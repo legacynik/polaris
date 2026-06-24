@@ -1,0 +1,11 @@
+{
+  "name": "legacy",
+  "owner": { "name": "legacynik", "url": "https://github.com/legacynik" },
+  "plugins": [
+    {
+      "name": "legacy",
+      "source": "./legacy",
+      "description": "Niccolò's way of working as a plugin: Polaris OS + team-workflow standard (mantra + conduct) + workflow-bootstrap. Installable in any repo, out of the box."
+    }
+  ]
+}
