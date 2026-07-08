@@ -64,7 +64,18 @@ def test_cli_remember_exit0(tmp_path, monkeypatch, capsys):
     repo = _wired_repo(tmp_path)
     monkeypatch.chdir(repo)
     assert mod.main(["remember", "nota importante"]) == 0
-    assert "REMEMBERED[nota importante]" in capsys.readouterr().out
+    # proves main() constructs title/body (not a flat "text") — the fake
+    # bundle mirrors the live bundle's title+body-required contract, so this
+    # fails if the shim regresses to sending {"text": ...} alone.
+    assert "REMEMBERED[title=nota importante]" in capsys.readouterr().out
+
+
+def test_cli_bundle_error_exit1(tmp_path, monkeypatch, capsys):
+    mod = _load_shim()
+    repo = _wired_repo(tmp_path)
+    monkeypatch.chdir(repo)
+    assert mod.main(["recall", "__force_error__"]) == 1
+    assert "boom" in capsys.readouterr().out
 
 
 def test_cli_unwired_repo_exit1(tmp_path, monkeypatch, capsys):
