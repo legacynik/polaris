@@ -1,7 +1,0 @@
-{
-  "name": "legacy",
-  "version": "0.1.0",
-  "description": "Niccolò's working method, out of the box. Polaris OS (sessions, decisions, lessons, scratchpad via Loop B) + the team-workflow standard (the mantra + conduct + core rules) + a bootstrap skill that mounts it all into any repo and wires the right MCPs and domain plugins. Run /workflow-bootstrap in a repo to align it to the standard; /start, /update, /end for the session lifecycle.",
-  "author": { "name": "Niccolò Franzin", "url": "https://github.com/legacynik" },
-  "keywords": ["workflow", "polaris", "sessions", "team", "bootstrap", "standard"]
-}

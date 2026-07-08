@@ -1,0 +1,21 @@
+{
+  "name": "polaris",
+  "version": "0.2.0",
+  "description": "Polaris OS out of the box: session lifecycle skills (start/update/end/pol-report), polmem CLI (recall/remember against the repo's committed memory bundle), team-workflow standard + bootstrap, and the workflow MCP servers (context7, sequential-thinking, codebase-memory). Run /pol-bootstrap in a repo to align it; /start, /update, /end for the session lifecycle.",
+  "author": { "name": "Niccolò Franzin", "url": "https://github.com/legacynik" },
+  "keywords": ["polaris", "workflow", "sessions", "memory", "polmem", "team", "bootstrap"],
+  "mcpServers": {
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp"]
+    },
+    "sequential-thinking": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+    },
+    "codebase-memory": {
+      "command": "codebase-memory-mcp",
+      "args": []
+    }
+  }
+}
