@@ -149,15 +149,16 @@ Turn this session's corrections and decisions into behavior change so the same m
 
 1. **Read the signal.** Read today's scratch for the current contributor at `_polaris/sessions/scratch/<contributor>/` (use the `git config user.email` slug) and pull every entry whose header is flagged `[CORRECTION]` (set by the Stop hook), plus the decisions surfaced in step 7.
 2. **Distill** each into an imperative lesson — **Why** + **How-to-apply**, generalized. Write the *rule*, not the incident ("Verify branch before any git op", not "fixed branch X today").
-3. **Classify** each into a tier with the §1 heuristic from `_polaris/plans/2026-06-18-decision-to-enforcement-loop.md`:
+3. **Classify.** If the portfolio layer is available (see "Vault resolution" above), classify each lesson into a tier with the §1 heuristic from `$POLARIS_VAULT/plans/2026-06-18-decision-to-enforcement-loop.md`:
    - **note** — pure rationale, no action.
    - **context** — needs judgment / is a preference.
    - **gate** — violation causes damage AND a script can mechanically detect it.
-4. **Route** (propose, human approves):
+   If the portfolio layer is NOT available: print "lesson B-loop: vault not available, skipping" once, default every lesson to tier **note**, and skip step 5 below.
+4. **Route** (propose, human approves) — always runs, vault or no vault:
    - **note** → append to `_polaris/lessons.md` (a `## ` block per the ledger contract) + to `decisions.md` if it's a real decision.
    - **context** → propose a `MEMORY.md` feedback entry (`**Why:** / **How to apply:**` shape) and/or one `CLAUDE.md` line.
    - **gate** → propose a preflight / pre-commit check.
-5. **Recurrence check.** For each lesson run `python3 _polaris/scripts/lesson_recurrence.py --match "<lesson>"`. If it already exists, run `--bump "<exact lesson title>"` and surface the printed promotion proposal (`note→context→gate`) for the human to confirm.
+5. **Recurrence check** (only if the portfolio layer is available). For each lesson run `python3 "$POLARIS_VAULT/scripts/lesson_recurrence.py" --match "<lesson>"`. If it already exists, run `--bump "<exact lesson title>"` and surface the printed promotion proposal (`note→context→gate`) for the human to confirm.
 
 Keep this lean: a few high-signal lessons beats a long list. Don't invent lessons with no signal in the scratch or decisions.
 
