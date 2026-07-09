@@ -1,11 +1,24 @@
 ---
 name: end
-description: Close a session — saves to repo-local _polaris/state/current.md and _polaris/sessions/, appends to cross-repo _polaris/sessions/ and memo/log.md, surfaces decisions to both repo _polaris/decisions.md and cross-repo _polaris/decisions.md, and offers a commit. Use at the end of any session, before a multi-day pause, or when the user says "end", "fine", "ho finito", "wrap up".
+description: Polaris skill — close a session — saves to repo-local _polaris/state/current.md and _polaris/sessions/, appends to cross-repo _polaris/sessions/ and memo/log.md when the vault is available, surfaces decisions to repo _polaris/decisions.md (and cross-repo decisions.md if available), and offers a commit. Use at the end of any session, before a multi-day pause, or when the user says "end", "fine", "ho finito", "wrap up".
 ---
 
 # end
 
 Close the session cleanly. Saves at two levels — repo-local `_polaris/` and cross-repo vault — surfaces decisions, and offers a commit.
+
+## Vault resolution (cross-repo layer — optional)
+
+The repo layer (`_polaris/` in the current repo) ALWAYS works and needs nothing.
+The cross-repo portfolio layer needs the Polaris vault:
+- if env `POLARIS_VAULT` is set → use it;
+- else if `~/Desktop/All Vibe Proj/_polaris` exists → use it (founder machine);
+- else → the portfolio layer is NOT available: print one line
+  "portfolio layer: not available on this machine" in the briefing/closing and
+  skip every cross-repo step silently. This is normal on teammate machines, not an error.
+`polmem` (CLI or bundle): use it only if `command -v polmem` succeeds OR
+`scripts/polaris_memory_repo.py` exists in the repo; otherwise say
+"polmem: not available" once and continue.
 
 ## When to use
 
@@ -84,9 +97,9 @@ Surface only — do not invent.
 - …
 ```
 
-### 6. Save cross-repo vault
+### 6. Save cross-repo vault (skip silently if the portfolio layer is not available)
 
-**`~/Desktop/All Vibe Proj/_polaris/sessions/{TODAY}.md`** — APPEND:
+**`$POLARIS_VAULT/sessions/{TODAY}.md`** — APPEND:
 ```markdown
 ## [{repo-name}] session-end {NOW}
 
@@ -103,7 +116,7 @@ Surface only — do not invent.
 - …
 ```
 
-**`~/Desktop/All Vibe Proj/_polaris/memo/log.md`** — APPEND one line:
+**`$POLARIS_VAULT/memo/log.md`** — APPEND one line:
 ```
 ## [{TODAY} {NOW}] session-end | {repo-name} | {summary ≤120 chars}
 ```
@@ -126,7 +139,7 @@ If confirmed, APPEND to **both**:
 **Status**: active
 ```
 
-**Cross-repo** `~/Desktop/All Vibe Proj/_polaris/decisions.md` — only for decisions that affect multiple repos or are strategic. Ask explicitly: "Cross-repo relevant? (y/n)"
+**Cross-repo** `$POLARIS_VAULT/decisions.md` (only if the portfolio layer is available) — only for decisions that affect multiple repos or are strategic. Ask explicitly: "Cross-repo relevant? (y/n)"
 
 Never auto-capture. Always confirm.
 
@@ -164,11 +177,29 @@ repo/_polaris/
   decisions.md            ← repo-specific decisions (APPEND, newest on top)
 ```
 
-Cross-repo vault: `~/Desktop/All Vibe Proj/_polaris/`
+Cross-repo vault: see "Vault resolution" above — `$POLARIS_VAULT` when available.
 
 ## Path rules
 
 - All repo-local writes go to `_polaris/` inside the current repo root
 - Create `_polaris/sessions/`, `_polaris/state/` if missing (`mkdir -p`)
-- Cross-repo `_polaris/` is always `~/Desktop/All Vibe Proj/_polaris/`
+- Cross-repo `_polaris/` resolves per the "Vault resolution" rule above (`$POLARIS_VAULT`); if unresolved, cross-repo writes are skipped entirely
 - **current.md is a SHARED resource** — use evidence-based judgment. Remove what's proven done. Ask when unsure. Never blindly wipe.
+
+## Memory sync — the cross-repo layer lives HERE (founder flip 2026-07-03)
+
+Per-repo indexing is fully automatic (git hooks on main + launchd 6h backstop) —
+/end does NOT need to sync product repos. What runs ONLY at /end is the
+Polaris-level layer + the drain, all backgrounded, NEVER blocking the close —
+and ONLY if the portfolio layer is available (writer-side, founder machine only;
+else skip this whole section silently):
+
+1. Distill drain (scratch → lessons):
+   `( DISTILL_AUTORUN=1 bash "$POLARIS_VAULT/scripts/distill_runner.sh" >/dev/null 2>&1 & )`
+2. Portfolio wiki (cross-repo, _polaris — the ONLY trigger for it), only if `polmem` is available:
+   `( polmem sync _polaris >/dev/null 2>&1 & )`
+3. Product-repo catch-up (cheap no-op when hooks already synced), only if `polmem` is available:
+   `( polmem sync >/dev/null 2>&1 & )`
+
+Skip silently if the vault or scripts are missing. Session close is a natural
+freshness event — the queue never survives a closed session unprocessed.
