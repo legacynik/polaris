@@ -1,17 +1,6 @@
 ---
-name: workflow-bootstrap
-description: >
-  Bootstrap the standard way of working into ANY repo (Polaris OS + team workflow
-  + MCP + domain plugins). Use it when you enter a new repo or want to align one to
-  the standard: it sets up the Polaris structure (state, sessions, decisions,
-  lessons, scratchpad via Loop B), installs the TEAM-WORKFLOW standard (the "mantra"
-  + conduct), writes a blunt powerful CLAUDE.md, wires the issue/triage flow, adds
-  the core MCPs (code-graph, context7, sequential-thinking) + superpowers, and
-  enables the right domain plugins (AWS, Odoo, Vercel, Stripe, Supabase…) by
-  detecting the stack. Trigger it when the user says "set up the workflow",
-  "bootstrap this repo", "mount Polaris here", "align to the standard", "prep the
-  repo", or enters a repo missing the Polaris/decisions/lessons machinery. It is
-  idempotent: rerun anytime, it won't break what's already there.
+name: pol-bootstrap
+description: Polaris skill — bootstrap the standard way of working into ANY repo (Polaris OS + team workflow + MCP + domain plugins). Use it when you enter a new repo or want to align one to the standard — it sets up the Polaris structure (state, sessions, decisions, lessons, scratchpad via Loop B), installs the TEAM-WORKFLOW standard (the "mantra" + conduct), writes a blunt powerful CLAUDE.md, wires the issue/triage flow, adds the core MCPs (code-graph, context7, sequential-thinking) + superpowers, and enables the right domain plugins (AWS, Odoo, Vercel, Stripe, Supabase…) by detecting the stack. Trigger it when the user says "set up the workflow", "bootstrap this repo", "mount Polaris here", "align to the standard", "prep the repo", or enters a repo missing the Polaris/decisions/lessons machinery. It is idempotent — rerun anytime, it won't break what's already there.
 user-invocable: true
 ---
 
@@ -25,8 +14,13 @@ Principle: this skill is a **thin detection + orchestration layer**. Domain
 knowledge lives in the plugins and in context7 (always live), never hardcoded here
 — so it never goes stale.
 
-VAULT = the cross-repo `_polaris/` folder (usually `~/Desktop/All Vibe Proj/_polaris/`).
-If you can't find it, ask the user where it is.
+## Vault resolution (cross-repo layer — optional)
+
+VAULT = the cross-repo `_polaris/` folder:
+- if env `POLARIS_VAULT` is set → use it;
+- else if `~/Desktop/All Vibe Proj/_polaris` exists → use it (founder machine);
+- else → ask the user where it is, or skip the cross-repo bootstrap steps if
+  there isn't one (repo-local Polaris structure still gets set up either way).
 
 ## 1. Understand where you are
 
@@ -75,7 +69,7 @@ always via env/placeholder, never committed.
   `claude mcp add codebase-memory -- codebase-memory-mcp`; it indexes the repo
   into the graph itself (no external DB). Recommended for the mantra step.
   The companion `codebase-memory` skill (query-syntax guidance) is OPTIONAL —
-  base-workflow already triggers the code-graph step, so the MCP alone suffices.
+  pol-base-workflow already triggers the code-graph step, so the MCP alone suffices.
   Power alternative — CodeGraphContext: `claude mcp add CodeGraphContext -- cgc mcp start`
   (requires the `cgc` binary **and** a graph backend such as Neo4j).
 - **sequential-thinking:** `claude mcp add sequential-thinking -- npx -y @modelcontextprotocol/server-sequential-thinking`

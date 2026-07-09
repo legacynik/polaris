@@ -1,11 +1,24 @@
 ---
 name: update
-description: Mid-session checkpoint — saves progress to repo-local _polaris/state/current.md and _polaris/sessions/, then appends to the cross-repo Polaris vault (_polaris/sessions/ and memo/log.md). No commit, no decision surfacing. Use before a temporary context switch, after a significant work block, or before launching a long task.
+description: Polaris skill — mid-session checkpoint — saves progress to repo-local _polaris/state/current.md and _polaris/sessions/, then appends to the cross-repo Polaris vault (_polaris/sessions/ and memo/log.md) when it's available. No commit, no decision surfacing. Use before a temporary context switch, after a significant work block, or before launching a long task.
 ---
 
 # update
 
 Snapshot current progress. Saves at two levels: repo-local `_polaris/` + cross-repo vault. Append-only, no commit.
+
+## Vault resolution (cross-repo layer — optional)
+
+The repo layer (`_polaris/` in the current repo) ALWAYS works and needs nothing.
+The cross-repo portfolio layer needs the Polaris vault:
+- if env `POLARIS_VAULT` is set → use it;
+- else if `~/Desktop/All Vibe Proj/_polaris` exists → use it (founder machine);
+- else → the portfolio layer is NOT available: print one line
+  "portfolio layer: not available on this machine" in the briefing/closing and
+  skip every cross-repo step silently. This is normal on teammate machines, not an error.
+`polmem` (CLI or bundle): use it only if `command -v polmem` succeeds OR
+`scripts/polaris_memory_repo.py` exists in the repo; otherwise say
+"polmem: not available" once and continue.
 
 ## When to use
 
@@ -42,9 +55,9 @@ Do not rewrite the whole file. Update header only.
 **Next**: …
 ```
 
-### 3. Write to cross-repo vault
+### 3. Write to cross-repo vault (skip silently if the portfolio layer is not available)
 
-**`~/Desktop/All Vibe Proj/_polaris/sessions/{TODAY}.md`** — append:
+**`$POLARIS_VAULT/sessions/{TODAY}.md`** — append:
 ```markdown
 ## [{repo-name}] checkpoint {HH:MM}
 
@@ -53,7 +66,7 @@ Do not rewrite the whole file. Update header only.
 **Next**: …
 ```
 
-**`~/Desktop/All Vibe Proj/_polaris/memo/log.md`** — append one line:
+**`$POLARIS_VAULT/memo/log.md`** — append one line:
 ```
 ## [{TODAY} {HH:MM}] checkpoint | {repo-name} | {one-line summary}
 ```
