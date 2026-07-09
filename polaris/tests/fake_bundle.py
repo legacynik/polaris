@@ -3,8 +3,8 @@
 (initialize / tools/call) AND the same remember contract: requires title+body,
 returns the error string "error: 'title' and 'body' are required." with
 isError:False when either is missing — this mirrors a real false-success bug
-found in the live bundle (Preventivi AI, scripts/polaris_memory_repo.py,
-discovered 2026-07-08 during Task 2's REAL step; see task-2-report.md).
+found in a live product repo's bundle during the REAL verification step
+(2026-07-08).
 recall accepts the magic query "__force_error__" to exercise the
 isError:true → shim exit 1 path end-to-end."""
 import json

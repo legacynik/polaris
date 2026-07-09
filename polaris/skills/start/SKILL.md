@@ -93,6 +93,15 @@ and from double-running fallbacks. Read the printed lines.
 
 ### 5. Present briefing
 
+The `Memory:` line is gated, not unconditional:
+- memory layer NOT resolved (no `polmem` on PATH and no
+  `scripts/polaris_memory_repo.py` in the repo) → omit the line entirely.
+- memory layer resolved but the portfolio layer is NOT available (teammate
+  machine, no vault) → `Memory: per-repo .wiki via recall (MCP)` — no map
+  pointer, since there's no vault to point into.
+- memory layer resolved AND the portfolio layer is available → `Memory:
+  per-repo .wiki + \`polmem recall\` (map: $POLARIS_VAULT/MEMORY-OS.md)`.
+
 ```
 {Day}, {Date}
 
@@ -107,7 +116,7 @@ Capacity: {one-line}
 Alert: {most urgent}
 Deadline: {nearest plan} ({N} days)
 
-Memory: per-repo .wiki + `polmem recall` (map: _polaris/MEMORY-OS.md)
+Memory: {gated line per rule above, or omitted}
 
 How can I help today?
 ```

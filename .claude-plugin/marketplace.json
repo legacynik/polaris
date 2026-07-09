@@ -1,6 +1,7 @@
 {
   "name": "polaris",
   "owner": { "name": "legacynik", "url": "https://github.com/legacynik" },
+  "description": "Polaris OS marketplace — Niccolò's working method as an installable plugin (session lifecycle, repo memory CLI, team workflow standard).",
   "plugins": [
     {
       "name": "polaris",
