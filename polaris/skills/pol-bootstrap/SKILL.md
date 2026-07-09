@@ -88,9 +88,11 @@ Copy `templates/settings.team.json` from the plugin into the repo as
 `.claude/settings.json`, so the whole team inherits the right permissions on
 clone (no per-teammate prompt-approval setup):
 - **If `.claude/settings.json` doesn't exist** — copy the template as-is.
-- **If it already exists** — MERGE the template's `permissions.allow` entries
-  into the existing array (dedupe, preserve what's already there). **Never
-  clobber** an existing settings file.
+- **If it already exists** — MERGE = touch ONLY `permissions.allow`; every
+  other key stays byte-identical. Dedupe the merged array, preserve what's
+  already there. If `permissions` exists without an `allow` key, create the
+  array alongside the existing sibling keys. **Never clobber** an existing
+  settings file.
 
 **Check prereqs** and report what's missing (don't install silently — the repo
 owner decides):

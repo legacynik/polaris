@@ -101,6 +101,15 @@ polmem remember "decided to cap retries at 3, see incident 2026-07-02"
 polmem health
 ```
 
+The plugin does **not** put `bin/polmem` on PATH — the examples above assume
+one of these:
+
+- Invoke it by its full cache path:
+  `python3 ~/.claude/plugins/cache/polaris/polaris/<version>/bin/polmem recall "..."`
+- Or symlink it once: `ln -s ~/.claude/plugins/cache/polaris/polaris/<version>/bin/polmem ~/.local/bin/polmem`.
+  The cache path is versioned, so the symlink goes stale on plugin update —
+  re-run the `ln -s` after `/plugin update`.
+
 - `recall` — keyword search weighted on page frontmatter (title/summary/tags)
   over the repo's `.wiki/` — no embeddings, no vector index.
 - `remember` — writes a journal entry (unreviewed capture, distilled later).
