@@ -101,7 +101,8 @@ polmem remember "decided to cap retries at 3, see incident 2026-07-02"
 polmem health
 ```
 
-- `recall` — semantic search over the repo's `.wiki/`.
+- `recall` — keyword search weighted on page frontmatter (title/summary/tags)
+  over the repo's `.wiki/` — no embeddings, no vector index.
 - `remember` — writes a journal entry (unreviewed capture, distilled later).
 - `health` — reports the bundle path, whether `.wiki/index.md` exists, and
   how many journal entries are pending.
