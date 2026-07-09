@@ -1,6 +1,7 @@
 ---
 name: pol-report
 description: Polaris skill — weekly report of the current repo — aggregates _polaris/sessions/ of the period + new decisions + git log into _polaris/weekly/YYYY-Wnn.md (Done / Decisions / Open threads / Next). Use at end of week, before a review with the team, or when the user asks "report", "weekly", "cosa abbiamo fatto questa settimana".
+user-invocable: true
 ---
 
 # pol-report

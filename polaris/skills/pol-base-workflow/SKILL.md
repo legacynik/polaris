@@ -1,6 +1,7 @@
 ---
 name: pol-base-workflow
 description: Polaris skill — the base development method — apply it BEFORE and WHILE building anything that touches code — a feature, a bugfix, a refactor, any change. It is not optional and not a formality — any coding task goes through it. Trigger it whenever you're about to implement, fix, refactor, extend, or change code — even when the user just says "add X", "fix Y", "change Z", "make it do W", or pastes a stack trace. It enforces — understand the code first (code-graph + dependencies), a spec with error paths and fallbacks following clean architecture, strict TDD (test fails first), 360° tests, the simplicity limits, fresh-eyes review, a real test, and that fixes hold (root cause, not patch). This is the BUILD method; the team-workflow (branch / PR / merge rules) is a separate concern. Use this first, by default.
+user-invocable: true
 ---
 
 # Base Workflow

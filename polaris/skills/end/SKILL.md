@@ -1,6 +1,7 @@
 ---
 name: end
 description: Polaris skill — close a session — saves to repo-local _polaris/state/current.md and _polaris/sessions/, appends to cross-repo _polaris/sessions/ and memo/log.md when the vault is available, surfaces decisions to repo _polaris/decisions.md (and cross-repo decisions.md if available), and offers a commit. Use at the end of any session, before a multi-day pause, or when the user says "end", "fine", "ho finito", "wrap up".
+user-invocable: true
 ---
 
 # end
