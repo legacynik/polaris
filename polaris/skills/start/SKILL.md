@@ -1,6 +1,7 @@
 ---
 name: start
 description: Polaris skill — start a session — loads repo-local context from _polaris/state/current.md, _polaris/sessions/, _polaris/state/goals.md, then adds cross-repo Polaris context (POLARIS.md dashboard, active deadlines) when the vault is available. Use at the beginning of any session, when resuming after a break, or when the user types /start.
+user-invocable: true
 ---
 
 # start

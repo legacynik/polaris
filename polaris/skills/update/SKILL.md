@@ -1,6 +1,7 @@
 ---
 name: update
 description: Polaris skill — mid-session checkpoint — saves progress to repo-local _polaris/state/current.md and _polaris/sessions/, then appends to the cross-repo Polaris vault (_polaris/sessions/ and memo/log.md) when it's available. No commit, no decision surfacing. Use before a temporary context switch, after a significant work block, or before launching a long task.
+user-invocable: true
 ---
 
 # update

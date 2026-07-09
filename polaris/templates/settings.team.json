@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__polaris-memory__recall",
+      "mcp__polaris-memory__remember",
+      "mcp__plugin_polaris_context7__*",
+      "mcp__plugin_polaris_sequential-thinking__*",
+      "mcp__plugin_polaris_codebase-memory__*",
+      "Bash(polmem *)",
+      "Bash(python3 scripts/polaris_memory_repo.py*)"
+    ]
+  }
+}

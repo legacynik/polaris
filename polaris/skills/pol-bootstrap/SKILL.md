@@ -79,6 +79,23 @@ always via env/placeholder, never committed.
 Don't hardcode one machine's exact server config into this plugin — name the
 tool + canonical install, and let the host's global config win where it exists.
 
+### 2c. Team settings (.claude/settings.json)
+
+Copy `templates/settings.team.json` from the plugin into the repo as
+`.claude/settings.json`, so the whole team inherits the right permissions on
+clone (no per-teammate prompt-approval setup):
+- **If `.claude/settings.json` doesn't exist** — copy the template as-is.
+- **If it already exists** — MERGE the template's `permissions.allow` entries
+  into the existing array (dedupe, preserve what's already there). **Never
+  clobber** an existing settings file.
+
+**Check prereqs** and report what's missing (don't install silently — the repo
+owner decides):
+- `node` / `npx` on PATH — needed for `context7` and `sequential-thinking`
+  (both run via `npx -y ...`).
+- `codebase-memory-mcp` on PATH — needed for the code-graph MCP server.
+- `python3` on PATH — needed for `polmem` / `scripts/polaris_memory_repo.py`.
+
 ## 3. Domain plugins (cascading, no hardcoding)
 
 1. **Known domain** (table match) → enable the existing plugin. Don't generate
@@ -169,6 +186,7 @@ always goes in, Archon **only if you want the repo to run on its own**.
 
 ## Wrap-up
 
-Summarize what you mounted: MCPs activated, domain plugins enabled, Polaris
-structure created, CLAUDE.md + `docs/TEAM-WORKFLOW.md` written, issue/triage flow
-wired. Then suggest `/start` for the first briefing.
+Summarize what you mounted: MCPs activated, team settings installed/merged
+(`.claude/settings.json`) and any missing prereqs, domain plugins enabled,
+Polaris structure created, CLAUDE.md + `docs/TEAM-WORKFLOW.md` written,
+issue/triage flow wired. Then suggest `/start` for the first briefing.
