@@ -12,7 +12,10 @@ Close the session cleanly. Saves at two levels — repo-local `_polaris/` and cr
 
 The repo layer (`_polaris/` in the current repo) ALWAYS works and needs nothing.
 The cross-repo portfolio layer needs the Polaris vault:
-- if env `POLARIS_VAULT` is set → use it;
+- if env `POLARIS_VAULT` is set AND that directory exists → use it;
+- if env `POLARIS_VAULT` is set but the path does NOT exist → print once
+  "portfolio layer: POLARIS_VAULT set but path not found — skipping" and
+  treat the portfolio layer as NOT available (same as the branch below);
 - else if `~/Desktop/All Vibe Proj/_polaris` exists → use it (founder machine);
 - else → the portfolio layer is NOT available: print one line
   "portfolio layer: not available on this machine" in the briefing/closing and
