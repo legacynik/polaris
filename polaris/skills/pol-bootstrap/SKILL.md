@@ -17,7 +17,10 @@ knowledge lives in the plugins and in context7 (always live), never hardcoded he
 ## Vault resolution (cross-repo layer — optional)
 
 VAULT = the cross-repo `_polaris/` folder:
-- if env `POLARIS_VAULT` is set → use it;
+- if env `POLARIS_VAULT` is set AND that directory exists → use it;
+- if env `POLARIS_VAULT` is set but the path does NOT exist → print once
+  "portfolio layer: POLARIS_VAULT set but path not found — skipping" and
+  treat it as unresolved (same as the branch below);
 - else if `~/Desktop/All Vibe Proj/_polaris` exists → use it (founder machine);
 - else → ask the user where it is, or skip the cross-repo bootstrap steps if
   there isn't one (repo-local Polaris structure still gets set up either way).

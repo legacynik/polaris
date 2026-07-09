@@ -12,7 +12,10 @@ Load all context needed to begin working. Two layers: repo-specific state + cros
 
 The repo layer (`_polaris/` in the current repo) ALWAYS works and needs nothing.
 The cross-repo portfolio layer needs the Polaris vault:
-- if env `POLARIS_VAULT` is set → use it;
+- if env `POLARIS_VAULT` is set AND that directory exists → use it;
+- if env `POLARIS_VAULT` is set but the path does NOT exist → print once
+  "portfolio layer: POLARIS_VAULT set but path not found — skipping" and
+  treat the portfolio layer as NOT available (same as the branch below);
 - else if `~/Desktop/All Vibe Proj/_polaris` exists → use it (founder machine);
 - else → the portfolio layer is NOT available: print one line
   "portfolio layer: not available on this machine" in the briefing/closing and
@@ -68,19 +71,25 @@ questions arise.
 Skip silently if the portfolio layer is not available or `MEMORY-OS.md` is unreachable.
 
 ### 4c. Memory health — READOUT ONLY (founder flip 2026-07-03, supersedes D1 gating)
-Per the vault-resolution rule: if `polmem` is available, run exactly: `polmem health || true`
-The exit code is the severity (0=green, 1=warn, 2=red), NOT a failure — `|| true`
-keeps the harness from flagging a RED as an error and from double-running fallbacks.
-Read the printed lines. If `polmem` is not on PATH but the portfolio layer is
-available, run `python3 "$POLARIS_VAULT/mcp/polmem" health || true` instead.
+Gate the invocation on actual availability — never invoke the bare `polmem`
+word unless `command -v polmem` already succeeded:
+- if `command -v polmem` succeeds → run exactly: `polmem health || true`
+- else if the portfolio layer is available (per the vault-resolution rule
+  above) → run `python3 "$POLARIS_VAULT/mcp/polmem" health || true` instead
+- else if `scripts/polaris_memory_repo.py` exists in this repo → print
+  "polmem CLI not on PATH — repo bundle present, MCP recall available" once
+  and skip (do NOT shell out to `polmem` — it isn't on PATH, that's noise)
+- else → print "polmem: not available" once and continue
+
+When actually run, the exit code is the severity (0=green, 1=warn, 2=red),
+NOT a failure — `|| true` keeps the harness from flagging a RED as an error
+and from double-running fallbacks. Read the printed lines.
 - Surface RED lines in the briefing's Alerts. That is ALL /start does.
 - Do NOT drain, do NOT sync, do NOT launch anything at /start — session context is
   sacred. Sync is fully automatic elsewhere: git hooks (.md commit on main +
   post-merge → `polmem sync <repo>`) + launchd 6h backstop + `/end` (cross-repo).
   A `wiki-sync` RED here means those triggers are broken — report it as an alert,
   don't paper over it in-session.
-
-Otherwise ("polmem" not available at all): say "polmem: not available" once and continue.
 
 ### 5. Present briefing
 
