@@ -1,10 +1,11 @@
 # polaris/tests/fake_bundle.py
 """Minimal stand-in for scripts/polaris_memory_repo.py — same JSON-RPC envelope
 (initialize / tools/call) AND the same remember contract: requires title+body,
-returns the error string "error: 'title' and 'body' are required." with
-isError:False when either is missing — this mirrors a real false-success bug
-found in a live product repo's bundle during the REAL verification step
-(2026-07-08).
+raises on validation failure so isError:True with "error: 'title' and 'body'
+are required." when either is missing. The live bundle used to return that
+string as a happy-path result (isError:False) — a false-success bug found
+during the REAL verification step (2026-07-08) and fixed on 2026-07-11; this
+fake now mirrors the fixed contract.
 recall accepts the magic query "__force_error__" to exercise the
 isError:true → shim exit 1 path end-to-end."""
 import json
@@ -24,7 +25,7 @@ def _recall_reply(args: dict) -> tuple[str, bool]:
 def _remember_reply(args: dict) -> tuple[str, bool]:
     title, body = args.get("title"), args.get("body")
     if not title or not body:
-        return "error: 'title' and 'body' are required.", False
+        return "error: 'title' and 'body' are required.", True
     return f"REMEMBERED[title={title}]", False
 
 
