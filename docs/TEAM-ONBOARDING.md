@@ -1,152 +1,144 @@
-# Polaris Team OS — onboarding reale per un team
+# Polaris Team OS — team onboarding
 
-Questo documento serve a una persona che apre una repo prodotto per la prima volta. Se un comando
-qui sotto non passa, fermati e segnala il blocco: non creare un vault personale e non improvvisare
-una seconda configurazione.
+This is the day-one checklist for a person opening a product repository for the first time. The
+README covers *what* Polaris is; this covers *what you run* to get set up. If a command below fails,
+stop and report the blocker — do not create a personal vault or improvise a second configuration.
 
-## 1. Installa il plugin Polaris
+## 1. Install the plugin
 
-`legacynik/polaris` è il marketplace pubblico del plugin. Il plugin contiene solo workflow:
-non inserire qui dati di progetto, decisioni private, clienti o stato della repo operativa. Poi,
-in Claude Code:
+`legacynik/polaris` is the public plugin marketplace. The plugin contains workflow only — never put
+project data, private decisions, customer information or repository state into it. In Claude Code:
 
 ```text
 /plugin marketplace add legacynik/polaris
 /plugin install polaris-team-os@polaris-team-os
 ```
 
-Riavvia Claude Code, poi verifica:
+Restart Claude Code, then verify:
 
 ```bash
 claude plugin list
 ```
 
-Devi vedere `polaris-team-os@polaris-team-os` abilitato.
+You must see `polaris-team-os@polaris-team-os` enabled.
 
-## 2. Preflight strumenti — una volta per macchina
+## 2. Tool preflight — once per machine
 
 ### Superpowers
 
-Polaris non sostituisce Superpowers: lo usa per pianificazione e delivery quando il lavoro richiede
-codice. Installa/verifica il plugin ufficiale:
+Polaris does not replace Superpowers — it uses it for planning and delivery when the work needs code.
+Install/verify the official plugin:
 
 ```text
 /plugin install superpowers@claude-plugins-official
 ```
 
-Poi controlla con `claude plugin list`. Se il marketplace ufficiale non è disponibile nella tua
-installazione, chiedi al maintainer il comando del marketplace configurato: non indovinare un ID.
+Confirm with `claude plugin list`. If the official marketplace is not available in your install, ask
+the maintainer for the configured marketplace command — do not guess an ID.
 
 ### Context7
 
-Context7 serve per documentazione aggiornata di SDK e librerie:
+Context7 provides up-to-date SDK and library documentation:
 
 ```text
 /plugin install context7@claude-plugins-official
 ```
 
-### MCP del plugin
+### Plugin MCP servers
 
-Polaris dichiara Sequential Thinking e Codebase Memory; Context7 arriva dal plugin ufficiale
-installato sopra. Dopo il riavvio verifica lo stato reale, non solo la presenza del file:
+Polaris declares Sequential Thinking and Codebase Memory; Context7 comes from the official plugin
+above. After the restart, check the real connection state, not just the file:
 
 ```bash
 claude mcp list
 ```
 
-Devono risultare connessi o avere un motivo esplicito.
+They must show connected or carry an explicit reason. `codebase-memory` also needs the
+`codebase-memory-mcp` binary. If `claude mcp list` reports it missing, install it with your machine's
+Python manager (for example `pipx install codebase-memory-mcp`), then re-run `claude mcp list`. Never
+store keys or credentials in the repo.
 
-Per `codebase-memory` serve anche il binario `codebase-memory-mcp`. Se `claude mcp list` lo segnala
-come mancante, installalo con il gestore Python della tua macchina (per esempio
-`pipx install codebase-memory-mcp`), poi ripeti `claude mcp list`. Non salvare chiavi o credenziali
-nella repo.
+## 3. Put `polmem` on your PATH
 
-## 3. Rendi `polmem` disponibile nella tua shell
+`polmem` is the repo's memory CLI: it runs `recall` over what the repo already knows (decisions,
+references, architecture, journal committed in `.wiki/`). **The CLI is the interface you use.** The
+MCP adapter is optional; the CLI is the reliable path.
 
-`polmem` è la CLI di memoria della repo: fa `recall` su ciò che la repo già sa (decisioni,
-reference, architettura, journal committati in `.wiki/`). **La CLI è l'interfaccia che usi tu.**
-Polaris dichiara anche un adattatore MCP, ma è opzionale: la CLI è il percorso affidabile.
-
-Installa il launcher una volta per macchina (lo aggiunge a `~/.local/bin/polmem`, indipendente
-dalla versione del plugin):
+Install the launcher once per machine (a version-independent shim at `~/.local/bin/polmem`):
 
 ```bash
 bash "$CLAUDE_PLUGIN_ROOT/polaris/scripts/install-polmem-cli.sh"
 ```
 
-Se lo script segnala che `~/.local/bin` non è sul PATH, aggiungi al tuo profilo di shell:
+If it reports that `~/.local/bin` is not on your PATH, add to your shell profile:
 
 ```bash
 export PATH="${HOME}/.local/bin:${PATH}"
 ```
 
-Poi, da dentro una repo prodotto wired a memoria, verifica:
+Then, from inside a memory-wired product repository, verify:
 
 ```bash
 polmem health
 polmem recall "confirmation gate"
 ```
 
-`recall` restituisce voci ordinate — punteggio, path sorgente, titolo, riassunto di una riga:
+`recall` returns ranked entries — score, source path, title, one-line summary. The three day-one
+commands are `polmem recall "<query>"`, `polmem health`, `polmem remember "<short note>"`. If
+`recall` says the repo is not memory-wired, `git pull` (the `.wiki` is committed and arrives with the
+code); if it is still missing, ask the repo owner to wire it — **do not run `polmem init` yourself**.
+`python3` must be installed. `polmem` only reads the repo you run it in, and `recall` is assumed
+context to verify, not current state.
 
-```text
-$ polmem recall "confirmation gate" --top 3
-[70] _polaris/decisions.md#2026-05-07 — Production runtime = ECS Fargate + Terraform …
-[70] references/cardaq-gateway-integration — Cardaq Gateway Integration …
-[70] synthesis/orbit-adversarial-gate-framework — Orbit Producer/Validator/Gate Framework …
-```
+## 4. Check the repo contract
 
-I tre comandi del primo giorno: `polmem recall "<query>"`, `polmem health`,
-`polmem remember "<nota breve>"`. Se `recall` dice che la repo non è wired, fai `git pull`
-(il `.wiki` è committato e arriva col codice). Serve `python3`. `polmem` legge solo la repo in cui
-lo esegui.
-
-## 4. Verifica il contratto della repo
-
-La repo possiede **una sola** root: `polaris/` oppure `_polaris/`. Deve contenere:
+The repository owns **one** root: `polaris/` or `_polaris/`. It must contain:
 
 ```text
 <root>/config.yml
-<root>/team/<tuo-github-login>/profile.yml
-<root>/team/<tuo-github-login>/weeks/
-<root>/team/<tuo-github-login>/reports/
+<root>/team/<your-github-login>/profile.yml
+<root>/team/<your-github-login>/weeks/
+<root>/team/<your-github-login>/reports/
 <root>/sessions/
 <root>/decisions.md
 ```
 
-Se manca il profilo o la root, chiedi al repository owner. Non eseguire bootstrap e non creare una
-cartella Polaris personale.
+Your `team/<login>/` folder name and the `github:` field in both `config.yml` and your `profile.yml`
+must be your **exact GitHub login** (case-sensitive) — the skills query `gh` by that string, so a
+nickname silently returns no evidence. If the profile or root is missing, ask the repository owner.
+Do not run a bootstrap and do not create a personal Polaris folder.
 
-## 5. Primo giorno
+## 5. First day
 
-1. Apri Claude Code dalla repo prodotto.
-2. Esegui `/start` e leggi outcome, proof, blocker e ownership altrui.
-3. Prima di proporre un branch, controlla il tuo piano e il lavoro già attivo.
-4. Usa `/update` dopo un avanzamento o un blocco reale.
-5. Usa `/end` quando chiudi: lascia una prossima azione concreta.
+1. Open Claude Code from the product repo.
+2. Run `/start`: read your outcome, proof, blockers, and other people's ownership.
+3. Before proposing a branch, check your plan and the work already active.
+4. Run `/update` after real progress or a real blocker.
+5. Run `/end` when you stop: leave one concrete next action.
 
-## 6. Settimana
+## 6. The week
 
-- Il CEO o il responsabile usa `/plan-week` per una proposta basata su issue/PR reali e capacità.
-- Una proposta CEO con `ceo_signature: pending` **non autorizza lavoro**.
-- Dopo firma, ogni persona mantiene il proprio piano nella repo.
-- A fine settimana `/report` confronta piano e realtà: consegne, prove, blocchi e prossima priorità.
+- The CEO or lead runs `/plan-week` for a proposal grounded in real issues/PRs and capacity.
+- A CEO proposal with `ceo_signature: pending` **does not authorize work**.
+- After sign-off, each person maintains their own plan in the repo.
+- At week end, `/report` compares plan versus reality: deliveries, proof, blockers, next priority.
+  Run it on the Friday of the week you are reporting (or set `WEEK` explicitly for a past week).
 
-### Esempio minimo
+### Minimal example
 
 ```md
-# Week 2026-W29 — @niccolo
+# Week 2026-W29 — @octocat
 
 ## Outcome
-Rendere verificabile il confirmation gate, con prova staging.
+Make the confirmation gate verifiable, with staging proof.
 
-| Issue | Stato | Prova |
+| Issue | Status | Proof |
 |---|---|---|
-| #573 | in revisione | PR + test staging |
+| #573 | in review | PR + staging test |
 
-## Non iniziare
-- Nuove feature finché #573 non è verificabile.
+## Not starting
+- New features until #573 is verifiable.
 ```
 
-Il report non conta messaggi o token: dice cosa era previsto, cosa è stato davvero consegnato e che
-cosa serve per chiudere il resto.
+The report never counts messages or tokens: it states what was planned, what was actually delivered,
+and what is needed to close the rest.

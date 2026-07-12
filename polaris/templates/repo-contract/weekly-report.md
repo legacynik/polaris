@@ -1,16 +1,16 @@
-# Report settimana YYYY-Www — @niccolo
+# Report YYYY-Www — @<login>
 
-## Previsto vs consegnato
+## Planned versus actual
 
-| Issue | Previsto | Consegnato davvero | Evidenza | Stato |
+| Issue | Planned | Actually delivered | Evidence | Status |
 |---|---|---|---|---|
-| #123 | Outcome pianificato | Risultato reale | PR, test o staging | chiuso / aperto |
+| #123 | planned outcome | what really shipped | PR, test or staging | closed / open |
 
-## Cosa abbiamo imparato
+## What we learned
 
-- Una cosa che ha migliorato autonomia, qualità o velocità.
+- One thing that improved autonomy, quality or speed.
 
-## Blocco e prossima settimana
+## Blocker and next week
 
-- Blocco reale: —
-- Prossimo risultato da proporre: —
+- Blocker: real blocker, or none.
+- Next: the single best starting point for next week.
