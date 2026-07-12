@@ -74,6 +74,13 @@ def _cmd_health() -> int:
     return 0
 
 
+def _cmd_sync() -> int:
+    print("sync: writer-side (distillation) runs on the founder machine / CI — "
+          "no-op on teammate machines. Your recall reads the committed .wiki; "
+          "it updates when you pull.")
+    return 0
+
+
 def _cmd_init(consumer: bool) -> int:
     print("polmem init (v0): consumer mode is the default for teammates — "
           "the repo's committed bundle + .mcp.json already give you recall/remember.")
@@ -89,6 +96,7 @@ def main(argv: list[str]) -> int:
     r = sub.add_parser("recall"); r.add_argument("query"); r.add_argument("--top", type=int, default=5)
     m = sub.add_parser("remember"); m.add_argument("text")
     sub.add_parser("health")
+    sub.add_parser("sync")
     i = sub.add_parser("init"); i.add_argument("--consumer", action="store_true")
     try:
         a = p.parse_args(argv)
@@ -102,6 +110,8 @@ def main(argv: list[str]) -> int:
         return _cmd_tool("remember", {"text": a.text, "title": a.text[:60].strip(), "body": a.text})
     if a.cmd == "health":
         return _cmd_health()
+    if a.cmd == "sync":
+        return _cmd_sync()
     return _cmd_init(a.consumer)
 
 

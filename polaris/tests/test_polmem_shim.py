@@ -109,6 +109,15 @@ def test_health_unwired_exit1(tmp_path, monkeypatch):
     assert mod.main(["health"]) == 1
 
 
+def test_cli_sync_noop_exit0(tmp_path, monkeypatch, capsys):
+    mod = _load_shim()
+    repo = _wired_repo(tmp_path)
+    monkeypatch.chdir(repo)
+    assert mod.main(["sync"]) == 0
+    out = capsys.readouterr().out
+    assert "writer-side" in out and "no-op" in out
+
+
 def test_shim_is_executable_and_stdlib_only():
     src = SHIM.read_text()
     assert src.startswith("#!/usr/bin/env python3")
