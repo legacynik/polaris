@@ -5,7 +5,7 @@ cd "$(dirname "${BASH_SOURCE[0]}")/.."
 fail=0
 for f in skills/*/SKILL.md; do
   name=$(basename "$(dirname "$f")")
-  desc=$(awk -F': ' '/^description:/ {print $2; exit}' "$f")
+  desc=$(sed -n 's/^description: //p' "$f" | head -1)
   case "$name" in
     start|update|end) ;;                       # bare names allowed
     pol-*) ;;                                  # convention
