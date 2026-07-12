@@ -1,5 +1,5 @@
-# Copy to _polaris/team/<github-login>/profile.yml and commit it.
-github: replace-with-github-login
+# Esempio: _polaris/team/niccolo/profile.yml. Copia nel percorso della persona e committa.
+github: niccolo
 assignment_mode: hybrid # owner_assigned | self_claim | hybrid
 weekly_capacity: 3
 preferred_areas: []

@@ -1,7 +1,7 @@
 {
   "name": "polaris-team-os",
-  "version": "0.3.1",
-  "description": "Polaris Team OS: repo-local session lifecycle skills (start/update/end/pol-report), polmem memory CLI, and the repository-first team workflow. Start with docs/TEAM-ONBOARDING.md; /start, /update and /end handle a session.",
+  "version": "0.4.0",
+  "description": "Polaris Team OS: five repository-first team commands — /start, /update, /end, /plan-week and /report — plus polmem memory CLI. Start with docs/TEAM-ONBOARDING.md.",
   "author": {
     "name": "Niccol\u00f2 Franzin",
     "url": "https://github.com/legacynik"

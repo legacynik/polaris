@@ -1,12 +1,29 @@
-# Week YYYY-Www — @github-login
+# Week YYYY-Www — @niccolo
 
-## Outcomes
+status: proposed
+ceo_signature: pending
+execution_authorized: false
 
-| Issue | Outcome | Owner | Branch | Status | Proof | Blocker / dependency |
-|---|---|---|---|---|---|---|
-| #123 | Short outcome | @github-login | `feat/123-short-name` | planned | — | — |
+## Outcome della settimana
 
-## Capacity
+Una frase concreta: che cosa deve essere verificabilmente vero entro venerdì?
 
-- Planned: 1 / 3
-- P0 override: none
+## Lavoro proposto
+
+| Issue | Risultato | Branch | Stato | Prova attesa | Blocco / dipendenza |
+|---|---|---|---|---|---|
+| #123 | Outcome breve | `feat/123-short-name` | pianificato | test, PR o staging | — |
+
+## Capacità e crescita
+
+- Capacità: 1 risultato su 3 disponibili.
+- Crescita: una cosa da imparare o da rendere più autonoma questa settimana.
+
+## Non iniziare
+
+- Lavoro non collegato all'outcome, salvo una nuova priorità esplicita.
+
+## Firma CEO
+
+- [ ] Approvato: `ceo_signature: approved`, `execution_authorized: true`
+- [ ] Da rivedere: lasciare `pending` e annotare il motivo.

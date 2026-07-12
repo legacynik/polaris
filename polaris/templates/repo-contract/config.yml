@@ -3,4 +3,4 @@ tracker:
   github_repo: owner/repository
   linear_team: null # Optional; leave null when GitHub is the only tracker.
 contributors:
-  - github: replace-with-github-login
+  - github: niccolo # esempio; aggiungere solo membri reali della repo
