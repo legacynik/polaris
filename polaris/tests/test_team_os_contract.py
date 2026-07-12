@@ -43,6 +43,30 @@ def test_the_new_commands_have_one_shared_team_contract() -> None:
     assert "planned versus actual" in report
 
 
+def test_evidence_skills_pin_the_iso_week_filename_convention() -> None:
+    plan = (SKILLS / "plan-week" / "SKILL.md").read_text()
+    report = (SKILLS / "report" / "SKILL.md").read_text()
+    # plan-week writes weeks/YYYY-Www.md, report writes reports/YYYY-Www.md — lock both.
+    assert "weeks/YYYY-Www.md" in plan
+    assert "reports/YYYY-Www.md" in report
+
+
+def test_evidence_skills_ship_concrete_tracker_commands() -> None:
+    plan = (SKILLS / "plan-week" / "SKILL.md").read_text()
+    report = (SKILLS / "report" / "SKILL.md").read_text()
+    # plan-week must pull live issues; report must gather git + tracker evidence.
+    assert "gh issue list" in plan
+    assert "weekly_capacity" in plan
+    assert "git log --since" in report
+    assert "gh pr list" in report
+
+
+def test_lifecycle_skills_verify_the_branch() -> None:
+    for name in ("start", "end"):
+        text = (SKILLS / name / "SKILL.md").read_text()
+        assert "git rev-parse --abbrev-ref HEAD" in text
+
+
 def test_onboarding_contains_a_real_tooling_preflight() -> None:
     onboarding = (ROOT.parent / "docs" / "TEAM-ONBOARDING.md").read_text()
 

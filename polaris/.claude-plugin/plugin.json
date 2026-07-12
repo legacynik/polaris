@@ -1,6 +1,6 @@
 {
   "name": "polaris-team-os",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Polaris Team OS: five repository-first team commands — /start, /update, /end, /plan-week and /report — plus polmem memory CLI. Start with docs/TEAM-ONBOARDING.md.",
   "author": {
     "name": "Niccol\u00f2 Franzin",
