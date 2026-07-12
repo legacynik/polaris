@@ -1,6 +1,7 @@
-# Esempio: _polaris/team/niccolo/profile.yml. Copia nel percorso della persona e committa.
-github: niccolo
-assignment_mode: hybrid # owner_assigned | self_claim | hybrid
+# Copy to _polaris/team/<github-login>/profile.yml and commit.
+# `github` must be the exact GitHub login (case-sensitive), verbatim — the folder name matches it.
+github: octocat
+assignment_mode: hybrid   # owner_assigned | self_claim | hybrid
 weekly_capacity: 3
-preferred_areas: []
+preferred_areas: []       # e.g. [backend, infra] — bias triage; leave [] to derive scope from repo evidence
 excluded_areas: []

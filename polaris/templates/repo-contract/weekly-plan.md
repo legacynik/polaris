@@ -1,29 +1,23 @@
-# Week YYYY-Www — @niccolo
+# Week YYYY-Www — @<login>
 
 status: proposed
 ceo_signature: pending
 execution_authorized: false
 
-## Outcome della settimana
+## Outcome
 
-Una frase concreta: che cosa deve essere verificabilmente vero entro venerdì?
+One concrete sentence: what must be verifiably true by Friday?
 
-## Lavoro proposto
+## Proposed work (capacity: N of <weekly_capacity> used on the primary)
 
-| Issue | Risultato | Branch | Stato | Prova attesa | Blocco / dipendenza |
+| Issue | Result | Branch | Status | Proof | Blocker |
 |---|---|---|---|---|---|
-| #123 | Outcome breve | `feat/123-short-name` | pianificato | test, PR o staging | — |
+| #123 | short outcome | `feat/123-short-name` | planned | test, PR or staging | — |
 
-## Capacità e crescita
+## Not starting
 
-- Capacità: 1 risultato su 3 disponibili.
-- Crescita: una cosa da imparare o da rendere più autonoma questa settimana.
+- Work not tied to the outcome, unless an explicit new priority.
 
-## Non iniziare
+## Evidence
 
-- Lavoro non collegato all'outcome, salvo una nuova priorità esplicita.
-
-## Firma CEO
-
-- [ ] Approvato: `ceo_signature: approved`, `execution_authorized: true`
-- [ ] Da rivedere: lasciare `pending` e annotare il motivo.
+gh issue list @ YYYY-MM-DD. Separate verified facts from assumptions.

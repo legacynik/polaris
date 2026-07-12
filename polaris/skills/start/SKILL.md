@@ -30,9 +30,11 @@ From the repository root, use **one** Polaris root:
    `docs/TEAM-ONBOARDING.md` (section "Verifica il contratto della repo"). Do not run a bootstrap
    command and do not create personal state.
 
-Identify the contributor from the matching `team/<github-login>/profile.yml`. Prefer the GitHub
-login for the current checkout (`gh api user --jq .login`); if it is ambiguous, list the available
-`team/*/` profiles and ask which is theirs. If no profile matches, stop and point to onboarding.
+Identify the contributor from the matching `team/<github-login>/profile.yml`. The `github:` field and
+the `team/<login>/` folder are the exact GitHub login, verbatim (case-sensitive) — the same string
+`gh` queries use. Prefer the login for the current checkout (`gh api user --jq .login`); if it is
+ambiguous, list the available `team/*/` profiles and ask which is theirs. If no profile matches, stop
+and point to onboarding.
 
 ## Step 3 — Read in this order
 
@@ -66,8 +68,15 @@ Expected shape — ranked entries (score, source, title, one-line summary):
 
 Failure branches:
 - `command not found: polmem` → run `bash "$CLAUDE_PLUGIN_ROOT/polaris/scripts/install-polmem-cli.sh"`, then retry.
-- "this repo is not memory-wired" or missing `.wiki` → `git pull`, then retry. If still missing,
-  say memory is unavailable once and continue; do not invent a fallback store.
+- `not memory-wired (no scripts/polaris_memory_repo.py)` → this repo does not carry the memory
+  bundle yet. `git pull` in case it is arriving with the code; if it is still missing, say memory is
+  unavailable once and continue. **Do not run `polmem init` yourself** and do not invent a fallback
+  store — tell the repo owner / CEO the repo needs wiring.
+- missing `.wiki` index after the bundle loads → `git pull`, then retry once.
+
+`recall` is repository memory, not current state: on the founder's own machine it may surface
+founder-vault entries. Treat every recalled page as **assumed** context to verify against the
+tracker or code — never cite it as evidence of what is true now.
 
 ## Step 5 — Brief (at most seven lines)
 

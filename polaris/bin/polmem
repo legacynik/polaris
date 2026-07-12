@@ -2,7 +2,7 @@
 # polaris/bin/polmem — Polaris memory CLI for teammates (v0).
 # Speaks JSON-MCP over stdin to the CURRENT repo's committed bundle
 # (scripts/polaris_memory_repo.py) — zero engine duplication. Repo-scoped,
-# consumer-first (D-T1). The founder's cross-repo polmem lives in the vault.
+# consumer-first: it only ever reads the repository you run it in.
 from __future__ import annotations
 
 import argparse
@@ -12,8 +12,9 @@ import sys
 from pathlib import Path
 
 BUNDLE_REL = Path("scripts") / "polaris_memory_repo.py"
-NOT_WIRED = ("this repo is not memory-wired (no scripts/polaris_memory_repo.py) — "
-             "ask Niccolò or run: polmem init")
+NOT_WIRED = ("this repo is not memory-wired (no scripts/polaris_memory_repo.py) — the memory "
+             "bundle ships committed with the repo: git pull, or ask the repo owner to wire it. "
+             "Do not run init here.")
 
 
 def find_bundle(start: Path) -> Path | None:
@@ -75,7 +76,7 @@ def _cmd_health() -> int:
 
 
 def _cmd_sync() -> int:
-    print("sync: writer-side (distillation) runs on the founder machine / CI — "
+    print("sync: writer-side (distillation) runs on the repo owner's machine / CI — "
           "no-op on teammate machines. Your recall reads the committed .wiki; "
           "it updates when you pull.")
     return 0
@@ -84,7 +85,7 @@ def _cmd_sync() -> int:
 def _cmd_init(consumer: bool) -> int:
     print("polmem init (v0): consumer mode is the default for teammates — "
           "the repo's committed bundle + .mcp.json already give you recall/remember.")
-    print("Writer role (distillation) stays single-writer (Niccolò's machine / CI).")
+    print("Writer role (distillation) stays single-writer (the repo owner's machine / CI).")
     if consumer:
         print("consumer: nothing to activate — you are read+journal only by design.")
     return 0

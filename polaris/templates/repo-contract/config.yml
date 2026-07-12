@@ -1,6 +1,9 @@
 # Commit this file in each product repository as _polaris/config.yml.
 tracker:
   github_repo: owner/repository
-  linear_team: null # Optional; leave null when GitHub is the only tracker.
+  linear_team: null   # Optional; leave null when GitHub is the only tracker.
 contributors:
-  - github: niccolo # esempio; aggiungere solo membri reali della repo
+  # `github` is the exact GitHub login (case-sensitive), verbatim — e.g. JeanpierreMiccoli17,
+  # not a nickname. Skills use it directly in `gh --assignee` / `author:` queries; a wrong value
+  # silently returns no evidence. Add only real repository members.
+  - github: octocat
