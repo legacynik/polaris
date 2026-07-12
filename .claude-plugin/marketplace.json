@@ -1,12 +1,12 @@
 {
-  "name": "polaris",
+  "name": "polaris-team-os",
   "owner": { "name": "legacynik", "url": "https://github.com/legacynik" },
-  "description": "Polaris OS marketplace — Niccolò's working method as an installable plugin (session lifecycle, repo memory CLI, team workflow standard).",
+  "description": "Polaris Team OS marketplace — repository-first session lifecycle, memory CLI, and a shared team operating model.",
   "plugins": [
     {
-      "name": "polaris",
+      "name": "polaris-team-os",
       "source": "./polaris",
-      "description": "Polaris OS — Niccolò's working method as a plugin: session lifecycle (start/update/end/pol-report), repo memory CLI (polmem), team-workflow standard, bootstrap. Installable in any repo, out of the box."
+      "description": "Polaris Team OS — repo-local session lifecycle and memory CLI. Product repositories carry the shared team plans, reports, decisions and rules."
     }
   ]
 }

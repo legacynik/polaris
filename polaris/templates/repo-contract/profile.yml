@@ -1,0 +1,6 @@
+# Copy to _polaris/team/<github-login>/profile.yml and commit it.
+github: replace-with-github-login
+assignment_mode: hybrid # owner_assigned | self_claim | hybrid
+weekly_capacity: 3
+preferred_areas: []
+excluded_areas: []

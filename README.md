@@ -1,140 +1,85 @@
-# Polaris
+# Polaris Team OS
 
-Polaris is a Claude Code plugin that installs a working method: a session
-lifecycle (`/start` · `/update` · `/end`), a repo-local memory CLI (`polmem`),
-and a bootstrap skill that wires the rest — MCP servers, team settings, and a
-`CLAUDE.md` — into any repo. Install it once; every repo you bootstrap gets
-the same setup.
+**Polaris Team OS** is the shared, repository-first working method for a product team. It provides
+the session lifecycle (`/start` · `/update` · `/end`), repository memory through `polmem`, and a
+small committed record of ownership, weekly goals, reports and decisions.
 
----
+It is **not** a personal vault and it does not require a founder-specific workspace. Product
+repositories own their own working context; the plugin is installed once per machine.
 
-## Install
+## Team onboarding — give this repository to a collaborator
 
-```
-/plugin marketplace add legacynik/polaris
-/plugin install polaris@polaris
-```
+1. Clone the product repository they will work on.
+2. Ensure it has the committed team contract described in
+   [`docs/TEAM-ONBOARDING.md`](docs/TEAM-ONBOARDING.md). The repository owner does this once;
+   contributors never bootstrap a private Polaris environment.
+3. In Claude Code, install this marketplace and plugin:
 
-### Prerequisites
+   ```text
+   /plugin marketplace add legacynik/polaris
+   /plugin install polaris-team-os@polaris-team-os
+   ```
 
-- **`node` / `npx`** on PATH — the plugin runs `context7` and
-  `sequential-thinking` via `npx -y ...`.
-- **`python3`** on PATH — the `polmem` CLI and the memory bundle it talks to
-  are plain-stdlib Python.
-- **`codebase-memory-mcp` on PATH (optional)** — the plugin's manifest wires
-  a `codebase-memory` MCP server unconditionally. If the binary isn't
-  installed, that one server fails to start; everything else in the plugin
-  (skills, `polmem`, the other two MCP servers) still works. Install it
-  separately if you want the code-graph capability.
+4. Open Claude Code from the product repository and run `/start`.
+5. Use `/update` for a real handoff and `/end` when closing a session. Use `polmem recall` before
+   a consequential decision and `polmem remember` to record a candidate lesson.
 
----
+The complete contributor and repo-owner checklist is in
+[`docs/TEAM-ONBOARDING.md`](docs/TEAM-ONBOARDING.md). It is self-contained: share this repository
+and the product repo; no internal vault path is required.
 
-## Teammate onboarding
+## Current commands
 
-1. Install the plugin (commands above).
-2. Clone the product repo you'll be working in — one that's already been
-   through `/pol-bootstrap` (ask whoever owns it if you're not sure).
-3. Open Claude Code in that repo.
-4. Run `/start`.
+| Command | What it does today |
+|---|---|
+| `/start` | Reads repository-local session state and available repo memory. |
+| `/update` | Saves a concise mid-session handoff. |
+| `/end` | Closes the local session, surfaces repo decisions and offers a commit. |
+| `/pol-report` | Produces a weekly repository report from sessions, decisions and git history. |
+| `polmem recall` / `remember` / `health` | Queries or records against the product repo's committed memory bundle. |
 
-`/start` loads whatever is present — repo-local state always, memory recall
-if the repo is wired for it, cross-repo context if a vault is configured.
-Nothing errors if a piece is missing; it just skips that section.
+`/pol-bootstrap` is retained only for existing legacy repositories. **Do not use it for team
+onboarding.** New product repos adopt the tracked contract explicitly, via the templates and
+checklist below.
 
----
+## Repository-first model
 
-## The two legs
+The plugin is global; the information colleagues need is committed in the product repository:
 
-Polaris deliberately splits into two things that install differently:
-
-| | Comes from the **plugin** (installed once, global) | Comes from the **product repo** (per repo, via `git clone`/`pull`) |
-|---|---|---|
-| Skills | `start`, `update`, `end`, `pol-report`, `pol-base-workflow`, `pol-bootstrap` | — |
-| MCP servers bundled | `context7`, `sequential-thinking`, `codebase-memory` | `polaris-memory` (repo-specific — lives in that repo's `.mcp.json`, not in the plugin) |
-| Memory data | — | `.wiki/` (index + journal) and `scripts/polaris_memory_repo.py`, the bundle `polmem` talks to |
-| Project rules | — | `CLAUDE.md`, `.claude/rules/`, `_polaris/decisions.md`, `_polaris/lessons.md` |
-| CI gates | — | whatever the repo owner wired (e.g. a pre-commit smoke gate on the memory bundle) |
-| Team permissions | `templates/settings.team.json` (the template) | `.claude/settings.json` (installed/merged by `/pol-bootstrap`) |
-
-The plugin gives every repo the same *method*. The product repo carries its
-own *memory and rules* — that's why cloning the repo, not just installing the
-plugin, is step 2 of onboarding.
-
----
-
-## Skills
-
-All six skills are namespaced so they never collide with a repo's own
-skills, and every one of their descriptions starts with `Polaris skill —` —
-search `polaris` in your skill picker to find all six at once.
-
-- **`/start`** — load context at the beginning of a session: repo-local
-  state always, plus cross-repo portfolio context and memory recall when
-  available.
-- **`/update`** — mid-session checkpoint. Saves progress, no commit.
-- **`/end`** — close a session: saves state, surfaces decisions, offers a
-  commit.
-- **`/pol-report`** — weekly report of the current repo, built from
-  `_polaris/sessions/`, decisions, and `git log`.
-- **`/pol-base-workflow`** — the always-on build method (understand the
-  code, spec, strict TDD, real test) for any change that touches code.
-- **`/pol-bootstrap`** — align a repo to the standard: Polaris structure,
-  team settings, MCP servers, domain plugins, `CLAUDE.md`. Idempotent —
-  rerun anytime.
-
-Naming convention: the three session-lifecycle skills keep their short names
-(`start`/`update`/`end`) for fast typing; everything else is prefixed
-`pol-*` to stay unambiguous.
-
----
-
-## `polmem` — the memory CLI
-
-`polaris/bin/polmem` is a thin, stdlib-only CLI that speaks JSON-MCP to
-whatever memory bundle the *current repo* ships at
-`scripts/polaris_memory_repo.py`. It doesn't carry any memory itself — it's
-a shim onto the product repo's own bundle (see "the two legs" above).
-
-```
-polmem recall "pricing calibration" --top 5
-polmem remember "decided to cap retries at 3, see incident 2026-07-02"
-polmem health
+```text
+_polaris/
+  config.yml
+  team/<github-login>/{profile.yml,weeks/,reports/}
+  sessions/YYYY-MM-DD-@<github-login>.md
+  decisions.md
+  lessons.md
+  state/current.md                 # local-only, ignored
 ```
 
-The plugin does **not** put `bin/polmem` on PATH — the examples above assume
-one of these:
+GitHub/Linear remain the live tracker. Markdown coordinates people: the current plan, ownership,
+proof and blockers. A founder portfolio view is an optional reader of committed product reports;
+it never becomes a second session writer.
 
-- Invoke it by its full cache path:
-  `python3 ~/.claude/plugins/cache/polaris/polaris/<version>/bin/polmem recall "..."`
-- Or symlink it once: `ln -s ~/.claude/plugins/cache/polaris/polaris/<version>/bin/polmem ~/.local/bin/polmem`.
-  The cache path is versioned, so the symlink goes stale on plugin update —
-  re-run the `ln -s` after `/plugin update`.
+## `polmem`
 
-- `recall` — keyword search weighted on page frontmatter (title/summary/tags)
-  over the repo's `.wiki/` — no embeddings, no vector index.
-- `remember` — writes a journal entry (unreviewed capture, distilled later).
-- `health` — reports the bundle path, whether `.wiki/index.md` exists, and
-  how many journal entries are pending.
+`polaris/bin/polmem` is a thin, stdlib-only CLI for the current product repository's memory bundle
+at `scripts/polaris_memory_repo.py`; it does not carry or duplicate memory itself.
 
-If the repo isn't memory-wired (no `scripts/polaris_memory_repo.py` up the
-directory tree from where you run it), every subcommand except `init` prints:
-
-```
-this repo is not memory-wired (no scripts/polaris_memory_repo.py) —
-ask Niccolò or run: polmem init
+```bash
+python3 path/to/polaris/bin/polmem recall "pricing calibration" --top 5
+python3 path/to/polaris/bin/polmem remember "decided to cap retries at 3"
+python3 path/to/polaris/bin/polmem health
 ```
 
-and exits 1. `polmem init` explains the situation — in this v0, teammates
-are consumer-only (recall + remember against a repo the founder's machine
-already writes to); there's nothing to activate on your end.
+If the repo is not memory-wired, the command reports that plainly and exits non-zero. It never
+creates a home-directory vault.
 
----
+## Migration and roadmap
 
-## For repo owners
+The full team contract, migration map and acceptance tests live in the public Polaris OS repository:
 
-Run `/pol-bootstrap` in a repo to align it to the standard: it sets up the
-`_polaris/` structure, installs/merges `.claude/settings.json` from
-`templates/settings.team.json`, adds the missing core MCP servers, detects
-the stack and enables matching domain plugins, and writes or tightens
-`CLAUDE.md`. It's idempotent — safe to rerun, and it never overwrites what's
-already there.
+- [`Polaris Team OS design`](https://github.com/legacynik/polaris-os/blob/main/docs/superpowers/specs/2026-07-12-polaris-team-os-design.md)
+- [`Implementation package`](https://github.com/legacynik/polaris-os/blob/main/docs/superpowers/plans/2026-07-12-polaris-team-os-package.md)
+
+The next implementation release consolidates duplicate lifecycle/report skills into `/end`,
+`/plan-week` and `/report`; it does not add a second workspace or dashboard.

@@ -1,0 +1,6 @@
+# Commit this file in each product repository as _polaris/config.yml.
+tracker:
+  github_repo: owner/repository
+  linear_team: null # Optional; leave null when GitHub is the only tracker.
+contributors:
+  - github: replace-with-github-login

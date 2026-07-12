@@ -1,18 +1,18 @@
 {
-  "name": "polaris",
-  "version": "0.2.3",
-  "description": "Polaris OS out of the box: session lifecycle skills (start/update/end/pol-report), polmem CLI (recall/remember against the repo's committed memory bundle), team-workflow standard + bootstrap, and the workflow MCP servers (context7, sequential-thinking, codebase-memory). Run /pol-bootstrap in a repo to align it; /start, /update, /end for the session lifecycle.",
+  "name": "polaris-team-os",
+  "version": "0.3.0",
+  "description": "Polaris Team OS: repo-local session lifecycle skills (start/update/end/pol-report), polmem memory CLI, and the repository-first team workflow. Start with docs/TEAM-ONBOARDING.md; /start, /update and /end handle a session.",
   "author": {
     "name": "Niccol\u00f2 Franzin",
     "url": "https://github.com/legacynik"
   },
   "keywords": [
-    "polaris",
+    "polaris-team-os",
     "workflow",
     "sessions",
     "memory",
     "polmem",
     "team",
-    "bootstrap"
+    "repository-first"
   ]
 }
