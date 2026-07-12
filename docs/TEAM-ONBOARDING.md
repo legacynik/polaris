@@ -61,7 +61,47 @@ come mancante, installalo con il gestore Python della tua macchina (per esempio
 `pipx install codebase-memory-mcp`), poi ripeti `claude mcp list`. Non salvare chiavi o credenziali
 nella repo.
 
-## 3. Verifica il contratto della repo
+## 3. Rendi `polmem` disponibile nella tua shell
+
+`polmem` è la CLI di memoria della repo: fa `recall` su ciò che la repo già sa (decisioni,
+reference, architettura, journal committati in `.wiki/`). **La CLI è l'interfaccia che usi tu.**
+Polaris dichiara anche un adattatore MCP, ma è opzionale: la CLI è il percorso affidabile.
+
+Installa il launcher una volta per macchina (lo aggiunge a `~/.local/bin/polmem`, indipendente
+dalla versione del plugin):
+
+```bash
+bash "$CLAUDE_PLUGIN_ROOT/polaris/scripts/install-polmem-cli.sh"
+```
+
+Se lo script segnala che `~/.local/bin` non è sul PATH, aggiungi al tuo profilo di shell:
+
+```bash
+export PATH="${HOME}/.local/bin:${PATH}"
+```
+
+Poi, da dentro una repo prodotto wired a memoria, verifica:
+
+```bash
+polmem health
+polmem recall "confirmation gate"
+```
+
+`recall` restituisce voci ordinate — punteggio, path sorgente, titolo, riassunto di una riga:
+
+```text
+$ polmem recall "confirmation gate" --top 3
+[70] _polaris/decisions.md#2026-05-07 — Production runtime = ECS Fargate + Terraform …
+[70] references/cardaq-gateway-integration — Cardaq Gateway Integration …
+[70] synthesis/orbit-adversarial-gate-framework — Orbit Producer/Validator/Gate Framework …
+```
+
+I tre comandi del primo giorno: `polmem recall "<query>"`, `polmem health`,
+`polmem remember "<nota breve>"`. Se `recall` dice che la repo non è wired, fai `git pull`
+(il `.wiki` è committato e arriva col codice). Serve `python3`. `polmem` legge solo la repo in cui
+lo esegui.
+
+## 4. Verifica il contratto della repo
 
 La repo possiede **una sola** root: `polaris/` oppure `_polaris/`. Deve contenere:
 
@@ -77,7 +117,7 @@ La repo possiede **una sola** root: `polaris/` oppure `_polaris/`. Deve contener
 Se manca il profilo o la root, chiedi al repository owner. Non eseguire bootstrap e non creare una
 cartella Polaris personale.
 
-## 4. Primo giorno
+## 5. Primo giorno
 
 1. Apri Claude Code dalla repo prodotto.
 2. Esegui `/start` e leggi outcome, proof, blocker e ownership altrui.
@@ -85,7 +125,7 @@ cartella Polaris personale.
 4. Usa `/update` dopo un avanzamento o un blocco reale.
 5. Usa `/end` quando chiudi: lascia una prossima azione concreta.
 
-## 5. Settimana
+## 6. Settimana
 
 - Il CEO o il responsabile usa `/plan-week` per una proposta basata su issue/PR reali e capacità.
 - Una proposta CEO con `ceo_signature: pending` **non autorizza lavoro**.

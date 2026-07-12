@@ -52,6 +52,41 @@ Context7 is installed from its official plugin. Polaris declares Sequential Thin
 Memory. The team workstation still needs a one-time preflight; see the onboarding document. Polaris
 does not silently install tools, credentials, MCP servers or domain plugins.
 
+## polmem — the repository's memory
+
+`polmem` is a small command-line tool that recalls what a repository already knows. It reads the
+repository's committed `.wiki/` (decisions, references, architecture, journal) and returns the most
+relevant entries for a query — no server, no account, no external call. **The CLI is the interface
+teammates use.** Polaris ships an MCP adapter too, but it is optional; the `polmem` command is the
+reliable path.
+
+One-time setup (adds `polmem` to your shell PATH):
+
+```bash
+bash "$CLAUDE_PLUGIN_ROOT/polaris/scripts/install-polmem-cli.sh"
+```
+
+The three commands that matter on day one, run from inside a memory-wired product repository:
+
+```bash
+polmem recall "confirmation gate"   # rank the repo's memory for a query
+polmem health                       # confirm the repo is wired (bundle + index + journal)
+polmem remember "short note"        # append a durable note to the repo journal
+```
+
+`recall` returns ranked entries — score, source path, title, and a one-line summary:
+
+```text
+$ polmem recall "confirmation gate" --top 3
+[70] _polaris/decisions.md#2026-05-07 — Production runtime = ECS Fargate + Terraform …
+[70] references/cardaq-gateway-integration — Cardaq Gateway Integration …
+[70] synthesis/orbit-adversarial-gate-framework — Orbit Producer/Validator/Gate Framework …
+```
+
+If `recall` says the repo is not memory-wired, `git pull` (the `.wiki` is committed and arrives with
+the code). `python3` must be installed. `polmem` is repository-scoped: it only ever reads the repo
+you run it in.
+
 ## Non-negotiable boundary
 
 `/plan-week` can create a proposal, but it cannot assign work. A CEO proposal stays non-executable
