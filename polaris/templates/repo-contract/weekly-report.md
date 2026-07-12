@@ -1,12 +1,16 @@
-# Week YYYY-Www report — @github-login
+# Report settimana YYYY-Www — @niccolo
 
-## Planned vs actual
+## Previsto vs consegnato
 
-| Issue | Planned outcome | Actual | Evidence | Status |
+| Issue | Previsto | Consegnato davvero | Evidenza | Stato |
 |---|---|---|---|---|
+| #123 | Outcome pianificato | Risultato reale | PR, test o staging | chiuso / aperto |
 
-## Decisions, blockers, next week
+## Cosa abbiamo imparato
 
-- Decisions: none
-- Blockers: none
-- Next: none
+- Una cosa che ha migliorato autonomia, qualità o velocità.
+
+## Blocco e prossima settimana
+
+- Blocco reale: —
+- Prossimo risultato da proporre: —

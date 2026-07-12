@@ -1,111 +1,49 @@
 ---
 name: update
-description: Polaris skill — mid-session checkpoint — saves progress to repo-local _polaris/state/current.md and _polaris/sessions/, then appends to the cross-repo Polaris vault (_polaris/sessions/ and memo/log.md) when it's available. No commit, no decision surfacing. Use before a temporary context switch, after a significant work block, or before launching a long task.
+description: Polaris skill — record a short repository-first checkpoint during an active session. Use after meaningful progress, a blocker or a context switch.
 user-invocable: true
 ---
 
-# update
+# /update — leave the work legible
 
-Snapshot current progress. Saves at two levels: repo-local `_polaris/` + cross-repo vault. Append-only, no commit.
+Use the same single-root resolver as `/start`: `polaris/` or `_polaris/`, never both. If the
+repository contract or contributor profile is missing, stop and explain what is missing.
 
-## Vault resolution (cross-repo layer — optional)
+## Write only shared coordination facts
 
-The repo layer (`_polaris/` in the current repo) ALWAYS works and needs nothing.
-The cross-repo portfolio layer needs the Polaris vault:
-- if env `POLARIS_VAULT` is set AND that directory exists → use it;
-- if env `POLARIS_VAULT` is set but the path does NOT exist → print once
-  "portfolio layer: POLARIS_VAULT set but path not found — skipping" and
-  treat the portfolio layer as NOT available (same as the branch below);
-- else if `~/Desktop/All Vibe Proj/_polaris` exists → use it (founder machine);
-- else → the portfolio layer is NOT available: print one line
-  "portfolio layer: not available on this machine" in the briefing/closing and
-  skip every cross-repo step silently. This is normal on teammate machines, not an error.
-`polmem` (CLI or bundle): use it only if `command -v polmem` succeeds OR
-`scripts/polaris_memory_repo.py` exists in the repo; otherwise say
-"polmem: not available" once and continue.
+Append a short entry to `sessions/YYYY-MM-DD-@<github-login>.md`:
 
-## When to use
-
-- Before a temporary break (coming back later)
-- After completing a significant chunk of work mid-session
-- Before launching a long task (Hand run, deploy, build)
-- User says "update", "checkpoint", "save", "aggiorna", "pol-update"
-
-Use `end` instead for closing a session.
-
-## Process
-
-### 1. Synthesize progress (3 bullets max each)
-From the current conversation:
-- **Done**: what has been completed so far
-- **In progress**: what is still open or mid-flight
-- **Next**: what comes after (if clear from context)
-
-### 2. Write to repo-local _polaris/
-
-**`_polaris/state/current.md`** — update the checkpoint header (create if missing):
-```markdown
-<!-- checkpoint: {YYYY-MM-DD} {HH:MM} -->
-{one-line summary of current status}
-```
-Do not rewrite the whole file. Update header only.
-
-**`_polaris/sessions/{TODAY}.md`** — append (create with `# Session Log: {TODAY}` if missing):
-```markdown
-## checkpoint {HH:MM}
-
-**Done**: …
-**In progress**: …
-**Next**: …
+```md
+## HH:MM — checkpoint
+- Done: <verified progress>
+- Next: <one concrete next step>
+- Blocker: <none, or exact blocker>
 ```
 
-### 3. Write to cross-repo vault (skip silently if the portfolio layer is not available)
+If the current weekly-plan item changed state, update only its `Status`, `Proof` or
+`Blocker / dependency` cell. Do not rewrite the plan and do not create a new plan.
 
-**`$POLARIS_VAULT/sessions/{TODAY}.md`** — append:
-```markdown
-## [{repo-name}] checkpoint {HH:MM}
+## Keep `current.md` tiny
 
-**Done**: …
-**In progress**: …
-**Next**: …
+Overwrite (never append to) `<root>/state/current.md` with this compact pointer. It is gitignored;
+the session log and weekly plan remain the shared history and source of truth.
+
+```md
+# Current work
+Updated: YYYY-MM-DD HH:MM
+Owner: @login
+Outcome: <one sentence>
+Status: <one verified fact>
+Blocker: <none or one fact>
+Next: <one concrete step>
 ```
 
-**`$POLARIS_VAULT/memo/log.md`** — append one line:
-```
-## [{TODAY} {HH:MM}] checkpoint | {repo-name} | {one-line summary}
-```
+Do not put a diary, transcript, raw tool output or more than one active work item in this file.
 
-### 3b. Layer-3: distill AND WRITE lessons (B loop)
+## Boundaries
 
-Distill *today's so-far* scratch + flagged corrections into lessons **and WRITE them now**. Karpathy system-prompt-learning. Skip silently if there's no signal.
+- Do not write a founder vault, global memo, private workspace or automatic lesson.
+- Do not create or assign issues, branches, pull requests or deployments.
+- Do not claim completion without a linked proof.
 
-> **Why this WRITES (changed 2026-06-19):** `/update` is frequently the LAST action before the session is closed (the user often skips `/end`). If distillation is only "proposed" here and deferred to `/end`, the lessons are LOST on close. So `/update` MUST persist them, not propose. Writing to `lessons.md` is append-only and fork-free (the recurrence `--bump` may fork — if it fails, the write still stands).
-
-1. **Read the signal.** Read today's scratch for the current contributor at `_polaris/sessions/scratch/<contributor>/` (`git config user.email` slug) + entries flagged `[CORRECTION]` (set by the Stop hook).
-2. **Distill** each into an imperative lesson — **Why** + **How-to-apply**, generalized (the rule, not the incident).
-3. **Classify.** If the portfolio layer is available (see "Vault resolution" above), classify per §1 of `$POLARIS_VAULT/plans/2026-06-18-decision-to-enforcement-loop.md`: **note** (rationale) / **context** (judgment/preference) / **gate** (damage + script-detectable). If the portfolio layer is NOT available: print "lesson B-loop: vault not available, skipping" once, default every lesson to tier **note**, and skip step 5 below.
-4. **WRITE the lesson record now** — append a `## ` block to `_polaris/lessons.md` for EVERY distilled lesson (fields: `rule` = Why+How, `tier`, `recurrence: 0`, `source`, `last_triggered`). This is the persistence that survives session close — always runs, vault or no vault. For `context`/`gate` tiers ALSO propose the higher-effort artifact (a `MEMORY.md`/`CLAUDE.md` line, or a preflight check) for the human to apply — but the lesson itself is already saved in `lessons.md`, never lost.
-5. **Recurrence check + bump** (only if the portfolio layer is available). For each, run `python3 "$POLARIS_VAULT/scripts/lesson_recurrence.py" --match "<lesson>"`; if it already exists, `--bump` it and surface the promotion proposal. If the script can't run (fork-starved), note it and continue — the write in step 4 already persisted the lesson.
-
-No signal → say nothing.
-
-### 4. Confirm
-Show the checkpoint block that was written. Done.
-
-## Path standard (every repo)
-
-```
-repo/_polaris/
-  sessions/{TODAY}.md     ← append checkpoint here
-  state/current.md        ← update header here
-```
-
-## What this skill does NOT do
-
-- Offer a commit → use `end`
-- Surface decisions → use `end`
-- Read git diff
-- Modify `decisions.md`
-- Touch `activity.log` (owned by git hook)
-
-(Note: as of 2026-06-19, step 3b DOES write lessons to `lessons.md` — `/update` may be the last action before close, so lessons must persist here, not wait for `end`. `end` additionally surfaces decisions + offers a commit.)
+Show the session checkpoint and the one-line `Next` from `current.md` when finished.

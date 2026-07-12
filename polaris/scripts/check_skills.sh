@@ -1,26 +1,24 @@
 #!/usr/bin/env bash
-# polaris/scripts/check_skills.sh — naming + path hygiene gate (spec D5 + de-hardcoding)
+# polaris/scripts/check_skills.sh — shipped command-surface gate
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 fail=0
+expected=$'end\nplan-week\nreport\nstart\nupdate'
+actual=$(find skills -mindepth 1 -maxdepth 1 -type d -exec basename {} \; | sort)
+[[ "$actual" == "$expected" ]] || {
+  echo "FAIL commands: expected only start/update/end/plan-week/report"; fail=1;
+}
 for f in skills/*/SKILL.md; do
   name=$(basename "$(dirname "$f")")
   desc=$(sed -n 's/^description: //p' "$f" | head -1)
   case "$name" in
-    start|update|end) ;;                       # bare names allowed
-    pol-*) ;;                                  # convention
-    *) echo "FAIL name: $name (must be pol-* or start/update/end)"; fail=1;;
+    start|update|end|plan-week|report) ;;
+    *) echo "FAIL command: $name"; fail=1;;
   esac
   [[ "$desc" == "Polaris skill — "* ]] || { echo "FAIL desc prefix: $name"; fail=1; }
-  # absolute founder paths allowed ONLY in the vault-resolution block
-  bad=$(grep -n "Desktop/All Vibe Proj" "$f" | grep -v "Vault resolution" -A0 || true)
-  block_line=$(grep -n "## Vault resolution" "$f" | cut -d: -f1 || true)
-  while IFS=: read -r ln _; do
-    [[ -z "$ln" ]] && continue
-    if [[ -z "$block_line" ]] || (( ln < block_line )) || (( ln > block_line + 15 )); then
-      echo "FAIL hardcoded path outside resolution block: $name:$ln"; fail=1
-    fi
-  done <<< "$(grep -n 'Desktop/All Vibe Proj' "$f" || true)"
+  if grep -nE 'POLARIS_VAULT|Desktop/All Vibe Proj|pol-bootstrap|pol-report|pol-base-workflow' "$f"; then
+    echo "FAIL legacy or founder-vault reference: $name"; fail=1
+  fi
 done
 [[ $fail -eq 0 ]] && echo "check_skills: OK"
 exit $fail
