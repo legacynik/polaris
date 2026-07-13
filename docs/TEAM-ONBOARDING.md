@@ -87,8 +87,9 @@ polmem recall "confirmation gate"
 commands are `polmem recall "<query>"`, `polmem health`, `polmem remember "<short note>"`. If
 `recall` says the repo is not memory-wired, `git pull` (the `.wiki` is committed and arrives with the
 code); if it is still missing, ask the repo owner to wire it — **do not run `polmem init` yourself**.
-`python3` must be installed. `polmem` only reads the repo you run it in, and `recall` is assumed
-context to verify, not current state.
+`python3` must be installed. `recall` only reads the repo you run it in; `remember` **writes** one
+line to the repo’s committed journal — never put secrets, customer data or personal information in
+it. `recall` is assumed context to verify, not current state.
 
 ## 4. Check the repo contract
 
@@ -133,7 +134,8 @@ repository owner — do not create the contract yourself.
 
 ## 6. The week
 
-- The CEO or lead runs `/plan-week` for a proposal grounded in real issues/PRs and capacity.
+- Each contributor runs `/plan-week` for **their own** week — a proposal grounded in real
+  issues/PRs and capacity. The CEO or lead requests and reviews it; the signature gates execution.
 - A CEO proposal with `ceo_signature: pending` **does not authorize work**.
 - After sign-off, each person maintains their own plan in the repo.
 - At week end, `/report` compares plan versus reality: deliveries, proof, blockers, next priority.

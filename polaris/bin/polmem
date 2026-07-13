@@ -2,7 +2,8 @@
 # polaris/bin/polmem — Polaris memory CLI for teammates (v0).
 # Speaks JSON-MCP over stdin to the CURRENT repo's committed bundle
 # (scripts/polaris_memory_repo.py) — zero engine duplication. Repo-scoped,
-# consumer-first: it only ever reads the repository you run it in.
+# consumer-first: recall reads the repository you run it in; remember appends
+# one journal line to it (committed shared history — no secrets/PII).
 from __future__ import annotations
 
 import argparse

@@ -42,8 +42,9 @@ PY
 ## Step 1 — Read the week's plan
 
 Open `team/<login>/weeks/$WEEK.md`. Its rows (issue, intended result, proof, branch) are the
-baseline you measure against. If there is no plan for the week, say so and report only what shipped;
-do not invent a baseline.
+baseline you measure against. Check its approval fields: if `execution_authorized` is not `true`,
+the baseline is an **unapproved proposal** — label it so in the report, never as a commitment. If
+there is no plan for the week, say so and report only what shipped; do not invent a baseline.
 
 ## Step 2 — Gather ground-truth evidence (read-only)
 
@@ -61,8 +62,8 @@ Step 0:
 
 ```bash
 # Tracker: merged PRs and closed issues authored by the contributor
-gh pr list    --repo "$REPO" --state merged --search "author:$LOGIN merged:$SINCE..$UNTIL" --json number,title,mergedAt,additions,deletions,mergeCommit
-gh issue list --repo "$REPO" --state closed --search "author:$LOGIN closed:$SINCE..$UNTIL"  --json number,title,closedAt
+gh pr list    --repo "$REPO" --state merged --search "author:$LOGIN merged:$SINCE..$UNTIL" --limit 200 --json number,title,mergedAt,additions,deletions,mergeCommit
+gh issue list --repo "$REPO" --state closed --search "author:$LOGIN closed:$SINCE..$UNTIL"  --limit 200 --json number,title,closedAt
 
 # Commits in the window, resolved login->commits SERVER-SIDE by GitHub.
 # Do NOT filter git log by an author-email pattern: squash commits carry the
@@ -71,8 +72,9 @@ gh issue list --repo "$REPO" --state closed --search "author:$LOGIN closed:$SINC
 gh api "repos/$REPO/commits?author=$LOGIN&since=${SINCE}T00:00:00Z&until=${UNTIL}T23:59:59Z&per_page=100" \
   --jq '.[] | "\(.sha[0:8]) \(.commit.author.date[0:10]) \(.commit.message | split("\n")[0])"'
 
-# Open PRs at end of range (branch debt)
-gh pr list --repo "$REPO" --author "$LOGIN" --state open --json number,title,createdAt
+# PRs open NOW (branch debt) — not reconstructable "as of" a past week: for a
+# historical report label this "open at report time", never "open at end of range".
+gh pr list --repo "$REPO" --author "$LOGIN" --state open --limit 200 --json number,title,createdAt
 ```
 
 Expected shape:
@@ -91,7 +93,8 @@ Two sources are in the repo, not the tracker:
   `$SINCE..$UNTIL`). They are the day-by-day backbone: what was verified each day, incidents and
   their resolution, handoffs. Link each day you cite.
 - **Decisions and lessons** — scan `<root>/decisions.md` (and `lessons.md`) for entries dated in
-  the window and attributable to the contributor.
+  the window carrying the contributor's `@<login>` marker (the `/end` proposal format includes it).
+  An entry without an owner marker is ambiguous — say so instead of guessing.
 
 Failure branches: `gh` not found or an auth error → report the failure and continue with the
 evidence you do have; never fabricate a PR link or a closed issue. No session logs in range → say
@@ -122,7 +125,7 @@ e.g. `team/octocat/reports/2026-W29.md`) from the plugin template
 6. `## Blockers and incidents` — resolved in-week (with how) and carry-over (with the blocker and
    the next decision).
 7. `## Metrics` — small table: PRs merged, issues closed, LOC delta, decisions logged, open PRs at
-   end of range, incidents. Counts are **derived from the evidence above at report time** — never
+   report time, incidents. Counts are **derived from the evidence above at report time** — never
    copied from a previous report or estimated.
 8. `## PM action` — the decisions the CEO/lead must take, each one line with its owner. This is the
    section the reader acts on; if nothing is needed, say "none".
@@ -158,13 +161,13 @@ secret-access detour. Top outstanding: request staging secret access up front fo
 | #54 | slim docs/index dangling links | not started | — | open |
 
 ## Day by day
-- **Mon 07-14** ([log](../sessions/2026-07-14-@octocat.md)) — #55 root-caused: key expired, not revoked; access request filed.
-- **Wed 07-16** ([log](../sessions/2026-07-16-@octocat.md)) — key rotated, judge re-run green, PR #58 merged.
+- **Mon 07-13** ([log](../sessions/2026-07-13-@octocat.md)) — #55 root-caused: key expired, not revoked; access request filed.
+- **Wed 07-15** ([log](../sessions/2026-07-15-@octocat.md)) — key rotated, judge re-run green, PR #58 merged.
 
 ## Merged PRs
 | PR | Title | LOC | Merge | Date |
 |---|---|---|---|---|
-| #58 | rotate OPENROUTER key + judge re-run | +42/−7 | `a1b2c3d` | 07-16 |
+| #58 | rotate OPENROUTER key + judge re-run | +42/−7 | `a1b2c3d` | 07-15 |
 
 Issues closed: #55.
 

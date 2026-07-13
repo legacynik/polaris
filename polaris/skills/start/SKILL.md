@@ -46,7 +46,13 @@ If `gh` is missing or unauthenticated (`gh auth status` fails), stop and point t
 ```bash
 mkdir -p "_polaris/team/$LOGIN/weeks" "_polaris/team/$LOGIN/reports" "_polaris/team/$LOGIN/sessions"
 cp "$CLAUDE_PLUGIN_ROOT/polaris/templates/repo-contract/profile.yml" "_polaris/team/$LOGIN/profile.yml"
+perl -pi -e "s/^github: .*/github: $LOGIN/" "_polaris/team/$LOGIN/profile.yml"
+grep -q "^github: $LOGIN$" "_polaris/team/$LOGIN/profile.yml" \
+  || echo "STOP: profile still carries the template login — fix github: before continuing"
 ```
+
+The template ships `github: octocat`; a copied-but-unedited profile makes every `gh` evidence query
+in `/plan-week` and `/report` silently target the wrong user — the grep gate above is mandatory.
 
 Never create `team/<login>/` folders for other people: each contributor's path is created on their
 machine by their own `/start`, from the login `gh api user` returns for them. A folder that does not
