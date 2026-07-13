@@ -1,6 +1,6 @@
 ---
 name: start
-description: Polaris skill — begin a repository-first team session. Verify the branch, resolve the repo contract, recall memory with polmem, and brief the contributor before any work. Trigger at session start, after a pause, or when asked "where do I start / what's my status / start session".
+description: Polaris skill — start a session. Branch check, current state and recent decisions, polmem recall, 7-line brief; provisions your team path only on first use. Trigger at session start, after a pause, or on "start / where do I start / start session".
 user-invocable: true
 ---
 
