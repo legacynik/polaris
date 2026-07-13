@@ -112,6 +112,29 @@ def test_codex_review_findings_stay_fixed() -> None:
     assert "(@<login>)" in end
 
 
+def test_terra_review_findings_stay_fixed() -> None:
+    # 2026-07-13 second external review (gpt-5.6) — pin every fix:
+    start = (SKILLS / "start" / "SKILL.md").read_text()
+    end = (SKILLS / "end" / "SKILL.md").read_text()
+    report = (SKILLS / "report" / "SKILL.md").read_text()
+    onboarding = (ROOT.parent / "docs" / "TEAM-ONBOARDING.md").read_text()
+
+    # H1: the identity gate HARD-STOPS (|| echo continued happily) and covers
+    # pre-existing profiles, not only freshly created ones.
+    assert 'exit 1' in start
+    assert "runs in BOTH branches" in start
+    # H2: non-Claude users get a working polmem path in the failure branch itself.
+    assert "polaris/bin/polmem" in start
+    # H3: the handoff commit stages the journal line remember just wrote.
+    assert ".wiki/journal" in end
+    # M: an unsigned weekly file is never briefed as active work.
+    assert "execution_authorized" in start
+    # M: commit evidence paginates past 100.
+    assert "--paginate" in report
+    # M: onboarding preflights gh install + auth.
+    assert "gh auth status" in onboarding and "gh auth login" in onboarding
+
+
 def test_end_feeds_the_repo_journal() -> None:
     # The daily loop closes the memory cycle mechanically: /start consumes
     # (recall), /end FEEDS — one machine-readable line into the repo journal

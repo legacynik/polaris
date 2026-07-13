@@ -36,6 +36,16 @@ Install/verify the official plugin:
 Confirm with `claude plugin list`. If the official marketplace is not available in your install, ask
 the maintainer for the configured marketplace command — do not guess an ID.
 
+### GitHub CLI
+
+The skills read every piece of delivery evidence through `gh` — without it `/start`, `/plan-week`
+and `/report` stop:
+
+```bash
+gh --version   # missing → install it (macOS: brew install gh; see cli.github.com)
+gh auth status # not logged in → gh auth login
+```
+
 ### Context7
 
 Context7 provides up-to-date SDK and library documentation:

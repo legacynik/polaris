@@ -39,7 +39,7 @@ LOGIN="$(gh api user --jq .login)"   # the exact, case-sensitive login
 
 If `gh` is missing or unauthenticated (`gh auth status` fails), stop and point to onboarding.
 
-- `_polaris/team/$LOGIN/profile.yml` exists → read it and continue.
+- `_polaris/team/$LOGIN/profile.yml` exists → read it (the identity gate below still applies).
 - It does not exist → this is the contributor's first session here: create **their own** path (and
   only theirs) from the plugin template, then set `github: $LOGIN` verbatim in the copied profile:
 
@@ -47,12 +47,16 @@ If `gh` is missing or unauthenticated (`gh auth status` fails), stop and point t
 mkdir -p "_polaris/team/$LOGIN/weeks" "_polaris/team/$LOGIN/reports" "_polaris/team/$LOGIN/sessions"
 cp "$CLAUDE_PLUGIN_ROOT/polaris/templates/repo-contract/profile.yml" "_polaris/team/$LOGIN/profile.yml"
 perl -pi -e "s/^github: .*/github: $LOGIN/" "_polaris/team/$LOGIN/profile.yml"
-grep -q "^github: $LOGIN$" "_polaris/team/$LOGIN/profile.yml" \
-  || echo "STOP: profile still carries the template login — fix github: before continuing"
 ```
 
-The template ships `github: octocat`; a copied-but-unedited profile makes every `gh` evidence query
-in `/plan-week` and `/report` silently target the wrong user — the grep gate above is mandatory.
+**Identity gate — runs in BOTH branches** (profile just created or pre-existing): a wrong `github:`
+silently targets the wrong GitHub user in every `/plan-week` and `/report` evidence query, so this
+hard-stops, it does not warn:
+
+```bash
+grep -q "^github: $LOGIN$" "_polaris/team/$LOGIN/profile.yml" \
+  || { echo "STOP: profile github: does not match your gh login ($LOGIN) — fix it first"; exit 1; }
+```
 
 Never create `team/<login>/` folders for other people: each contributor's path is created on their
 machine by their own `/start`, from the login `gh api user` returns for them. A folder that does not
@@ -62,7 +66,9 @@ match a real GitHub login silently breaks every `gh` evidence query.
 
 1. `team/<login>/profile.yml` — `weekly_capacity`, `assignment_mode`, preferred/excluded areas.
 2. The current ISO-week plan `team/<login>/weeks/$(date +%G-W%V).md` — outcome, branch, proof,
-   blockers. If absent, say there is no signed plan for this week; planning happens in `/plan-week`.
+   blockers. Check `execution_authorized`: anything other than `true` is an **unapproved proposal**
+   — brief it as such, never as active work. If the file is absent, say there is no signed plan for
+   this week; planning happens in `/plan-week`.
 3. Other current-week files under `team/*/weeks/` and recent entries under `team/*/sessions/` —
    titles, owners and active branches only, to avoid collisions.
 4. `<root>/decisions.md` and `<root>/lessons.md` (if present), then `<root>/state/current.md` if it exists. `current.md` is a compact,
@@ -89,7 +95,7 @@ Expected shape — ranked entries (score, source, title, one-line summary):
 ```
 
 Failure branches:
-- `command not found: polmem` → run `bash "$CLAUDE_PLUGIN_ROOT/polaris/scripts/install-polmem-cli.sh"`, then retry.
+- `command not found: polmem` → in Claude Code run `bash "$CLAUDE_PLUGIN_ROOT/polaris/scripts/install-polmem-cli.sh"`, then retry. Outside Claude Code (Codex/Cursor), the installer's launcher cannot resolve — use the checkout shim instead: `python3 <plugin-checkout>/polaris/bin/polmem` (see AGENTS.md).
 - `not memory-wired (no scripts/polaris_memory_repo.py)` → this repo does not carry the memory
   bundle yet. `git pull` in case it is arriving with the code; if it is still missing, say memory is
   unavailable once and continue. **Do not run `polmem init` yourself** and do not invent a fallback
