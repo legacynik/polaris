@@ -145,5 +145,7 @@ What do you want to move forward first?
 ```
 
 If there is no signed plan, say so plainly. Planning happens in `/plan-week`; implementation still
-needs an explicit user request. Do not overwrite `state/current.md` from `/start` — `/update` and
-`/end` keep it short.
+needs an explicit user request. **When the chosen first move is code**, enter it through the team's
+build method — the Superpowers flow (brainstorm → written plan → TDD) or the repo's own workflow
+skill if its CLAUDE.md names one — never straight into edits from the brief. Do not overwrite
+`state/current.md` from `/start` — `/update` and `/end` keep it short.
