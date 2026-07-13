@@ -71,7 +71,8 @@ match a real GitHub login silently breaks every `gh` evidence query.
    template; default English if the field is absent).
 2. The current ISO-week plan `team/<login>/weeks/$(date +%G-W%V).md` — outcome, branch, proof,
    blockers. Check `execution_authorized`: anything other than `true` is an **unapproved proposal**
-   — brief it as such, never as active work. If the file is absent, say there is no signed plan for
+   — brief it as such, never as active work. Exception: rows marked `status: auto-authorized`
+   (secondary items under a founder grant in `config.yml`) are startable — say which ones. If the file is absent, say there is no signed plan for
    this week; planning happens in `/plan-week`.
 3. Other current-week files under `team/*/weeks/` and recent entries under `team/*/sessions/` —
    titles, owners and active branches only, to avoid collisions.

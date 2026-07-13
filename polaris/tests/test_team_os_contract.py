@@ -188,6 +188,24 @@ def test_end_feeds_the_repo_journal() -> None:
     assert "not memory-wired" in end  # same failure branch as /start
 
 
+def test_auto_authorization_is_founder_granted_and_scoped() -> None:
+    # Gap #3 (founder-bottleneck): secondary items may start pre-signature, but
+    # the grant lives in config.yml (repo-owner territory) — NEVER in the
+    # self-provisioned profile, or a contributor could grant themselves the
+    # bypass. Primary + prod/client-facing always wait for the signature.
+    plan = (SKILLS / "plan-week" / "SKILL.md").read_text()
+    start = (SKILLS / "start" / "SKILL.md").read_text()
+    config_tpl = (TEMPLATES / "config.yml").read_text()
+    profile_tpl = (TEMPLATES / "profile.yml").read_text()
+
+    assert "auto_authorized: secondary" in config_tpl
+    assert "auto_authorized" not in profile_tpl
+    flat = " ".join(plan.split())
+    assert "founder-owned" in flat and "never the self-provisioned profile" in flat
+    assert "always waits for the signature" in flat
+    assert "auto-authorized" in start
+
+
 def test_lessons_are_part_of_the_contract() -> None:
     # Product repos carry lessons.md next to decisions.md; /end proposes durable
     # lessons the same gated way it proposes decisions.
