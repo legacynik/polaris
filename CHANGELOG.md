@@ -3,6 +3,25 @@
 All notable changes to Polaris Team OS. The installed version is pinned in
 `polaris/.claude-plugin/plugin.json`.
 
+## 0.6.2
+
+### Fixed (external Codex review of v0.5.0..v0.6.1 — 3 High, 5 Medium, 2 Low)
+- **Self-provisioned profile kept `github: octocat`** (High): `/start` now rewrites the login
+  (`perl -pi`) and gates on `grep -q "^github: $LOGIN$"` — a template login silently targets the
+  wrong GitHub user in every evidence query.
+- **AGENTS.md promised polmem to non-Claude CLIs the installer couldn't deliver** (High): the
+  installed launcher resolves the Claude plugin cache only; non-Claude agents now get the checkout
+  path (`python3 polaris/bin/polmem`, alias documented).
+- **`remember` writes committed history but docs said polmem "only reads"** (High): read/write
+  split stated everywhere; explicit privacy rule (no secrets/credentials/customer data/PII) on the
+  `/end` journal line; shim header corrected.
+- `gh pr/issue list` now pass `--limit 200` (default 30 truncated busy weeks); open PRs labeled
+  "open at report time" (not reconstructable as of a past week); an unsigned plan is reported as an
+  **unapproved proposal**, never a commitment baseline; decisions/lessons proposals carry the
+  `(@<login>)` owner marker so report attribution is deterministic; `/end` commit snippet uses
+  `$LOGIN` instead of literal placeholders; worked-example weekdays corrected.
+- All fixes pinned in `test_codex_review_findings_stay_fixed`.
+
 ## 0.6.1
 
 ### Changed

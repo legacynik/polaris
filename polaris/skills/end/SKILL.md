@@ -32,8 +32,10 @@ distill decides later what is durable, so never skip this because the session fe
 polmem remember "session YYYY-MM-DD @<login>: <shipped/verified, one clause> — next: <first step>"
 ```
 
-Failure branches are the same as `/start` Step 4: `command not found: polmem` → run the plugin
-installer once; `not memory-wired` → skip this line, say so once, continue the handoff. Never run
+This line is **written to the repo's committed journal** — shared history. Same privacy boundary as
+the contract README: no secrets, credentials, customer data or personal information, ever. Failure
+branches are the same as `/start` Step 4: `command not found: polmem` → run the plugin installer
+once; `not memory-wired` → skip this line, say so once, continue the handoff. Never run
 `polmem init` yourself.
 
 ## Step 2 — Tick the plan
@@ -48,7 +50,7 @@ convention the team must follow), **propose** a `<root>/decisions.md` entry and 
 before writing it:
 
 ```md
-## YYYY-MM-DD — <decision title>
+## YYYY-MM-DD — <decision title> (@<login>)
 Chose <X> over <Y> because <evidence>. Affects <area>.
 ```
 
@@ -69,8 +71,8 @@ If `git status --short` shows changes, propose a single **pathspec-only** commit
 touched — never `git add -A`:
 
 ```bash
-git add <root>/team/<login>/sessions/<file> <root>/team/<login>/weeks/<file>   # only the files you wrote
-git commit -m "chore(polaris): session handoff <date> @<login>"
+git add "_polaris/team/$LOGIN/sessions/<file>" "_polaris/team/$LOGIN/weeks/<file>"   # only the files you wrote
+git commit -m "chore(polaris): session handoff $(date +%F) @$LOGIN"
 ```
 
 Never commit or push without an explicit request. After committing, if the branch is ahead of its

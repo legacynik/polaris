@@ -18,8 +18,14 @@ of this repository: read the relevant SKILL.md below and follow it exactly.
 
 - Where a skill references `$CLAUDE_PLUGIN_ROOT`, substitute the path of this repository checkout.
 - Repo-contract templates live in [polaris/templates/repo-contract/](polaris/templates/repo-contract/).
-- The `polmem` memory CLI installs once per machine with
-  `bash polaris/scripts/install-polmem-cli.sh` (adds `~/.local/bin/polmem`).
+- The `polmem` memory CLI: with Claude Code, install once per machine with
+  `bash polaris/scripts/install-polmem-cli.sh` (adds `~/.local/bin/polmem`, resolved from the
+  plugin cache). **Without Claude Code**, run the shim straight from this checkout — it finds the
+  target repo's committed bundle from your working directory:
+  `alias polmem='python3 /path/to/this-checkout/polaris/bin/polmem'`.
+- `polmem recall` reads the repository's committed memory; `polmem remember` **writes** one line to
+  the repo's committed journal — never put secrets, credentials, customer data or personal
+  information in it.
 - The contract root in every product repository is **`_polaris/`** — one root, never `polaris/`,
   never both. Your `team/<login>/` folder name is your exact GitHub login
   (`gh api user --jq .login`); never create another contributor's path.

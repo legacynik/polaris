@@ -88,6 +88,30 @@ def test_plans_and_reports_are_authored_by_their_owner() -> None:
         assert "team/giovanni" not in text
 
 
+def test_codex_review_findings_stay_fixed() -> None:
+    # 2026-07-13 external Codex review of v0.5.0..v0.6.1 — pin every fix:
+    start = (SKILLS / "start" / "SKILL.md").read_text()
+    end = (SKILLS / "end" / "SKILL.md").read_text()
+    report = (SKILLS / "report" / "SKILL.md").read_text()
+    onboarding = (ROOT.parent / "docs" / "TEAM-ONBOARDING.md").read_text()
+    agents = (ROOT.parent / "AGENTS.md").read_text()
+
+    # H1: a copied-but-unedited profile keeps github: octocat → wrong gh target.
+    assert 'grep -q "^github: $LOGIN$"' in start
+    # H2: non-Claude CLIs need the checkout shim, the installed launcher is Claude-only.
+    assert "polaris/bin/polmem" in agents
+    # H3: remember WRITES committed history — privacy rule is explicit.
+    assert "no secrets, credentials, customer data or personal information" in end
+    assert "**writes**" in onboarding
+    # M: gh list default is 30 — explicit limits; open PRs are "now", not "as of".
+    assert report.count("--limit 200") >= 3
+    assert "open at report time" in report
+    # M: an unsigned plan is not a commitment baseline.
+    assert "unapproved proposal" in report
+    # M: decisions/lessons carry the owner marker for deterministic attribution.
+    assert "(@<login>)" in end
+
+
 def test_end_feeds_the_repo_journal() -> None:
     # The daily loop closes the memory cycle mechanically: /start consumes
     # (recall), /end FEEDS — one machine-readable line into the repo journal
