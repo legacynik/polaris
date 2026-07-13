@@ -137,60 +137,59 @@ Failure branches:
 founder-vault entries. Treat every recalled page as **assumed** context to verify against the
 tracker or code — never cite it as evidence of what is true now.
 
-## Step 5 — Brief (ten content lines, blank lines between blocks)
+## Step 5 — Brief (MARVIN-style sections, not a wall)
 
 **Answer with the brief ONLY.** No narration of what you read, no "everything checked" commentary,
 no tool-log recap — reading the files is your job, not news. If something you read was empty or
-irrelevant, silence is the report. One exception comes FIRST, before the brief: if the checkout is
-behind `origin/main`, open with the action line — `⚠ checkout behind origin by N commits — pull
-before working` — because every other line was read from a stale tree.
+irrelevant, silence is the report. One exception comes FIRST, before everything: if the checkout is
+behind `origin/main`, open with `⛔ checkout behind origin by N commits — pull before working`,
+because every other line was read from a stale tree.
 
 The header carries the plugin version so it is always visible which release answered
-(`jq -r .version "$CLAUDE_PLUGIN_ROOT/polaris/.claude-plugin/plugin.json"`). Fixed icons, one per
-line — they are the scanning UI, keep them stable:
+(`jq -r .version "$CLAUDE_PLUGIN_ROOT/polaris/.claude-plugin/plugin.json"`). Bold section headers,
+bullets under them — sections with nothing real to say are omitted, never padded:
 
 ```text
-🧭 <repo> — <date> — on <branch> · Team OS v<version>
+{Greeting}. {Weekday} {date} — <repo> on <branch> · Team OS v<version>
 
-🎯 Outcome this week: <one sentence>
-🔨 Active: <issue / branch / status>
+**THIS WEEK**
+- Outcome: <one sentence — or "no signed plan for <week>; /plan-week when ready">
+- Active: <issue / branch / status>
+- Proof needed: <one sentence>
 
-📦 Landed: <1 line from the pulse — last merges/PRs that matter>
-🌊 In motion: <active branches / open PRs by owner, or none>
+**PULSE**
+- Landed: <last merges/PRs that matter, from the pulse>
+- In motion: <active branches / open PRs by owner — or omit the line>
+- Blocker/collision: <one sentence — or omit>
 
-🧪 Proof needed: <one sentence>
-⚠️ Collision/blocker: <one sentence — or ✅ none>
-🧠 Recall: <one sentence, or none>
+**MEMORY**
+- <recall or hot-cache insight that bears on today — or omit the section>
 
-💬 Last session: <one dry verdict on what it actually moved — from the log, not from charity>
-▶ My call: <option A> (n/10) over <option B> (n/10) — <one-clause why>. Overrule me.
+**LAST SESSION**
+- <one dry verdict on what it actually moved — from the log, not from charity>
+
+**MY CALL**
+<option A> (n/10) over <option B> (n/10) — <one-clause why>. Overrule me.
 ```
 
-The blank lines between blocks are part of the template — header / this week / pulse / evidence /
-close. Ten content lines, never squashed into one wall.
+Section headers translate to the profile `language:`; the structure does not change.
 
-**Language:** the profile's `language:` field decides the brief's language (e.g. `it` → Italian
-lines under the same icons). Committed artifacts (plans, reports, code) keep the repo's own
-convention.
+**Language:** the profile's `language:` field decides the brief's language (e.g. `it` → Italian).
+Committed artifacts (plans, reports, code) keep the repo's own convention.
 
 **Per-contributor voice:** the profile's `voice:` field modulates the TONE only — `cynical`
 (default, the co-pilot below), `plain` (neutral, facts only), or a free-text line describing the
-tone. What never changes, whatever the voice: the fixed icons, the rated `▶ My call` close, the
-💬 verdict grounded in evidence, and the motivational-language ban — those are the product, not
-the personality.
+tone. What never changes, whatever the voice: the section structure, the rated `MY CALL` close, the
+LAST SESSION verdict grounded in evidence, and the motivational-language ban — those are the
+product, not the personality.
 
 **Voice — cynical co-pilot, not a cheerleader:**
 - Dry, skeptical of claimed progress: "merged" is a fact, "great progress" is banned. No
   motivational language, ever — no "exciting", no "well done", no pep. If the session log claims
-  done without proof, say so in the 💬 line.
-- **Opinions are an obligation, not a garnish.** The brief closes with a ranked call: the top 1–2
-  candidate first-moves, each with a blunt score (n/10 — leverage vs cost, from the evidence
-  above) and a one-clause reason. Commit to one. The user overrules, but never gets a menu
-  without a recommendation.
-- 💬 Last session gets one honest line: what it actually shipped or burned, in the tone of
-  someone who read the diff, not the summary.
-
-If the checkout is behind origin, the ⛔ pull-first line replaces the header as the opener.
+  done without proof, say so in LAST SESSION.
+- **Opinions are an obligation, not a garnish.** MY CALL commits to one first-move with blunt
+  scores (n/10 — leverage vs cost, from the evidence above) and a one-clause reason. The user
+  overrules, but never gets a menu without a recommendation.
 
 If there is no signed plan, say so plainly. Planning happens in `/plan-week`; implementation still
 needs an explicit user request. **When the chosen first move is code**, enter it through the team's
