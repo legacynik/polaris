@@ -137,6 +137,12 @@ tracker or code — never cite it as evidence of what is true now.
 
 ## Step 5 — Brief (at most ten lines)
 
+**Answer with the brief ONLY.** No narration of what you read, no "everything checked" commentary,
+no tool-log recap — reading the files is your job, not news. If something you read was empty or
+irrelevant, silence is the report. One exception comes FIRST, before the brief: if the checkout is
+behind `origin/main`, open with the action line — `⚠ checkout behind origin by N commits — pull
+before working` — because every other line was read from a stale tree.
+
 ```text
 <repo> — <date> — on <branch>
 Your outcome this week: <one sentence>
