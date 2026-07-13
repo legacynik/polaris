@@ -3,6 +3,15 @@
 All notable changes to Polaris Team OS. The installed version is pinned in
 `polaris/.claude-plugin/plugin.json`.
 
+## 0.6.4
+
+### Changed
+- **Founder-vault resolver case.** A repository whose root IS `_polaris` (the founder vault) now
+  resolves to its own root when it carries `./config.yml` — one flow everywhere, no parallel
+  founder-only session skills. Part of the single-method consolidation: the personal MARVIN-era
+  `/start` `/end` `/update` command files are retired on the founder machine; the CEO layer is an
+  external pull-based skill, never a second write path.
+
 ## 0.6.3
 
 ### Fixed (second external review, gpt-5.6 — 3 High, 3 Medium)

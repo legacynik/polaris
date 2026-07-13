@@ -54,6 +54,8 @@ def test_contract_root_is_single_underscore_polaris() -> None:
     onboarding = (ROOT.parent / "docs" / "TEAM-ONBOARDING.md").read_text()
 
     assert "_polaris/config.yml" in start
+    # Founder-vault case: a repo whose root IS _polaris resolves to its own root.
+    assert "root is itself named `_polaris`" in start
     for text in (start, update, readme, onboarding):
         flat = " ".join(text.split())
         assert "`polaris/` or `_polaris/`" not in flat

@@ -26,7 +26,9 @@ git checkout, stop and say so — this command needs a repository.
 The Polaris root is **`_polaris/`** — one root, committed with the code:
 
 1. `_polaris/` if `_polaris/config.yml` exists;
-2. otherwise **stop**: the repository has no committed Team OS contract. Point the contributor to
+2. otherwise, if the repository root is itself named `_polaris` and carries `./config.yml` (the
+   founder-vault case: the vault IS the Polaris root), use the repository root;
+3. otherwise **stop**: the repository has no committed Team OS contract. Point the contributor to
    `docs/TEAM-ONBOARDING.md` (section "Check the repo contract"). Do not create the root or
    `config.yml` yourself — the repository owner wires the contract.
 
