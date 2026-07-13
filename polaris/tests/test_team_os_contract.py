@@ -90,6 +90,19 @@ def test_plans_and_reports_are_authored_by_their_owner() -> None:
         assert "team/giovanni" not in text
 
 
+def test_start_grounds_the_live_repo_state() -> None:
+    # /start is the situational view, not a file reader: it must pull the repo
+    # pulse (what landed, which branches are in motion, open PRs) and lean on
+    # polmem — hot cache first, then a targeted recall — before briefing.
+    start = (SKILLS / "start" / "SKILL.md").read_text()
+    assert "git log origin/main" in start          # what landed recently
+    assert "git branch -vv" in start               # active branches, ahead/behind
+    assert "gh pr list" in start                   # open PRs in motion
+    assert "hot.md" in start                       # polmem hot cache recap
+    assert "Recently landed" in start              # the brief carries the pulse
+    assert "In motion" in start
+
+
 def test_codex_review_findings_stay_fixed() -> None:
     # 2026-07-13 external Codex review of v0.5.0..v0.6.1 — pin every fix:
     start = (SKILLS / "start" / "SKILL.md").read_text()

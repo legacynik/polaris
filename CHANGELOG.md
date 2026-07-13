@@ -3,6 +3,19 @@
 All notable changes to Polaris Team OS. The installed version is pinned in
 `polaris/.claude-plugin/plugin.json`.
 
+## 0.7.0
+
+### Added
+- **`/start` repo pulse.** The brief is now a situational view, not a file read-back: after the
+  contract files, `/start` grounds the LIVE state — `git log origin/main -5` (what landed),
+  `git branch -vv --sort=-committerdate` (branches in motion, ahead/behind), `gh pr list` (open
+  PRs by owner) — and treats plan-vs-pulse mismatches as brief-worthy collisions. Where the plan
+  and the pulse disagree, the pulse wins.
+- **polmem two-pass at start.** Warm recap first (`.wiki/hot.md` — what the repo's memory has been
+  touching lately, zero queries), then the targeted recall; with no signed plan the query derives
+  from the last session log + last landed commits.
+- Brief grows to ten lines with `Recently landed:` and `In motion:`.
+
 ## 0.6.5
 
 ### Changed
