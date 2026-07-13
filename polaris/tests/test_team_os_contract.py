@@ -106,6 +106,10 @@ def test_start_grounds_the_live_repo_state() -> None:
     assert "10 most recent" in start
     assert "first screen" in start
     assert "never read the whole file" in " ".join(start.split())
+    # UX contract: the answer is the brief, not a reading diary; a stale
+    # checkout is the FIRST line, with the action.
+    assert "Answer with the brief ONLY" in start
+    assert "behind `origin/main`" in start
 
 
 def test_codex_review_findings_stay_fixed() -> None:

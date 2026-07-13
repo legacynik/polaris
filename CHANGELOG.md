@@ -3,6 +3,14 @@
 All notable changes to Polaris Team OS. The installed version is pinned in
 `polaris/.claude-plugin/plugin.json`.
 
+## 0.7.3
+
+### Changed
+- **The answer is the brief, not a reading diary.** `/start` outputs the ten-line brief only — no
+  "everything read, nothing relevant" narration, no tool-log recap (live-run UX feedback). One
+  exception leads: a checkout behind `origin/main` opens the answer with the action line
+  ("pull before working"), because everything else was read from a stale tree.
+
 ## 0.7.2
 
 ### Changed
