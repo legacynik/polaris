@@ -77,13 +77,35 @@ match a real GitHub login silently breaks every `gh` evidence query.
    gitignored pointer: if it conflicts with the approved plan or evidence, treat it as stale.
 5. The most recent relevant session log in `<root>/team/<login>/sessions/`.
 
+**Repo pulse (read-only)** — the files say what was intended; git and the tracker say what is
+actually in motion:
+
+```bash
+git fetch --prune origin 2>/dev/null || echo "(offline — local view, may be stale)"
+git log origin/main -5 --oneline                  # what landed most recently
+git branch -vv --sort=-committerdate | head -8    # active branches, ahead/behind
+gh pr list --state open --limit 10 --json number,title,author \
+  --jq '.[] | "#\(.number) @\(.author.login): \(.title)"'
+```
+
+Read these as evidence: a branch fresher than the plan, or an open PR touching your area, is a
+collision for the brief. Where the plan and the pulse disagree, the pulse wins and the mismatch is
+worth a line.
+
 **Branch check:** compare Step 1's branch to the plan's `Branch` cell. If they differ (and the plan
 has a branch), STOP and ask before proceeding — you may be on another panel's checkout.
 
 ## Step 4 — Recall memory (polmem CLI, mandatory)
 
 `polmem` is the repository's memory and the CLI is the interface — use it for any context question
-before answering from assumption. Run a targeted recall on the active plan's issue or domain:
+before answering from assumption. Two passes:
+
+**1. Warm recap** — read `.wiki/hot.md` if it exists: the hot cache lists the memory pages most
+recently touched by the sync, i.e. what the repo has been "thinking about" lately. One glance, no
+query needed.
+
+**2. Targeted recall** — on the active plan's issue or domain; if there is no plan, derive the
+query from the most recent session log and the last landed commits (the pulse above):
 
 ```bash
 polmem recall "confirmation gate" --top 3
@@ -108,12 +130,14 @@ Failure branches:
 founder-vault entries. Treat every recalled page as **assumed** context to verify against the
 tracker or code — never cite it as evidence of what is true now.
 
-## Step 5 — Brief (at most seven lines)
+## Step 5 — Brief (at most ten lines)
 
 ```text
-<repo> — <date>
+<repo> — <date> — on <branch>
 Your outcome this week: <one sentence>
 Active item: <issue / branch / status>
+Recently landed: <1 line from the pulse — last merges/PRs that matter>
+In motion: <active branches / open PRs by owner, or none>
 Proof needed: <one sentence>
 Collision or blocker: <one sentence, or none>
 Relevant decision or recall: <one sentence, or none>
