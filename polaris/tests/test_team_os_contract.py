@@ -73,6 +73,21 @@ def test_start_provisions_own_path_from_the_real_github_login() -> None:
     assert "Never create a `team/` folder for a teammate" in onboarding
 
 
+def test_plans_and_reports_are_authored_by_their_owner() -> None:
+    # Locked 2026-07-13: the contributor writes THEIR OWN plan (/plan-week runs
+    # on their machine, in their own team/<login>/weeks/); the CEO signs it but
+    # never writes it for them. Worked examples must not model placeholder
+    # logins (team/jeanpierre) — that is the exact pattern that shipped a broken
+    # contract into a product repo.
+    plan = (SKILLS / "plan-week" / "SKILL.md").read_text()
+    report = (SKILLS / "report" / "SKILL.md").read_text()
+
+    assert "Never write another contributor's plan" in " ".join(plan.split())
+    for text in (plan, report):
+        assert "team/jeanpierre" not in text
+        assert "team/giovanni" not in text
+
+
 def test_lessons_are_part_of_the_contract() -> None:
     # Product repos carry lessons.md next to decisions.md; /end proposes durable
     # lessons the same gated way it proposes decisions.

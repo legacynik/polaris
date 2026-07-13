@@ -3,6 +3,18 @@
 All notable changes to Polaris Team OS. The installed version is pinned in
 `polaris/.claude-plugin/plugin.json`.
 
+## 0.5.1
+
+### Changed
+- **Plans are authored by their owner.** `/plan-week` now states it explicitly: the plan file lives
+  in **your own** `team/$LOGIN/weeks/` (login from `gh api user`, same resolver as `/start`) and you
+  never write another contributor's plan — the CEO reviews and signs (`ceo_signature`), they don't
+  write it for you. Locked with the founder 2026-07-13 after a pre-created plan shipped into a
+  product repo.
+- **Worked examples de-placeholdered.** `/plan-week` and `/report` examples used `team/jeanpierre/`
+  — the exact placeholder-login pattern that broke a real contract. Now `team/octocat/`, and the
+  release contract test forbids placeholder logins in the skills.
+
 ## 0.5.0
 
 ### Changed
