@@ -3,6 +3,15 @@
 All notable changes to Polaris Team OS. The installed version is pinned in
 `polaris/.claude-plugin/plugin.json`.
 
+## 0.7.12
+
+### Added
+- **`## Bottleneck` — mandatory section in `/report`.** The single biggest thing that slowed the
+  week (from the evidence, not vibes) + ONE concrete removal proposal. Never "none" — a week with
+  no named bottleneck means the author didn't look. Turns continuous bottleneck-hunting into a
+  per-person async ritual (G4 gap #2, ai-native-engineering-team reference); the removal proposals
+  feed PM action.
+
 ## 0.7.11
 
 ### Changed
