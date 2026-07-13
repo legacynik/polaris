@@ -3,6 +3,23 @@
 All notable changes to Polaris Team OS. The installed version is pinned in
 `polaris/.claude-plugin/plugin.json`.
 
+## 0.6.0
+
+### Changed
+- **`/report` is a real report now, not a diff table.** Modeled on the production weekly reports
+  (noemi W20–W27): `TL;DR` → `Planned versus actual` → `Day by day` (from the contributor's session
+  logs, each linked) → `Merged PRs` (ground truth from `gh`, LOC + merge SHA; where logs and `gh`
+  disagree, `gh` wins) → `Decisions in range` → `Blockers and incidents` → `Metrics` (derived at
+  report time, never copied) → `PM action` (what the CEO must decide) → `Next week`. Scales
+  honestly: a quiet week is a short report — never pad.
+- **Evidence wiring fixed by a live REAL test.** Commits are resolved login→commits **server-side**
+  (`gh api repos/$REPO/commits?author=$LOGIN&since=…&until=…`): the previous author-email approach
+  returned zero on a real repo because squash commits carry the user's configured (personal) email,
+  not the noreply form. `git fetch --prune` precedes evidence gathering; open PRs at end of range
+  are part of the picture. This closes audit finding #5 (thin evidence commands) — commit/PR
+  evidence now links into the repo graph mechanically, not "a intuito".
+- Weekly-report template rewritten to the new structure.
+
 ## 0.5.2
 
 ### Added

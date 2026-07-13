@@ -113,6 +113,30 @@ def test_evidence_skills_ship_concrete_tracker_commands() -> None:
     assert "weekly_capacity" in plan
     assert "gh pr list" in report
     assert "gh issue list" in report
+    # The report is ground-truth-first: remote synced, commits resolved
+    # login->commits SERVER-SIDE (the REAL test proved an author-email pattern
+    # returns 0 on a real repo: squash commits carry the user's configured
+    # email, e.g. gmail, not the noreply form), session logs as the day-by-day
+    # backbone, decisions.md scanned in-range.
+    assert "git fetch --prune" in report
+    assert "commits?author=$LOGIN" in report
+    assert "@users.noreply.github.com" not in report
+    assert "team/<login>/sessions/" in report
+    assert "decisions.md" in report
+
+
+def test_report_is_a_real_report_not_just_a_diff_table() -> None:
+    # Locked 2026-07-13: "il report non deve essere solo planned/actual" — the
+    # real weekly reports (noemi W20–W27) carry a TL;DR, day-by-day evidence,
+    # merged-PR ground truth, metrics, and an explicit PM-action section. The
+    # skill and template pin that structure, and scale down honestly.
+    report = (SKILLS / "report" / "SKILL.md").read_text()
+    report_tpl = (TEMPLATES / "weekly-report.md").read_text()
+    for header in ("## TL;DR", "## Planned versus actual", "## Metrics",
+                   "## PM action", "## Next week"):
+        assert header in report, f"missing {header} in skill"
+        assert header in report_tpl, f"missing {header} in template"
+    assert "never pad" in " ".join(report.split())
 
 
 def test_report_uses_login_evidence_not_local_git_identity() -> None:
@@ -182,7 +206,7 @@ def test_repo_contract_templates_exist_are_english_and_match_worked_examples() -
     report_skill = (SKILLS / "report" / "SKILL.md").read_text()
     for header in ("## Outcome", "## Not starting", "## Evidence"):
         assert header in plan_tpl and header in plan_skill
-    for header in ("## Planned versus actual", "## What we learned", "## Blocker and next week"):
+    for header in ("## TL;DR", "## Planned versus actual", "## PM action"):
         assert header in report_tpl and header in report_skill
 
     # Contributor schema is explicit about the exact GitHub login.
