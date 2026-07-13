@@ -233,10 +233,13 @@ def test_report_is_a_real_report_not_just_a_diff_table() -> None:
     report = (SKILLS / "report" / "SKILL.md").read_text()
     report_tpl = (TEMPLATES / "weekly-report.md").read_text()
     for header in ("## TL;DR", "## Planned versus actual", "## Metrics",
-                   "## PM action", "## Next week"):
+                   "## Bottleneck", "## PM action", "## Next week"):
         assert header in report, f"missing {header} in skill"
         assert header in report_tpl, f"missing {header} in template"
     assert "never pad" in " ".join(report.split())
+    # The bottleneck hunt is a ritual, not a vibe: mandatory, with a removal proposal.
+    flat = " ".join(report.split())
+    assert "mandatory, never" in flat and "removal proposal" in flat
 
 
 def test_report_uses_login_evidence_not_local_git_identity() -> None:

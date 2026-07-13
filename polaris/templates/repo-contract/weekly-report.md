@@ -38,6 +38,11 @@ Entries you logged in `decisions.md` / `lessons.md` this week, or "None logged."
 |---|---|---|---|---|---|
 | N | N | +N/−N | N | N | N |
 
+## Bottleneck
+
+The single biggest thing that slowed this week + one concrete removal proposal. Mandatory — a week
+with no named bottleneck means you didn't look.
+
 ## PM action
 
 - Decisions the CEO/lead must take (one line each, with owner), or "none".

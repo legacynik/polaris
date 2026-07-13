@@ -127,9 +127,14 @@ e.g. `team/octocat/reports/2026-W29.md`) from the plugin template
 7. `## Metrics` — small table: PRs merged, issues closed, LOC delta, decisions logged, open PRs at
    report time, incidents. Counts are **derived from the evidence above at report time** — never
    copied from a previous report or estimated.
-8. `## PM action` — the decisions the CEO/lead must take, each one line with its owner. This is the
+8. `## Bottleneck` — **mandatory, never "none"**: the single biggest thing that slowed this week
+   (a wait, a flaky gate, a missing access, a review queue — from the evidence, not vibes) + ONE
+   concrete removal proposal. This is the continuous bottleneck-hunt, run per-person and async —
+   the loop that keeps the system fast without a meeting. A week with no named bottleneck means
+   the report author didn't look.
+9. `## PM action` — the decisions the CEO/lead must take, each one line with its owner. This is the
    section the reader acts on; if nothing is needed, say "none".
-9. `## Next week` — a short ordered priority list for the contributor's own scope.
+10. `## Next week` — a short ordered priority list for the contributor's own scope.
 
 **Scale honestly.** The report's length is proportional to the evidence: a quiet week is a short
 report — never pad a section to look busy, never repeat the same item in three sections. Keep it
