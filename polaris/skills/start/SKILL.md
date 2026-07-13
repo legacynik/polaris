@@ -73,8 +73,12 @@ match a real GitHub login silently breaks every `gh` evidence query.
    this week; planning happens in `/plan-week`.
 3. Other current-week files under `team/*/weeks/` and recent entries under `team/*/sessions/` —
    titles, owners and active branches only, to avoid collisions.
-4. `<root>/decisions.md` and `<root>/lessons.md` (if present), then `<root>/state/current.md` if it exists. `current.md` is a compact,
-   gitignored pointer: if it conflicts with the approved plan or evidence, treat it as stale.
+4. `<root>/decisions.md` and `<root>/lessons.md` (if present) — **budget cap: the 10 most recent
+   entries each** (both are newest-on-top; a mature repo's full ledger is tens of thousands of
+   tokens — recall in Step 4 retrieves older entries on demand, never read the whole file). Then
+   `<root>/state/current.md` if it exists: a compact, gitignored pointer — if it conflicts with the
+   approved plan or evidence, treat it as stale; if it is longer than ~30 lines it has decayed into
+   a diary — read only the newest block and flag it for a trim.
 5. The most recent relevant session log in `<root>/team/<login>/sessions/`.
 
 **Repo pulse (read-only)** — the files say what was intended; git and the tracker say what is
@@ -100,9 +104,10 @@ has a branch), STOP and ask before proceeding — you may be on another panel's 
 `polmem` is the repository's memory and the CLI is the interface — use it for any context question
 before answering from assumption. Two passes:
 
-**1. Warm recap** — read `.wiki/hot.md` if it exists: the hot cache lists the memory pages most
-recently touched by the sync, i.e. what the repo has been "thinking about" lately. One glance, no
-query needed.
+**1. Warm recap** — read the **first screen** (~40 lines) of `.wiki/hot.md` if it exists: the hot
+cache lists the memory pages most recently touched by the sync, i.e. what the repo has been
+"thinking about" lately. One glance, no query needed — never ingest the whole file (a live measure
+found a 20KB hot.md: that is a sync hygiene problem, not context to load).
 
 **2. Targeted recall** — on the active plan's issue or domain; if there is no plan, derive the
 query from the most recent session log and the last landed commits (the pulse above):

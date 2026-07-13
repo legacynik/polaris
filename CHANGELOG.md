@@ -3,6 +3,15 @@
 All notable changes to Polaris Team OS. The installed version is pinned in
 `polaris/.claude-plugin/plugin.json`.
 
+## 0.7.2
+
+### Changed
+- **Context budget caps in `/start`.** A live measure on a mature repo found the real context cost
+  is not the skill (+~1k tokens across 0.4.2→0.7.1) but uncapped inputs: `decisions.md` at 111KB
+  (~28k tokens) and `hot.md` at 20KB. `/start` now reads the 10 most recent decisions/lessons
+  entries, the first screen of `hot.md`, and treats a >30-line `state/current.md` as a decayed
+  diary (read newest block, flag for trim). Older context is recall's job, on demand.
+
 ## 0.7.1
 
 ### Changed
