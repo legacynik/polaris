@@ -66,7 +66,9 @@ match a real GitHub login silently breaks every `gh` evidence query.
 
 ## Step 3 — Read in this order
 
-1. `team/<login>/profile.yml` — `weekly_capacity`, `assignment_mode`, preferred/excluded areas.
+1. `team/<login>/profile.yml` — `weekly_capacity`, `assignment_mode`, preferred/excluded areas,
+   and `language:` — the brief is written in THAT language (labels and icons stay as in the
+   template; default English if the field is absent).
 2. The current ISO-week plan `team/<login>/weeks/$(date +%G-W%V).md` — outcome, branch, proof,
    blockers. Check `execution_authorized`: anything other than `true` is an **unapproved proposal**
    — brief it as such, never as active work. If the file is absent, say there is no signed plan for
@@ -159,6 +161,10 @@ line — they are the scanning UI, keep them stable:
 💬 Last session: <one dry verdict on what it actually moved — from the log, not from charity>
 ▶ My call: <option A> (n/10) over <option B> (n/10) — <one-clause why>. Overrule me.
 ```
+
+**Language:** the profile's `language:` field decides the brief's language (e.g. `it` → Italian
+lines under the same icons). Committed artifacts (plans, reports, code) keep the repo's own
+convention.
 
 **Voice — cynical co-pilot, not a cheerleader:**
 - Dry, skeptical of claimed progress: "merged" is a fact, "great progress" is banned. No

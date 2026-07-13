@@ -2,6 +2,7 @@
 # (your own path only — never create it for someone else). Commit it with your work.
 # `github` must be the exact GitHub login (case-sensitive), verbatim — the folder name matches it.
 github: octocat
+language: en              # brief/conversation language for this contributor (it, en, ...)
 assignment_mode: hybrid   # owner_assigned | self_claim | hybrid
 weekly_capacity: 3
 preferred_areas: []       # e.g. [backend, infra] — bias triage; leave [] to derive scope from repo evidence

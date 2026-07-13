@@ -117,6 +117,9 @@ def test_start_grounds_the_live_repo_state() -> None:
     # a dry verdict on the last session, motivational language banned.
     assert "My call:" in start and "(n/10)" in start
     assert "💬 Last session:" in start
+    # The brief speaks the contributor's profile language.
+    assert "`language:`" in start
+    assert "language: en" in (TEMPLATES / "profile.yml").read_text()
     assert "No\n  motivational language" in start or "no motivational language" in " ".join(start.split()).lower()
 
 
