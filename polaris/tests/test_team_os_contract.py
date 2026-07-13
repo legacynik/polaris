@@ -110,13 +110,14 @@ def test_start_grounds_the_live_repo_state() -> None:
     # checkout is the FIRST line, with the action.
     assert "Answer with the brief ONLY" in start
     assert "behind `origin/main`" in start
-    # Scannable brief: fixed icon scheme + the answering plugin version in the header.
-    assert "🧭" in start and "🎯" in start and "▶" in start
+    # MARVIN-style sections + the answering plugin version in the header.
+    for header in ("**THIS WEEK**", "**PULSE**", "**LAST SESSION**", "**MY CALL**"):
+        assert header in start, header
     assert '.claude-plugin/plugin.json' in start
     # Cynical co-pilot contract: opinionated close (ranked call with scores),
     # a dry verdict on the last session, motivational language banned.
-    assert "My call:" in start and "(n/10)" in start
-    assert "💬 Last session:" in start
+    assert "(n/10)" in start
+    assert "Overrule me" in start
     # The brief speaks the contributor's profile language.
     assert "`language:`" in start
     tpl = (TEMPLATES / "profile.yml").read_text()

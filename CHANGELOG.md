@@ -3,6 +3,15 @@
 All notable changes to Polaris Team OS. The installed version is pinned in
 `polaris/.claude-plugin/plugin.json`.
 
+## 0.7.9
+
+### Changed
+- **Brief goes MARVIN-style.** Founder UX iteration: bold section headers with bullets
+  (**THIS WEEK / PULSE / MEMORY / LAST SESSION / MY CALL**) instead of one-emoji-per-line; empty
+  sections are omitted, never padded. Greeting + date + version header; ⛔ stale-checkout line
+  still leads when the tree is behind. Headers translate to the profile `language:`; structure
+  stays invariant across voices.
+
 ## 0.7.8
 
 ### Changed
