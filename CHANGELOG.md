@@ -3,6 +3,13 @@
 All notable changes to Polaris Team OS. The installed version is pinned in
 `polaris/.claude-plugin/plugin.json`.
 
+## 0.6.5
+
+### Changed
+- `/start` description slimmed to what the user sees in the command palette: "start a session —
+  branch check, current state and recent decisions, polmem recall, 7-line brief; provisions your
+  team path only on first use". Behavior unchanged.
+
 ## 0.6.4
 
 ### Changed
