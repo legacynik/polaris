@@ -118,6 +118,8 @@ def test_start_grounds_the_live_repo_state() -> None:
     # a dry verdict on the last session, motivational language banned.
     assert "(n/10)" in start
     assert "Overrule me" in start
+    # The brief renders as markdown (bold headers), never inside a code fence.
+    assert "NEVER inside a code fence" in start
     # The brief speaks the contributor's profile language.
     assert "`language:`" in start
     tpl = (TEMPLATES / "profile.yml").read_text()

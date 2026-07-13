@@ -3,6 +3,12 @@
 All notable changes to Polaris Team OS. The installed version is pinned in
 `polaris/.claude-plugin/plugin.json`.
 
+## 0.7.10
+
+### Fixed
+- The brief renders as plain markdown, **never inside a code fence** — a fenced brief shows
+  literal asterisks instead of bold section headers in the terminal (founder caught it live).
+
 ## 0.7.9
 
 ### Changed
