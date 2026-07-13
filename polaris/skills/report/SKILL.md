@@ -69,7 +69,7 @@ gh issue list --repo "$REPO" --state closed --search "author:$LOGIN closed:$SINC
 # Do NOT filter git log by an author-email pattern: squash commits carry the
 # user's configured email (often a personal one), so a guessed pattern
 # silently returns zero — a live run proved it.
-gh api "repos/$REPO/commits?author=$LOGIN&since=${SINCE}T00:00:00Z&until=${UNTIL}T23:59:59Z&per_page=100" \
+gh api --paginate "repos/$REPO/commits?author=$LOGIN&since=${SINCE}T00:00:00Z&until=${UNTIL}T23:59:59Z&per_page=100" \
   --jq '.[] | "\(.sha[0:8]) \(.commit.author.date[0:10]) \(.commit.message | split("\n")[0])"'
 
 # PRs open NOW (branch debt) — not reconstructable "as of" a past week: for a

@@ -3,6 +3,23 @@
 All notable changes to Polaris Team OS. The installed version is pinned in
 `polaris/.claude-plugin/plugin.json`.
 
+## 0.6.3
+
+### Fixed (second external review, gpt-5.6 — 3 High, 3 Medium)
+- **Identity gate now gates** (High): the v0.6.2 `grep || echo` continued on failure and skipped
+  pre-existing profiles entirely. The gate hard-stops (`|| { …; exit 1; }`) and runs in BOTH
+  branches — fresh or pre-existing profile.
+- **Non-Claude users no longer stranded by the failure branch** (High): `command not found: polmem`
+  now routes Codex/Cursor users to the checkout shim (`python3 <checkout>/polaris/bin/polmem`)
+  instead of a Claude-only installer that exits 127 without a plugin cache.
+- **The `/end` journal line reaches the team** (High): `polmem remember` writes `.wiki/journal/…`,
+  but the offered pathspec commit staged only sessions/weeks — the journal file is now part of the
+  handoff commit.
+- `/start` never briefs an unsigned weekly file as active work (`execution_authorized` checked);
+  commit evidence paginates (`gh api --paginate`); onboarding preflights the GitHub CLI
+  (`gh --version`, `gh auth status`, `gh auth login`).
+- All pinned in `test_terra_review_findings_stay_fixed`.
+
 ## 0.6.2
 
 ### Fixed (external Codex review of v0.5.0..v0.6.1 — 3 High, 5 Medium, 2 Low)

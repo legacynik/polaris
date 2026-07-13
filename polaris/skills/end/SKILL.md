@@ -68,10 +68,12 @@ next session — do not retain completed threads.
 ## Step 5 — Offer a clean commit
 
 If `git status --short` shows changes, propose a single **pathspec-only** commit scoped to what you
-touched — never `git add -A`:
+touched — never `git add -A`. The Step 1 `polmem remember` line lands in `.wiki/journal/`: it is
+committed shared history, so it belongs in this commit or it never reaches the team:
 
 ```bash
-git add "_polaris/team/$LOGIN/sessions/<file>" "_polaris/team/$LOGIN/weeks/<file>"   # only the files you wrote
+git add "_polaris/team/$LOGIN/sessions/<file>" "_polaris/team/$LOGIN/weeks/<file>" \
+        ".wiki/journal/<file-from-step-1>"   # only the files you wrote — INCLUDING the journal line
 git commit -m "chore(polaris): session handoff $(date +%F) @$LOGIN"
 ```
 
