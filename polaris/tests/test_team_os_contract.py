@@ -33,7 +33,6 @@ def test_the_new_commands_have_one_shared_team_contract() -> None:
     plan = (SKILLS / "plan-week" / "SKILL.md").read_text()
     report = (SKILLS / "report" / "SKILL.md").read_text()
 
-    assert "`polaris/`" in start
     assert "`_polaris/`" in start
     for lifecycle_skill in (start, update, end):
         assert "state/current.md" in lifecycle_skill
@@ -42,6 +41,45 @@ def test_the_new_commands_have_one_shared_team_contract() -> None:
         plan.split()
     )
     assert "planned versus actual" in report
+
+
+def test_contract_root_is_single_underscore_polaris() -> None:
+    # The Polaris root is `_polaris/`, full stop — the dual-root (`polaris/` or
+    # `_polaris/`) resolver was a drift from the convention every product repo
+    # already uses, and "root chosen per-repo" is exactly how one repo ended up
+    # carrying both.
+    start = (SKILLS / "start" / "SKILL.md").read_text()
+    update = (SKILLS / "update" / "SKILL.md").read_text()
+    readme = (ROOT.parent / "README.md").read_text()
+    onboarding = (ROOT.parent / "docs" / "TEAM-ONBOARDING.md").read_text()
+
+    assert "_polaris/config.yml" in start
+    for text in (start, update, readme, onboarding):
+        flat = " ".join(text.split())
+        assert "`polaris/` or `_polaris/`" not in flat
+        assert "`polaris/` if" not in flat
+
+
+def test_start_provisions_own_path_from_the_real_github_login() -> None:
+    # A contributor's path is created on THEIR machine from THEIR GitHub login
+    # (`gh api user`) — never pre-created for someone else and never guessed:
+    # placeholder folders (team/jeanpierre) break every gh evidence query.
+    start = (SKILLS / "start" / "SKILL.md").read_text()
+    onboarding = (ROOT.parent / "docs" / "TEAM-ONBOARDING.md").read_text()
+
+    assert "gh api user --jq .login" in start
+    assert "Never create `team/<login>/` folders for other people" in start
+    assert "gh api user --jq .login" in onboarding
+    assert "Never create a `team/` folder for a teammate" in onboarding
+
+
+def test_lessons_are_part_of_the_contract() -> None:
+    # Product repos carry lessons.md next to decisions.md; /end proposes durable
+    # lessons the same gated way it proposes decisions.
+    end = (SKILLS / "end" / "SKILL.md").read_text()
+    readme = (ROOT.parent / "README.md").read_text()
+    assert "lessons.md" in end
+    assert "lessons.md" in readme
 
 
 def test_evidence_skills_pin_the_iso_week_filename_convention() -> None:
@@ -144,7 +182,7 @@ def test_sessions_are_per_contributor_not_shared() -> None:
     readme = (ROOT.parent / "README.md").read_text()
     onboarding = (ROOT.parent / "docs" / "TEAM-ONBOARDING.md").read_text()
     assert "sessions/            # per-day handoffs" in readme
-    assert "<root>/team/<your-github-login>/sessions/" in onboarding
+    assert "_polaris/team/<your-github-login>/sessions/" in onboarding
     assert "Migrating from" in onboarding
 
 

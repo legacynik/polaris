@@ -6,9 +6,10 @@ user-invocable: true
 
 # /update — leave the work legible
 
-Use the same single-root resolver as `/start`: `polaris/` or `_polaris/`, never both, and the
-matching `team/<login>/profile.yml`. If the contract or profile is missing, stop and explain what is
-missing (point to `docs/TEAM-ONBOARDING.md`).
+Use the same resolver as `/start`: the Polaris root is `_polaris/`, and the contributor is their own
+GitHub login (`gh api user --jq .login`) with the matching `team/<login>/profile.yml`. If your
+profile is missing, run `/start` first — it provisions your own path. If the root itself is missing,
+stop and point to `docs/TEAM-ONBOARDING.md`.
 
 ## What a good checkpoint contains
 

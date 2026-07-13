@@ -3,6 +3,27 @@
 All notable changes to Polaris Team OS. The installed version is pinned in
 `polaris/.claude-plugin/plugin.json`.
 
+## 0.5.0
+
+### Changed
+- **Single Polaris root: `_polaris/`.** The dual-root resolver (`polaris/` or `_polaris/`) is gone —
+  it drifted from the convention every product repository already uses, and per-repo root choice is
+  exactly how one repository ended up carrying both roots at once. `/start` and `/update` now
+  resolve `_polaris/config.yml` only; README, onboarding and the release contract tests pin it.
+- **Self-provisioning contributor paths.** A contributor's `team/<login>/` path is created by
+  **their own first `/start`**, from the exact login `gh api user --jq .login` returns on their
+  machine: profile.yml (from the plugin template), `weeks/`, `reports/`, `sessions/`. Nobody
+  pre-creates paths for other people, and no login is ever guessed — placeholder folders
+  (e.g. `team/jeanpierre`) silently break every `gh` evidence query.
+- **`lessons.md` joins the contract.** Product repos carry `<root>/lessons.md` next to
+  `decisions.md`; `/end` proposes durable lessons through the same confirm-before-write gate, and
+  `/start` reads it alongside decisions.
+
+### Migration
+- Repositories that carried a `polaris/` root (no underscore): the repo owner renames it
+  (`git mv polaris _polaris`) and deletes pre-created placeholder `team/` folders — real paths are
+  recreated by each contributor's `/start`. See the migration note in `docs/TEAM-ONBOARDING.md`.
+
 ## 0.4.4
 
 ### Changed

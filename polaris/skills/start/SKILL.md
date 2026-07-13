@@ -6,8 +6,9 @@ user-invocable: true
 
 # /start — orient before acting
 
-Read-only. This command makes the next choice visible. It never creates a workspace, issue, branch,
-pull request or assignment, and never writes `state/current.md`.
+Read-only, with one exception: on a contributor's **first session** in a repository it provisions
+their own `team/<login>/` path (Step 2). It never creates issues, branches, pull requests or
+assignments, and never writes `state/current.md`.
 
 ## Step 1 — Verify the branch FIRST
 
@@ -22,19 +23,34 @@ git checkout, stop and say so — this command needs a repository.
 
 ## Step 2 — Resolve the repository contract
 
-From the repository root, use **one** Polaris root:
+The Polaris root is **`_polaris/`** — one root, committed with the code:
 
-1. `polaris/` if `polaris/config.yml` exists;
-2. otherwise `_polaris/` if `_polaris/config.yml` exists;
-3. otherwise **stop**: the repository has no committed Team OS contract. Point the contributor to
-   `docs/TEAM-ONBOARDING.md` (section "Verifica il contratto della repo"). Do not run a bootstrap
-   command and do not create personal state.
+1. `_polaris/` if `_polaris/config.yml` exists;
+2. otherwise **stop**: the repository has no committed Team OS contract. Point the contributor to
+   `docs/TEAM-ONBOARDING.md` (section "Check the repo contract"). Do not create the root or
+   `config.yml` yourself — the repository owner wires the contract.
 
-Identify the contributor from the matching `team/<github-login>/profile.yml`. The `github:` field and
-the `team/<login>/` folder are the exact GitHub login, verbatim (case-sensitive) — the same string
-`gh` queries use. Prefer the login for the current checkout (`gh api user --jq .login`); if it is
-ambiguous, list the available `team/*/` profiles and ask which is theirs. If no profile matches, stop
-and point to onboarding.
+Identify the contributor from **their own GitHub account** — never from a folder someone else
+pre-created and never from a guessed nickname:
+
+```bash
+LOGIN="$(gh api user --jq .login)"   # the exact, case-sensitive login
+```
+
+If `gh` is missing or unauthenticated (`gh auth status` fails), stop and point to onboarding.
+
+- `_polaris/team/$LOGIN/profile.yml` exists → read it and continue.
+- It does not exist → this is the contributor's first session here: create **their own** path (and
+  only theirs) from the plugin template, then set `github: $LOGIN` verbatim in the copied profile:
+
+```bash
+mkdir -p "_polaris/team/$LOGIN/weeks" "_polaris/team/$LOGIN/reports" "_polaris/team/$LOGIN/sessions"
+cp "$CLAUDE_PLUGIN_ROOT/polaris/templates/repo-contract/profile.yml" "_polaris/team/$LOGIN/profile.yml"
+```
+
+Never create `team/<login>/` folders for other people: each contributor's path is created on their
+machine by their own `/start`, from the login `gh api user` returns for them. A folder that does not
+match a real GitHub login silently breaks every `gh` evidence query.
 
 ## Step 3 — Read in this order
 
@@ -43,7 +59,7 @@ and point to onboarding.
    blockers. If absent, say there is no signed plan for this week; planning happens in `/plan-week`.
 3. Other current-week files under `team/*/weeks/` and recent entries under `team/*/sessions/` —
    titles, owners and active branches only, to avoid collisions.
-4. `<root>/decisions.md`, then `<root>/state/current.md` if it exists. `current.md` is a compact,
+4. `<root>/decisions.md` and `<root>/lessons.md` (if present), then `<root>/state/current.md` if it exists. `current.md` is a compact,
    gitignored pointer: if it conflicts with the approved plan or evidence, treat it as stale.
 5. The most recent relevant session log in `<root>/team/<login>/sessions/`.
 

@@ -41,7 +41,9 @@ before writing it:
 Chose <X> over <Y> because <evidence>. Affects <area>.
 ```
 
-Do not log routine progress as a decision. If nothing durable happened, say so.
+The same gate applies to durable lessons — a real mistake plus the rule that prevents its
+recurrence: **propose** an entry in `<root>/lessons.md` and wait for confirmation before writing it.
+Do not log routine progress as a decision or a lesson. If nothing durable happened, say so.
 
 ## Step 4 — Prune the live pointer
 
