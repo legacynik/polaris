@@ -101,6 +101,11 @@ def test_start_grounds_the_live_repo_state() -> None:
     assert "hot.md" in start                       # polmem hot cache recap
     assert "Recently landed" in start              # the brief carries the pulse
     assert "In motion" in start
+    # Context budget caps — a live measure found decisions.md at 111KB and
+    # hot.md at 20KB: /start reads slices, recall retrieves the rest on demand.
+    assert "10 most recent" in start
+    assert "first screen" in start
+    assert "never read the whole file" in " ".join(start.split())
 
 
 def test_codex_review_findings_stay_fixed() -> None:
