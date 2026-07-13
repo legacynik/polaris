@@ -143,17 +143,25 @@ irrelevant, silence is the report. One exception comes FIRST, before the brief: 
 behind `origin/main`, open with the action line — `⚠ checkout behind origin by N commits — pull
 before working` — because every other line was read from a stale tree.
 
+The header carries the plugin version so it is always visible which release answered
+(`jq -r .version "$CLAUDE_PLUGIN_ROOT/polaris/.claude-plugin/plugin.json"`). Fixed icons, one per
+line — they are the scanning UI, keep them stable:
+
 ```text
-<repo> — <date> — on <branch>
-Your outcome this week: <one sentence>
-Active item: <issue / branch / status>
-Recently landed: <1 line from the pulse — last merges/PRs that matter>
-In motion: <active branches / open PRs by owner, or none>
-Proof needed: <one sentence>
-Collision or blocker: <one sentence, or none>
-Relevant decision or recall: <one sentence, or none>
-What do you want to move forward first?
+🧭 <repo> — <date> — on <branch> · Team OS v<version>
+🎯 Outcome this week: <one sentence>
+🔨 Active: <issue / branch / status>
+📦 Landed: <1 line from the pulse — last merges/PRs that matter>
+🌊 In motion: <active branches / open PRs by owner, or none>
+🧪 Proof needed: <one sentence>
+⚠️ Collision/blocker: <one sentence — or ✅ none>
+🧠 Recall: <one sentence, or none>
+▶ First move?
 ```
+
+**Voice:** a calm co-pilot on the radio — verb-first, punchy, zero filler. Every line earns its
+place with a fact; dry wit is allowed in at most one line, never instead of a fact. If the
+checkout is behind origin, the ⛔ pull-first line replaces the header as the opener.
 
 If there is no signed plan, say so plainly. Planning happens in `/plan-week`; implementation still
 needs an explicit user request. **When the chosen first move is code**, enter it through the team's
