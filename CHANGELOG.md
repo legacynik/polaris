@@ -3,6 +3,14 @@
 All notable changes to Polaris Team OS. The installed version is pinned in
 `polaris/.claude-plugin/plugin.json`.
 
+## 0.7.7
+
+### Added
+- **`voice:` in the contributor profile.** Per-contributor TONE for the brief: `cynical` (default
+  dry co-pilot), `plain` (neutral, facts only), or a free-text tone line. Structure is invariant
+  whatever the voice — fixed icons, rated `▶ My call`, evidence-grounded 💬 verdict, motivational
+  ban: that's the product, not the personality.
+
 ## 0.7.6
 
 ### Added

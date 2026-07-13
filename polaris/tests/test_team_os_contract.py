@@ -119,7 +119,13 @@ def test_start_grounds_the_live_repo_state() -> None:
     assert "💬 Last session:" in start
     # The brief speaks the contributor's profile language.
     assert "`language:`" in start
-    assert "language: en" in (TEMPLATES / "profile.yml").read_text()
+    tpl = (TEMPLATES / "profile.yml").read_text()
+    assert "language: en" in tpl
+    # Voice is per-contributor TONE only; structure (icons, rated call,
+    # motivational ban) is invariant product behavior.
+    assert "voice: cynical" in tpl
+    assert "`voice:`" in start
+    assert "not\nthe personality" in start or "not the personality" in " ".join(start.split())
     assert "No\n  motivational language" in start or "no motivational language" in " ".join(start.split()).lower()
 
 
