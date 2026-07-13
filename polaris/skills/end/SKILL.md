@@ -25,6 +25,17 @@ Append to `team/<login>/sessions/YYYY-MM-DD-@<github-login>.md`:
 - Next session: <first step>
 ```
 
+Then feed the repository memory with the same handoff, one machine-readable line — the offline
+distill decides later what is durable, so never skip this because the session felt routine:
+
+```bash
+polmem remember "session YYYY-MM-DD @<login>: <shipped/verified, one clause> — next: <first step>"
+```
+
+Failure branches are the same as `/start` Step 4: `command not found: polmem` → run the plugin
+installer once; `not memory-wired` → skip this line, say so once, continue the handoff. Never run
+`polmem init` yourself.
+
 ## Step 2 — Tick the plan
 
 Update the matching row in `team/<login>/weeks/$(date +%G-W%V).md` only when its state or proof
