@@ -3,6 +3,16 @@
 All notable changes to Polaris Team OS. The installed version is pinned in
 `polaris/.claude-plugin/plugin.json`.
 
+## 0.7.5
+
+### Changed
+- **Cynical co-pilot voice.** Motivational language is banned outright; "merged" is a fact,
+  "great progress" is not. Two new closing lines: `💬 Last session:` — one dry verdict on what it
+  actually moved (from the log, not from charity; unproven "done" claims get called out) — and
+  `▶ My call:` — a ranked recommendation with blunt scores (n/10, leverage vs cost) and a
+  one-clause why. The user overrules, but never gets a menu without a recommendation. Closes the
+  iter-3 "ranked-recommendation nel briefing" item.
+
 ## 0.7.4
 
 ### Changed

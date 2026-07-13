@@ -113,6 +113,11 @@ def test_start_grounds_the_live_repo_state() -> None:
     # Scannable brief: fixed icon scheme + the answering plugin version in the header.
     assert "🧭" in start and "🎯" in start and "▶" in start
     assert '.claude-plugin/plugin.json' in start
+    # Cynical co-pilot contract: opinionated close (ranked call with scores),
+    # a dry verdict on the last session, motivational language banned.
+    assert "My call:" in start and "(n/10)" in start
+    assert "💬 Last session:" in start
+    assert "No\n  motivational language" in start or "no motivational language" in " ".join(start.split()).lower()
 
 
 def test_codex_review_findings_stay_fixed() -> None:
