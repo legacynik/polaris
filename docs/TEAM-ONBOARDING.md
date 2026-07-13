@@ -92,25 +92,36 @@ context to verify, not current state.
 
 ## 4. Check the repo contract
 
-The repository owns **one** root: `polaris/` or `_polaris/`. It must contain:
+The repository owns **one** Polaris root: `_polaris/`, committed with the code. The repository owner
+provides:
 
 ```text
-<root>/config.yml
-<root>/team/<your-github-login>/profile.yml
-<root>/team/<your-github-login>/weeks/
-<root>/team/<your-github-login>/reports/
-<root>/team/<your-github-login>/sessions/
-<root>/decisions.md
+_polaris/config.yml
+_polaris/decisions.md
+_polaris/lessons.md              # optional but standard
 ```
 
-> **Migrating from ≤0.4.3:** sessions moved from the shared `<root>/sessions/` to the per-contributor
-> `<root>/team/<login>/sessions/`. Move your existing files: `git mv <root>/sessions/*-@<login>.md
-> <root>/team/<login>/sessions/`.
+Your own path is **not** pre-created for you. On your first `/start`, the plugin reads your exact
+GitHub login (`gh api user --jq .login`) and creates:
 
-Your `team/<login>/` folder name and the `github:` field in both `config.yml` and your `profile.yml`
-must be your **exact GitHub login** (case-sensitive) — the skills query `gh` by that string, so a
-nickname silently returns no evidence. If the profile or root is missing, ask the repository owner.
-Do not run a bootstrap and do not create a personal Polaris folder.
+```text
+_polaris/team/<your-github-login>/profile.yml
+_polaris/team/<your-github-login>/weeks/
+_polaris/team/<your-github-login>/reports/
+_polaris/team/<your-github-login>/sessions/
+```
+
+The folder name and the `github:` field in both `config.yml` and your `profile.yml` are your
+**exact GitHub login** (case-sensitive) — the skills query `gh` by that string, so a nickname
+silently returns no evidence. Never create a `team/` folder for a teammate: each person's path is
+created on their machine by their own `/start`. If the root or `config.yml` is missing, ask the
+repository owner — do not create the contract yourself.
+
+> **Migrating from ≤0.4.4:** sessions moved from the shared `<root>/sessions/` to the per-contributor
+> `<root>/team/<login>/sessions/` — move your own files: `git mv <root>/sessions/*-@<login>.md
+> <root>/team/<login>/sessions/`. Repositories that carried a `polaris/` root (no underscore) or
+> pre-created placeholder `team/` folders: the repo owner renames the root (`git mv polaris
+> _polaris`) and deletes the placeholders — real paths are recreated by each contributor's `/start`.
 
 ## 5. First day
 

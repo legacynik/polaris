@@ -39,12 +39,11 @@ never create tracker work or write outside the current product repository.
 
 ## The contract model
 
-Each product repository carries **one** Polaris root (`polaris/` or `_polaris/`, never both). The
-contract is committed with the code, so it travels with a `git clone` and is shared by the whole
-team:
+Each product repository carries **one** Polaris root: **`_polaris/`**. The contract is committed
+with the code, so it travels with a `git clone` and is shared by the whole team:
 
 ```text
-<root>/                          # polaris/ or _polaris/ — one, committed with the code
+_polaris/                        # the Polaris root — one, committed with the code
 ├── config.yml                   # tracker.github_repo, optional linear_team, contributors[].github
 ├── team/
 │   └── <github-login>/          # folder name == exact GitHub login (case-sensitive)
@@ -53,11 +52,14 @@ team:
 │       ├── reports/YYYY-Www.md  # weekly reports (from /report) — planned vs actual
 │       └── sessions/            # per-day handoffs (from /update and /end), committed
 ├── decisions.md                 # durable decisions, append-only
+├── lessons.md                   # durable lessons, append-only (optional but standard)
 └── state/                       # ephemeral, gitignored (current.md — a live pointer only)
 ```
 
 Per-contributor: sessions live under each contributor's own `team/<login>/sessions/`, same isolation
-as `weeks/` and `reports/`, so contributors never write to a shared, collision-prone directory.
+as `weeks/` and `reports/`, so contributors never write to a shared, collision-prone directory. Each
+contributor's `team/<login>/` path is created **by their own first `/start`**, from the exact login
+`gh api user` returns on their machine — never pre-created for someone else, never a nickname.
 
 Templates for every one of these files ship in
 [`polaris/templates/repo-contract/`](polaris/templates/repo-contract). Filenames are the ISO week
