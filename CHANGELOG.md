@@ -3,6 +3,12 @@
 All notable changes to Polaris Team OS. The installed version is pinned in
 `polaris/.claude-plugin/plugin.json`.
 
+## 0.7.11
+
+### Changed
+- Version dropped from the brief header (founder: noise once the cache-staleness hunt is over) —
+  header is now `{Greeting}. {Weekday} {date} — <repo> on <branch>`.
+
 ## 0.7.10
 
 ### Fixed
