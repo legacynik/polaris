@@ -3,6 +3,8 @@
 # `github` must be the exact GitHub login (case-sensitive), verbatim — the folder name matches it.
 github: octocat
 language: en              # brief/conversation language for this contributor (it, en, ...)
+voice: cynical            # brief tone: cynical (dry co-pilot, default) | plain (neutral, facts only)
+                          # | any free-text line describing the tone you want
 assignment_mode: hybrid   # owner_assigned | self_claim | hybrid
 weekly_capacity: 3
 preferred_areas: []       # e.g. [backend, infra] — bias triage; leave [] to derive scope from repo evidence
