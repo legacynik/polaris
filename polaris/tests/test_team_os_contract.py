@@ -113,7 +113,6 @@ def test_start_grounds_the_live_repo_state() -> None:
     # MARVIN-style sections + the answering plugin version in the header.
     for header in ("**THIS WEEK**", "**PULSE**", "**LAST SESSION**", "**MY CALL**"):
         assert header in start, header
-    assert '.claude-plugin/plugin.json' in start
     # Cynical co-pilot contract: opinionated close (ranked call with scores),
     # a dry verdict on the last session, motivational language banned.
     assert "(n/10)" in start

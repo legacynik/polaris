@@ -145,14 +145,13 @@ irrelevant, silence is the report. One exception comes FIRST, before everything:
 behind `origin/main`, open with `⛔ checkout behind origin by N commits — pull before working`,
 because every other line was read from a stale tree.
 
-The header carries the plugin version so it is always visible which release answered
-(`jq -r .version "$CLAUDE_PLUGIN_ROOT/polaris/.claude-plugin/plugin.json"`). Bold section headers,
+Bold section headers,
 bullets under them — sections with nothing real to say are omitted, never padded.
 
 **Render as plain markdown, NEVER inside a code fence**: a fenced brief shows literal asterisks
 instead of bold headers in the terminal. The block below is the shape, not a fence to copy:
 
-{Greeting}. {Weekday} {date} — <repo> on <branch> · Team OS v<version>
+{Greeting}. {Weekday} {date} — <repo> on <branch>
 
 **THIS WEEK**
 - Outcome: <one sentence — or "no signed plan for <week>; /plan-week when ready">
