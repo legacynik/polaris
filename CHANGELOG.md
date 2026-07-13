@@ -3,6 +3,16 @@
 All notable changes to Polaris Team OS. The installed version is pinned in
 `polaris/.claude-plugin/plugin.json`.
 
+## 0.7.4
+
+### Changed
+- **The brief gets a face.** Fixed icon scheme (🧭 header · 🎯 outcome · 🔨 active · 📦 landed ·
+  🌊 in motion · 🧪 proof · ⚠️/✅ blocker · 🧠 recall · ▶ first move) — the icons are the scanning
+  UI. Voice: calm co-pilot on the radio — verb-first, punchy, dry wit at most one line, never
+  instead of a fact.
+- **Version in the header.** The brief opens with `· Team OS v<version>` read from plugin.json at
+  runtime — no more guessing which cached release answered.
+
 ## 0.7.3
 
 ### Changed

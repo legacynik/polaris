@@ -110,6 +110,9 @@ def test_start_grounds_the_live_repo_state() -> None:
     # checkout is the FIRST line, with the action.
     assert "Answer with the brief ONLY" in start
     assert "behind `origin/main`" in start
+    # Scannable brief: fixed icon scheme + the answering plugin version in the header.
+    assert "🧭" in start and "🎯" in start and "▶" in start
+    assert '.claude-plugin/plugin.json' in start
 
 
 def test_codex_review_findings_stay_fixed() -> None:
