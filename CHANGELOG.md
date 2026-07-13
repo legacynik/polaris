@@ -3,6 +3,15 @@
 All notable changes to Polaris Team OS. The installed version is pinned in
 `polaris/.claude-plugin/plugin.json`.
 
+## 0.7.1
+
+### Changed
+- `/start` closes with an explicit build-method bridge: when the chosen first move is code, enter
+  through the Superpowers flow (brainstorm → plan → TDD) or the workflow skill the repo's CLAUDE.md
+  names — never straight into edits from the brief. No skill is force-loaded at session start:
+  Superpowers already self-injects via its own SessionStart hook, and orientation sessions stay
+  cheap.
+
 ## 0.7.0
 
 ### Added
