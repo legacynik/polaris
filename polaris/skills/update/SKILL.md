@@ -18,7 +18,8 @@ result yet, say "in progress" — do not inflate.
 
 ## Step 1 — Append to the session log
 
-Append to `sessions/YYYY-MM-DD-@<github-login>.md` (create it if today's file does not exist):
+Append to `team/<login>/sessions/YYYY-MM-DD-@<github-login>.md` (create it if today's file does not
+exist):
 
 ```md
 ## HH:MM — checkpoint

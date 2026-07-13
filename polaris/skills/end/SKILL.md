@@ -16,7 +16,7 @@ git status --short                 # what actually changed this session
 
 ## Step 1 — Write the handoff
 
-Append to `sessions/YYYY-MM-DD-@<github-login>.md`:
+Append to `team/<login>/sessions/YYYY-MM-DD-@<github-login>.md`:
 
 ```md
 ## HH:MM — session end
@@ -56,7 +56,7 @@ If `git status --short` shows changes, propose a single **pathspec-only** commit
 touched — never `git add -A`:
 
 ```bash
-git add <root>/sessions/<file> <root>/weeks/<file>   # only the files you wrote
+git add <root>/team/<login>/sessions/<file> <root>/team/<login>/weeks/<file>   # only the files you wrote
 git commit -m "chore(polaris): session handoff <date> @<login>"
 ```
 
