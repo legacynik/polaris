@@ -3,6 +3,13 @@
 All notable changes to Polaris Team OS. The installed version is pinned in
 `polaris/.claude-plugin/plugin.json`.
 
+## 0.7.6
+
+### Added
+- **`language:` in the contributor profile.** `/start` writes the brief in the contributor's own
+  language (`language: it` → Italian lines under the same fixed icons); committed artifacts keep
+  the repo convention. Default `en` when absent.
+
 ## 0.7.5
 
 ### Changed
