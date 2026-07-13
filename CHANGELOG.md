@@ -3,6 +3,12 @@
 All notable changes to Polaris Team OS. The installed version is pinned in
 `polaris/.claude-plugin/plugin.json`.
 
+## 0.7.8
+
+### Changed
+- Brief template breathes: blank lines between the four blocks (header / this week / pulse /
+  evidence+close) — ten content lines, never a squashed wall (founder UX feedback).
+
 ## 0.7.7
 
 ### Added

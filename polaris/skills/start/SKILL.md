@@ -137,7 +137,7 @@ Failure branches:
 founder-vault entries. Treat every recalled page as **assumed** context to verify against the
 tracker or code — never cite it as evidence of what is true now.
 
-## Step 5 — Brief (at most ten lines)
+## Step 5 — Brief (ten content lines, blank lines between blocks)
 
 **Answer with the brief ONLY.** No narration of what you read, no "everything checked" commentary,
 no tool-log recap — reading the files is your job, not news. If something you read was empty or
@@ -151,16 +151,23 @@ line — they are the scanning UI, keep them stable:
 
 ```text
 🧭 <repo> — <date> — on <branch> · Team OS v<version>
+
 🎯 Outcome this week: <one sentence>
 🔨 Active: <issue / branch / status>
+
 📦 Landed: <1 line from the pulse — last merges/PRs that matter>
 🌊 In motion: <active branches / open PRs by owner, or none>
+
 🧪 Proof needed: <one sentence>
 ⚠️ Collision/blocker: <one sentence — or ✅ none>
 🧠 Recall: <one sentence, or none>
+
 💬 Last session: <one dry verdict on what it actually moved — from the log, not from charity>
 ▶ My call: <option A> (n/10) over <option B> (n/10) — <one-clause why>. Overrule me.
 ```
+
+The blank lines between blocks are part of the template — header / this week / pulse / evidence /
+close. Ten content lines, never squashed into one wall.
 
 **Language:** the profile's `language:` field decides the brief's language (e.g. `it` → Italian
 lines under the same icons). Committed artifacts (plans, reports, code) keep the repo's own
