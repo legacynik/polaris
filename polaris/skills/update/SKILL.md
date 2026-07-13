@@ -6,7 +6,7 @@ user-invocable: true
 
 # /update — leave the work legible
 
-Use the same resolver as `/start`: the Polaris root is `_polaris/`, and the contributor is their own
+Use the same resolver as `/start` (including the root-is-`_polaris` vault case): the Polaris root is `_polaris/`, and the contributor is their own
 GitHub login (`gh api user --jq .login`) with the matching `team/<login>/profile.yml`. If your
 profile is missing, run `/start` first — it provisions your own path. If the root itself is missing,
 stop and point to `docs/TEAM-ONBOARDING.md`.
