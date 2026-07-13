@@ -3,6 +3,27 @@
 All notable changes to Polaris Team OS. The installed version is pinned in
 `polaris/.claude-plugin/plugin.json`.
 
+## 0.5.2
+
+### Added
+- **`_polaris/README.md` template** (`polaris/templates/repo-contract/README.md`) — the contract's
+  front door in every product repo: structure table (who writes what), the locked rules (single
+  root, own-path provisioning, CEO signature gate, tracker stays the execution truth) and the
+  privacy boundaries (no personal capacity data, no mentor/investor terms, neutral commit
+  messages). Evolved from the noemi-ai pre-Team-OS README.
+- **`AGENTS.md` bridge** — the five skills are consumable by non-Claude agent CLIs (Codex, etc.)
+  from a plain repo checkout: skill index with relative paths, `$CLAUDE_PLUGIN_ROOT` substitution
+  note, contract root and boundary rules. Contract-tested.
+- `team/<login>/handoff/` documented as the optional home for rich multi-session handoff docs.
+
+### Decided (layout frozen)
+- `weeks/` + `reports/` stay separate siblings — the identical ISO-week filename pairs them by
+  construction; a `weekly/` merge would buy one click and cost a 3-surface migration.
+- `team/<login>/` stays (vs bare `_polaris/<login>/`) — it separates people-space from contract
+  files and keeps skill globs (`team/*/weeks/`) unambiguous.
+- `state/current.md` stays at the root — ephemeral and per-checkout; moving it under a login adds
+  no isolation.
+
 ## 0.5.1
 
 ### Changed

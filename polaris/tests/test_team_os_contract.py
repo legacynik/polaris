@@ -156,8 +156,19 @@ def test_start_handles_not_memory_wired_without_running_init() -> None:
 
 def test_repo_contract_templates_exist_are_english_and_match_worked_examples() -> None:
     for name in ("config.yml", "profile.yml", "weekly-plan.md", "weekly-report.md",
-                 "state.gitignore"):
+                 "state.gitignore", "README.md"):
         assert (TEMPLATES / name).is_file(), f"missing template {name}"
+
+    # The root README is the contract's front door: it must pin the single root,
+    # own-path provisioning, the signature gate and the privacy boundary.
+    root_readme = (TEMPLATES / "README.md").read_text()
+    for required in (
+        "One root: `_polaris/`",
+        "Never create another contributor's path",
+        "ceo_signature: pending",
+        "Privacy boundaries",
+    ):
+        assert required in root_readme
 
     plan_tpl = (TEMPLATES / "weekly-plan.md").read_text()
     report_tpl = (TEMPLATES / "weekly-report.md").read_text()
@@ -199,6 +210,17 @@ def test_sessions_are_per_contributor_not_shared() -> None:
     assert "sessions/            # per-day handoffs" in readme
     assert "_polaris/team/<your-github-login>/sessions/" in onboarding
     assert "Migrating from" in onboarding
+
+
+def test_agents_md_bridges_the_skills_to_non_claude_clis() -> None:
+    # Codex/other agent CLIs consume the skills from a repo checkout via
+    # AGENTS.md — it must link every shipped skill and explain the
+    # $CLAUDE_PLUGIN_ROOT substitution.
+    agents = (ROOT.parent / "AGENTS.md").read_text()
+    for name in ("start", "update", "end", "plan-week", "report"):
+        assert f"polaris/skills/{name}/SKILL.md" in agents
+    assert "$CLAUDE_PLUGIN_ROOT" in agents
+    assert "_polaris/" in agents
 
 
 def test_lifecycle_skills_verify_the_branch() -> None:
