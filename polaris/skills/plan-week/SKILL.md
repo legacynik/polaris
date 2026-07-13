@@ -110,8 +110,12 @@ ceo_signature: pending
 execution_authorized: false
 ```
 
-Only a direct approval flips `execution_authorized: true`. After approval the contributor may pick a
-branch and update the plan; this command still performs no tracker mutations.
+Only a direct approval flips `execution_authorized: true`. **One scoped exception**: if
+`config.yml` (founder-owned — never the self-provisioned profile) grants this contributor
+`auto_authorized: secondary`, the plan's **secondary** items may start before the signature — mark
+those rows `status: auto-authorized`. The primary outcome, and any item touching production or
+client-facing surfaces, always waits for the signature regardless of the grant. After approval the
+contributor may pick a branch and update the plan; this command still performs no tracker mutations.
 
 ## Worked example
 

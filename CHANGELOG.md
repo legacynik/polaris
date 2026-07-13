@@ -3,6 +3,17 @@
 All notable changes to Polaris Team OS. The installed version is pinned in
 `polaris/.claude-plugin/plugin.json`.
 
+## 0.8.0
+
+### Added
+- **Scoped pre-authorization (founder-granted).** `config.yml` may grant a contributor
+  `auto_authorized: secondary`: the plan's secondary items start before the CEO signature
+  (`status: auto-authorized`, surfaced by `/start` as startable). The grant lives in
+  founder-owned `config.yml` ONLY — a self-provisioned profile can never grant it. The primary
+  outcome and anything touching production or client-facing surfaces always waits for the
+  signature. Closes G4 gap #3 (founder-bottleneck) without an SLA: the gate stays where it
+  protects, disappears where it strangles.
+
 ## 0.7.12
 
 ### Added
