@@ -3,6 +3,22 @@
 All notable changes to Polaris Team OS. The installed version is pinned in
 `polaris/.claude-plugin/plugin.json`.
 
+## 0.4.4
+
+### Changed
+- **Per-contributor sessions path.** Session logs move from the shared `<root>/sessions/` to the
+  per-contributor `<root>/team/<login>/sessions/` — the same isolation `weeks/` and `reports/`
+  already use, so contributors never write to a shared, collision-prone directory. `/update` and
+  `/end` now append to `team/<login>/sessions/YYYY-MM-DD-@<login>.md`; `/start` reads its own recent
+  session logs from the same path and globs `team/*/sessions/` for cross-contributor
+  collision-awareness, alongside the existing `team/*/weeks/` check.
+- README's repo-contract tree and `docs/TEAM-ONBOARDING.md`'s contract checklist updated to show
+  `sessions/` nested under `team/<login>/`.
+
+### Migration
+- Repositories on ≤0.4.3: move existing `<root>/sessions/*-@<login>.md` files into
+  `<root>/team/<login>/sessions/`. See the migration note in `docs/TEAM-ONBOARDING.md`.
+
 ## 0.4.3
 
 Iteration from a live 6-run benchmark (with-skill vs baseline) — objective defects only.

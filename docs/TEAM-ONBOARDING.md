@@ -99,9 +99,13 @@ The repository owns **one** root: `polaris/` or `_polaris/`. It must contain:
 <root>/team/<your-github-login>/profile.yml
 <root>/team/<your-github-login>/weeks/
 <root>/team/<your-github-login>/reports/
-<root>/sessions/
+<root>/team/<your-github-login>/sessions/
 <root>/decisions.md
 ```
+
+> **Migrating from ≤0.4.3:** sessions moved from the shared `<root>/sessions/` to the per-contributor
+> `<root>/team/<login>/sessions/`. Move your existing files: `git mv <root>/sessions/*-@<login>.md
+> <root>/team/<login>/sessions/`.
 
 Your `team/<login>/` folder name and the `github:` field in both `config.yml` and your `profile.yml`
 must be your **exact GitHub login** (case-sensitive) — the skills query `gh` by that string, so a

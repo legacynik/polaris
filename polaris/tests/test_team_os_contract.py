@@ -128,6 +128,26 @@ def test_repo_contract_templates_exist_are_english_and_match_worked_examples() -
     assert "exact GitHub login" in profile_tpl
 
 
+def test_sessions_are_per_contributor_not_shared() -> None:
+    # v0.4.4: session logs moved from the shared <root>/sessions/ to the per-contributor
+    # <root>/team/<login>/sessions/ — same isolation as weeks/ and reports/, so contributors
+    # never collide writing to the same directory.
+    start = (SKILLS / "start" / "SKILL.md").read_text()
+    update = (SKILLS / "update" / "SKILL.md").read_text()
+    end = (SKILLS / "end" / "SKILL.md").read_text()
+    for skill in (start, update, end):
+        assert "team/<login>/sessions/" in skill
+
+    # /start's collision check must glob across contributors' session logs too.
+    assert "team/*/sessions/" in start
+
+    readme = (ROOT.parent / "README.md").read_text()
+    onboarding = (ROOT.parent / "docs" / "TEAM-ONBOARDING.md").read_text()
+    assert "sessions/            # per-day handoffs" in readme
+    assert "<root>/team/<your-github-login>/sessions/" in onboarding
+    assert "Migrating from" in onboarding
+
+
 def test_lifecycle_skills_verify_the_branch() -> None:
     for name in ("start", "end"):
         text = (SKILLS / name / "SKILL.md").read_text()

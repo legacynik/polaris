@@ -50,11 +50,14 @@ team:
 │   └── <github-login>/          # folder name == exact GitHub login (case-sensitive)
 │       ├── profile.yml          # weekly_capacity, assignment_mode, preferred/excluded areas
 │       ├── weeks/YYYY-Www.md    # weekly plans (from /plan-week) — proposal until signed
-│       └── reports/YYYY-Www.md  # weekly reports (from /report) — planned vs actual
-├── sessions/                    # per-day handoffs (from /update and /end), committed
+│       ├── reports/YYYY-Www.md  # weekly reports (from /report) — planned vs actual
+│       └── sessions/            # per-day handoffs (from /update and /end), committed
 ├── decisions.md                 # durable decisions, append-only
 └── state/                       # ephemeral, gitignored (current.md — a live pointer only)
 ```
+
+Per-contributor: sessions live under each contributor's own `team/<login>/sessions/`, same isolation
+as `weeks/` and `reports/`, so contributors never write to a shared, collision-prone directory.
 
 Templates for every one of these files ship in
 [`polaris/templates/repo-contract/`](polaris/templates/repo-contract). Filenames are the ISO week

@@ -41,11 +41,11 @@ and point to onboarding.
 1. `team/<login>/profile.yml` — `weekly_capacity`, `assignment_mode`, preferred/excluded areas.
 2. The current ISO-week plan `team/<login>/weeks/$(date +%G-W%V).md` — outcome, branch, proof,
    blockers. If absent, say there is no signed plan for this week; planning happens in `/plan-week`.
-3. Other current-week files under `team/*/weeks/` — titles, owners and active branches only, to
-   avoid collisions.
+3. Other current-week files under `team/*/weeks/` and recent entries under `team/*/sessions/` —
+   titles, owners and active branches only, to avoid collisions.
 4. `<root>/decisions.md`, then `<root>/state/current.md` if it exists. `current.md` is a compact,
    gitignored pointer: if it conflicts with the approved plan or evidence, treat it as stale.
-5. The most recent relevant session log in `<root>/sessions/`.
+5. The most recent relevant session log in `<root>/team/<login>/sessions/`.
 
 **Branch check:** compare Step 1's branch to the plan's `Branch` cell. If they differ (and the plan
 has a branch), STOP and ask before proceeding — you may be on another panel's checkout.
