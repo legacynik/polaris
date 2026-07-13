@@ -99,7 +99,7 @@ def test_start_grounds_the_live_repo_state() -> None:
     assert "git branch -vv" in start               # active branches, ahead/behind
     assert "gh pr list" in start                   # open PRs in motion
     assert "hot.md" in start                       # polmem hot cache recap
-    assert "Recently landed" in start              # the brief carries the pulse
+    assert "Landed:" in start                      # the brief carries the pulse
     assert "In motion" in start
     # Context budget caps — a live measure found decisions.md at 111KB and
     # hot.md at 20KB: /start reads slices, recall retrieves the rest on demand.
