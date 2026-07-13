@@ -1,6 +1,6 @@
 ---
 name: plan-week
-description: Polaris skill — build a capacity-bounded weekly plan for one contributor from live GitHub/Linear issues and current team ownership. Trigger at the start of a week, when a CEO asks for a proposal, or on "plan my week / propose work / weekly plan".
+description: Polaris skill — build your own capacity-bounded weekly plan from live GitHub/Linear issues and current team ownership; the CEO signs it, they don't write it. Trigger at the start of a week, when the CEO asks you for a proposal, or on "plan my week / propose work / weekly plan".
 user-invocable: true
 ---
 
@@ -11,8 +11,10 @@ or assignments, and performs no tracker mutations.
 
 ## Step 1 — Resolve contract, contributor, capacity
 
-Resolve the single Polaris root and `team/<login>/profile.yml` exactly as `/start` does. Read from
-the contract:
+Resolve the single Polaris root and **your own** `team/<login>/profile.yml` exactly as `/start`
+does (`LOGIN` from `gh api user --jq .login`). Plans are authored by their owner: the file lives in
+your own `team/$LOGIN/weeks/`. Never write another contributor's plan — the CEO reviews and signs
+it (Step 7), they do not write it for you. Read from the contract:
 - `config.yml` → `tracker.github_repo` (e.g. `owner/name`) and optional `tracker.linear_team`;
 - `team/<login>/profile.yml` → **`weekly_capacity`** (the hard cap on primary items), the
   `github:` login (exact, case-sensitive — used verbatim as `$LOGIN` in `gh` queries), plus
@@ -86,7 +88,7 @@ the same as `/start` — including the not-memory-wired case (tell the repo owne
 ## Step 6 — Write the plan file
 
 Write `team/<login>/weeks/$WEEK.md` (exact convention: ISO week — `weeks/YYYY-Www.md`, e.g.
-`team/jeanpierre/weeks/2026-W29.md`) from the plugin template
+`team/octocat/weeks/2026-W29.md`) from the plugin template
 `$CLAUDE_PLUGIN_ROOT/polaris/templates/repo-contract/weekly-plan.md` (copy it into the repo if you
 keep local templates). Do not overwrite an existing plan for the week without saying so. It must
 contain:
@@ -113,10 +115,10 @@ branch and update the plan; this command still performs no tracker mutations.
 
 ## Worked example
 
-`team/jeanpierre/weeks/2026-W29.md`:
+`team/octocat/weeks/2026-W29.md`:
 
 ```md
-# Week 2026-W29 — @jeanpierre
+# Week 2026-W29 — @octocat
 status: proposed
 ceo_signature: pending
 execution_authorized: false

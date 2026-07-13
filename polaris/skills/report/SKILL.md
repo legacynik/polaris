@@ -78,7 +78,7 @@ the repo is not memory-wired, see `/start` Step 4 — do not run `polmem init`).
 ## Step 4 — Write the report file
 
 Create or update `team/<login>/reports/$WEEK.md` (exact convention: ISO week — `reports/YYYY-Www.md`,
-e.g. `team/jeanpierre/reports/2026-W29.md`) from the plugin template
+e.g. `team/octocat/reports/2026-W29.md`) from the plugin template
 `$CLAUDE_PLUGIN_ROOT/polaris/templates/repo-contract/weekly-report.md` (copy it into the repo if you
 keep local templates). Keep it under one screen and answer:
 
@@ -96,10 +96,10 @@ keep local templates). Keep it under one screen and answer:
 
 ## Worked example
 
-`team/jeanpierre/reports/2026-W29.md`:
+`team/octocat/reports/2026-W29.md`:
 
 ```md
-# Report 2026-W29 — @jeanpierre
+# Report 2026-W29 — @octocat
 
 ## Planned versus actual
 | Issue | Planned | Actually delivered | Evidence | Status |
