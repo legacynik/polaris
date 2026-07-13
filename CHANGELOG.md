@@ -3,6 +3,15 @@
 All notable changes to Polaris Team OS. The installed version is pinned in
 `polaris/.claude-plugin/plugin.json`.
 
+## 0.6.1
+
+### Changed
+- **`/end` feeds the repository memory.** After the handoff block, one machine-readable line goes
+  into the repo journal (`polmem remember "session … — next: …"`); the offline distill decides what
+  is durable. This closes the daily memory cycle mechanically — `/start` consumes (recall), `/end`
+  feeds — for every contributor, since `remember` ships in the thin repo bundle. Same failure
+  branches as `/start` (never `polmem init`).
+
 ## 0.6.0
 
 ### Changed

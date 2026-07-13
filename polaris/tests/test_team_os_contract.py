@@ -88,6 +88,16 @@ def test_plans_and_reports_are_authored_by_their_owner() -> None:
         assert "team/giovanni" not in text
 
 
+def test_end_feeds_the_repo_journal() -> None:
+    # The daily loop closes the memory cycle mechanically: /start consumes
+    # (recall), /end FEEDS — one machine-readable line into the repo journal
+    # via polmem remember; the offline distill decides what is durable. Without
+    # this, the graph only grows when someone remembers to propose a decision.
+    end = (SKILLS / "end" / "SKILL.md").read_text()
+    assert "polmem remember" in end
+    assert "not memory-wired" in end  # same failure branch as /start
+
+
 def test_lessons_are_part_of_the_contract() -> None:
     # Product repos carry lessons.md next to decisions.md; /end proposes durable
     # lessons the same gated way it proposes decisions.
