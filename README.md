@@ -50,7 +50,8 @@ _polaris/                        # the Polaris root — one, committed with the 
 │       ├── profile.yml          # weekly_capacity, assignment_mode, preferred/excluded areas
 │       ├── weeks/YYYY-Www.md    # weekly plans (from /plan-week) — proposal until signed
 │       ├── reports/YYYY-Www.md  # weekly reports (from /report) — planned vs actual
-│       └── sessions/            # per-day handoffs (from /update and /end), committed
+│       ├── sessions/            # per-day handoffs (from /update and /end), committed
+│       └── handoff/             # optional: rich multi-session handoff docs
 ├── decisions.md                 # durable decisions, append-only
 ├── lessons.md                   # durable lessons, append-only (optional but standard)
 └── state/                       # ephemeral, gitignored (current.md — a live pointer only)
