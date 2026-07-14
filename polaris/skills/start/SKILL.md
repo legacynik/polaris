@@ -79,9 +79,10 @@ match a real GitHub login silently breaks every `gh` evidence query.
 4. `<root>/decisions.md` and `<root>/lessons.md` (if present) — **budget cap: the 10 most recent
    entries each** (both are newest-on-top; a mature repo's full ledger is tens of thousands of
    tokens — recall in Step 4 retrieves older entries on demand, never read the whole file). Then
-   `<root>/state/current.md` if it exists: a compact, gitignored pointer — if it conflicts with the
-   approved plan or evidence, treat it as stale; if it is longer than ~30 lines it has decayed into
-   a diary — read only the newest block and flag it for a trim.
+   `<root>/state/current.md` if it exists: the gitignored open-items ledger (checkpoint line +
+   `## Open`) — if it conflicts with the approved plan or evidence, treat it as stale. If it
+   carries shipped-work narrative instead of open items it has decayed into a diary — flag it for
+   a reconcile, but never drop open items yourself.
 5. The most recent relevant session log in `<root>/team/<login>/sessions/`.
 
 **Repo pulse (read-only)** — the files say what was intended; git and the tracker say what is
