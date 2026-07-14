@@ -36,24 +36,37 @@ Keep the whole entry **≤10 lines**. This session log is shared history and is 
 If the current weekly-plan item (`team/<login>/weeks/$(date +%G-W%V).md`) changed state, update only
 its `Status`, `Proof` or `Blocker` cell. Do not rewrite the plan and do not create a new plan.
 
-## Step 3 — Keep `state/current.md` tiny
+## Step 3 — Reconcile `state/current.md` (the open-items ledger)
 
-**Overwrite** (never append to) `<root>/state/current.md` with this compact pointer. It is
-gitignored; the session log and weekly plan remain the shared source of truth.
+`current.md` is the repo's live ledger of what is genuinely open — checkpoint line on top, open
+items below. **Reconcile it, never blind-overwrite and never append**: read the existing file
+first, then apply state changes. Two invariants, in priority order:
+
+1. **Nothing open is ever lost.** An item leaves the file ONLY when (a) you closed it and can name
+   the evidence (PR/commit/test — cite it in the session log), or (b) it is promoted to an
+   issue/plan — promotion replaces the item's detail with one pointer line (`→ #123`), it never
+   deletes silently. Items owned by other sessions/panels stay untouched.
+2. **Only open truth lives here.** No narrative of shipped work (→ session log), no decisions
+   taken (→ decisions.md), no history. Size is an OUTPUT of that discipline, never a constraint:
+   10 genuinely open items = 10 items in the file; each may carry 1–3 lines of context (an item
+   stripped of its why/where is half-lost). Never trim an open item to make the file smaller.
 
 ```md
-# Current work
-Updated: YYYY-MM-DD HH:MM
-Owner: @login
-Outcome: <one sentence>
-Status: <one verified fact>
-Blocker: <none or one fact>
-Next: <one concrete step>
+# Current — open items
+Updated: YYYY-MM-DD HH:MM by @login — <checkpoint: one line on what this session moved>
+
+## Open
+- [@login] <item> — <1–3 lines of context: where it stands, what unblocks it> · since YYYY-MM-DD
+- [@other] <untouched item from another session — not yours to remove>
+
+## Next
+- <one concrete first step>
 ```
 
-Do not put a diary, transcript, raw tool output or more than one active work item in this file. If
-`state/current.md` already holds a different owner, you may be on another panel's checkout — confirm
-before overwriting.
+An item idle >14 days gets flagged `stale?` — it stays until a human closes or promotes it, never
+auto-dropped. It is gitignored; the session log and weekly plan remain the shared source of truth.
+If the file holds another owner's fresher checkpoint line, you may be on another panel's checkout —
+confirm before touching it.
 
 ## Boundaries
 
@@ -61,4 +74,4 @@ before overwriting.
 - Do not create or assign issues, branches, pull requests or deployments.
 - Do not claim completion without a linked proof.
 
-Finish by showing the session checkpoint and the one-line `Next` from `state/current.md`.
+Finish by showing the session checkpoint and the `Next` line from `state/current.md`.
