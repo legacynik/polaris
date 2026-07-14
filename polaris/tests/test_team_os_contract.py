@@ -36,7 +36,11 @@ def test_the_new_commands_have_one_shared_team_contract() -> None:
     assert "`_polaris/`" in start
     for lifecycle_skill in (start, update, end):
         assert "state/current.md" in lifecycle_skill
-        assert "overwrite" in lifecycle_skill.lower()
+    # current.md semantics: RECONCILE — blind overwrite loses other panels' open
+    # items (the fear that bred checkpoint stacking); append breeds 83KB diaries.
+    for writer in (update, end):
+        assert "econcile" in writer
+        assert "never blind-overwrite" in writer or "exact\nsemantics" in writer or "exact semantics" in " ".join(writer.split())
     assert "does not create issues, branches, pull requests or assignments" in " ".join(
         plan.split()
     )
@@ -176,6 +180,21 @@ def test_terra_review_findings_stay_fixed() -> None:
     assert "--paginate" in report
     # M: onboarding preflights gh install + auth.
     assert "gh auth status" in onboarding and "gh auth login" in onboarding
+
+
+def test_current_md_is_an_open_items_ledger_nothing_open_lost() -> None:
+    # Founder tradeoff (2026-07-14): size is an OUTPUT of the only-open-truth
+    # discipline, never an eviction criterion. Items leave only by evidence-named
+    # closure or promotion-with-pointer; other owners' items are untouchable;
+    # stale items get flagged, never auto-dropped.
+    update = (SKILLS / "update" / "SKILL.md").read_text()
+    flat = " ".join(update.split())
+    assert "Nothing open is ever lost" in flat
+    assert "never deletes silently" in flat
+    assert "Never trim an open item to make the file smaller" in flat
+    assert "stale?" in update
+    assert "not yours to remove" in flat
+    assert "## Open" in update
 
 
 def test_end_feeds_the_repo_journal() -> None:

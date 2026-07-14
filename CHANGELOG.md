@@ -3,6 +3,19 @@
 All notable changes to Polaris Team OS. The installed version is pinned in
 `polaris/.claude-plugin/plugin.json`.
 
+## 0.8.1
+
+### Changed
+- **`current.md` becomes an open-items LEDGER with reconcile semantics** (founder design session).
+  Blind overwrite loses other panels' open items — the very fear that bred checkpoint stacking;
+  append breeds 83KB diaries (a live 62-checkpoint file was purged today). `/update` and `/end` now
+  READ the file first and reconcile: an item leaves ONLY by evidence-named closure or by promotion
+  to an issue/plan (which leaves a `→ #123` pointer, never a silent delete); other owners' items
+  are untouchable; idle >14d → flagged `stale?`, never auto-dropped. **Size is an output of the
+  only-open-truth discipline, never an eviction criterion** — 10 open items = 10 items, each with
+  its 1–3 lines of context; shipped-work narrative goes to the session log, decisions to
+  decisions.md. `/start` reads it as the ledger and never drops open items itself.
+
 ## 0.8.0
 
 ### Added

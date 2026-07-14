@@ -60,10 +60,11 @@ Do not log routine progress as a decision or a lesson. If nothing durable happen
 
 ## Step 4 — Prune the live pointer
 
-**Overwrite** (never append to) `<root>/state/current.md` after the handoff, keeping the same six
-compact fields `/update` uses: updated, owner, outcome, status, blocker, next. This gitignored file
-is a live pointer, not a second session log; on a clean handoff its `Next` is the first step for the
-next session — do not retain completed threads.
+**Reconcile** `<root>/state/current.md` after the handoff, with `/update` Step 3's exact
+semantics (read first; open-items ledger; nothing open ever lost; closed items leave only with
+named evidence; promotion leaves a pointer; other owners' items untouched). On a clean handoff the
+`Next` line is the first step for the next session. Completed threads leave the ledger — their
+story lives in the session log you just wrote, not here.
 
 ## Step 5 — Offer a clean commit
 
