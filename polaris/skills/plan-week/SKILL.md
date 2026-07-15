@@ -1,6 +1,6 @@
 ---
 name: plan-week
-description: Polaris skill — build your own capacity-bounded weekly plan from live GitHub/Linear issues and current team ownership; the CEO signs it, they don't write it. Trigger at the start of a week, when the CEO asks you for a proposal, or on "plan my week / propose work / weekly plan".
+description: Polaris skill — build your own weekly focus from live GitHub/Linear issues and current team ownership. You author it and you execute it; the lead may reorder priorities, but only red work waits for a named approver. Trigger at the start of a week, when the lead asks what you are picking up, or on "plan my week / propose work / weekly plan".
 user-invocable: true
 ---
 
@@ -13,8 +13,8 @@ or assignments, and performs no tracker mutations.
 
 Resolve the single Polaris root and **your own** `team/<login>/profile.yml` exactly as `/start`
 does (`LOGIN` from `gh api user --jq .login`). Plans are authored by their owner: the file lives in
-your own `team/$LOGIN/weeks/`. Never write another contributor's plan — the CEO reviews and signs
-it (Step 7), they do not write it for you. Read from the contract:
+your own `team/$LOGIN/weeks/`. Never write another contributor's plan: everyone authors their own,
+on their own machine, from their own login. Read from the contract:
 - `config.yml` → `tracker.github_repo` (e.g. `owner/name`) and optional `tracker.linear_team`;
 - `team/<login>/profile.yml` → **`weekly_capacity`** (the hard cap on primary items), the
   `github:` login (exact, case-sensitive — used verbatim as `$LOGIN` in `gh` queries), plus
@@ -71,9 +71,12 @@ Rank candidates in this strict order — **severity outranks age, always**:
 4. **staleness**: older `updatedAt` first — the **final tiebreak only**, once 1–3 are equal, so
    nothing rots. It must never promote an old low-severity issue over a fresh critical one.
 
-**Capacity rule (hard):** select at most `weekly_capacity` **primary** items. If more qualify, keep
-the top `weekly_capacity` and list the rest under "Not starting". Secondary/quick items may be added
-only if they plausibly fit alongside the primaries — never exceed capacity on primary outcomes.
+**Capacity — a planning guide, not a quota.** `weekly_capacity` is the contributor's own estimate of
+how many primary outcomes plausibly fit a week. It exists to keep the plan honest, not to cap
+output. Aim at it, and list what does not fit under "Not starting" so the choice is visible instead
+of silent. When reality disagrees with the number — an incident displaced the week, the work was
+smaller than it looked — adjust it in the weekly note and say why. A capacity defended against
+reality is a fiction the lead then plans against.
 
 ## Step 5 — Recall prior context
 
@@ -99,23 +102,43 @@ contain:
 - dependencies and ownership collisions (from other contributors' current-week files);
 - state the evidence date and separate verified facts from assumptions.
 
-## Step 7 — Approval boundary
+## Step 7 — Ownership boundary (the plan does not wait for permission)
 
-A `/plan-week` output is a **proposal until reviewed** (typically in the weekly call). When the user
-asked for a CEO proposal, mark the file:
+The plan is **yours**. You own the outcome, the alternatives, the evidence — so write it, commit it,
+and let it travel with the work into the PR. A plan visible in the repo is reviewable at any moment,
+which is what the lead actually needs; a plan that waits for a countersignature just moves the
+thinking into the lead's queue. What the lead does with it is **priority alignment**: read it, reorder it, correct
+the scope. That is not permission to execute, and their silence is not a block.
+
+There is no signature field, deliberately. A lead who is the default technical gate becomes every
+contributor's bottleneck at once, and a contributor who waits for a signature has stopped owning the
+outcome — you get permission-seeking on reversible work and, worse, the illusion of control on the
+work that actually needed a second pair of eyes. Mark the file with what is **true**, not with a
+permission state:
 
 ```yaml
-status: proposed
-ceo_signature: pending
-execution_authorized: false
+status: active         # active | carried | superseded
+lead_review: pending   # pending | read | reordered — priority alignment, never a gate
 ```
 
-Only a direct approval flips `execution_authorized: true`. **One scoped exception**: if
-`config.yml` (founder-owned — never the self-provisioned profile) grants this contributor
-`auto_authorized: secondary`, the plan's **secondary** items may start before the signature — mark
-those rows `status: auto-authorized`. The primary outcome, and any item touching production or
-client-facing surfaces, always waits for the signature regardless of the grant. After approval the
-contributor may pick a branch and update the plan; this command still performs no tracker mutations.
+**Where approval IS required — the red stop-lines.** Not ceremony: the places where being wrong is
+irreversible, or where someone else carries the risk.
+
+- material expansion of access/RLS/auth, or personal-data use, retention or deletion;
+- a new processor/vendor, or an irreversible data migration;
+- a legal or customer commitment;
+- production promotion where a signed control (e.g. a segregation-of-duties matrix) names an
+  approver — that approver, not the lead by default;
+- a material change to the agreed outcome or architecture direction.
+
+A red item is **proposed with evidence and waits for its named approver** before execution or
+promotion. Everything else — bounded, reversible work inside the agreed outcome — you decide and
+proceed, recording `Decision / Why / Risk / Next step` in the issue or PR.
+
+**The repository's own charter wins over this section.** If `profile.yml` carries a `workflow:`
+pointer (e.g. `docs/workflow/TEAM-WORKFLOW.md`), read it: its boundaries are the real contract, and
+a repo under an external audit may legitimately name approvers this list does not know about. This
+command still performs no tracker mutations.
 
 ## Worked example
 
@@ -123,9 +146,8 @@ contributor may pick a branch and update the plan; this command still performs n
 
 ```md
 # Week 2026-W29 — @octocat
-status: proposed
-ceo_signature: pending
-execution_authorized: false
+status: active
+lead_review: pending
 
 ## Outcome
 Staging MCC-judge runs green again — the stale OPENROUTER_API_KEY (#55) no longer 401s any job.

@@ -29,13 +29,15 @@ for the one-time, per-machine setup.
 | `/start` | Verify the branch, resolve the repo contract, recall memory, and brief the contributor before any work. |
 | `/update` | Leave a concise, verified checkpoint in the session log and weekly plan. |
 | `/end` | Close a session with a handoff, decision proposals, and an optional pathspec-only commit. |
-| `/plan-week` | Build a capacity-bounded weekly **proposal** from live tracker issues and current ownership. |
-| `/report` | Compare the approved plan with real delivery evidence from the tracker — planned versus actual. |
+| `/plan-week` | Build **your own** weekly focus from live tracker issues and current ownership. |
+| `/report` | Compare your plan with real delivery evidence from the tracker — planned versus actual. |
 
 No bootstrap command, generic development manifesto, or duplicate report command ships. `/plan-week`
-produces a proposal only: it never creates issues, branches, PRs or assignments, and a CEO proposal
-stays non-executable until its signature says otherwise. `/start`, `/update`, `/end` and `/report`
-never create tracker work or write outside the current product repository.
+writes a plan and nothing else: it never creates issues, branches, PRs or assignments. **The plan
+does not wait for a signature** — you own bounded, reversible work; the lead reads and may reorder
+your focus (priority alignment, not permission), and only **red** work waits for a **named**
+approver. `/start`, `/update`, `/end` and `/report` never create tracker work or write outside the
+current product repository.
 
 ## The contract model
 
@@ -48,7 +50,7 @@ _polaris/                        # the Polaris root — one, committed with the 
 ├── team/
 │   └── <github-login>/          # folder name == exact GitHub login (case-sensitive)
 │       ├── profile.yml          # weekly_capacity, assignment_mode, preferred/excluded areas
-│       ├── weeks/YYYY-Www.md    # weekly plans (from /plan-week) — proposal until signed
+│       ├── weeks/YYYY-Www.md    # weekly focus (from /plan-week) — yours, not a permission request
 │       ├── reports/YYYY-Www.md  # weekly reports (from /report) — planned vs actual
 │       ├── sessions/            # per-day handoffs (from /update and /end), committed
 │       └── handoff/             # optional: rich multi-session handoff docs

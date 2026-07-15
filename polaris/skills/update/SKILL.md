@@ -36,35 +36,58 @@ Keep the whole entry **≤10 lines**. This session log is shared history and is 
 If the current weekly-plan item (`team/<login>/weeks/$(date +%G-W%V).md`) changed state, update only
 its `Status`, `Proof` or `Blocker` cell. Do not rewrite the plan and do not create a new plan.
 
-## Step 3 — Reconcile `state/current.md` (the open-items ledger)
+## Step 3 — Reconcile `state/current.md` (the convergence point) — add and flag, never close
 
-`current.md` is the repo's live ledger of what is genuinely open — checkpoint line on top, open
-items below. **Reconcile it, never blind-overwrite and never append**: read the existing file
-first, then apply state changes. Two invariants, in priority order:
+**Resolve it from the MAIN worktree, always** — never from the checkout you happen to be sitting in:
 
-1. **Nothing open is ever lost.** An item leaves the file ONLY when (a) you closed it and can name
-   the evidence (PR/commit/test — cite it in the session log), or (b) it is promoted to an
-   issue/plan — promotion replaces the item's detail with one pointer line (`→ #123`), it never
-   deletes silently. Items owned by other sessions/panels stay untouched.
-2. **Only open truth lives here.** No narrative of shipped work (→ session log), no decisions
-   taken (→ decisions.md), no history. Size is an OUTPUT of that discipline, never a constraint:
-   10 genuinely open items = 10 items in the file; each may carry 1–3 lines of context (an item
-   stripped of its why/where is half-lost). Never trim an open item to make the file smaller.
-
-```md
-# Current — open items
-Updated: YYYY-MM-DD HH:MM by @login — <checkpoint: one line on what this session moved>
-
-## Open
-- [@login] <item> — <1–3 lines of context: where it stands, what unblocks it> · since YYYY-MM-DD
-- [@other] <untouched item from another session — not yours to remove>
-
-## Next
-- <one concrete first step>
+```bash
+MAIN_WT="$(git worktree list --porcelain | head -1 | sed 's|^worktree ||')"  # main worktree is listed first
+# → "$MAIN_WT/_polaris/state/current.md"  (or "$MAIN_WT/state/current.md" when the repo root IS _polaris)
 ```
 
-An item idle >14 days gets flagged `stale?` — it stays until a human closes or promotes it, never
-auto-dropped. It is gitignored; the session log and weekly plan remain the shared source of truth.
+This file is gitignored, so it never travels with a branch. A panel that writes it inside its own
+worktree writes a handoff **nobody will ever read**, because the next session opens the main
+checkout. That is measured, not theoretical: three worktrees of one live repo each held an orphaned
+copy — 80KB last touched 12 July, 66KB last touched 8 July, one absent entirely — every one of them
+a handoff its own author never saw again. One file, in the main worktree, is what makes many
+parallel panels legible from one place.
+
+Because every panel converges here, **the branch is a thread's identity**: one panel, one worktree,
+one branch. Tag each thread with its branch and `/end` can ask git whether the work actually landed
+instead of guessing — and no panel has to know which of the others is alive.
+
+**Reconcile, never blind-overwrite and never blind-append**: read the existing file first, then
+apply your changes to your own thread. **`/update` has no closing authority** — only `/end` may
+remove a thread; `/update` adds one, updates its own thread's context, or flags one stale. Two
+invariants, in priority order:
+
+1. **Nothing open is ever lost, and `/update` never closes anything — even its own thread.** Many
+   panels write this one file, sometimes within the same hour. The only reliable way for that to
+   never eat someone's thread is for no delete path to exist here at all.
+2. **Only open truth lives here.** No narrative of shipped work (→ session log), no decisions taken
+   (→ decisions.md), no history. Size is an OUTPUT of that discipline, never a constraint: 10
+   genuinely live threads = 10 threads in the file, each with 1–3 lines of context (a thread
+   stripped of its why/where is half-lost). Never trim a live thread to make the file smaller.
+
+```md
+# Current — live threads
+Updated: YYYY-MM-DD HH:MM by @login — <one line on what this session moved>
+
+## Open
+- `feat/123-short-name` — <1–3 lines: where it stands, what unblocks it> · since YYYY-MM-DD
+- `fix/456-other-panel` — <another panel's thread — not yours to remove>
+
+## Next
+- `feat/123-short-name`: <one concrete first step>
+- `fix/456-other-panel`: <their next step — never overwrite it with yours>
+```
+
+A thread idle >14 days gets flagged `stale?` — it stays until `/end` closes or promotes it, never
+auto-dropped. `stale?` is a question, not a verdict: parked work on a live branch is still work.
+
+If a `state/current.md` also exists in the **non-main** worktree you are in, it predates this rule:
+say so once and offer to fold its live threads into the main file. Do not delete it silently — it
+may be the only copy of a handoff.
 If the file holds another owner's fresher checkpoint line, you may be on another panel's checkout —
 confirm before touching it.
 

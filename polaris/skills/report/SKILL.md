@@ -42,9 +42,11 @@ PY
 ## Step 1 — Read the week's plan
 
 Open `team/<login>/weeks/$WEEK.md`. Its rows (issue, intended result, proof, branch) are the
-baseline you measure against. Check its approval fields: if `execution_authorized` is not `true`,
-the baseline is an **unapproved proposal** — label it so in the report, never as a commitment. If
-there is no plan for the week, say so and report only what shipped; do not invent a baseline.
+baseline you measure against — the contributor's own stated intent, which is exactly what makes
+planned-versus-actual worth reading. If `lead_review:` shows the lead reordered the week, measure
+against the reordered focus and say the priority changed mid-week; a plan overtaken by a real
+priority is not a miss. If there is no plan for the week, say so and report only what shipped; do
+not invent a baseline.
 
 ## Step 2 — Gather ground-truth evidence (read-only)
 
@@ -132,8 +134,10 @@ e.g. `team/octocat/reports/2026-W29.md`) from the plugin template
    concrete removal proposal. This is the continuous bottleneck-hunt, run per-person and async —
    the loop that keeps the system fast without a meeting. A week with no named bottleneck means
    the report author didn't look.
-9. `## PM action` — the decisions the CEO/lead must take, each one line with its owner. This is the
-   section the reader acts on; if nothing is needed, say "none".
+9. `## PM action` — the decisions someone else must take for this work to move, each one line with
+   its **named** owner. Not "things to approve": blockers only you cannot clear — a red item waiting
+   on its approver, an access someone must grant, a priority call between two real options. This is
+   the section the reader acts on; if nothing is needed, say "none", which is the healthy default.
 10. `## Next week` — a short ordered priority list for the contributor's own scope.
 
 **Scale honestly.** The report's length is proportional to the evidence: a quiet week is a short

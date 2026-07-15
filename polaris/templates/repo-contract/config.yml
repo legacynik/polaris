@@ -7,8 +7,3 @@ contributors:
   # not a nickname. Skills use it directly in `gh --assignee` / `author:` queries; a wrong value
   # silently returns no evidence. Add only real repository members.
   - github: octocat
-  # Optional, FOUNDER-granted (this file is repo-owner territory — a self-provisioned
-  # profile.yml can never grant this): secondary plan items may start before the CEO
-  # signature. The primary outcome and anything touching production or client-facing
-  # surfaces ALWAYS waits for the signature.
-  #   auto_authorized: secondary

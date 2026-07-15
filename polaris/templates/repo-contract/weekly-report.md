@@ -45,7 +45,7 @@ with no named bottleneck means you didn't look.
 
 ## PM action
 
-- Decisions the CEO/lead must take (one line each, with owner), or "none".
+- Blockers only someone else can clear (one line each, with a named owner), or "none".
 
 ## Next week
 
