@@ -70,10 +70,12 @@ match a real GitHub login silently breaks every `gh` evidence query.
    and `language:` — the brief is written in THAT language (labels and icons stay as in the
    template; default English if the field is absent).
 2. The current ISO-week plan `team/<login>/weeks/$(date +%G-W%V).md` — outcome, branch, proof,
-   blockers. Check `execution_authorized`: anything other than `true` is an **unapproved proposal**
-   — brief it as such, never as active work. Exception: rows marked `status: auto-authorized`
-   (secondary items under a founder grant in `config.yml`) are startable — say which ones. If the file is absent, say there is no signed plan for
-   this week; planning happens in `/plan-week`.
+   blockers. This is the contributor's **own** focus: brief it as active work, never as something
+   awaiting permission. If `lead_review:` says the lead reordered or corrected it, surface that —
+   it is priority information, not a gate. The one thing to brief as blocked is a **red** item
+   (per the repo's workflow charter, `profile.yml` → `workflow:`) waiting on its **named** approver
+   — say who that is. If the file is absent, say there is no plan for this week and offer
+   `/plan-week`; its absence never blocks urgent or clearly-owned work.
 3. Other current-week files under `team/*/weeks/` and recent entries under `team/*/sessions/` —
    titles, owners and active branches only, to avoid collisions.
 4. `<root>/decisions.md` and `<root>/lessons.md` (if present) — **budget cap: the 10 most recent
@@ -132,7 +134,7 @@ Failure branches:
 - `not memory-wired (no scripts/polaris_memory_repo.py)` → this repo does not carry the memory
   bundle yet. `git pull` in case it is arriving with the code; if it is still missing, say memory is
   unavailable once and continue. **Do not run `polmem init` yourself** and do not invent a fallback
-  store — tell the repo owner / CEO the repo needs wiring.
+  store — tell the repo owner the repo needs wiring.
 - missing `.wiki` index after the bundle loads → `git pull`, then retry once.
 
 `recall` is repository memory, not current state: on the founder's own machine it may surface

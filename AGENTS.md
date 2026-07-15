@@ -11,7 +11,7 @@ of this repository: read the relevant SKILL.md below and follow it exactly.
 | start | [polaris/skills/start/SKILL.md](polaris/skills/start/SKILL.md) | Begin a session: verify the branch, resolve the `_polaris/` contract, self-provision your own `team/<login>/` on first run, recall memory, brief |
 | update | [polaris/skills/update/SKILL.md](polaris/skills/update/SKILL.md) | Mid-session checkpoint in your own `team/<login>/sessions/` |
 | end | [polaris/skills/end/SKILL.md](polaris/skills/end/SKILL.md) | Close a session: handoff, decision/lesson proposals, optional pathspec-only commit |
-| plan-week | [polaris/skills/plan-week/SKILL.md](polaris/skills/plan-week/SKILL.md) | Your own weekly plan — a proposal until the CEO signs it |
+| plan-week | [polaris/skills/plan-week/SKILL.md](polaris/skills/plan-week/SKILL.md) | Your own weekly focus — yours to execute; only red work waits for a named approver |
 | report | [polaris/skills/report/SKILL.md](polaris/skills/report/SKILL.md) | Weekly report — planned versus actual, evidence from the tracker |
 
 ## Notes for non-Claude agents
@@ -30,5 +30,8 @@ of this repository: read the relevant SKILL.md below and follow it exactly.
   never both. Your `team/<login>/` folder name is your exact GitHub login
   (`gh api user --jq .login`); never create another contributor's path.
 - Boundaries the skills enforce apply to you too: no tracker mutations from the lifecycle
-  commands, plans need the CEO signature before execution, propose-then-confirm for
-  `decisions.md` / `lessons.md`.
+  commands, propose-then-confirm for `decisions.md` / `lessons.md`, and no signature gate on
+  bounded reversible work — only **red** work (access/RLS/auth, personal data, processor/vendor,
+  irreversible migration, legal/customer commitment, audited production promotion, material
+  outcome/architecture change) waits for its **named** approver. If the repo ships a workflow
+  charter (`profile.yml` → `workflow:`), that charter's boundaries win.

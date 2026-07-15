@@ -1,8 +1,7 @@
 # Week YYYY-Www — @<login>
 
-status: proposed
-ceo_signature: pending
-execution_authorized: false
+status: active         # active | carried | superseded
+lead_review: pending   # pending | read | reordered — priority alignment, never a gate
 
 ## Outcome
 

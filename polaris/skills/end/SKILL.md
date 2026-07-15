@@ -26,17 +26,30 @@ Append to `team/<login>/sessions/YYYY-MM-DD-@<github-login>.md`:
 ```
 
 Then feed the repository memory with the same handoff, one machine-readable line — the offline
-distill decides later what is durable, so never skip this because the session felt routine:
+distill decides later what is durable, so never skip this because the session felt routine.
+
+**Check the repo owns a journal BEFORE you call `remember` — the binary resolving is not the test:**
 
 ```bash
-polmem remember "session YYYY-MM-DD @<login>: <shipped/verified, one clause> — next: <first step>"
+test -d .wiki/journal || echo "NOT memory-wired — skip the remember line"
 ```
 
-This line is **written to the repo's committed journal** — shared history. Same privacy boundary as
+This matters more than it looks. `polmem` may be installed **globally** and work perfectly while
+being wired to a different repository: run `remember` in a repo without its own `.wiki/journal/` and
+the line does not fail — it silently lands in **someone else's** journal, carrying this session's
+content out of this repository. Measured, not hypothetical: an `/end` run inside a scratch repo
+wrote its handoff into an unrelated vault. `command -v polmem` passes in exactly that state, which
+is why the wiring test is the repo's directory, never the binary.
+
+```bash
+polmem remember "session YYYY-MM-DD @<login>" "<shipped/verified, one clause> — next: <first step>"
+```
+
+The line is **written to this repo's committed journal** — shared history. Same privacy boundary as
 the contract README: no secrets, credentials, customer data or personal information, ever. Failure
-branches are the same as `/start` Step 4: `command not found: polmem` → run the plugin installer
-once; `not memory-wired` → skip this line, say so once, continue the handoff. Never run
-`polmem init` yourself.
+branches: no `.wiki/journal/` → skip the line, say once that the repo is not memory-wired, continue
+the handoff (tell the repo owner; do **not** wire it yourself); `command not found: polmem` → run the
+plugin installer once, then re-check the wiring above. Never run `polmem init` yourself.
 
 ## Step 2 — Tick the plan
 
@@ -58,13 +71,42 @@ The same gate applies to durable lessons — a real mistake plus the rule that p
 recurrence: **propose** an entry in `<root>/lessons.md` and wait for confirmation before writing it.
 Do not log routine progress as a decision or a lesson. If nothing durable happened, say so.
 
-## Step 4 — Prune the live pointer
+## Step 4 — Prune the live pointer (the only step allowed to close a thread)
 
-**Reconcile** `<root>/state/current.md` after the handoff, with `/update` Step 3's exact
-semantics (read first; open-items ledger; nothing open ever lost; closed items leave only with
-named evidence; promotion leaves a pointer; other owners' items untouched). On a clean handoff the
-`Next` line is the first step for the next session. Completed threads leave the ledger — their
-story lives in the session log you just wrote, not here.
+**Resolve it from the MAIN worktree**, exactly as `/update` Step 3 does — the handoff has to land
+where the next session will actually open, not inside the worktree you happen to be in:
+
+```bash
+MAIN_WT="$(git worktree list --porcelain | head -1 | sed 's|^worktree ||')"  # main worktree is listed first
+# → "$MAIN_WT/_polaris/state/current.md"  (or "$MAIN_WT/state/current.md" when the repo root IS _polaris)
+```
+
+**Reconcile** it: read it first, never blind-overwrite, same rules as `/update` Step 3 (threads keyed
+by branch, nothing open lost, other panels' threads and `Next` lines untouched) — with one
+difference. **`/end` is the only Team OS command with closing authority**, and it spends it against
+ground truth rather than impression.
+
+**A thread closes only when its work actually landed.** Ask git and the tracker; never infer death
+from "nothing moved lately". Work parked on a live branch while its owner spent the week elsewhere
+is the normal shape of parallel development — several panels, several worktrees, several branches
+open for days — and dropping that thread is precisely the loss this file exists to prevent:
+
+```bash
+git worktree list                                        # a worktree still holds the branch → live, stop
+git branch --merged origin/main | grep -qx "  <branch>"  # merged into the base?
+gh pr list --head "<branch>" --state all --limit 1 --json number,state,mergedAt
+```
+
+Close the thread when its branch is **merged** (or its PR reports `MERGED`), and cite that evidence
+in the session log you just wrote. Otherwise it stays: an open PR is not a closed thread, a green
+real-test is not a merge, "the code is done" is not a merge, and a branch with no recent commits is
+parked, not dead. The other exit is **promotion** — a thread that became an issue/plan leaves one
+pointer line (`→ #123`), never a silent delete. A thread with no branch closes only against named
+evidence in the log.
+
+On a clean handoff the `Next` line is the first step for the next session; leave other panels' `Next`
+lines alone. Closed threads leave the pointer — their story lives in the session log you just wrote,
+not here.
 
 ## Step 5 — Offer a clean commit
 

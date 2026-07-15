@@ -3,6 +3,72 @@
 All notable changes to Polaris Team OS. The installed version is pinned in
 `polaris/.claude-plugin/plugin.json`.
 
+## 0.9.0
+
+### Removed
+- **The CEO signature gate is gone — `ceo_signature`, `execution_authorized` and `auto_authorized`
+  no longer exist** (founder call, 2026-07-15: "leva proprio la mia firma"). The model was
+  backwards, and 0.8.0's `auto_authorized: secondary` was a patch on a broken default rather than a
+  fix. The live engineering charter this plugin is supposed to serve says the opposite in writing:
+  green work is **self-merged by its owner** after the applicable gates, amber **proceeds** on a
+  recorded `Decision / Why / Risk / Next step` ("silence is not a block"), the lead "**is not the
+  default technical gate**", and their review of the weekly focus is "**priority alignment, not a
+  technical approval gate**". A plugin shipping the inverse trains contributors to ask permission
+  for reversible work and makes the founder the whole team's bottleneck.
+
+### Changed
+- **The weekly plan states truth, not permission**: `status: active|carried|superseded` +
+  `lead_review: pending|read|reordered`. The plan is committed and travels into the PR — visible
+  and correctable at any time, blocking at none. `/start` briefs it as **active work**; `/report`
+  measures against it as the contributor's own stated intent, and a plan overtaken by a real
+  reprioritisation is reported as a priority change, not a miss.
+- **The gate survives exactly where being wrong is irreversible — the red stop-lines**, and it
+  names an approver instead of defaulting to the lead: access/RLS/auth expansion, personal-data
+  use/retention/deletion, new processor/vendor, irreversible migration, legal/customer commitment,
+  audited production promotion, material outcome/architecture change. **The repository's own
+  charter (`profile.yml` → `workflow:`) outranks this list** — an audited repo may name approvers
+  the plugin cannot know about (e.g. a signed segregation-of-duties matrix).
+- **`weekly_capacity` is a planning guide, not a quota.** The live contract had already corrected
+  this by hand (`weekly_capacity: 3 # planning guide, not a quota`) before the plugin caught up; a
+  hard cap turns an honesty device into a lid on output.
+- **`/end` closes a thread only against verified merge.** `git worktree list` (a worktree still
+  holding the branch = live), `git branch --merged origin/main`, `gh pr list --head`. An open PR is
+  not a closed thread, a green real-test is not a merge, and a branch with no recent commits is
+  **parked, not dead** — with several panels on several worktrees, parked-while-you-work-elsewhere
+  is the normal shape of the work, and dropping it is the exact loss this file exists to prevent.
+- **There is no CEO in this contract.** The role is gone, not just the signature field — `/plan-week`
+  Step 1 still read "the CEO reviews and signs it", which the first sweep missed because it banned
+  the phrase `CEO signs`. What exists: a repo **owner**, and (where a repo has one) a **lead** who
+  sets outcomes, priorities and red stop-lines. `## PM action` in `/report` is no longer "decisions
+  the CEO must take" but "blockers only someone else can clear, with a named owner" — and "none" is
+  the healthy default. The contract test now bans the bare word, because authority-by-rank is how
+  the gate grows back under a new name.
+- **`current.md` converges on the MAIN worktree** — `/update` and `/end` resolve it via
+  `git worktree list --porcelain | head -1`, never from the checkout they happen to sit in. The real
+  workflow is many panels in many worktrees whose handoff must land where the next session opens:
+  main. Since the file is gitignored it never travels with a branch, so v0.8.1's per-checkout
+  isolation was the **bug, not the safety** — measured on one live repo, three worktrees each held
+  an orphaned copy (80KB last touched 12 July, 66KB last touched 8 July, one absent), every one a
+  handoff its own author never saw again. Consequences: **the branch is a thread's identity** (one
+  panel, one worktree, one branch — the panel discriminator that makes the merge check possible
+  without any panel knowing which others are alive), threads and `Next` lines are branch-keyed so
+  panels stop overwriting each other, and a `current.md` found in a non-main worktree is surfaced as
+  a pre-rule orphan, never silently deleted — it may be the only copy of a handoff.
+
+## 0.8.2
+
+### Changed
+- **`/update` loses closing authority over `current.md` — only `/end` may close an item**
+  (founder correction, issue #24 follow-up). 0.8.1 gave `/update` and `/end` the identical
+  reconcile contract, including the same power to remove/close a ledger item. `/update` runs
+  often, sometimes from several panels within the same hour — that shared delete path is exactly
+  the surface that lets one panel's cleanup collide with another panel's still-open thread.
+  `/update` may now only add a new item, update its own item's context, or flag one `stale?`;
+  it never closes one, even its own. `/end` is unchanged: the sole, deliberate, evidence-cited
+  (or promotion-with-pointer) point where an item leaves the ledger. Non-destructive by design if
+  `/end` is skipped for a while — closed-but-unpruned items are noise, not corruption, and the
+  existing `stale?` flag already surfaces them.
+
 ## 0.8.1
 
 ### Changed

@@ -144,10 +144,17 @@ repository owner — do not create the contract yourself.
 
 ## 6. The week
 
-- Each contributor runs `/plan-week` for **their own** week — a proposal grounded in real
-  issues/PRs and capacity. The CEO or lead requests and reviews it; the signature gates execution.
-- A CEO proposal with `ceo_signature: pending` **does not authorize work**.
-- After sign-off, each person maintains their own plan in the repo.
+- Each contributor runs `/plan-week` for **their own** week — a focus grounded in real issues/PRs
+  and capacity. Commit it and let it travel into your PRs: a plan visible in the repo is reviewable
+  whenever the lead wants, which is the point.
+- **It does not wait for a signature.** The lead reads it and may reorder or correct the scope —
+  that is priority alignment, not permission, and their silence is not a block. You own bounded,
+  reversible work: decide, proceed, and record `Decision / Why / Risk / Next step` in the issue or
+  PR. Only **red** work waits for a **named** approver (access/RLS/auth expansion, personal-data
+  use/retention/deletion, new processor/vendor, irreversible migration, legal/customer commitment,
+  audited production promotion, material outcome/architecture change). If your repo ships a workflow
+  charter (`profile.yml` → `workflow:`), that charter's boundaries win over this list.
+- Each person maintains their own plan in the repo as reality changes.
 - At week end, `/report` compares plan versus reality: deliveries, proof, blockers, next priority.
   Run it on the Friday of the week you are reporting (or set `WEEK` explicitly for a past week).
 
