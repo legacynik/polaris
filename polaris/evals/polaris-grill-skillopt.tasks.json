@@ -1,0 +1,90 @@
+{
+  "format": "skillopt_sleep.tasks.v1",
+  "project": "polaris-team-os",
+  "transcript_source": "founder-polaris-grill-2026-07-17",
+  "target_skill_path": "polaris/skills/polaris-grill/SKILL.md",
+  "reviewed": true,
+  "tasks": [
+    {
+      "id": "auto-answer-schema-and-backend-before-asking",
+      "project": "polaris-team-os",
+      "intent": "Grill this fraud-scoring change with docs. Inspect the database and backend too.",
+      "context_excerpt": "The checked-in schema, migrations, generated types, service code and tests fully describe the current data flow. Only the product owner's acceptable false-positive tradeoff is unknown.",
+      "outcome": "success",
+      "reference_kind": "rule",
+      "judge": {
+        "kind": "rule",
+        "checks": [
+          {"op": "regex", "arg": "(?is)(?:evidence|evidenza).*(?:schema|migration|database).*(?:backend|service|api)"},
+          {"op": "regex", "arg": "(?is)(?:recommend|raccomand).*(?:false.?positive|falso positivo)"},
+          {"op": "max_chars", "arg": 2600}
+        ]
+      },
+      "tags": ["auto-answer", "database-schema", "backend"],
+      "source_sessions": ["2026-07-17-founder-polaris-grill"],
+      "split": "train",
+      "origin": "real"
+    },
+    {
+      "id": "memory-is-not-current-state",
+      "project": "polaris-team-os",
+      "intent": "Grill the change using polmem and decisions.",
+      "context_excerpt": "A recalled note names legacy_table, but the newest migration, ORM model and backend query use canonical_table. The response must resolve the conflict from current evidence and identify the memory entry as stale context.",
+      "outcome": "success",
+      "reference_kind": "rule",
+      "judge": {
+        "kind": "rule",
+        "checks": [
+          {"op": "regex", "arg": "(?is)(?:memory|polmem).*(?:context|stale|obsolet).*(?:migration|orm|code|backend)"},
+          {"op": "regex", "arg": "(?is)(?:canonical_table).*(?:evidence|current|attual)"},
+          {"op": "max_chars", "arg": 2200}
+        ]
+      },
+      "tags": ["memory-boundary", "supersession", "schema"],
+      "source_sessions": ["2026-07-17-founder-polaris-grill"],
+      "split": "train",
+      "origin": "real"
+    },
+    {
+      "id": "versioned-docs-resolve-sdk-question",
+      "project": "polaris-team-os",
+      "intent": "Grill the integration and use current docs so you answer what you can yourself.",
+      "context_excerpt": "The lockfile pins SDK 4.2.1. Context7 official documentation resolves retry and timeout semantics. A private implementation snippet is available locally but must not be sent externally.",
+      "outcome": "success",
+      "reference_kind": "rule",
+      "judge": {
+        "kind": "rule",
+        "checks": [
+          {"op": "regex", "arg": "(?is)(?:4\\.2\\.1).*(?:Context7|official docs|documentazione ufficiale)"},
+          {"op": "regex", "arg": "(?is)(?:retry|timeout).*(?:evidence|evidenza|document)"},
+          {"op": "max_chars", "arg": 2200}
+        ]
+      },
+      "tags": ["context7", "version-grounding", "privacy"],
+      "source_sessions": ["2026-07-17-founder-polaris-grill"],
+      "split": "val",
+      "origin": "real"
+    },
+    {
+      "id": "multi-context-handoff-does-not-implement",
+      "project": "polaris-team-os",
+      "intent": "The change spans schema migration, backend rollout and client compatibility. Finish the grill.",
+      "context_excerpt": "The repository already declares docs/specs/change.md as its canonical spec path. Produce the decision-complete handoff, route it there, and require a fresh-context review. Do not code or create tracker work.",
+      "outcome": "success",
+      "reference_kind": "rule",
+      "judge": {
+        "kind": "rule",
+        "checks": [
+          {"op": "section_present", "arg": "Evidence / Inference / Unknown"},
+          {"op": "regex", "arg": "(?is)docs/specs/change\\.md.*(?:fresh context|contesto fresco)"},
+          {"op": "regex", "arg": "(?is)(?:do not implement|non implement).*(?:issue|branch|pull request|assignment)"},
+          {"op": "max_chars", "arg": 5000}
+        ]
+      },
+      "tags": ["handoff", "canonical-spec", "read-only"],
+      "source_sessions": ["2026-07-17-founder-polaris-grill"],
+      "split": "val",
+      "origin": "real"
+    }
+  ]
+}

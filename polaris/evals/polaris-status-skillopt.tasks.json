@@ -1,0 +1,90 @@
+{
+  "format": "skillopt_sleep.tasks.v1",
+  "project": "polaris-team-os",
+  "transcript_source": "founder-correction-2026-07-16",
+  "target_skill_path": "polaris/skills/polaris-status/SKILL.md",
+  "reviewed": true,
+  "tasks": [
+    {
+      "id": "resume-does-not-trigger-status",
+      "project": "polaris-team-os",
+      "intent": "Start. Riprendi da dove avevamo lasciato.",
+      "context_excerpt": "The latest handoff contains an objective, checkpoint, blocker and next action. Do not produce a repository or portfolio survey.",
+      "outcome": "success",
+      "reference_kind": "rule",
+      "judge": {
+        "kind": "rule",
+        "checks": [
+          {"op": "regex", "arg": "(?is)^(?!.*(?:git fetch|gh pr list|polmem health)).*(?:checkpoint|handoff).*(?:next action|prossima azione)"},
+          {"op": "max_chars", "arg": 900}
+        ]
+      },
+      "tags": ["trigger-boundary", "start-cost"],
+      "source_sessions": ["2026-07-16-founder-start-status-correction"],
+      "split": "train",
+      "origin": "real"
+    },
+    {
+      "id": "explicit-full-status",
+      "project": "polaris-team-os",
+      "intent": "Pol status: fammi vedere tutto, incluso repo corrente, team e memoria.",
+      "context_excerpt": "Portfolio state and a product repository are available. Return a concise decision-grade briefing, not a dump.",
+      "outcome": "success",
+      "reference_kind": "rule",
+      "judge": {
+        "kind": "rule",
+        "checks": [
+          {"op": "section_present", "arg": "PORTFOLIO"},
+          {"op": "section_present", "arg": "CURRENT REPO"},
+          {"op": "section_present", "arg": "MEMORY / HEALTH"},
+          {"op": "section_present", "arg": "MY CALL"},
+          {"op": "max_chars", "arg": 3200}
+        ]
+      },
+      "tags": ["explicit-status", "decision-grade"],
+      "source_sessions": ["2026-07-16-founder-start-status-correction"],
+      "split": "train",
+      "origin": "real"
+    },
+    {
+      "id": "health-sandbox-degrades",
+      "project": "polaris-team-os",
+      "intent": "Polaris status. polmem health fallisce con PermissionError su ps.",
+      "context_excerpt": "The host sandbox denies process inspection. Continue the status and describe memory health as degraded or unavailable; do not crash or make it a gate.",
+      "outcome": "success",
+      "reference_kind": "rule",
+      "judge": {
+        "kind": "rule",
+        "checks": [
+          {"op": "regex", "arg": "(?is)(?:memory|memoria).*(?:degraded|unavailable|degradata|non disponibile)"},
+          {"op": "regex", "arg": "(?is)(?:continue|proced|status)"},
+          {"op": "max_chars", "arg": 1800}
+        ]
+      },
+      "tags": ["failure-mode", "polmem-health"],
+      "source_sessions": ["2026-07-16-polmem-permission-error"],
+      "split": "val",
+      "origin": "real"
+    },
+    {
+      "id": "stale-portfolio-does-not-mutate",
+      "project": "polaris-team-os",
+      "intent": "Pol status completo; il freshness check dice stale da quattro giorni.",
+      "context_excerpt": "Report the stale state, prefer live Git/GitHub evidence, and give the refresh action as a risk. Do not run an update ritual or rewrite the vault.",
+      "outcome": "success",
+      "reference_kind": "rule",
+      "judge": {
+        "kind": "rule",
+        "checks": [
+          {"op": "regex", "arg": "(?is)(?:stale|obsolet|non aggiornato).*(?:git|github|live|evidenza)"},
+          {"op": "regex", "arg": "(?is)(?:risk|rischio|refresh|aggiorna)"},
+          {"op": "max_chars", "arg": 2200}
+        ]
+      },
+      "tags": ["freshness", "read-only"],
+      "source_sessions": ["2026-07-16-founder-start-status-correction"],
+      "split": "val",
+      "origin": "real"
+    }
+  ]
+}

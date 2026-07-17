@@ -2,8 +2,9 @@
 
 Polaris Team OS is a repository-first operating model for a product team working in Claude Code. It
 makes ownership, weekly outcomes, session handoffs and delivery evidence visible **from inside the
-product repository** — the same place the code lives. Five slash commands (`/start`, `/update`,
-`/end`, `/plan-week`, `/report`) plus a memory CLI (`polmem`). It is not a founder vault, an issue
+product repository** — the same place the code lives. Seven slash commands (`/start`,
+`/polaris-status`, `/polaris-grill`, `/update`, `/end`, `/plan-week`, `/report`) plus a memory CLI (`polmem`). It is
+not a founder vault, an issue
 tracker, or a second project manager: GitHub or Linear stays the source of execution truth, and
 Polaris records who owns an outcome, why it matters, what proof closes it, and what is blocked.
 
@@ -22,22 +23,37 @@ only** — never put project data, customer information, private decisions or re
 into it. Then follow [`docs/TEAM-ONBOARDING.md`](docs/TEAM-ONBOARDING.md) from the product repository
 for the one-time, per-machine setup.
 
-## The five commands
+For Codex, Cursor, Claude Code, and other Agent Skills clients, install the same versioned skills
+through the Vercel Skills CLI:
+
+```bash
+npx skills add legacynik/polaris --list
+npx skills add legacynik/polaris --skill '*' -a codex -a claude-code
+```
+
+The marketplace manifest declares all seven paths, so the plugin and Skills CLI consume the same
+`SKILL.md` files; there is no provider-specific duplicate.
+
+## The seven commands
 
 | Command | One-line purpose |
 |---|---|
-| `/start` | Verify the branch, resolve the repo contract, recall memory, and brief the contributor before any work. |
+| `/start` | Resume the authorized outcome from the latest local handoff/checkpoint; first use also provisions your own path. |
+| `/polaris-status` | Explicit full portfolio/repository pulse, team collisions, freshness, memory and health. |
+| `/polaris-grill` | Clarify an ambiguous product or technical change against live repo evidence, durable decisions, backend/schema contracts and versioned docs; emit an execution handoff without implementing. |
 | `/update` | Leave a concise, verified checkpoint in the session log and weekly plan. |
 | `/end` | Close a session with a handoff, decision proposals, and an optional pathspec-only commit. |
 | `/plan-week` | Build **your own** weekly focus from live tracker issues and current ownership. |
 | `/report` | Compare your plan with real delivery evidence from the tracker — planned versus actual. |
 
-No bootstrap command, generic development manifesto, or duplicate report command ships. `/plan-week`
-writes a plan and nothing else: it never creates issues, branches, PRs or assignments. **The plan
-does not wait for a signature** — you own bounded, reversible work; the lead reads and may reorder
-your focus (priority alignment, not permission), and only **red** work waits for a **named**
-approver. `/start`, `/update`, `/end` and `/report` never create tracker work or write outside the
-current product repository.
+No bootstrap, generic development manifesto, or duplicate report command ships. `/polaris-grill`
+is the read-only clarification gate; it proposes durable entries but never implements or mutates the
+tracker. Full portfolio/repository pulse is explicit `/polaris-status`, not work paid on every
+`/start`. `/plan-week` writes a plan and nothing else: it never creates issues, branches, PRs or
+assignments. **The plan does not wait for a signature** — you own bounded, reversible work; the
+lead reads and may reorder your focus (priority alignment, not permission), and only **red** work
+waits for a **named** approver. `/start`, `/update`, `/end` and `/report` never create tracker work
+or write outside the current product repository.
 
 ## The contract model
 
@@ -106,8 +122,9 @@ the tracker or code, never as proof of what is true now.
 
 - **Claude Code** with plugin support.
 - **`python3`** (3.8+) on PATH — `polmem` and the `/report` week computation use it.
-- **`gh`** (GitHub CLI), authenticated (`gh auth status`) — `/plan-week` and `/report` read the
-  tracker through it. Optionally the Linear tooling if `tracker.linear_team` is set.
+- **`gh`** (GitHub CLI), authenticated (`gh auth status`) — first `/start` resolves and caches the
+  contributor login; `/plan-week` and `/report` read the tracker through it. Recurring `/start`
+  remains local. Optionally the Linear tooling if `tracker.linear_team` is set.
 - **Superpowers** and **Context7** plugins for planning/delivery and live docs; **Sequential
   Thinking** and **Codebase Memory** MCP servers are declared by the plugin. See onboarding for the
   per-machine preflight. Polaris never silently installs tools, credentials, MCP servers or plugins.
