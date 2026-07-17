@@ -3,6 +3,30 @@
 All notable changes to Polaris Team OS. The installed version is pinned in
 `polaris/.claude-plugin/plugin.json`.
 
+## 0.10.0
+
+### Added
+- **`/polaris-grill`.** A read-only, repo-grounded product and technical interview that combines
+  live code, backend and schema contracts, `_polaris/` state, decisions, lessons, targeted
+  `polmem recall`, and version-aware Context7 documentation. It auto-answers from evidence, asks one
+  decision-bearing question at a time, and emits a bounded execution handoff without implementing,
+  mutating trackers, or inventing a second spec system.
+- **Portable `/polaris-status`.** The existing full-status workflow now ships from the versioned
+  package as a provider-neutral Agent Skill. It owns the expensive Git/GitHub pulse, team scan,
+  freshness, memory and health paths removed from `/start`, and is discoverable by Agent Skills
+  installers as well as the Claude plugin.
+
+### Changed
+- **`/start` is resume-only.** It reads the current outcome, local branch, latest owned
+  handoff/checkpoint, active blocker and concrete next action. Repo pulse, remote fetch, open PRs,
+  other contributors, decision/lesson slices, memory recall and health moved behind the explicit
+  operator status workflow instead of being paid on every session start.
+- **Recurring identity resolution is local.** The exact GitHub login is resolved and cached in
+  repo-local git config on first use; subsequent starts do not call GitHub just to locate the
+  contributor profile.
+- The release contract now caps `/start` at 7 KB / 900 words and fails if status operations creep
+  back into it.
+
 ## 0.9.0
 
 ### Removed
@@ -68,7 +92,6 @@ All notable changes to Polaris Team OS. The installed version is pinned in
   (or promotion-with-pointer) point where an item leaves the ledger. Non-destructive by design if
   `/end` is skipped for a while — closed-but-unpruned items are noise, not corruption, and the
   existing `stale?` flag already surfaces them.
-
 ## 0.8.1
 
 ### Changed

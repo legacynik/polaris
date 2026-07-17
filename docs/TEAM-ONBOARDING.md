@@ -38,8 +38,8 @@ the maintainer for the configured marketplace command — do not guess an ID.
 
 ### GitHub CLI
 
-The skills read every piece of delivery evidence through `gh` — without it `/start`, `/plan-week`
-and `/report` stop:
+The first `/start` resolves and caches your exact login through `gh`; `/plan-week` and `/report`
+read delivery evidence through it. Without authenticated `gh`, those setup/evidence paths stop:
 
 ```bash
 gh --version   # missing → install it (macOS: brew install gh; see cli.github.com)
@@ -137,10 +137,14 @@ repository owner — do not create the contract yourself.
 ## 5. First day
 
 1. Open Claude Code from the product repo.
-2. Run `/start`: read your outcome, proof, blockers, and other people's ownership.
-3. Before proposing a branch, check your plan and the work already active.
-4. Run `/update` after real progress or a real blocker.
-5. Run `/end` when you stop: leave one concrete next action.
+2. Run `/start`: read your authorized outcome, latest handoff/checkpoint, blocker, and next action.
+3. Use the explicit Polaris status workflow when you need repo pulse, team collisions, memory, or a
+   portfolio-wide view.
+4. Before planning an ambiguous product or technical change, run `/polaris-grill`: it checks live
+   repo evidence, durable decisions, backend/schema contracts, memory, and versioned Context7 docs,
+   then hands off a testable brief without implementing or creating tracker work.
+5. Run `/update` after real progress or a real blocker.
+6. Run `/end` when you stop: leave one concrete next action.
 
 ## 6. The week
 

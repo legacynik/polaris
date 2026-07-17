@@ -1,49 +1,54 @@
 ---
 name: start
-description: Polaris skill — start a session. Branch check, current state and recent decisions, polmem recall, 7-line brief; provisions your team path only on first use. Trigger at session start, after a pause, or on "start / where do I start / start session".
+description: Polaris skill — resume the current objective from the latest local handoff. First use also provisions your own team path.
 user-invocable: true
 ---
 
-# /start — orient before acting
+# /start — resume, do not survey
 
-Read-only, with one exception: on a contributor's **first session** in a repository it provisions
-their own `team/<login>/` path (Step 2). It never creates issues, branches, pull requests or
-assignments, and never writes `state/current.md`.
+`/start` restores the smallest local context needed to continue the current objective. It does not
+build a situational view of the repository or portfolio. Do not fetch, scan pull requests or other
+contributors, run health checks, or recall memory here. Those belong to `/polaris-status`.
 
-## Step 1 — Verify the branch FIRST
+The recurring path is read-only and local. First use may cache the contributor login in local git
+config and provision that contributor's own `_polaris/team/<login>/` path. It never creates issues,
+branches, pull requests or assignments, and never writes `state/current.md`.
 
-Before reading anything, confirm you are where you think you are (checkouts are shared across panels):
+## Step 1 — Verify the local branch
 
 ```bash
 git rev-parse --abbrev-ref HEAD
 ```
 
-Hold the result. After Step 3 you will compare it to the active plan's branch. If the repo is not a
-git checkout, stop and say so — this command needs a repository.
+Hold the result. If this is not a git checkout, stop. Later compare it with the current weekly
+plan's branch. Do not fetch to answer this question.
 
-## Step 2 — Resolve the repository contract
+## Step 2 — Resolve the repository contract and local identity
 
 The Polaris root is **`_polaris/`** — one root, committed with the code:
 
 1. `_polaris/` if `_polaris/config.yml` exists;
-2. otherwise, if the repository root is itself named `_polaris` and carries `./config.yml` (the
-   founder-vault case: the vault IS the Polaris root), use the repository root;
-3. otherwise **stop**: the repository has no committed Team OS contract. Point the contributor to
-   `docs/TEAM-ONBOARDING.md` (section "Check the repo contract"). Do not create the root or
-   `config.yml` yourself — the repository owner wires the contract.
+2. otherwise, if the repository root is itself named `_polaris` and carries `./config.yml`, use the
+   repository root;
+3. otherwise stop and point to `docs/TEAM-ONBOARDING.md`. Do not create a contract implicitly.
 
-Identify the contributor from **their own GitHub account** — never from a folder someone else
-pre-created and never from a guessed nickname:
+Use the cached repo-local login on recurring sessions:
 
 ```bash
-LOGIN="$(gh api user --jq .login)"   # the exact, case-sensitive login
+LOGIN="$(git config --local --get polaris.login || true)"
 ```
 
-If `gh` is missing or unauthenticated (`gh auth status` fails), stop and point to onboarding.
+If it is absent, this is machine setup: require authenticated `gh`, resolve the exact login once,
+and cache it locally:
 
-- `_polaris/team/$LOGIN/profile.yml` exists → read it (the identity gate below still applies).
-- It does not exist → this is the contributor's first session here: create **their own** path (and
-  only theirs) from the plugin template, then set `github: $LOGIN` verbatim in the copied profile:
+```bash
+gh auth status
+LOGIN="$(gh api user --jq .login)"
+git config --local polaris.login "$LOGIN"
+```
+
+If `_polaris/team/$LOGIN/profile.yml` is absent, provision **only that contributor's** path from the
+plugin template:
 
 ```bash
 mkdir -p "_polaris/team/$LOGIN/weeks" "_polaris/team/$LOGIN/reports" "_polaris/team/$LOGIN/sessions"
@@ -51,152 +56,48 @@ cp "$CLAUDE_PLUGIN_ROOT/polaris/templates/repo-contract/profile.yml" "_polaris/t
 perl -pi -e "s/^github: .*/github: $LOGIN/" "_polaris/team/$LOGIN/profile.yml"
 ```
 
-**Identity gate — runs in BOTH branches** (profile just created or pre-existing): a wrong `github:`
-silently targets the wrong GitHub user in every `/plan-week` and `/report` evidence query, so this
-hard-stops, it does not warn:
+Never create `team/<login>/` folders for other people. The identity gate runs in BOTH branches,
+whether the profile was just created or already existed:
 
 ```bash
 grep -q "^github: $LOGIN$" "_polaris/team/$LOGIN/profile.yml" \
-  || { echo "STOP: profile github: does not match your gh login ($LOGIN) — fix it first"; exit 1; }
+  || { echo "STOP: profile github: does not match cached login ($LOGIN) — fix it first"; exit 1; }
 ```
 
-Never create `team/<login>/` folders for other people: each contributor's path is created on their
-machine by their own `/start`, from the login `gh api user` returns for them. A folder that does not
-match a real GitHub login silently breaks every `gh` evidence query.
+## Step 3 — Read only the resume set
 
-## Step 3 — Read in this order
+Read these local files, in order:
 
-1. `team/<login>/profile.yml` — `weekly_capacity`, `assignment_mode`, preferred/excluded areas,
-   and `language:` — the brief is written in THAT language (labels and icons stay as in the
-   template; default English if the field is absent).
-2. The current ISO-week plan `team/<login>/weeks/$(date +%G-W%V).md` — outcome, branch, proof,
-   blockers. This is the contributor's **own** focus: brief it as active work, never as something
-   awaiting permission. If `lead_review:` says the lead reordered or corrected it, surface that —
-   it is priority information, not a gate. The one thing to brief as blocked is a **red** item
-   (per the repo's workflow charter, `profile.yml` → `workflow:`) waiting on its **named** approver
-   — say who that is. If the file is absent, say there is no plan for this week and offer
-   `/plan-week`; its absence never blocks urgent or clearly-owned work.
-3. Other current-week files under `team/*/weeks/` and recent entries under `team/*/sessions/` —
-   titles, owners and active branches only, to avoid collisions.
-4. `<root>/decisions.md` and `<root>/lessons.md` (if present) — **budget cap: the 10 most recent
-   entries each** (both are newest-on-top; a mature repo's full ledger is tens of thousands of
-   tokens — recall in Step 4 retrieves older entries on demand, never read the whole file). Then
-   `<root>/state/current.md` if it exists: the gitignored open-items ledger (checkpoint line +
-   `## Open`) — if it conflicts with the approved plan or evidence, treat it as stale. If it
-   carries shipped-work narrative instead of open items it has decayed into a diary — flag it for
-   a reconcile, but never drop open items yourself.
-5. The most recent relevant session log in `<root>/team/<login>/sessions/`.
+1. `team/<login>/profile.yml` — only `language:` plus identity fields needed for the brief.
+2. `team/<login>/weeks/$(date +%G-W%V).md` — current outcome, branch, blocker and next proof. This is
+   the contributor's own focus: brief it as active work, never as something
+   awaiting permission. If `lead_review:` records a reorder, surface it as priority information.
+   Only a **red** item waiting on its **named** approver is blocked. If the file is absent, say there
+   is no current weekly plan; its absence never blocks urgent or clearly-owned work.
+3. `state/current.md` if present — only the current checkpoint and `## Open` item for this branch or
+   contributor. It is a pointer, not session history; never rewrite it from `/start`.
+4. The newest file in `team/<login>/sessions/` — read its handoff/checkpoint and concrete next
+   action. Do not scan `team/*/sessions/`.
 
-**Repo pulse (read-only)** — the files say what was intended; git and the tracker say what is
-actually in motion:
+Do not read decisions, lessons, `.wiki/hot.md`, or unrelated files speculatively. Memory is not
+current state and recall is never mandatory at session start.
 
-```bash
-git fetch --prune origin 2>/dev/null || echo "(offline — local view, may be stale)"
-git log origin/main -5 --oneline                  # what landed most recently
-git branch -vv --sort=-committerdate | head -8    # active branches, ahead/behind
-gh pr list --state open --limit 10 --json number,title,author \
-  --jq '.[] | "#\(.number) @\(.author.login): \(.title)"'
-```
+Compare the local branch from Step 1 with the current plan's branch. If both are present and differ,
+stop with the exact mismatch. This is a local safety gate, not a reason to fetch.
 
-Read these as evidence: a branch fresher than the plan, or an open PR touching your area, is a
-collision for the brief. Where the plan and the pulse disagree, the pulse wins and the mismatch is
-worth a line.
+## Step 4 — Render the resume brief
 
-**Branch check:** compare Step 1's branch to the plan's `Branch` cell. If they differ (and the plan
-has a branch), STOP and ask before proceeding — you may be on another panel's checkout.
+Answer with the brief ONLY, as plain markdown, NEVER inside a code fence. Use the profile's
+`language:` (default English). Omit empty lines rather than padding them.
 
-## Step 4 — Recall memory (polmem CLI, mandatory)
+{Weekday} {date} — <repo> on <branch>
 
-`polmem` is the repository's memory and the CLI is the interface — use it for any context question
-before answering from assumption. Two passes:
+**RESUME**
+- Outcome: <current outcome, or no current weekly outcome>
+- Checkpoint: <latest verified handoff/checkpoint>
+- Blocker: <one active blocker, if any>
+- Next action: <the concrete continuation step from the handoff, reconciled with the plan>
 
-**1. Warm recap** — read the **first screen** (~40 lines) of `.wiki/hot.md` if it exists: the hot
-cache lists the memory pages most recently touched by the sync, i.e. what the repo has been
-"thinking about" lately. One glance, no query needed — never ingest the whole file (a live measure
-found a 20KB hot.md: that is a sync hygiene problem, not context to load).
-
-**2. Targeted recall** — on the active plan's issue or domain; if there is no plan, derive the
-query from the most recent session log and the last landed commits (the pulse above):
-
-```bash
-polmem recall "confirmation gate" --top 3
-```
-
-Expected shape — ranked entries (score, source, title, one-line summary):
-
-```text
-[70] _polaris/decisions.md#2026-05-07 — Production runtime = ECS Fargate + Terraform …
-[70] references/cardaq-gateway-integration — Cardaq Gateway Integration …
-```
-
-Failure branches:
-- `command not found: polmem` → in Claude Code run `bash "$CLAUDE_PLUGIN_ROOT/polaris/scripts/install-polmem-cli.sh"`, then retry. Outside Claude Code (Codex/Cursor), the installer's launcher cannot resolve — use the checkout shim instead: `python3 <plugin-checkout>/polaris/bin/polmem` (see AGENTS.md).
-- `not memory-wired (no scripts/polaris_memory_repo.py)` → this repo does not carry the memory
-  bundle yet. `git pull` in case it is arriving with the code; if it is still missing, say memory is
-  unavailable once and continue. **Do not run `polmem init` yourself** and do not invent a fallback
-  store — tell the repo owner the repo needs wiring.
-- missing `.wiki` index after the bundle loads → `git pull`, then retry once.
-
-`recall` is repository memory, not current state: on the founder's own machine it may surface
-founder-vault entries. Treat every recalled page as **assumed** context to verify against the
-tracker or code — never cite it as evidence of what is true now.
-
-## Step 5 — Brief (MARVIN-style sections, not a wall)
-
-**Answer with the brief ONLY.** No narration of what you read, no "everything checked" commentary,
-no tool-log recap — reading the files is your job, not news. If something you read was empty or
-irrelevant, silence is the report. One exception comes FIRST, before everything: if the checkout is
-behind `origin/main`, open with `⛔ checkout behind origin by N commits — pull before working`,
-because every other line was read from a stale tree.
-
-Bold section headers,
-bullets under them — sections with nothing real to say are omitted, never padded.
-
-**Render as plain markdown, NEVER inside a code fence**: a fenced brief shows literal asterisks
-instead of bold headers in the terminal. The block below is the shape, not a fence to copy:
-
-{Greeting}. {Weekday} {date} — <repo> on <branch>
-
-**THIS WEEK**
-- Outcome: <one sentence — or "no signed plan for <week>; /plan-week when ready">
-- Active: <issue / branch / status>
-- Proof needed: <one sentence>
-
-**PULSE**
-- Landed: <last merges/PRs that matter, from the pulse>
-- In motion: <active branches / open PRs by owner — or omit the line>
-- Blocker/collision: <one sentence — or omit>
-
-**MEMORY**
-- <recall or hot-cache insight that bears on today — or omit the section>
-
-**LAST SESSION**
-- <one dry verdict on what it actually moved — from the log, not from charity>
-
-**MY CALL**
-<option A> (n/10) over <option B> (n/10) — <one-clause why>. Overrule me.
-
-Section headers translate to the profile `language:`; the structure does not change.
-
-**Language:** the profile's `language:` field decides the brief's language (e.g. `it` → Italian).
-Committed artifacts (plans, reports, code) keep the repo's own convention.
-
-**Per-contributor voice:** the profile's `voice:` field modulates the TONE only — `cynical`
-(default, the co-pilot below), `plain` (neutral, facts only), or a free-text line describing the
-tone. What never changes, whatever the voice: the section structure, the rated `MY CALL` close, the
-LAST SESSION verdict grounded in evidence, and the motivational-language ban — those are the
-product, not the personality.
-
-**Voice — cynical co-pilot, not a cheerleader:**
-- Dry, skeptical of claimed progress: "merged" is a fact, "great progress" is banned. No
-  motivational language, ever — no "exciting", no "well done", no pep. If the session log claims
-  done without proof, say so in LAST SESSION.
-- **Opinions are an obligation, not a garnish.** MY CALL commits to one first-move with blunt
-  scores (n/10 — leverage vs cost, from the evidence above) and a one-clause reason. The user
-  overrules, but never gets a menu without a recommendation.
-
-If there is no signed plan, say so plainly. Planning happens in `/plan-week`; implementation still
-needs an explicit user request. **When the chosen first move is code**, enter it through the team's
-build method — the Superpowers flow (brainstorm → written plan → TDD) or the repo's own workflow
-skill if its CLAUDE.md names one — never straight into edits from the brief. Do not overwrite
-`state/current.md` from `/start` — `/update` and `/end` keep it short.
+If the plan and handoff disagree, name the mismatch in `Blocker`; do not invent a reconciliation.
+If there is no handoff, derive `Next action` from the current plan and say that no checkpoint
+exists. Implementation still requires an explicit user request.

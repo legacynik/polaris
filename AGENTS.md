@@ -8,7 +8,9 @@ of this repository: read the relevant SKILL.md below and follow it exactly.
 
 | Command | File | Purpose |
 |---|---|---|
-| start | [polaris/skills/start/SKILL.md](polaris/skills/start/SKILL.md) | Begin a session: verify the branch, resolve the `_polaris/` contract, self-provision your own `team/<login>/` on first run, recall memory, brief |
+| start | [polaris/skills/start/SKILL.md](polaris/skills/start/SKILL.md) | Resume the authorized outcome from the latest local handoff/checkpoint; self-provision your own `team/<login>/` on first run |
+| polaris-status | [polaris/skills/polaris-status/SKILL.md](polaris/skills/polaris-status/SKILL.md) | Explicit full portfolio/repository pulse, team collisions, freshness, memory and health |
+| polaris-grill | [polaris/skills/polaris-grill/SKILL.md](polaris/skills/polaris-grill/SKILL.md) | Repo-grounded product and technical interview with decision-complete execution handoff |
 | update | [polaris/skills/update/SKILL.md](polaris/skills/update/SKILL.md) | Mid-session checkpoint in your own `team/<login>/sessions/` |
 | end | [polaris/skills/end/SKILL.md](polaris/skills/end/SKILL.md) | Close a session: handoff, decision/lesson proposals, optional pathspec-only commit |
 | plan-week | [polaris/skills/plan-week/SKILL.md](polaris/skills/plan-week/SKILL.md) | Your own weekly focus — yours to execute; only red work waits for a named approver |

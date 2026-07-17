@@ -1,5 +1,6 @@
 """Release contract for the small, repository-first Polaris Team OS surface."""
 
+import json
 import re
 from pathlib import Path
 
@@ -9,14 +10,83 @@ SKILLS = ROOT / "skills"
 TEMPLATES = ROOT / "templates" / "repo-contract"
 
 
-def test_only_the_team_lifecycle_commands_are_shipped() -> None:
+def test_marketplace_exposes_the_same_skills_to_agent_skills_cli() -> None:
+    marketplace = json.loads((ROOT.parent / ".claude-plugin" / "marketplace.json").read_text())
+    plugin = marketplace["plugins"][0]
+    declared = {Path(path).name for path in plugin["skills"]}
+    shipped = {path.name for path in SKILLS.iterdir() if path.is_dir()}
+    assert plugin["source"] == "./polaris"
+    assert declared == shipped
+    for relative in plugin["skills"]:
+        assert (ROOT / relative.removeprefix("./") / "SKILL.md").is_file()
+
+
+def test_only_the_team_commands_are_shipped() -> None:
     assert {path.name for path in SKILLS.iterdir() if path.is_dir()} == {
         "start",
+        "polaris-grill",
+        "polaris-status",
         "update",
         "end",
         "plan-week",
         "report",
     }
+
+
+def test_start_and_status_have_non_overlapping_cost_contracts() -> None:
+    start = (SKILLS / "start" / "SKILL.md").read_text()
+    status = (SKILLS / "polaris-status" / "SKILL.md").read_text()
+
+    for expensive in ("git fetch", "git log origin/main", "gh pr list", "polmem health"):
+        assert expensive not in start
+        assert expensive in status
+    assert "Do not use for \"start\", \"resume\", \"continue\"" in status
+    assert "Never hardcode a personal filesystem path" in status
+    assert "`/start` restores the current outcome" in status
+
+
+def test_polaris_grill_is_repo_grounded_and_handoff_only() -> None:
+    grill = (SKILLS / "polaris-grill" / "SKILL.md").read_text()
+    flat = " ".join(grill.split())
+
+    for required in (
+        "polmem recall",
+        "_polaris/decisions.md",
+        "_polaris/lessons.md",
+        "_polaris/state/current.md",
+        "Context7",
+        "database-schema",
+        "Database and backend discovery",
+        "Auto-answer before asking",
+        "one question at a time",
+        "Evidence",
+        "Inference",
+        "Unknown",
+        "canonical spec path",
+        "single context window",
+        "fresh context",
+    ):
+        assert required in grill
+
+    assert "Memory is context, never proof of current state" in flat
+    assert "Do not implement" in flat
+    assert "does not create issues, branches, pull requests or assignments" in flat
+    assert "Never send proprietary code" in flat
+    assert "never run DDL, DML, migrations, or type generation" in flat
+    assert "user-invocable: true" in grill
+
+
+def test_polaris_grill_ships_a_reviewed_skillopt_benchmark() -> None:
+    benchmark = json.loads(
+        (ROOT / "evals" / "polaris-grill-skillopt.tasks.json").read_text()
+    )
+
+    assert benchmark["format"] == "skillopt_sleep.tasks.v1"
+    assert benchmark["target_skill_path"] == "polaris/skills/polaris-grill/SKILL.md"
+    assert benchmark["reviewed"] is True
+    assert {task["split"] for task in benchmark["tasks"]} == {"train", "val"}
+    assert len(benchmark["tasks"]) >= 4
+    assert all(task["origin"] == "real" for task in benchmark["tasks"])
 
 
 def test_every_command_is_repo_first_and_not_founder_vault_based() -> None:
@@ -95,45 +165,35 @@ def test_plans_and_reports_are_authored_by_their_owner() -> None:
         assert "team/giovanni" not in text
 
 
-def test_start_grounds_the_live_repo_state() -> None:
-    # /start is the situational view, not a file reader: it must pull the repo
-    # pulse (what landed, which branches are in motion, open PRs) and lean on
-    # polmem — hot cache first, then a targeted recall — before briefing.
+def test_start_is_a_bounded_local_resume_not_a_status_command() -> None:
+    # Locked 2026-07-16: /start resumes the current objective from the latest
+    # handoff. The expensive situational view belongs to explicit
+    # /polaris-status, never to every session start.
     start = (SKILLS / "start" / "SKILL.md").read_text()
-    assert "git log origin/main" in start          # what landed recently
-    assert "git branch -vv" in start               # active branches, ahead/behind
-    assert "gh pr list" in start                   # open PRs in motion
-    assert "hot.md" in start                       # polmem hot cache recap
-    assert "Landed:" in start                      # the brief carries the pulse
-    assert "In motion" in start
-    # Context budget caps — a live measure found decisions.md at 111KB and
-    # hot.md at 20KB: /start reads slices, recall retrieves the rest on demand.
-    assert "10 most recent" in start
-    assert "first screen" in start
-    assert "never read the whole file" in " ".join(start.split())
-    # UX contract: the answer is the brief, not a reading diary; a stale
-    # checkout is the FIRST line, with the action.
+    for forbidden in (
+        "git fetch",
+        "git log origin/main",
+        "git branch -vv",
+        "gh pr list",
+        "polmem health",
+        "polmem recall",
+        "10 most recent",
+        "team/*/weeks/",
+    ):
+        assert forbidden not in start, forbidden
+    assert "Do not scan `team/*/sessions/`" in start
+    assert "current outcome" in start
+    assert "handoff/checkpoint" in start
+    assert "Next action:" in start
+    assert "**RESUME**" in start
     assert "Answer with the brief ONLY" in start
-    assert "behind `origin/main`" in start
-    # MARVIN-style sections + the answering plugin version in the header.
-    for header in ("**THIS WEEK**", "**PULSE**", "**LAST SESSION**", "**MY CALL**"):
-        assert header in start, header
-    # Cynical co-pilot contract: opinionated close (ranked call with scores),
-    # a dry verdict on the last session, motivational language banned.
-    assert "(n/10)" in start
-    assert "Overrule me" in start
-    # The brief renders as markdown (bold headers), never inside a code fence.
     assert "NEVER inside a code fence" in start
-    # The brief speaks the contributor's profile language.
     assert "`language:`" in start
-    tpl = (TEMPLATES / "profile.yml").read_text()
-    assert "language: en" in tpl
-    # Voice is per-contributor TONE only; structure (icons, rated call,
-    # motivational ban) is invariant product behavior.
-    assert "voice: cynical" in tpl
-    assert "`voice:`" in start
-    assert "not\nthe personality" in start or "not the personality" in " ".join(start.split())
-    assert "No\n  motivational language" in start or "no motivational language" in " ".join(start.split()).lower()
+    # Structural budget: the v0.8.1 start skill was 10,949 bytes / 1,667 words.
+    # Keep the resume contract small enough that future features cannot silently
+    # turn it back into a status dashboard.
+    assert len(start.encode()) <= 7_000
+    assert len(start.split()) <= 900
 
 
 def test_codex_review_findings_stay_fixed() -> None:
@@ -176,8 +236,10 @@ def test_terra_review_findings_stay_fixed() -> None:
     # pre-existing profiles, not only freshly created ones.
     assert 'exit 1' in start
     assert "runs in BOTH branches" in start
-    # H2: non-Claude users get a working polmem path in the failure branch itself.
-    assert "polaris/bin/polmem" in start
+    # H2 replacement: recurring starts resolve identity locally; gh is a one-time
+    # machine setup path, not a network call paid on every resume.
+    assert "git config --local --get polaris.login" in start
+    assert "git config --local polaris.login" in start
     # H3: the handoff commit stages the journal line remember just wrote.
     assert ".wiki/journal" in end
     # M (REVERSED 2026-07-15): "an unsigned weekly file is never briefed as active
@@ -288,10 +350,8 @@ def test_end_checks_repo_wiring_before_remember_not_the_binary() -> None:
 
 
 def test_end_feeds_the_repo_journal() -> None:
-    # The daily loop closes the memory cycle mechanically: /start consumes
-    # (recall), /end FEEDS — one machine-readable line into the repo journal
-    # via polmem remember; the offline distill decides what is durable. Without
-    # this, the graph only grows when someone remembers to propose a decision.
+    # /end FEEDS one machine-readable line into the repo journal. Recall is
+    # explicit/on-demand; it is deliberately not coupled to /start anymore.
     end = (SKILLS / "end" / "SKILL.md").read_text()
     assert "polmem remember" in end
     assert "not memory-wired" in end  # same failure branch as /start
@@ -472,13 +532,11 @@ def test_plan_week_ranks_severity_over_staleness_and_grounds_scope() -> None:
     assert "CODEOWNERS" in plan
 
 
-def test_start_handles_not_memory_wired_without_running_init() -> None:
+def test_start_does_not_boot_or_query_memory() -> None:
     start = (SKILLS / "start" / "SKILL.md").read_text()
-    flat = " ".join(start.split())
-    assert "not memory-wired" in start
-    assert "Do not run `polmem init` yourself" in start
-    # recall is assumed context, not current state.
-    assert "not current state" in flat
+    assert "polmem" not in start
+    assert "recall is never mandatory" in start
+    assert "Memory is not\ncurrent state" in start
 
 
 def test_repo_contract_templates_exist_are_english_and_match_worked_examples() -> None:
@@ -532,8 +590,8 @@ def test_sessions_are_per_contributor_not_shared() -> None:
     for skill in (start, update, end):
         assert "team/<login>/sessions/" in skill
 
-    # /start's collision check must glob across contributors' session logs too.
-    assert "team/*/sessions/" in start
+    # Collision discovery belongs to explicit status, not resume.
+    assert "Do not scan `team/*/sessions/`" in start
 
     readme = (ROOT.parent / "README.md").read_text()
     onboarding = (ROOT.parent / "docs" / "TEAM-ONBOARDING.md").read_text()
@@ -547,7 +605,15 @@ def test_agents_md_bridges_the_skills_to_non_claude_clis() -> None:
     # AGENTS.md — it must link every shipped skill and explain the
     # $CLAUDE_PLUGIN_ROOT substitution.
     agents = (ROOT.parent / "AGENTS.md").read_text()
-    for name in ("start", "update", "end", "plan-week", "report"):
+    for name in (
+        "start",
+        "polaris-grill",
+        "polaris-status",
+        "update",
+        "end",
+        "plan-week",
+        "report",
+    ):
         assert f"polaris/skills/{name}/SKILL.md" in agents
     assert "$CLAUDE_PLUGIN_ROOT" in agents
     assert "_polaris/" in agents

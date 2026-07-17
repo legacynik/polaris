@@ -1,0 +1,4 @@
+interface:
+  display_name: "Polaris Grill"
+  short_description: "Repo-grounded product and technical interview"
+  default_prompt: "Use $polaris-grill to auto-answer from repository evidence, backend/schema contracts, durable decisions, memory, and current docs before asking me one decision-bearing question at a time."
