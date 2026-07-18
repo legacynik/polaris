@@ -107,7 +107,7 @@ so; the tracker evidence still stands.
 For each plan row, mark it shipped (with a linked PR/issue/test), partially done, or not started —
 and why. A blocked item is useful information when its blocker and next decision are explicit. Use
 `polmem recall "<topic>" --top 3` if you need the decision context behind a blocker (if recall says
-the repo is not memory-wired, see `/start` Step 4 — do not run `polmem init`).
+the repo is not memory-wired, tell the repo owner — do not run `polmem init` yourself).
 
 ## Step 4 — Write the report file
 
@@ -150,52 +150,3 @@ verified facts from assumptions.
 - Do not overwrite an earlier report for the same week; append a dated update if new evidence arrives.
 - Do not create tracker issues, assignments, branches, pull requests or deployments.
 - Do not write outside the current repository or infer performance judgments unsupported by evidence.
-
-## Worked example
-
-`team/octocat/reports/2026-W29.md` (quiet-week scale — one primary shipped, one slipped):
-
-```md
-# Report 2026-W29 — @octocat
-
-## TL;DR
-Staging MCC-judge is green again: the stale OPENROUTER_API_KEY (#55) was rotated and wired via PR
-#58 (staging run log linked). #54 (docs dangling links) did not start — the week went to #55's
-secret-access detour. Top outstanding: request staging secret access up front for #54-type work.
-
-## Planned versus actual
-| Issue | Planned | Actually delivered | Evidence | Status |
-|---|---|---|---|---|
-| #55 | fix stale OPENROUTER key, green judge | key rotated, judge green | PR #58, staging run log | closed |
-| #54 | slim docs/index dangling links | not started | — | open |
-
-## Day by day
-- **Mon 07-13** ([log](../sessions/2026-07-13-@octocat.md)) — #55 root-caused: key expired, not revoked; access request filed.
-- **Wed 07-15** ([log](../sessions/2026-07-15-@octocat.md)) — key rotated, judge re-run green, PR #58 merged.
-
-## Merged PRs
-| PR | Title | LOC | Merge | Date |
-|---|---|---|---|---|
-| #58 | rotate OPENROUTER key + judge re-run | +42/−7 | `a1b2c3d` | 07-15 |
-
-Issues closed: #55.
-
-## Decisions in range
-None logged.
-
-## Blockers and incidents
-- Resolved: staging secret access took two days to grant (the real cost of #55).
-- Carry-over: none.
-
-## Metrics
-| PRs merged | Issues closed | LOC | Decisions | Open PRs | Incidents |
-|---|---|---|---|---|---|
-| 1 | 1 | +42/−7 | 0 | 0 | 0 |
-
-## PM action
-- Grant standing staging-secret read access to whoever owns judge maintenance — the two-day wait
-  was the week's only real loss.
-
-## Next week
-1. #54 docs dangling links (small, unblocked — start Monday).
-```
