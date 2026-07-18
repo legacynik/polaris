@@ -16,12 +16,17 @@ does (`LOGIN` from `gh api user --jq .login`). Plans are authored by their owner
 your own `team/$LOGIN/weeks/`. Never write another contributor's plan: everyone authors their own,
 on their own machine, from their own login. Read from the contract:
 - `config.yml` → `tracker.github_repo` (e.g. `owner/name`) and optional `tracker.linear_team`;
-- `team/<login>/profile.yml` → **`weekly_capacity`** (the hard cap on primary items), the
-  `github:` login (exact, case-sensitive — used verbatim as `$LOGIN` in `gh` queries), plus
-  `preferred_areas` / `excluded_areas` used to bias and filter triage.
+- `team/<login>/profile.yml` → **`weekly_capacity`** (the *default* weekly commitment, not a hard
+  cap), the `github:` login (exact, case-sensitive — used verbatim as `$LOGIN` in `gh` queries),
+  plus `preferred_areas` / `excluded_areas` used to bias and filter triage.
 
 If any is missing, stop and point to `docs/TEAM-ONBOARDING.md`. Set `REPO="$(tracker.github_repo)"`,
 `LOGIN="$(profile github)"` and `WEEK="$(date +%G-W%V)"` (ISO year-week, e.g. `2026-W29`).
+
+**Ask this week's commitment — it drives the load.** Before ranking, ask the contributor how much
+they want to take on **this** week: a number of primary outcomes, or light / normal / heavy. Their
+answer is `CAP`, the load the plan is sized to. `weekly_capacity` is only the default offered if they
+don't say — the week's real load is what they commit to now, not a static profile number.
 
 ## Step 2 — Pull live issues (read-only)
 
@@ -71,12 +76,10 @@ Rank candidates in this strict order — **severity outranks age, always**:
 4. **staleness**: older `updatedAt` first — the **final tiebreak only**, once 1–3 are equal, so
    nothing rots. It must never promote an old low-severity issue over a fresh critical one.
 
-**Capacity — a planning guide, not a quota.** `weekly_capacity` is the contributor's own estimate of
-how many primary outcomes plausibly fit a week. It exists to keep the plan honest, not to cap
-output. Aim at it, and list what does not fit under "Not starting" so the choice is visible instead
-of silent. When reality disagrees with the number — an incident displaced the week, the work was
-smaller than it looked — adjust it in the weekly note and say why. A capacity defended against
-reality is a fiction the lead then plans against.
+**Fit to `CAP` — the commitment from Step 1.** Aim the plan at `CAP` primary outcomes, and list what
+does not fit under "Not starting" so the choice is visible instead of silent. `CAP` is a planning
+guide, not a quota. If this week's `CAP` differs a lot from the profile `weekly_capacity`, note why
+in the weekly file; if the gap is persistent, propose updating `weekly_capacity` to match reality.
 
 ## Step 5 — Recall prior context
 
@@ -84,9 +87,9 @@ reality is a fiction the lead then plans against.
 polmem recall "<issue keywords>" --top 3
 ```
 
-Use it to catch prior decisions and pitfalls for the chosen issues. `polmem` failure branches are
-the same as `/start` — including the not-memory-wired case (tell the repo owner; do **not** run
-`polmem init` yourself).
+Use it to catch prior decisions and pitfalls for the chosen issues. If `polmem` is missing, skip
+recall and continue. If it reports the repo is not memory-wired, tell the repo owner — do **not**
+run `polmem init` yourself.
 
 ## Step 6 — Write the plan file
 
@@ -104,17 +107,10 @@ contain:
 
 ## Step 7 — Ownership boundary (the plan does not wait for permission)
 
-The plan is **yours**. You own the outcome, the alternatives, the evidence — so write it, commit it,
-and let it travel with the work into the PR. A plan visible in the repo is reviewable at any moment,
-which is what the lead actually needs; a plan that waits for a countersignature just moves the
-thinking into the lead's queue. What the lead does with it is **priority alignment**: read it, reorder it, correct
-the scope. That is not permission to execute, and their silence is not a block.
-
-There is no signature field, deliberately. A lead who is the default technical gate becomes every
-contributor's bottleneck at once, and a contributor who waits for a signature has stopped owning the
-outcome — you get permission-seeking on reversible work and, worse, the illusion of control on the
-work that actually needed a second pair of eyes. Mark the file with what is **true**, not with a
-permission state:
+The plan is **yours**: you own the outcome and the evidence — write it, commit it, let it travel
+into the PR. What the lead does with it is priority alignment (read, reorder, correct scope), not
+permission; their silence is not a block. No signature field, deliberately — mark the file with what
+is **true**, not a permission state:
 
 ```yaml
 status: active         # active | carried | superseded
@@ -135,32 +131,5 @@ A red item is **proposed with evidence and waits for its named approver** before
 promotion. Everything else — bounded, reversible work inside the agreed outcome — you decide and
 proceed, recording `Decision / Why / Risk / Next step` in the issue or PR.
 
-**The repository's own charter wins over this section.** If `profile.yml` carries a `workflow:`
-pointer (e.g. `docs/workflow/TEAM-WORKFLOW.md`), read it: its boundaries are the real contract, and
-a repo under an external audit may legitimately name approvers this list does not know about. This
-command still performs no tracker mutations.
-
-## Worked example
-
-`team/octocat/weeks/2026-W29.md`:
-
-```md
-# Week 2026-W29 — @octocat
-status: active
-lead_review: pending
-
-## Outcome
-Staging MCC-judge runs green again — the stale OPENROUTER_API_KEY (#55) no longer 401s any job.
-
-## Proposed work (capacity: 1 of 3 used on the primary)
-| Issue | Result | Branch | Status | Proof | Blocker |
-|---|---|---|---|---|---|
-| #55 | rotate + wire secret, re-run judge | `fix/55-openrouter-key` | planned | green staging job log | needs staging secret access |
-| #54 | slim docs/index.md dangling links | `docs/54-index-slim` | secondary | link-check clean | — |
-
-## Not starting
-- #49 Orbit assistant — larger than one week; propose separately.
-
-## Evidence
-gh issue list @ 2026-07-13; #55 updated 2026-07-12. Assumption: secret rotation is unblocked.
-```
+**The repo's own `workflow:` charter wins over this section** — if `profile.yml` points to one, its
+boundaries are the real contract. This command performs no tracker mutations.
