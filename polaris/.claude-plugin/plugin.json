@@ -1,6 +1,6 @@
 {
   "name": "polaris-team-os",
-  "version": "0.12.0",
+  "version": "0.12.1",
   "description": "Polaris Team OS: seven repository-first commands \u2014 /start, /polaris-status, /polaris-grill, /update, /end, /plan-week and /report \u2014 plus polmem memory CLI. /start is a bounded local resume. Start with docs/TEAM-ONBOARDING.md.",
   "author": {
     "name": "Niccol\u00f2 Franzin",
