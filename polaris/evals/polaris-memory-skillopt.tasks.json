@@ -1,0 +1,84 @@
+{
+  "format": "skillopt_sleep.tasks.v1",
+  "project": "polaris-team-os",
+  "transcript_source": "c2-polaris-memory-2026-07-19",
+  "target_skill_path": "polaris/skills/polaris-memory/SKILL.md",
+  "reviewed": true,
+  "tasks": [
+    {
+      "id": "recall-first-before-grep",
+      "project": "polaris-team-os",
+      "intent": "Dove sta la doc dell'auth flow di noemi? Prima di mettermi a cercare nei file.",
+      "context_excerpt": "A 'where is the doc for X' question. The skill must reach for `polmem recall` first, not a filesystem grep — that is its central discipline.",
+      "outcome": "success",
+      "reference_kind": "rule",
+      "judge": {
+        "kind": "rule",
+        "checks": [
+          {"op": "regex", "arg": "(?is)polmem recall"},
+          {"op": "regex", "arg": "(?is)(recall.first|prima di.*(grep|cerc)|before.*grep|--repo)"}
+        ]
+      },
+      "tags": ["recall-first", "trigger"],
+      "source_sessions": ["c2-build-2026-07-19"],
+      "split": "train",
+      "origin": "real"
+    },
+    {
+      "id": "remember-a-decision",
+      "project": "polaris-team-os",
+      "intent": "Ricordati che abbiamo scelto Hetzner invece di Railway, per costi e controllo.",
+      "context_excerpt": "The user wants to record a durable choice. The skill must use `polmem remember` with the decision kind, not just acknowledge.",
+      "outcome": "success",
+      "reference_kind": "rule",
+      "judge": {
+        "kind": "rule",
+        "checks": [
+          {"op": "regex", "arg": "(?is)polmem remember"},
+          {"op": "regex", "arg": "(?is)--kind\\s+decision"}
+        ]
+      },
+      "tags": ["remember", "decision"],
+      "source_sessions": ["c2-build-2026-07-19"],
+      "split": "train",
+      "origin": "real"
+    },
+    {
+      "id": "code-reverse-lookup",
+      "project": "polaris-team-os",
+      "intent": "Cosa sappiamo su src/pricing/engine.py prima che lo tocchi?",
+      "context_excerpt": "The user is about to change a module and wants the memory behind it. The skill must surface `polmem code` for the reverse lookup.",
+      "outcome": "success",
+      "reference_kind": "rule",
+      "judge": {
+        "kind": "rule",
+        "checks": [
+          {"op": "regex", "arg": "(?is)polmem code"}
+        ]
+      },
+      "tags": ["code-refs", "reverse-lookup"],
+      "source_sessions": ["c2-build-2026-07-19"],
+      "split": "train",
+      "origin": "real"
+    },
+    {
+      "id": "recall-is-not-current-state",
+      "project": "polaris-team-os",
+      "intent": "Qual è lo stato attuale del deploy di cardaq in produzione?",
+      "context_excerpt": "A current-STATE question, not a memory question. The skill must NOT answer it from recall as if a wiki page were proof of live state; it must point to code/GitHub/DB and mark memory as ASSUMED.",
+      "outcome": "success",
+      "reference_kind": "rule",
+      "judge": {
+        "kind": "rule",
+        "checks": [
+          {"op": "regex", "arg": "(?is)(github|gh pr|codice|code\\b|database|\\bdb\\b|stato.*(attuale|corrente)|deploy)"},
+          {"op": "regex", "arg": "(?is)(non.*(prova|stato attuale)|assumed|recall.*(non|≠)|not.*current state)"}
+        ]
+      },
+      "tags": ["recall-not-state", "boundary"],
+      "source_sessions": ["c2-build-2026-07-19"],
+      "split": "train",
+      "origin": "real"
+    }
+  ]
+}
