@@ -116,6 +116,38 @@ Look for:
 
 Do not dump every task, commit, PR, or memory result. Complete means decision-grade coverage.
 
+## Step 5b — Alignment sweep (the heavy realignment — lives here, never in start/update/end)
+
+The fast per-session skills stay light on purpose. This is where the expensive "keep everything
+coherent" work runs, on demand — so `/polaris-status` is a **total-alignment checkpoint**: run it
+weekly/when-needed and it does the analysis, holds the proof, and proposes the cleanup for a
+one-confirm approval — you never mark or delete by hand.
+
+1. **Stale-state sweep.** Resolve each `state/current.md` open thread against ground truth:
+
+   ```bash
+   python3 "$CLAUDE_PLUGIN_ROOT/polaris/scripts/state_reconcile.py" _polaris/state/current.md --repo-dir .
+   ```
+
+   It flags threads whose branch is **merged into origin/main** (superseded, proven) vs active vs
+   unverified. Observe-only; it writes nothing until you confirm.
+
+2. **Branch hygiene vs the workflow rules.** How many branches are open, and how many should close:
+
+   ```bash
+   git branch --merged origin/main | grep -vE '^\*?\s*(main|master)$'   # local branches safe to delete
+   gh pr list --state open --limit 20 --json number,headRefName,updatedAt   # open PRs / their branches
+   git for-each-ref --sort=-committerdate --format='%(refname:short) %(committerdate:relative)' refs/heads
+   ```
+
+   Surface: open-branch count, merged-but-undeleted (propose delete), and any branch idle >14d
+   (`stale?`, a question not a verdict — parked work on a live branch is still work).
+
+3. **Propose the cleanup as ONE confirm loop, with the proof.** List the superseded threads + the
+   mergeable branches, each with its evidence (the merge SHA / PR), and ask a single yes/no. Only on
+   yes: `state_reconcile.py --apply` (same plugin-root path) to remove exactly the confirmed threads, and delete the named
+   merged branches. Never auto-delete, never touch active/unverified/other-panel threads.
+
 ## Step 6 — Render the briefing
 
 Match the user's language. Keep the default response under 50 lines and omit empty sections:
@@ -138,6 +170,11 @@ Match the user's language. Keep the default response under 50 lines and omit emp
 
 **RISKS**
 - Up to three evidence-backed contradictions or stale surfaces
+
+**ALIGNMENT** (only when the Step 5b sweep found something)
+- Open branches: N · mergeable/undeleted: M · idle-`stale?`: K
+- Superseded state threads (branch merged → proven): list with the merge evidence
+- One line: "Confirm to clean (close these threads + delete these branches)?" — apply only on yes
 
 **MY CALL**
 - One highest-leverage next move with a short reason; the user may overrule it
