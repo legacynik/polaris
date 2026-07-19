@@ -143,10 +143,25 @@ one-confirm approval — you never mark or delete by hand.
    Surface: open-branch count, merged-but-undeleted (propose delete), and any branch idle >14d
    (`stale?`, a question not a verdict — parked work on a live branch is still work).
 
-3. **Propose the cleanup as ONE confirm loop, with the proof.** List the superseded threads + the
-   mergeable branches, each with its evidence (the merge SHA / PR), and ask a single yes/no. Only on
-   yes: `state_reconcile.py --apply` (same plugin-root path) to remove exactly the confirmed threads, and delete the named
-   merged branches. Never auto-delete, never touch active/unverified/other-panel threads.
+3. **Wiki retrieval quality.** Two independent ways a wiki degrades retrieval — surface both:
+
+   ```bash
+   python3 "$CLAUDE_PLUGIN_ROOT/polaris/scripts/wiki_quality_check.py" .wiki --max-age 45 --front-door-lag 3
+   ```
+
+   - `[archive?]` — active docs stale on BOTH the `updated:` frontmatter AND git-last-commit → real
+     archive candidates (verify supersession). The ONLY wiki items that enter the confirm loop.
+   - `[metadata-lag]` — `updated:` old but git-recent → a LIVE doc; propose bumping the field, NEVER
+     archive (a lone age flag on a load-bearing doc is a false positive — see lessons).
+   - `FRONT-DOOR STALE` — hot.md / newest journal lags the newest commit → the entry point doesn't
+     reflect recent work. Root cause is the distiller not auto-running; surface it, don't archive.
+
+4. **Propose the cleanup as ONE confirm loop, with the proof.** List the superseded threads + the
+   mergeable branches + the `[archive?]` wiki docs, each with its evidence (merge SHA / PR / both-stale
+   ages), and ask a single yes/no. Only on yes: `state_reconcile.py --apply` to remove the confirmed
+   threads, delete the named merged branches, and set `lifecycle: archived` on the confirmed candidates.
+   Never auto-delete, never archive a `[metadata-lag]` or front-door item, never touch
+   active/unverified/other-panel threads.
 
 ## Step 6 — Render the briefing
 
