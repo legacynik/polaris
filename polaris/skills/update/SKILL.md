@@ -46,7 +46,7 @@ MAIN_WT="$(git worktree list --porcelain | head -1 | sed 's|^worktree ||')"  # m
 ```
 
 It is gitignored, so it never travels with a branch: written inside a worktree, the next session
-(which opens the main checkout) never sees it — a measured loss (orphaned per-worktree handoffs).
+(which opens the main checkout) never sees it — a handoff nobody will ever read, a measured loss (orphaned per-worktree handoffs).
 One file in the main worktree keeps many parallel panels legible from one place.
 
 Because every panel converges here, **the branch is a thread's identity**: one panel, one worktree,

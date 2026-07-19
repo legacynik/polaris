@@ -78,7 +78,7 @@ Rank candidates in this strict order — **severity outranks age, always**:
 
 **Fit to `CAP` — the commitment from Step 1.** Aim the plan at `CAP` primary outcomes, and list what
 does not fit under "Not starting" so the choice is visible instead of silent. `CAP` is a planning
-guide, not a quota. If this week's `CAP` differs a lot from the profile `weekly_capacity`, note why
+guide, not a quota — it exists to size the plan honestly, not to cap output. If this week's `CAP` differs a lot from the profile `weekly_capacity`, note why
 in the weekly file; if the gap is persistent, propose updating `weekly_capacity` to match reality.
 
 ## Step 5 — Recall prior context
@@ -104,6 +104,11 @@ contain:
 - what is deliberately **not** being started;
 - dependencies and ownership collisions (from other contributors' current-week files);
 - state the evidence date and separate verified facts from assumptions.
+
+The template's section headers make this concrete — write under exactly these: `## Outcome` (the one
+outcome that matters), `## Not starting` (what is deliberately deferred, visible not silent), and
+`## Evidence` (proof of done with its date). Keep them identical to the template so the plan reads the
+same across the team.
 
 ## Step 7 — Ownership boundary (the plan does not wait for permission)
 
