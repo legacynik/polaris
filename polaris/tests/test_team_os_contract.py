@@ -31,6 +31,7 @@ def test_only_the_team_commands_are_shipped() -> None:
         "plan-week",
         "report",
         "pol-apex-curate",  # founder-only OS curation, shipped with a portable ($CLAUDE_PLUGIN_ROOT) apex tool
+        "polaris-memory",
     }
 
 
