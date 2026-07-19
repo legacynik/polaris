@@ -34,12 +34,11 @@ distill decides later what is durable, so never skip this because the session fe
 test -d .wiki/journal || echo "NOT memory-wired — skip the remember line"
 ```
 
-This matters more than it looks. `polmem` may be installed **globally** and work perfectly while
-being wired to a different repository: run `remember` in a repo without its own `.wiki/journal/` and
-the line does not fail — it silently lands in **someone else's** journal, carrying this session's
-content out of this repository. Measured, not hypothetical: an `/end` run inside a scratch repo
-wrote its handoff into an unrelated vault. `command -v polmem` passes in exactly that state, which
-is why the wiring test is the repo's directory, never the binary.
+This matters more than it looks. `polmem` may be installed **globally** yet wired to a different
+repository: run `remember` in a repo without its own `.wiki/journal/` and it does not fail — it
+silently lands in **someone else's** journal, carrying this session out of this repo (observed).
+`command -v polmem` passes in exactly that state, which is why the wiring test is the repo's
+directory, never the binary.
 
 ```bash
 polmem remember "session YYYY-MM-DD @<login>" "<shipped/verified, one clause> — next: <first step>"
