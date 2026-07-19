@@ -1,0 +1,68 @@
+{
+  "format": "skillopt_sleep.tasks.v1",
+  "project": "polaris-team-os",
+  "transcript_source": "founder-correction-2026-07-19",
+  "target_skill_path": "polaris/skills/end/SKILL.md",
+  "reviewed": true,
+  "tasks": [
+    {
+      "id": "architectural-decision-proposed",
+      "project": "polaris-team-os",
+      "intent": "End. Oggi abbiamo scelto Serena come code-graph dopo un chaos-test su 4 candidati.",
+      "context_excerpt": "The session made a durable architectural choice with multi-week impact on the product. Step 3 must propose (not write) a decisions.md entry.",
+      "outcome": "success",
+      "reference_kind": "rule",
+      "judge": {
+        "kind": "rule",
+        "checks": [
+          {"op": "regex", "arg": "(?is)decisions\\.md"},
+          {"op": "regex", "arg": "(?is)(impact|horizon|30\\s*day|architett|supersed)"},
+          {"op": "regex", "arg": "(?is)(propos|wait|conferma|don't write)"}
+        ]
+      },
+      "tags": ["decision-model", "architectural"],
+      "source_sessions": ["2026-07-19-founder-decision-lesson-model"],
+      "split": "train",
+      "origin": "real"
+    },
+    {
+      "id": "routine-progress-not-logged",
+      "project": "polaris-team-os",
+      "intent": "End. Ho sistemato tre typo e rilanciato i test, tutti verdi.",
+      "context_excerpt": "Nothing durable happened — only routine progress. Step 3 must NOT propose a decision or a lesson.",
+      "outcome": "success",
+      "reference_kind": "rule",
+      "judge": {
+        "kind": "rule",
+        "checks": [
+          {"op": "regex", "arg": "(?is)(nothing durable|niente di durevole|no decision|nessuna decisione|routine)"},
+          {"op": "not_regex", "arg": "(?is)## \\d{4}-\\d{2}-\\d{2} —"}
+        ]
+      },
+      "tags": ["decision-model", "negative"],
+      "source_sessions": ["2026-07-19-founder-decision-lesson-model"],
+      "split": "train",
+      "origin": "real"
+    },
+    {
+      "id": "loop-blocker-becomes-lesson",
+      "project": "polaris-team-os",
+      "intent": "End. Mi sono bloccato in un loop aspettando conferme che avevi già dato, invece di procedere.",
+      "context_excerpt": "A real mistake — a loop/blocker overcome — occurred. Step 3 must propose a lessons.md entry pairing the mistake with the rule that prevents recurrence.",
+      "outcome": "success",
+      "reference_kind": "rule",
+      "judge": {
+        "kind": "rule",
+        "checks": [
+          {"op": "regex", "arg": "(?is)lessons\\.md"},
+          {"op": "regex", "arg": "(?is)(rule|regola|prevent|recurrence|ricorrenza)"},
+          {"op": "regex", "arg": "(?is)(propos|wait|conferma)"}
+        ]
+      },
+      "tags": ["lesson-model", "loop-blocker"],
+      "source_sessions": ["2026-07-19-founder-decision-lesson-model"],
+      "split": "train",
+      "origin": "real"
+    }
+  ]
+}
