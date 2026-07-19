@@ -1,12 +1,15 @@
 {
   "name": "polaris-team-os",
-  "owner": { "name": "legacynik", "url": "https://github.com/legacynik" },
-  "description": "Polaris Team OS marketplace — seven repository-first commands, memory CLI, and a shared team operating model.",
+  "owner": {
+    "name": "legacynik",
+    "url": "https://github.com/legacynik"
+  },
+  "description": "Polaris Team OS marketplace \u2014 seven repository-first commands, memory CLI, and a shared team operating model.",
   "plugins": [
     {
       "name": "polaris-team-os",
       "source": "./polaris",
-      "description": "Polaris Team OS — /start, /polaris-status, /polaris-grill, /update, /end, /plan-week and /report. Product repositories carry the shared team plans, reports, decisions and rules.",
+      "description": "Polaris Team OS \u2014 /start, /polaris-status, /polaris-grill, /update, /end, /plan-week and /report. Product repositories carry the shared team plans, reports, decisions and rules.",
       "skills": [
         "./skills/start",
         "./skills/polaris-status",
@@ -14,7 +17,8 @@
         "./skills/update",
         "./skills/end",
         "./skills/plan-week",
-        "./skills/report"
+        "./skills/report",
+        "./skills/pol-apex-curate"
       ]
     }
   ]
