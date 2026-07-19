@@ -45,12 +45,9 @@ MAIN_WT="$(git worktree list --porcelain | head -1 | sed 's|^worktree ||')"  # m
 # → "$MAIN_WT/_polaris/state/current.md"  (or "$MAIN_WT/state/current.md" when the repo root IS _polaris)
 ```
 
-This file is gitignored, so it never travels with a branch. A panel that writes it inside its own
-worktree writes a handoff **nobody will ever read**, because the next session opens the main
-checkout. That is measured, not theoretical: three worktrees of one live repo each held an orphaned
-copy — 80KB last touched 12 July, 66KB last touched 8 July, one absent entirely — every one of them
-a handoff its own author never saw again. One file, in the main worktree, is what makes many
-parallel panels legible from one place.
+It is gitignored, so it never travels with a branch: written inside a worktree, the next session
+(which opens the main checkout) never sees it — a measured loss (orphaned per-worktree handoffs).
+One file in the main worktree keeps many parallel panels legible from one place.
 
 Because every panel converges here, **the branch is a thread's identity**: one panel, one worktree,
 one branch. Tag each thread with its branch and `/end` can ask git whether the work actually landed
