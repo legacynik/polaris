@@ -6,8 +6,15 @@
       "@modelcontextprotocol/server-sequential-thinking"
     ]
   },
-  "codebase-memory": {
-    "command": "codebase-memory-mcp",
-    "args": []
+  "serena-code-graph": {
+    "command": "uvx",
+    "args": [
+      "--from",
+      "git+https://github.com/oraios/serena@96e95c0b5dfaf21a277a1478e72c11f9383a9c9a",
+      "--with",
+      "pyright",
+      "python",
+      "${CLAUDE_PLUGIN_ROOT}/scripts/serena_code_graph_launcher.py"
+    ]
   }
 }
