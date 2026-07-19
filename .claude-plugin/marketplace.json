@@ -18,7 +18,8 @@
         "./skills/end",
         "./skills/plan-week",
         "./skills/report",
-        "./skills/pol-apex-curate"
+        "./skills/pol-apex-curate",
+        "./skills/polaris-memory"
       ]
     }
   ]
