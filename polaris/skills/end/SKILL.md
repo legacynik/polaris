@@ -56,20 +56,23 @@ plugin installer once, then re-check the wiring above. Never run `polmem init` y
 Update the matching row in `team/<login>/weeks/$(date +%G-W%V).md` only when its state or proof
 changed. Do not rewrite the plan.
 
-## Step 3 — Surface durable decisions (propose, don't write)
+## Step 3 — Surface durable decisions and lessons (propose, don't write)
 
-If the session produced a genuinely durable choice (an architecture decision, a reversed approach, a
-convention the team must follow), **propose** a `<root>/decisions.md` entry and wait for confirmation
-before writing it:
+Propose (and wait for confirmation before writing) only if genuinely durable — never routine progress.
+
+**A decision** qualifies only if it either **supersedes a past decision** (name which, and align it)
+**or** sets an **architectural direction** whose impact runs from today out to 30 days–years on the
+product/development. → `<root>/decisions.md`:
 
 ```md
 ## YYYY-MM-DD — <decision title> (@<login>)
-Chose <X> over <Y> because <evidence>. Affects <area>.
+Chose <X> over <Y> because <evidence>. Supersedes: <past decision, or —>. Impact: <area, horizon>.
 ```
 
-The same gate applies to durable lessons — a real mistake plus the rule that prevents its
-recurrence: **propose** an entry in `<root>/lessons.md` and wait for confirmation before writing it.
-Do not log routine progress as a decision or a lesson. If nothing durable happened, say so.
+**A lesson** = a real mistake — usually a loop or blocker you overcame — plus the one rule that
+prevents its recurrence. → `<root>/lessons.md`.
+
+If nothing durable happened, say so. Do not log routine progress as either.
 
 ## Step 4 — Prune the live pointer (the only step allowed to close a thread)
 
