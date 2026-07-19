@@ -59,18 +59,16 @@ git fetch --prune origin
 
 Then collect, by GitHub login. **Never use `git log --author="$(git config user.email)"`**: it
 resolves to the local machine's git identity, not the teammate's, so on any shared checkout it
-returns nothing useful (a live run proved it). Use `$LOGIN` and the `$SINCE..$UNTIL` window from
-Step 0:
+returns nothing useful. Use `$LOGIN` and the `$SINCE..$UNTIL` window from Step 0:
 
 ```bash
 # Tracker: merged PRs and closed issues authored by the contributor
 gh pr list    --repo "$REPO" --state merged --search "author:$LOGIN merged:$SINCE..$UNTIL" --limit 200 --json number,title,mergedAt,additions,deletions,mergeCommit
 gh issue list --repo "$REPO" --state closed --search "author:$LOGIN closed:$SINCE..$UNTIL"  --limit 200 --json number,title,closedAt
 
-# Commits in the window, resolved login->commits SERVER-SIDE by GitHub.
-# Do NOT filter git log by an author-email pattern: squash commits carry the
-# user's configured email (often a personal one), so a guessed pattern
-# silently returns zero — a live run proved it.
+# Commits in the window, login->commits resolved SERVER-SIDE by GitHub.
+# Not git log --author: squash commits carry the user's configured (often
+# personal) email, so a guessed pattern silently returns zero.
 gh api --paginate "repos/$REPO/commits?author=$LOGIN&since=${SINCE}T00:00:00Z&until=${UNTIL}T23:59:59Z&per_page=100" \
   --jq '.[] | "\(.sha[0:8]) \(.commit.author.date[0:10]) \(.commit.message | split("\n")[0])"'
 
