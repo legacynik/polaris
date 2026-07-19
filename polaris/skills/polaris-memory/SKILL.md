@@ -20,8 +20,11 @@ any harness. It uses grep + a typed-edge graph (no vectors), so it's instant and
 ## The one rule: recall FIRST
 
 Before you `grep`/`find`/`ls` your way through a repo to answer *"where's the doc for X"* or *"what did
-we decide about Y"*, and before you build or re-invent anything — **query memory first**. It costs one
-command and routinely saves reading dozens of files (or re-solving a solved problem).
+we decide about Y"*, and before you build or re-invent anything — **query memory first** — *except for
+current-state questions* (what is deployed right now, what a PR does today): those never come from
+recall, they resolve against code/GitHub/DB (see "recall ≠ current state" below). For the design/
+decision/history questions it does cover, recall costs one command and routinely saves reading dozens
+of files (or re-solving a solved problem).
 
 ```bash
 polmem recall "cardaq deadline sprint"          # search everything
