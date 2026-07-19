@@ -88,6 +88,24 @@ may be the only copy of a handoff.
 If the file holds another owner's fresher checkpoint line, you may be on another panel's checkout —
 confirm before touching it.
 
+## Step 4 — Land the checkpoint in git (your branch, pathspec-only)
+
+A checkpoint left uncommitted is an orphaned handoff — the exact failure Polaris exists to prevent.
+Land it on your **current branch**: a checkpoint describes *this branch's* work, so it belongs here;
+`/end` is what promotes durable history to main. Delegate the commit to the script so hygiene is
+enforced in code, never left to prose:
+
+```bash
+LOGIN="$(git config --local --get polaris.login || gh api user --jq .login)"
+"$CLAUDE_PLUGIN_ROOT/polaris/scripts/session_commit.sh" \
+  "team/$LOGIN/sessions/$(date +%F)-@$LOGIN.md"    # pass the weekly plan as a 2nd arg ONLY if Step 2 ticked it
+```
+
+The script is pathspec-only (never `git add -A`, so parallel panels sharing one tree can never drag
+each other's uncommitted work), refuses to commit `state/current.md`, `decisions.md`/`lessons.md`
+(those are `/end`'s vetted promotion) or any `.env*`, reports the branch it landed on, and skips
+silently on an empty checkpoint. It never checks out another branch and never pushes.
+
 ## Boundaries
 
 - Do not write a founder vault, global memo, private workspace or automatic lesson.
