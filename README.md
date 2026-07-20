@@ -2,8 +2,8 @@
 
 Polaris Team OS is a repository-first operating model for a product team working in Claude Code. It
 makes ownership, weekly outcomes, session handoffs and delivery evidence visible **from inside the
-product repository** — the same place the code lives. Seven slash commands (`/start`,
-`/polaris-status`, `/polaris-grill`, `/update`, `/end`, `/plan-week`, `/report`) plus a memory CLI (`polmem`). It is
+product repository** — the same place the code lives. Nine slash commands (`/start`,
+`/polaris-status`, `/polaris-grill`, `/update`, `/end`, `/plan-week`, `/report`, `/polaris-memory`, `/pol-apex-curate`) plus a memory CLI (`polmem`). It is
 not a founder vault, an issue
 tracker, or a second project manager: GitHub or Linear stays the source of execution truth, and
 Polaris records who owns an outcome, why it matters, what proof closes it, and what is blocked.
@@ -31,10 +31,10 @@ npx skills add legacynik/polaris --list
 npx skills add legacynik/polaris --skill '*' -a codex -a claude-code
 ```
 
-The marketplace manifest declares all seven paths, so the plugin and Skills CLI consume the same
+The marketplace manifest declares all nine paths, so the plugin and Skills CLI consume the same
 `SKILL.md` files; there is no provider-specific duplicate.
 
-## The seven commands
+## The nine commands
 
 | Command | One-line purpose |
 |---|---|
@@ -45,6 +45,8 @@ The marketplace manifest declares all seven paths, so the plugin and Skills CLI 
 | `/end` | Close a session with a handoff, decision proposals, and an optional pathspec-only commit. |
 | `/plan-week` | Build **your own** weekly focus from live tracker issues and current ownership. |
 | `/report` | Compare your plan with real delivery evidence from the tracker — planned versus actual. |
+| `/polaris-memory` | Search and record team memory via the `polmem` CLI — recall-first before building; recall ≠ current state. |
+| `/pol-apex-curate` | Curate a repo's `CLAUDE.md` (the always-loaded apex) — distill lessons/decisions into a ≤200-line, propose-only patch. |
 
 No bootstrap, generic development manifesto, or duplicate report command ships. `/polaris-grill`
 is the read-only clarification gate; it proposes durable entries but never implements or mutates the
