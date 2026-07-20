@@ -21,7 +21,15 @@ on their own machine, from their own login. Read from the contract:
   plus `preferred_areas` / `excluded_areas` used to bias and filter triage.
 
 If any is missing, stop and point to `docs/TEAM-ONBOARDING.md`. Set `REPO="$(tracker.github_repo)"`,
-`LOGIN="$(profile github)"` and `WEEK="$(date +%G-W%V)"` (ISO year-week, e.g. `2026-W29`).
+`LOGIN="$(profile github)"` and the target ISO year-week — **a plan authored on the weekend
+(Saturday/Sunday) is for the week that STARTS Monday, so roll forward then**; otherwise it lands in the
+ending week (e.g. Sunday of `W29`) and Monday's `/start` looks for `W30` and finds nothing:
+
+```bash
+WEEK="$(python3 -c "import datetime; d=datetime.date.today(); d += datetime.timedelta(days=8-d.isoweekday()) if d.isoweekday()>=6 else datetime.timedelta(0); print(d.strftime('%G-W%V'))")"
+```
+
+(run on Sun 2026-07-19 → `2026-W30`, not the ending `2026-W29`; Mon–Fri → the current week, unchanged).
 
 **Ask this week's commitment — it drives the load.** Before ranking, ask the contributor how much
 they want to take on **this** week: a number of primary outcomes, or light / normal / heavy. Their
