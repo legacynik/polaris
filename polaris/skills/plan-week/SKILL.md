@@ -103,7 +103,7 @@ run `polmem init` yourself.
 
 Write `team/<login>/weeks/$WEEK.md` (exact convention: ISO week — `weeks/YYYY-Www.md`, e.g.
 `team/octocat/weeks/2026-W29.md`) from the plugin template
-`$CLAUDE_PLUGIN_ROOT/polaris/templates/repo-contract/weekly-plan.md` (copy it into the repo if you
+`$CLAUDE_PLUGIN_ROOT/templates/repo-contract/weekly-plan.md` (copy it into the repo if you
 keep local templates). Do not overwrite an existing plan for the week without saying so. It must
 contain:
 - one outcome that matters to the product or customer;

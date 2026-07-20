@@ -615,6 +615,8 @@ def test_agents_md_bridges_the_skills_to_non_claude_clis() -> None:
         "end",
         "plan-week",
         "report",
+        "polaris-memory",
+        "pol-apex-curate",
     ):
         assert f"polaris/skills/{name}/SKILL.md" in agents
     assert "$CLAUDE_PLUGIN_ROOT" in agents

@@ -96,7 +96,9 @@ def front_door_lag(wiki_dir: Path, repo_dir: str, max_lag: int) -> list[str]:
 
 
 def _newest(d: Path) -> Path | None:
-    files = sorted(d.glob("*.md"), key=lambda p: p.stat().st_mtime, reverse=True) if d.exists() else []
+    # sort by filename, NOT mtime: journal entries carry ISO/dated names (chronological), and a
+    # clone/checkout resets mtimes — the newest-by-mtime could be an arbitrary older entry.
+    files = sorted(d.glob("*.md"), key=lambda p: p.name, reverse=True) if d.exists() else []
     return files[0] if files else None
 
 
@@ -113,14 +115,16 @@ def git_age(repo_dir: str, rel: str, today: datetime.date) -> int | None:
         return None
 
 
-def report(buckets: dict[str, list], max_age: int, wiki_dir: Path | None = None) -> str:
+def report(buckets: dict[str, list], max_age: int, wiki_dir: Path | None = None,
+           today: datetime.date | None = None) -> str:
+    today = today or datetime.date.today()  # use the caller's --today so a deterministic run classifies consistently
     stale = buckets["stale_active"]
     if not stale:
         return f"wiki quality: clean — no active doc older than {max_age}d polluting retrieval."
     repo, sub = (str(wiki_dir.parent), wiki_dir.name) if wiki_dir else (".", ".wiki")
     archive, metadata_lag = [], []  # git-old too → real candidate; git-recent → live doc, stale field only
     for name, _fm, age in sorted(stale, key=lambda x: -(x[2] or 0)):
-        g = git_age(repo, f"{sub}/{name}", datetime.date.today()) if wiki_dir else None
+        g = git_age(repo, f"{sub}/{name}", today) if wiki_dir else None
         (metadata_lag if (g is not None and g <= max_age) else archive).append((name, age, g))
     lines = [f"═══ WIKI QUALITY — {len(stale)} active doc(s) with stale `updated:` (>{max_age}d) ═══"]
     for name, age, g in archive[:12]:
@@ -174,7 +178,7 @@ def main(argv: list[str] | None = None) -> int:
     if not wiki_dir.exists():
         print(f"no wiki dir at {wiki_dir}", file=sys.stderr)
         return 0
-    print(report(scan(wiki_dir, today, max_age), max_age, wiki_dir))
+    print(report(scan(wiki_dir, today, max_age), max_age, wiki_dir, today))
     # the real degrade signal: entry points that lag recent activity (cardaq audit)
     fd = front_door_lag(wiki_dir, str(wiki_dir.parent), max_lag)
     if fd:

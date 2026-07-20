@@ -97,9 +97,15 @@ enforced in code, never left to prose:
 
 ```bash
 LOGIN="$(git config --local --get polaris.login || gh api user --jq .login)"
-"$CLAUDE_PLUGIN_ROOT/polaris/scripts/session_commit.sh" \
-  "team/$LOGIN/sessions/$(date +%F)-@$LOGIN.md"    # pass the weekly plan as a 2nd arg ONLY if Step 2 ticked it
+ROOT="_polaris"; [ -f "_polaris/config.yml" ] || ROOT="."   # normal product repo → _polaris/ ; vault (repo root IS _polaris) → .
+"$CLAUDE_PLUGIN_ROOT/scripts/session_commit.sh" \
+  "$ROOT/team/$LOGIN/sessions/$(date +%F)-@$LOGIN.md"    # the session log Step 1 wrote (under the resolved Polaris root)
+  # add the weekly plan "$ROOT/team/$LOGIN/weeks/$(date +%G-W%V).md" as a 2nd arg ONLY if Step 2 ticked it
 ```
+
+The paths MUST be under the resolved Polaris root (`_polaris/` in a normal repo, `.` in the vault): the
+session log lives at `$ROOT/team/$LOGIN/sessions/`, and a bare `team/$LOGIN/...` would miss it — the
+commit would find nothing and skip, leaving the checkpoint orphaned (the exact bug this step prevents).
 
 The script is pathspec-only (never `git add -A`, so parallel panels sharing one tree can never drag
 each other's uncommitted work), refuses to commit `state/current.md`, `decisions.md`/`lessons.md`

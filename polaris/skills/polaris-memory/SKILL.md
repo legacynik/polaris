@@ -27,9 +27,8 @@ decision/history questions it does cover, recall costs one command and routinely
 of files (or re-solving a solved problem).
 
 ```bash
-polmem recall "cardaq deadline sprint"          # search everything
-polmem recall "auth flow" --repo noemi-ai        # scope to one repo
-polmem recall "pricing" --tag decision --top 8   # filter + widen
+polmem recall "cardaq deadline sprint"     # search this repo's memory
+polmem recall "auth flow" --top 8          # widen the result count
 ```
 
 Recall ranks **titles/summaries/tags**, not full document bodies. If the first query returns weak hits,
@@ -45,24 +44,25 @@ Resolve current state against code, GitHub, or the database, and treat the page 
 ## Record what's worth keeping
 
 ```bash
-polmem remember "Chose Hetzner over Railway" "Cost + control; revisit at 10 paying users" --kind decision
-polmem remember "grep-only usage-drift misses renamed callers" "Use the LSP resolver in prod" --kind lesson
+polmem remember "Decision: chose Hetzner over Railway — cost + control; revisit at 10 paying users"
+polmem remember "Lesson: grep-only usage-drift misses renamed callers — use the LSP resolver in prod"
 ```
 
-`--kind` is `decision` (a choice made, with the why), `lesson` (a mistake→rule, so it isn't repeated),
-or `outcome` (a shipped result). A `remember` is recallable immediately in the same working tree.
-Prefer recording at `/end`, which vets and commits these into shared history — teammates go blind on
-uncommitted decisions/lessons.
+Lead the note with what it is — `Decision:` (a choice made, with the why), `Lesson:` (a mistake→rule so
+it isn't repeated), or `Outcome:` (a shipped result). A `remember` is recallable immediately in the same
+working tree. Prefer recording at `/end`, which vets and commits these into shared history — teammates go
+blind on uncommitted decisions/lessons.
 
 ## Find the memory behind a piece of code
 
 ```bash
-polmem code src/pricing/engine.py     # which wiki pages reference this file/symbol
-polmem code apply_discount
+polmem recall "pricing engine apply_discount"   # recall by the file/symbol name before you touch it
 ```
 
-Reverse lookup via the `code_refs` join key — the fast way to answer *"what do we know about this
-module before I touch it"*.
+Recall the memory around a module by its file/symbol name — the fast way to answer *"what do we know
+about this before I change it"*. (A repo wired with the full memory engine also exposes a precise
+`polmem code <file|symbol>` reverse-lookup via the `code_refs` join key; the shipped teammate shim
+covers `recall`, `remember`, `health`, `sync`.)
 
 ## Health (weekly, RED only)
 

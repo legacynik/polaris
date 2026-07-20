@@ -36,8 +36,14 @@ commit_checkpoint() {
     done <<< "$staged"
     local login; login="$(git config --local --get polaris.login 2>/dev/null || echo session)"
     # commit with explicit pathspec: only these paths land, even if another panel pre-staged something
-    git commit -q -m "chore(session): checkpoint @${login} $(date +%F)" -- "$log" ${plan:+"$plan"}
-    echo "session_commit: committed on ${branch} — ${staged//$'\n'/, }"
+    if git commit -q -m "chore(session): checkpoint @${login} $(date +%F)" -- "$log" ${plan:+"$plan"}; then
+        echo "session_commit: committed on ${branch} — ${staged//$'\n'/, }"
+    else
+        # never claim success on a failed commit (hook rejection, missing identity, index lock, bad pathspec):
+        # /update would report the checkpoint landed while it sits uncommitted.
+        echo "session_commit: git commit FAILED on ${branch} — checkpoint NOT landed (${staged//$'\n'/, })" >&2
+        return 1
+    fi
 }
 
 _selfcheck() {

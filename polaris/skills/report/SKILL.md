@@ -111,7 +111,7 @@ the repo is not memory-wired, tell the repo owner — do not run `polmem init` y
 
 Create or update `team/<login>/reports/$WEEK.md` (exact convention: ISO week — `reports/YYYY-Www.md`,
 e.g. `team/octocat/reports/2026-W29.md`) from the plugin template
-`$CLAUDE_PLUGIN_ROOT/polaris/templates/repo-contract/weekly-report.md`. Sections, in order:
+`$CLAUDE_PLUGIN_ROOT/templates/repo-contract/weekly-report.md`. Sections, in order:
 
 1. `## TL;DR` — three sentences max: the week's outcome, the biggest thing shipped (with its
    evidence), the top outstanding item.
