@@ -52,7 +52,7 @@ plugin template:
 
 ```bash
 mkdir -p "_polaris/team/$LOGIN/weeks" "_polaris/team/$LOGIN/reports" "_polaris/team/$LOGIN/sessions"
-cp "$CLAUDE_PLUGIN_ROOT/polaris/templates/repo-contract/profile.yml" "_polaris/team/$LOGIN/profile.yml"
+cp "$CLAUDE_PLUGIN_ROOT/templates/repo-contract/profile.yml" "_polaris/team/$LOGIN/profile.yml"
 perl -pi -e "s/^github: .*/github: $LOGIN/" "_polaris/team/$LOGIN/profile.yml"
 ```
 

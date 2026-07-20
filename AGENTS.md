@@ -15,6 +15,8 @@ of this repository: read the relevant SKILL.md below and follow it exactly.
 | end | [polaris/skills/end/SKILL.md](polaris/skills/end/SKILL.md) | Close a session: handoff, decision/lesson proposals, optional pathspec-only commit |
 | plan-week | [polaris/skills/plan-week/SKILL.md](polaris/skills/plan-week/SKILL.md) | Your own weekly focus — yours to execute; only red work waits for a named approver |
 | report | [polaris/skills/report/SKILL.md](polaris/skills/report/SKILL.md) | Weekly report — planned versus actual, evidence from the tracker |
+| polaris-memory | [polaris/skills/polaris-memory/SKILL.md](polaris/skills/polaris-memory/SKILL.md) | Search/record team memory via the `polmem` CLI — recall-first before building; recall ≠ current state |
+| pol-apex-curate | [polaris/skills/pol-apex-curate/SKILL.md](polaris/skills/pol-apex-curate/SKILL.md) | Curate a repo's `CLAUDE.md` apex — distill lessons/decisions into a ≤200-line, propose-only patch |
 
 ## Notes for non-Claude agents
 

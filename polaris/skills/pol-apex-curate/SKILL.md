@@ -49,7 +49,7 @@ not just a flag.
 ## Self-check before presenting (deterministic, mandatory)
 Extract the proposed apex body (everything above the first `---` separator) to
 `/tmp/apex-body.md`, then run:
-`python3 "$CLAUDE_PLUGIN_ROOT/polaris/mcp/apex_gate_cli.py" --file /tmp/apex-body.md --against <repo>/CLAUDE.md`
+`python3 "$CLAUDE_PLUGIN_ROOT/mcp/apex_gate_cli.py" --file /tmp/apex-body.md --against <repo>/CLAUDE.md`
 Exit 1 or any WARN → fix the proposal and re-run. Present only a clean proposal.
 
 ## Handoff

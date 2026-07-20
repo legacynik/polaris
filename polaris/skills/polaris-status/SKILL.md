@@ -126,7 +126,7 @@ one-confirm approval — you never mark or delete by hand.
 1. **Stale-state sweep.** Resolve each `state/current.md` open thread against ground truth:
 
    ```bash
-   python3 "$CLAUDE_PLUGIN_ROOT/polaris/scripts/state_reconcile.py" _polaris/state/current.md --repo-dir .
+   python3 "$CLAUDE_PLUGIN_ROOT/scripts/state_reconcile.py" _polaris/state/current.md --repo-dir .
    ```
 
    It flags threads whose branch is **merged into origin/main** (superseded, proven) vs active vs
@@ -146,7 +146,7 @@ one-confirm approval — you never mark or delete by hand.
 3. **Wiki retrieval quality.** Two independent ways a wiki degrades retrieval — surface both:
 
    ```bash
-   python3 "$CLAUDE_PLUGIN_ROOT/polaris/scripts/wiki_quality_check.py" .wiki --max-age 45 --front-door-lag 3
+   python3 "$CLAUDE_PLUGIN_ROOT/scripts/wiki_quality_check.py" .wiki --max-age 45 --front-door-lag 3
    ```
 
    - `[archive?]` — active docs stale on BOTH the `updated:` frontmatter AND git-last-commit → real
