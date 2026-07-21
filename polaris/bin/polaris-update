@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+# polaris-update — update the complete Polaris system on this machine in one command:
+#   1. this repo clone (git pull)
+#   2. skills, globally for Claude Code + Codex (npx skills -> ~/.agents/skills + symlinks)
+#   3. polmem CLI launcher (plugin cache first, this clone as fallback)
+#   4. Serena code-graph: launcher files + SHA pin synced from this repo's .mcp.json
+#   5. obsidian-wiki tool (uv)
+# Idempotent, re-runnable. Team members on the Claude plugin don't need this — the
+# plugin auto-updates; this is for npx-skills (cross-harness) machines.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+step() { printf '\n==> %s\n' "$*"; }
+
+step "repo: pull $ROOT"
+git -C "$ROOT" pull --ff-only
+
+step "skills: npx skills add legacynik/polaris --global (Claude + Codex)"
+npx -y skills add legacynik/polaris --skill '*' --agent '*' --global --yes
+# npx skills may not symlink a NEW skill into every harness — backfill missing links.
+for src in "$ROOT"/skills/*/; do
+  n="$(basename "$src")"
+  for dir in "$HOME/.claude/skills" "$HOME/.codex/skills"; do
+    if [ -d "$dir" ] && [ -d "$HOME/.agents/skills/$n" ] && [ ! -e "$dir/$n" ]; then
+      ln -sf "$HOME/.agents/skills/$n" "$dir/$n"
+      echo "  linked missing $n into $dir"
+    fi
+  done
+done
+
+step "polmem: install launcher (plugin-cache-or-clone resolution)"
+mkdir -p "$HOME/.local/bin"
+cat > "$HOME/.local/bin/polmem" <<LAUNCHER_EOF
+#!/usr/bin/env bash
+# polmem launcher (installed by polaris-update). Plugin cache first (auto-updating,
+# team channel); falls back to the repo clone that installed it (npx-skills machines).
+set -euo pipefail
+SHIM="\$(find "\$HOME/.claude/plugins/cache" -type f -path '*polaris-team-os*/bin/polmem' 2>/dev/null | sort -V | tail -n1 || true)"
+[ -n "\${SHIM:-}" ] || SHIM="$ROOT/bin/polmem"
+exec python3 "\$SHIM" "\$@"
+LAUNCHER_EOF
+chmod +x "$HOME/.local/bin/polmem"
+echo "  installed ~/.local/bin/polmem (fallback: $ROOT/bin/polmem)"
+
+step "serena: sync launcher + SHA pin from .mcp.json"
+DEST="$HOME/.local/share/polaris-serena"
+mkdir -p "$DEST"
+cp "$ROOT/scripts/serena_code_graph_launcher.py" "$ROOT/scripts/serena_freshness_fix.py" "$DEST/"
+SHA="$(python3 -c "
+import json
+args = json.load(open('$ROOT/.mcp.json'))['serena-code-graph']['args']
+print(next(a for a in args if 'serena@' in a).split('@', 1)[1])")"
+python3 - "$SHA" <<'PY'
+import json, re, sys, pathlib
+sha = sys.argv[1]
+p = pathlib.Path.home() / ".claude.json"
+d = json.loads(p.read_text())
+srv = d.get("mcpServers", {}).get("serena-code-graph")
+changed = False
+for i, a in enumerate(srv.get("args", []) if srv else []):
+    new = re.sub(r"serena@[0-9a-f]{7,40}", f"serena@{sha}", a)
+    if new != a:
+        srv["args"][i] = new
+        changed = True
+if changed:
+    p.write_text(json.dumps(d, indent=2))
+    print(f"  ~/.claude.json pinned -> serena@{sha}")
+else:
+    print("  ~/.claude.json already current (or serena not configured)")
+PY
+TOML="$HOME/.codex/config.toml"
+if [ -f "$TOML" ] && grep -q 'serena@' "$TOML"; then
+  perl -pi -e "s/serena\@[0-9a-f]{7,40}/serena\@$SHA/g" "$TOML"
+  echo "  ~/.codex/config.toml pinned -> serena@$SHA"
+fi
+
+step "wiki: uv tool upgrade obsidian-wiki"
+if command -v uv >/dev/null 2>&1 && uv tool list 2>/dev/null | grep -q obsidian-wiki; then
+  uv tool upgrade obsidian-wiki
+else
+  echo "  obsidian-wiki not installed via uv — skipped"
+fi
+
+step "done — restart Claude Code / Codex to load updated MCP pins"
