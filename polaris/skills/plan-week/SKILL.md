@@ -84,10 +84,16 @@ Rank candidates in this strict order — **severity outranks age, always**:
 4. **staleness**: older `updatedAt` first — the **final tiebreak only**, once 1–3 are equal, so
    nothing rots. It must never promote an old low-severity issue over a fresh critical one.
 
-**Fit to `CAP` — the commitment from Step 1.** Aim the plan at `CAP` primary outcomes, and list what
-does not fit under "Not starting" so the choice is visible instead of silent. `CAP` is a planning
-guide, not a quota — it exists to size the plan honestly, not to cap output. If this week's `CAP` differs a lot from the profile `weekly_capacity`, note why
-in the weekly file; if the gap is persistent, propose updating `weekly_capacity` to match reality.
+**Load the plate WITH the contributor, aggressively — never pre-cut to a safe few.** Show them the
+FULL ranked slate (all the candidates, not a conservative top-3), then ask which to take on. Bias hard
+toward loading a full week: propose the primaries AND every capacity-fitting secondary that clears the
+bar, and put the rest in an explicit "could also pull in" list rather than silently dropping it. On
+`heavy`/`hard`, fill the week and then some — it is far easier for them to cut than to be handed an
+empty-looking plan. The contributor decides what lands; your job is to surface the whole slate and ask,
+never to quietly keep the plan thin.
+
+`CAP` sizes the ask, it does not cap output — a conservative default is the failure here. If this week's
+`CAP` differs a lot from the profile `weekly_capacity`, note why; if the gap is persistent, propose updating it.
 
 ## Step 5 — Recall prior context
 
