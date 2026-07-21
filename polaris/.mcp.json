@@ -10,7 +10,7 @@
     "command": "uvx",
     "args": [
       "--from",
-      "git+https://github.com/oraios/serena@96e95c0b5dfaf21a277a1478e72c11f9383a9c9a",
+      "git+https://github.com/oraios/serena@16e8e24da103d47beb5f43df1f5585985f9aabd6",
       "--with",
       "pyright",
       "python",
