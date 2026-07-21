@@ -31,10 +31,12 @@ WEEK="$(python3 -c "import datetime; d=datetime.date.today(); d += datetime.time
 
 (run on Sun 2026-07-19 → `2026-W30`, not the ending `2026-W29`; Mon–Fri → the current week, unchanged).
 
-**Ask this week's commitment — it drives the load.** Before ranking, ask the contributor how much
-they want to take on **this** week: a number of primary outcomes, or light / normal / heavy. Their
-answer is `CAP`, the load the plan is sized to. `weekly_capacity` is only the default offered if they
-don't say — the week's real load is what they commit to now, not a static profile number.
+**Ask this week's commitment — it drives the load.** Before ranking, ask how much they want to take
+on **this** week. Concrete guide (scale with how the epics are scoped — coarse epics load fewer,
+tight ones more): `light` ≈ 2-3 epics, `normal` 4-5, `heavy`/`hard` 7-8. Their answer is `CAP`. `CAP`
+is a planning guide, not a quota: it sizes the ask, its purpose is not to cap output. `weekly_capacity`
+is the default offered if they don't say; the week's real load is what they commit to now, not a static
+profile number.
 
 ## Step 2 — Pull live issues (read-only)
 
