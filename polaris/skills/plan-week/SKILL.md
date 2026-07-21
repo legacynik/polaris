@@ -38,10 +38,18 @@ is a planning guide, not a quota: it sizes the ask, its purpose is not to cap ou
 is the default offered if they don't say; the week's real load is what they commit to now, not a static
 profile number.
 
-## Step 2 — Pull live issues (read-only)
+## Step 2 — Read the whole picture (carryover + open issues)
+
+Never rank blind. Gather two things so the plan is a real path, not a top-3 guess:
+
+**a) Carryover — what's still open from last week.** Read the contributor's most recent
+`team/<login>/weeks/*.md` and their assigned open issues (what did not close, what is mid-flight).
+These lead the new week — you finish what you started before you start new.
+
+**b) The live issues (read-only):**
 
 ```bash
-gh issue list --repo "$REPO" --state open --json number,title,labels,updatedAt --limit 50
+gh issue list --repo "$REPO" --state open --json number,title,labels,updatedAt --limit 60
 ```
 
 Expected shape:
