@@ -78,6 +78,13 @@ Read these local files, in order:
    contributor. It is a pointer, not session history; never rewrite it from `/start`.
 4. The newest file in `team/<login>/sessions/` — read its handoff/checkpoint and concrete next
    action. Do not scan `team/*/sessions/`.
+5. **Handoff radar (multi-panel machines)** — if `<polaris-root>/scripts/handoff_radar.py` exists,
+   run it (`python3 <polaris-root>/scripts/handoff_radar.py`, read-only, <2s). It surfaces
+   end-of-session handoffs that main cannot see: stray per-worktree `state/current.md`, session
+   logs committed on unmerged branches, uncommitted logs in worktrees. Include any ⚠ rows in the
+   brief under a `**Handoff sparsi**` line so the operator can decide where to resume — this is
+   exactly the context that silently goes missing with parallel panels. Absent script → skip
+   silently (single-panel machines don't need it).
 
 Do not read decisions, lessons, `.wiki/hot.md`, or unrelated files speculatively. Memory is not
 current state and recall is never mandatory at session start.
