@@ -88,6 +88,14 @@ by branch, nothing open lost, other panels' threads and `Next` lines untouched) 
 difference. **`/end` is the only Team OS command with closing authority**, and it spends it against
 ground truth rather than impression.
 
+**The thread line is the handoff that survives.** A session log committed on a branch is
+INVISIBLE to `/start` until that branch merges — for a paused worktree that can be days. So the
+thread line in `current.md` must carry the resume-essence on its own, written as if it is the only
+survivor (it is): `- \`branch\` — <done in 1 clause; next concrete step; blocker or none> ·
+wt: <worktree path if not main> · since YYYY-MM-DD`. Pausing WITHOUT a PR is normal: keep the
+worktree alive, record its path in the line, and the next session reopens that same worktree from
+`/start` — never feel forced to PR early just to make work visible.
+
 **A thread closes only when its work actually landed.** Ask git and the tracker; never infer death
 from "nothing moved lately". Work parked on a live branch while its owner spent the week elsewhere
 is the normal shape of parallel development — several panels, several worktrees, several branches
