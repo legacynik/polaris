@@ -96,11 +96,13 @@ wt: <worktree path if not main> · since YYYY-MM-DD`. Pausing WITHOUT a PR is no
 worktree alive, record its path in the line, and the next session reopens that same worktree from
 `/start` — never feel forced to PR early just to make work visible.
 
-**Branch-closure offer (conditional, never forced).** If THIS session's branch looks finished —
-its DoD/acceptance met AND the test suite passes — offer to close it properly before the handoff:
-invoke `superpowers:finishing-a-development-branch` (merge/PR/keep/discard menu, test-gated).
-If work is simply pausing, skip silently: session end ≠ branch end — parking a live worktree is
-the normal shape of multi-panel work, and this offer must never pressure an early PR.
+**Branch discipline (superpowers:finishing-a-development-branch).** If this session produced
+commits on a feature branch, invoke `superpowers:finishing-a-development-branch` before the
+handoff. It does NOT force closure — its menu includes "keep as-is", which IS the pause path:
+the discipline it adds is that tests get verified and the branch's fate is an EXPLICIT recorded
+choice (merge / PR / keep / discard), never silent limbo. One adaptation: if tests are RED on
+work-in-progress, do not treat that as a blocker — skip the menu, park the branch in the handoff
+(thread line + cockpit) and note the red state. Session end ≠ branch end.
 
 **A thread closes only when its work actually landed.** Ask git and the tracker; never infer death
 from "nothing moved lately". Work parked on a live branch while its owner spent the week elsewhere
