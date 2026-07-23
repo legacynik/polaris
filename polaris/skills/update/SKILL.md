@@ -112,6 +112,26 @@ each other's uncommitted work), refuses to commit `state/current.md`, `decisions
 (those are `/end`'s vetted promotion) or any `.env*`, reports the branch it landed on, and skips
 silently on an empty checkpoint. It never checks out another branch and never pushes.
 
+
+## Cockpit append (dense session state — EVERY contributor; multi-panel is the norm)
+
+ALWAYS append the same dense block to the CURRENT repo's `<polaris-root>/state/current-state.md`
+(gitignored per contract — `state/` is ephemeral; append-only, never pruned here). This is each
+contributor's per-repo cockpit: Gio/JP run parallel panels too.
+
+Additionally, if `$HOME/Desktop/All Vibe Proj/_polaris` exists (the founder vault) and is not the
+current root, ALSO append a dense block to
+`<vault>/state/current-state.md` (gitignored, append-only, NEVER pruned by /update — the dense
+cockpit file). No vault on this machine → the per-repo cockpit above is the only (and sufficient) copy.
+
+```markdown
+## Update: {YYYY-MM-DD HH:MM} · {repo} · {branch}{ · wt: <path> se non-main}
+- {cosa fatto, 1-3 bullet DENSI — non comprimere}
+- Files: {file toccati con stato}
+- Commits: {`git log --oneline` degli sha di QUESTA sessione su questo branch, o "nessuno"}
+- Next: {passo concreto}
+```
+
 ## Boundaries
 
 - Do not write a founder vault, global memo, private workspace or automatic lesson.

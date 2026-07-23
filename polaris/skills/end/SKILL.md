@@ -141,3 +141,27 @@ git status -sb | head -1   # e.g. "## main...origin/main [ahead 1]"
 
 Summarize the handoff in three bullets (shipped, open, next). This command never writes outside the
 current repository and never mutates the tracker.
+
+## Cockpit append (dense session state — EVERY contributor; multi-panel is the norm)
+
+ALWAYS append the same dense block to the CURRENT repo's `<polaris-root>/state/current-state.md`
+(gitignored per contract — `state/` is ephemeral; append-only, never pruned here). This is each
+contributor's per-repo cockpit: Gio/JP run parallel panels too.
+
+Additionally, if `$HOME/Desktop/All Vibe Proj/_polaris` exists (the founder vault) and is not the
+current root, ALSO append the FULL handoff
+to `<vault>/state/current-state.md` (gitignored, append-only — the everything-file: next steps, tasks, resume instructions, nothing compressed away). No vault → the per-repo cockpit is the only copy.
+
+```markdown
+## Session end: {YYYY-MM-DD HH:MM} · {repo} · {branch}{ · wt: <path>}
+### Topics
+### Decisions
+### Files modified
+### Open threads
+### Next actions
+### Commits (history)     ← `git log --oneline <base>..HEAD` del branch: gli sha SONO il log
+### Resume instructions   ← come riprendere ESATTAMENTE: worktree, branch, comando, primo passo
+```
+
+This block is IN ADDITION to the thread line in `current.md` (thin index) and the committed
+session log (team history). The cockpit file is where "tutto" lives.
