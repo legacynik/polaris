@@ -83,8 +83,13 @@ Read these local files, in order:
    end-of-session handoffs that main cannot see: stray per-worktree `state/current.md`, session
    logs committed on unmerged branches, uncommitted logs in worktrees. Include any ⚠ rows in the
    brief under a `**Handoff sparsi**` line so the operator can decide where to resume — this is
-   exactly the context that silently goes missing with parallel panels. Absent script → skip
-   silently (single-panel machines don't need it).
+   exactly the context that silently goes missing with parallel panels. If the script is absent (team machines — npx ships
+   skills only), run the inline fallback, same purpose, two read-only commands scoped to THIS repo:
+   `git worktree list` → for each extra worktree, flag any `<polaris-root>/state/current-state.md`
+   or `current.md` living there (stray cockpit), and
+   `git log --all --not main --since='14 days ago' --oneline -- '*sessions/*.md' | head -5` →
+   handoffs committed on unmerged branches. Also read the tail (last 2 blocks) of this repo's
+   `state/current-state.md` if present — it is the dense cockpit with resume instructions.
 
 Do not read decisions, lessons, `.wiki/hot.md`, or unrelated files speculatively. Memory is not
 current state and recall is never mandatory at session start.
