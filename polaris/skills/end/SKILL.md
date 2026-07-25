@@ -146,8 +146,12 @@ the domain-modeling convention) and link it to the code it governs:
 
 1. Resolve every referenced file/symbol with **Serena** (`find_symbol`) — exact paths from the
    tree, never inferred from prose (the 12-wrong-path lesson).
-2. Put them in `code_refs:` frontmatter (files + symbols) — the drift contract: when that code
-   changes, the scanner flags this ADR stale, same signal as any code_refs page.
+2. Put them in `code_refs:` frontmatter — **symbols (qualified names) are the primary key**
+   (`ClassName.method`, module-level names); file paths only as context; **line numbers never**
+   (they drift on every edit — false-positive machine). The ADR file's frontmatter IS the store:
+   git-versioned, scanner-validated, CI-gated — no service, no separate index. Serena resolves
+   symbols live for drift checks (`find_symbol` still exists? signature changed?
+   `find_referencing_symbols` for impact).
 3. The decisions.md entry gets `→ ADR: docs/adr/NNNN-<slug>.md` appended; the ADR body states
    decision, alternatives weighed, and consequences — content per domain-modeling.
 4. Include the ADR file in the Step 5 commit pathspec.
