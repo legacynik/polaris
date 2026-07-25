@@ -140,6 +140,18 @@ Chose <X> over <Y> because <evidence>. Supersedes: <past decision, or —>. Impa
 **A lesson** = a real mistake — usually a loop or blocker you overcame — plus the one rule that
 prevents its recurrence. → `<root>/lessons.md`.
 
+**ADR — automatic for qualifying decisions (hard rule; the decisions.md entry alone is NOT enough).**
+When the decision qualifies, ALSO scaffold `docs/adr/NNNN-<slug>.md` (repo root; next free NNNN —
+the domain-modeling convention) and link it to the code it governs:
+
+1. Resolve every referenced file/symbol with **Serena** (`find_symbol`) — exact paths from the
+   tree, never inferred from prose (the 12-wrong-path lesson).
+2. Put them in `code_refs:` frontmatter (files + symbols) — the drift contract: when that code
+   changes, the scanner flags this ADR stale, same signal as any code_refs page.
+3. The decisions.md entry gets `→ ADR: docs/adr/NNNN-<slug>.md` appended; the ADR body states
+   decision, alternatives weighed, and consequences — content per domain-modeling.
+4. Include the ADR file in the Step 5 commit pathspec.
+
 If nothing durable happened, say so. Do not log routine progress as either.
 
 ## Step 4 — Prune the live pointer (the only step allowed to close a thread)
