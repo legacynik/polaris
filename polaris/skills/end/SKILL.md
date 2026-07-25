@@ -15,6 +15,24 @@ git status --short                 # what actually changed this session
 ```
 
 
+
+## Write-target rule (single physical path — NEVER per-worktree, NEVER per-branch)
+
+ALL session-state writes in this skill — session log, weekly-plan tick, `state/current.md`,
+`state/current-state.md` — go to the **MAIN worktree's** files, regardless of which worktree or
+branch this panel sits in:
+
+```bash
+MAIN_WT="$(git worktree list --porcelain | head -1 | sed 's|^worktree ||')"
+ROOT="$MAIN_WT/_polaris"; [ -f "$ROOT/config.yml" ] || ROOT="$MAIN_WT"
+```
+
+Why (founder rule, 2026-07-25): parallel worktrees each writing their own copy of the same daily
+file = N divergent copies on N branches = overwrites and data loss at merge time. One physical
+path means appends from every panel land in ONE file, in mtime order. Session-state never rides a
+feature branch. Tag entries with `· wt: <name> · branch: <branch>` so provenance survives without
+fragmentation.
+
 ## State hygiene (every run — the skills are the writers AND the janitors)
 
 Before writing, sweep the CURRENT repo's Polaris root for strays (multi-panel machines drift:
@@ -64,14 +82,34 @@ branches: no `.wiki/journal/` → skip the line, say once that the repo is not m
 the handoff (tell the repo owner; do **not** wire it yourself); `command not found: polmem` → run the
 plugin installer once, then re-check the wiring above. Never run `polmem init` yourself.
 
+### Step 1b — Structured handoff → `$ROOT/team/<login>/handoff/YYYY-MM-DD.md`
+
+The contract's `handoff/` directory is for handoffs RICHER than a checkpoint — write it on every
+/end (main worktree, append if the file exists):
+
+```md
+# Handoff YYYY-MM-DD HH:MM — @<login>
+Repo: <repo> · wt: <worktree name or main> · branch: <branch> · commits: <shas this session>
+## Shipped (verified)
+## Open threads (with exact state)
+## Next session: first command to run
+## Risks / do-not-touch
+```
+
+This file is committed shared history (Step 5 includes it). The cockpit block stays the dense
+personal view; THIS is the structured one a teammate (or you in 3 days) resumes from.
+
 ## Step 2 — Tick the plan
 
 Update the matching row in `team/<login>/weeks/$(date +%G-W%V).md` only when its state or proof
 changed. Do not rewrite the plan.
 
-## Step 3 — Surface durable decisions and lessons (propose, don't write)
+## Step 3 — Capture durable decisions and lessons (WRITE them — a proposal that dies with the session is data loss)
 
-Propose (and wait for confirmation before writing) only if genuinely durable — never routine progress.
+Founder rule 2026-07-25: /end WRITES qualifying decisions and lessons directly — append-only, in
+the MAIN worktree, attributed `(@<login>)` — and lists what it wrote in the closing summary so the
+founder can amend/revert (git history protects; a never-confirmed proposal protects nothing).
+Write only if genuinely durable — never routine progress.
 
 **A decision** qualifies only if it either **supersedes a past decision** (name which, and align it)
 **or** sets an **architectural direction** whose impact runs from today out to 30 days–years on the
@@ -148,7 +186,9 @@ committed shared history, so it belongs in this commit or it never reaches the t
 
 ```bash
 git add "_polaris/team/$LOGIN/sessions/<file>" "_polaris/team/$LOGIN/weeks/<file>" \
-        ".wiki/journal/<file-from-step-1>"   # only the files you wrote — INCLUDING the journal line
+        "_polaris/team/$LOGIN/handoff/$(date +%F).md" \
+        "_polaris/decisions.md" "_polaris/lessons.md" \
+        ".wiki/journal/<file-from-step-1>"   # only files you wrote this session — incl. handoff + any Step 3 append
 git commit -m "chore(polaris): session handoff $(date +%F) @$LOGIN"
 ```
 

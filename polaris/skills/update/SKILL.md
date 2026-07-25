@@ -18,6 +18,24 @@ Three facts, no narration: **Done** (verified, not "worked on"), **Next** (one c
 result yet, say "in progress" — do not inflate.
 
 
+
+## Write-target rule (single physical path — NEVER per-worktree, NEVER per-branch)
+
+ALL session-state writes in this skill — session log, weekly-plan tick, `state/current.md`,
+`state/current-state.md` — go to the **MAIN worktree's** files, regardless of which worktree or
+branch this panel sits in:
+
+```bash
+MAIN_WT="$(git worktree list --porcelain | head -1 | sed 's|^worktree ||')"
+ROOT="$MAIN_WT/_polaris"; [ -f "$ROOT/config.yml" ] || ROOT="$MAIN_WT"
+```
+
+Why (founder rule, 2026-07-25): parallel worktrees each writing their own copy of the same daily
+file = N divergent copies on N branches = overwrites and data loss at merge time. One physical
+path means appends from every panel land in ONE file, in mtime order. Session-state never rides a
+feature branch. Tag entries with `· wt: <name> · branch: <branch>` so provenance survives without
+fragmentation.
+
 ## State hygiene (every run — the skills are the writers AND the janitors)
 
 Before writing, sweep the CURRENT repo's Polaris root for strays (multi-panel machines drift:
@@ -33,11 +51,11 @@ Skip silently when the repo is already clean. Never delete anything in this step
 
 ## Step 1 — Append to the session log
 
-Append to `team/<login>/sessions/YYYY-MM-DD-@<github-login>.md` (create it if today's file does not
-exist):
+Append to `$ROOT/team/<login>/sessions/YYYY-MM-DD-@<github-login>.md` **in the MAIN worktree**
+(per the write-target rule above; create it if today's file does not exist):
 
 ```md
-## HH:MM — checkpoint
+## HH:MM — checkpoint · wt: <worktree name or main> · branch: <branch>
 - Done: <verified progress, with proof if any>
 - Next: <one concrete next step>
 - Blocker: <none, or exact blocker>
