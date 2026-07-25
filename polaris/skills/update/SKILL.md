@@ -18,23 +18,17 @@ Three facts, no narration: **Done** (verified, not "worked on"), **Next** (one c
 result yet, say "in progress" — do not inflate.
 
 
+## One home (write-target for ALL session-state)
 
-## Write-target rule (single physical path — NEVER per-worktree, NEVER per-branch)
-
-ALL session-state writes in this skill — session log, weekly-plan tick, `state/current.md`,
-`state/current-state.md` — go to the **MAIN worktree's** files, regardless of which worktree or
-branch this panel sits in:
+Every write in this skill — session log, plan tick, `current.md`, `current-state.md` — lands in the
+**MAIN worktree**, whichever worktree/branch this panel sits in. One home = every panel appends to
+the same file in time order; per-worktree copies diverge on N branches and lose data at merge.
+Provenance lives in the entry header (`wt:`/`branch:`), not in the file's location.
 
 ```bash
 MAIN_WT="$(git worktree list --porcelain | head -1 | sed 's|^worktree ||')"
 ROOT="$MAIN_WT/_polaris"; [ -f "$ROOT/config.yml" ] || ROOT="$MAIN_WT"
 ```
-
-Why (founder rule, 2026-07-25): parallel worktrees each writing their own copy of the same daily
-file = N divergent copies on N branches = overwrites and data loss at merge time. One physical
-path means appends from every panel land in ONE file, in mtime order. Session-state never rides a
-feature branch. Tag entries with `· wt: <name> · branch: <branch>` so provenance survives without
-fragmentation.
 
 ## State hygiene (every run — the skills are the writers AND the janitors)
 
@@ -70,16 +64,8 @@ its `Status`, `Proof` or `Blocker` cell. Do not rewrite the plan and do not crea
 
 ## Step 3 — Reconcile `state/current.md` (the convergence point) — add and flag, never close
 
-**Resolve it from the MAIN worktree, always** — never from the checkout you happen to be sitting in:
-
-```bash
-MAIN_WT="$(git worktree list --porcelain | head -1 | sed 's|^worktree ||')"  # main worktree is listed first
-# → "$MAIN_WT/_polaris/state/current.md"  (or "$MAIN_WT/state/current.md" when the repo root IS _polaris)
-```
-
-It is gitignored, so it never travels with a branch: written inside a worktree, the next session
-(which opens the main checkout) never sees it — a handoff nobody will ever read, a measured loss (orphaned per-worktree handoffs).
-One file in the main worktree keeps many parallel panels legible from one place.
+Path per the **One home** rule: `$ROOT/state/current.md` (gitignored — it never travels with a
+branch; one file keeps every parallel panel legible from one place).
 
 Because every panel converges here, **the branch is a thread's identity**: one panel, one worktree,
 one branch. Tag each thread with its branch and `/end` can ask git whether the work actually landed
@@ -123,13 +109,13 @@ confirm before touching it.
 ## Step 4 — Land the checkpoint in git (your branch, pathspec-only)
 
 A checkpoint left uncommitted is an orphaned handoff — the exact failure Polaris exists to prevent.
-Land it on your **current branch**: a checkpoint describes *this branch's* work, so it belongs here;
-`/end` is what promotes durable history to main. Delegate the commit to the script so hygiene is
-enforced in code, never left to prose:
+Run the script **from the MAIN worktree** (where One home wrote the files). It commits only when
+that tree is on the default branch and defers otherwise — the file stays as the single on-disk
+copy and the next main-tree session lands it. Hygiene is enforced in code, never left to prose:
 
 ```bash
 LOGIN="$(git config --local --get polaris.login || gh api user --jq .login)"
-ROOT="_polaris"; [ -f "_polaris/config.yml" ] || ROOT="."   # normal product repo → _polaris/ ; vault (repo root IS _polaris) → .
+cd "$MAIN_WT"; ROOT="_polaris"; [ -f "_polaris/config.yml" ] || ROOT="."
 "$CLAUDE_PLUGIN_ROOT/scripts/session_commit.sh" \
   "$ROOT/team/$LOGIN/sessions/$(date +%F)-@$LOGIN.md"    # the session log Step 1 wrote (under the resolved Polaris root)
   # add the weekly plan "$ROOT/team/$LOGIN/weeks/$(date +%G-W%V).md" as a 2nd arg ONLY if Step 2 ticked it
@@ -139,11 +125,8 @@ The paths MUST be under the resolved Polaris root (`_polaris/` in a normal repo,
 session log lives at `$ROOT/team/$LOGIN/sessions/`, and a bare `team/$LOGIN/...` would miss it — the
 commit would find nothing and skip, leaving the checkpoint orphaned (the exact bug this step prevents).
 
-The script is pathspec-only (never `git add -A`, so parallel panels sharing one tree can never drag
-each other's uncommitted work), refuses to commit `state/current.md`, `decisions.md`/`lessons.md`
-(those are `/end`'s vetted promotion) or any `.env*`, reports the branch it landed on, and skips
-silently on an empty checkpoint. It never checks out another branch and never pushes.
-
+The script is pathspec-only, refuses `state/current.md` / `decisions.md` / `lessons.md` / `.env*`,
+commits only from the default branch (defers elsewhere), never checks out and never pushes.
 
 ## Cockpit append (dense session state — EVERY contributor; multi-panel is the norm)
 

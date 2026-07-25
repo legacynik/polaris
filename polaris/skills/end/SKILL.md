@@ -1,6 +1,6 @@
 ---
 name: end
-description: Polaris skill — close a repository-first team session with a handoff, decision proposals, a plan tick and an optional pathspec-only commit. Trigger when stopping work, before a multi-day pause, or on "wrap up / end session / /end".
+description: Polaris skill — close a repository-first team session with a handoff, decisions/lessons written to the ledgers, a plan tick and a pathspec-only commit. Trigger when stopping work, before a multi-day pause, or on "wrap up / end session / /end".
 user-invocable: true
 ---
 
@@ -15,23 +15,17 @@ git status --short                 # what actually changed this session
 ```
 
 
+## One home (write-target for ALL session-state)
 
-## Write-target rule (single physical path — NEVER per-worktree, NEVER per-branch)
-
-ALL session-state writes in this skill — session log, weekly-plan tick, `state/current.md`,
-`state/current-state.md` — go to the **MAIN worktree's** files, regardless of which worktree or
-branch this panel sits in:
+Every write in this skill — session log, handoff file, plan tick, `current.md`, `current-state.md`,
+decisions/lessons appends — lands in the **MAIN worktree**, whichever worktree/branch this panel
+sits in. One home = appends from every panel land in one file, in time order; per-worktree copies
+diverge on N branches and lose data at merge. Provenance lives in the block header (`wt:`/`branch:`).
 
 ```bash
 MAIN_WT="$(git worktree list --porcelain | head -1 | sed 's|^worktree ||')"
 ROOT="$MAIN_WT/_polaris"; [ -f "$ROOT/config.yml" ] || ROOT="$MAIN_WT"
 ```
-
-Why (founder rule, 2026-07-25): parallel worktrees each writing their own copy of the same daily
-file = N divergent copies on N branches = overwrites and data loss at merge time. One physical
-path means appends from every panel land in ONE file, in mtime order. Session-state never rides a
-feature branch. Tag entries with `· wt: <name> · branch: <branch>` so provenance survives without
-fragmentation.
 
 ## State hygiene (every run — the skills are the writers AND the janitors)
 
@@ -99,6 +93,30 @@ Repo: <repo> · wt: <worktree name or main> · branch: <branch> · commits: <sha
 This file is committed shared history (Step 5 includes it). The cockpit block stays the dense
 personal view; THIS is the structured one a teammate (or you in 3 days) resumes from.
 
+### Step 1c — Cockpit append (dense session state, every contributor)
+
+ALWAYS append the same dense block to the CURRENT repo's `<polaris-root>/state/current-state.md`
+(gitignored per contract — `state/` is ephemeral; append-only, never pruned here). This is each
+contributor's per-repo cockpit: Gio/JP run parallel panels too.
+
+Additionally, if `$HOME/Desktop/All Vibe Proj/_polaris` exists (the founder vault) and is not the
+current root, ALSO append the FULL handoff
+to `<vault>/state/current-state.md` (gitignored, append-only — the everything-file: next steps, tasks, resume instructions, nothing compressed away). No vault → the per-repo cockpit is the only copy.
+
+```markdown
+## Session end: {YYYY-MM-DD HH:MM} · {repo} · {branch}{ · wt: <path>}
+### Topics
+### Decisions
+### Files modified
+### Open threads
+### Next actions
+### Commits (history)     ← `git log --oneline <base>..HEAD` del branch: gli sha SONO il log
+### Resume instructions   ← come riprendere ESATTAMENTE: worktree, branch, comando, primo passo
+```
+
+This block is IN ADDITION to the thread line in `current.md` (thin index) and the committed
+session log (team history). The cockpit file is where "tutto" lives.
+
 ## Step 2 — Tick the plan
 
 Update the matching row in `team/<login>/weeks/$(date +%G-W%V).md` only when its state or proof
@@ -106,10 +124,9 @@ changed. Do not rewrite the plan.
 
 ## Step 3 — Capture durable decisions and lessons (WRITE them — a proposal that dies with the session is data loss)
 
-Founder rule 2026-07-25: /end WRITES qualifying decisions and lessons directly — append-only, in
-the MAIN worktree, attributed `(@<login>)` — and lists what it wrote in the closing summary so the
-founder can amend/revert (git history protects; a never-confirmed proposal protects nothing).
-Write only if genuinely durable — never routine progress.
+/end WRITES qualifying decisions and lessons directly — append-only, One home, attributed
+`(@<login>)` — and lists what it wrote in the closing summary (git history protects; a proposal
+that dies with the session protects nothing). Only the genuinely durable qualifies.
 
 **A decision** qualifies only if it either **supersedes a past decision** (name which, and align it)
 **or** sets an **architectural direction** whose impact runs from today out to 30 days–years on the
@@ -127,15 +144,8 @@ If nothing durable happened, say so. Do not log routine progress as either.
 
 ## Step 4 — Prune the live pointer (the only step allowed to close a thread)
 
-**Resolve it from the MAIN worktree**, exactly as `/update` Step 3 does — the handoff has to land
-where the next session will actually open, not inside the worktree you happen to be in:
-
-```bash
-MAIN_WT="$(git worktree list --porcelain | head -1 | sed 's|^worktree ||')"  # main worktree is listed first
-# → "$MAIN_WT/_polaris/state/current.md"  (or "$MAIN_WT/state/current.md" when the repo root IS _polaris)
-```
-
-**Reconcile** it: read it first, never blind-overwrite, same rules as `/update` Step 3 (threads keyed
+Path per the **One home** rule: `$ROOT/state/current.md` — the handoff lands where the next
+session opens. **Reconcile** it: read it first, never blind-overwrite, same rules as `/update` Step 3 (threads keyed
 by branch, nothing open lost, other panels' threads and `Next` lines untouched) — with one
 difference. **`/end` is the only Team OS command with closing authority**, and it spends it against
 ground truth rather than impression.
@@ -203,27 +213,3 @@ git status -sb | head -1   # e.g. "## main...origin/main [ahead 1]"
 
 Summarize the handoff in three bullets (shipped, open, next). This command never writes outside the
 current repository and never mutates the tracker.
-
-## Cockpit append (dense session state — EVERY contributor; multi-panel is the norm)
-
-ALWAYS append the same dense block to the CURRENT repo's `<polaris-root>/state/current-state.md`
-(gitignored per contract — `state/` is ephemeral; append-only, never pruned here). This is each
-contributor's per-repo cockpit: Gio/JP run parallel panels too.
-
-Additionally, if `$HOME/Desktop/All Vibe Proj/_polaris` exists (the founder vault) and is not the
-current root, ALSO append the FULL handoff
-to `<vault>/state/current-state.md` (gitignored, append-only — the everything-file: next steps, tasks, resume instructions, nothing compressed away). No vault → the per-repo cockpit is the only copy.
-
-```markdown
-## Session end: {YYYY-MM-DD HH:MM} · {repo} · {branch}{ · wt: <path>}
-### Topics
-### Decisions
-### Files modified
-### Open threads
-### Next actions
-### Commits (history)     ← `git log --oneline <base>..HEAD` del branch: gli sha SONO il log
-### Resume instructions   ← come riprendere ESATTAMENTE: worktree, branch, comando, primo passo
-```
-
-This block is IN ADDITION to the thread line in `current.md` (thin index) and the committed
-session log (team history). The cockpit file is where "tutto" lives.
