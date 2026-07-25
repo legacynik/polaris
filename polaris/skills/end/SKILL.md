@@ -140,9 +140,11 @@ Chose <X> over <Y> because <evidence>. Supersedes: <past decision, or —>. Impa
 **A lesson** = a real mistake — usually a loop or blocker you overcame — plus the one rule that
 prevents its recurrence. → `<root>/lessons.md`.
 
-**ADR — automatic for qualifying decisions (hard rule; the decisions.md entry alone is NOT enough).**
-When the decision qualifies, ALSO scaffold `docs/adr/NNNN-<slug>.md` (repo root; next free NNNN —
-the domain-modeling convention) and link it to the code it governs:
+**ADR — backstop audit (the ADR is born AT DECISION TIME, per the apex rule — not here).**
+Sweep this session for qualifying decisions: each must ALREADY have its `docs/adr/NNNN-<slug>.md`.
+One missing = a miss to repair NOW, and say so in the closing summary (the rule slipped once —
+name it so it doesn't become a habit). Scaffold the missing ADR exactly as the apex rule
+prescribes:
 
 1. Resolve every referenced file/symbol with **Serena** (`find_symbol`) — exact paths from the
    tree, never inferred from prose (the 12-wrong-path lesson).
