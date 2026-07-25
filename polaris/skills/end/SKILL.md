@@ -14,6 +14,20 @@ git rev-parse --abbrev-ref HEAD   # confirm the branch (shared checkouts)
 git status --short                 # what actually changed this session
 ```
 
+
+## State hygiene (every run — the skills are the writers AND the janitors)
+
+Before writing, sweep the CURRENT repo's Polaris root for strays (multi-panel machines drift:
+older sessions write with pre-patch instructions):
+
+1. Session files in the LEGACY top-level `<root>/sessions/` (not `team/<login>/sessions/`):
+   `git mv` (or mv, if untracked) each into `team/<login>/sessions/`, adding a `-legacy` suffix
+   on filename collision. Note the move in one line of this run's checkpoint — never silently.
+2. Non-canonical `current` variants in `<root>/state/` (anything beyond `current.md`,
+   `current-state.md`, `goals.md`, `backlog*.md`): FLAG them in your output with their mtime and
+   first heading; fold their still-live content into the cockpit only on explicit confirmation.
+Skip silently when the repo is already clean. Never delete anything in this step.
+
 ## Step 1 — Write the handoff
 
 Append to `team/<login>/sessions/YYYY-MM-DD-@<github-login>.md`:
