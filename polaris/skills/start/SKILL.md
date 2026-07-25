@@ -78,6 +78,11 @@ Read these local files, in order:
    contributor. It is a pointer, not session history; never rewrite it from `/start`.
 4. The newest file in `team/<login>/sessions/` — read its handoff/checkpoint and concrete next
    action. Do not scan `team/*/sessions/`.
+4b. `state/goals.md` if present — the goals the briefing anchors to. If empty or stale (>30 days
+   untouched), ask once: "Goals aggiornati?". (Origin property; also mandated by the founder's
+   global CLAUDE.md.)
+4c. `<root>/decisions.md` — the LAST 5 entries only, for continuity (what was just decided shapes
+   today's work). Never the whole file.
 5. **Handoff radar (multi-panel machines)** — if `<polaris-root>/scripts/handoff_radar.py` exists,
    run it (`python3 <polaris-root>/scripts/handoff_radar.py`, read-only, <2s). It surfaces
    end-of-session handoffs that main cannot see: stray per-worktree `state/current.md`, session
@@ -88,10 +93,12 @@ Read these local files, in order:
    `git worktree list` → for each extra worktree, flag any `<polaris-root>/state/current-state.md`
    or `current.md` living there (stray cockpit), and
    `git log --all --not main --since='14 days ago' --oneline -- '*sessions/*.md' | head -5` →
-   handoffs committed on unmerged branches. Also read the tail (last 2 blocks) of this repo's
-   `state/current-state.md` if present — it is the dense cockpit with resume instructions.
+   handoffs committed on unmerged branches.
+6. **Cockpit tail (ALWAYS, radar or not)** — read the last 2 blocks of `state/current-state.md`
+   (main worktree) if present: it is the dense record with next-steps and resume instructions;
+   the brief's `Checkpoint`/`Next action` should prefer it when fresher than the session log.
 
-Do not read decisions, lessons, `.wiki/hot.md`, or unrelated files speculatively. Memory is not
+Do not read lessons, `.wiki/hot.md`, or unrelated files speculatively (decisions: last 5 only, per 4c). Memory is not
 current state and recall is never mandatory at session start.
 
 Compare the local branch from Step 1 with the current plan's branch. If both are present and differ,
