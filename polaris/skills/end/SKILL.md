@@ -206,19 +206,33 @@ On a clean handoff the `Next` line is the first step for the next session; leave
 lines alone. Closed threads leave the pointer — their story lives in the session log you just wrote,
 not here.
 
-## Step 5 — Offer a clean commit
+## Step 5 — Land the handoff in git (same guard as `/update`, in code)
 
-If `git status --short` shows changes, propose a single **pathspec-only** commit scoped to what you
-touched — never `git add -A`. The Step 1 `polmem remember` line lands in `.wiki/journal/`: it is
-committed shared history, so it belongs in this commit or it never reaches the team:
+If `git status --short` shows changes, land what you wrote through **the same script `/update` uses**
+— pathspec-only, and it commits ONLY from the default branch of the MAIN worktree. A handoff
+committed on a feature branch is stranded: invisible to `/start` until that branch merges, which for
+a paused worktree is days or never (observed loss). Off the default branch the script defers: the
+files stay on disk as the single copy and the next main-tree session lands them — say so, do not
+hand-commit around the guard. The Step 1 `polmem remember` line lands in `.wiki/journal/`: it is
+committed shared history, so it belongs here or it never reaches the team.
 
 ```bash
-git add "_polaris/team/$LOGIN/sessions/<file>" "_polaris/team/$LOGIN/weeks/<file>" \
-        "_polaris/team/$LOGIN/handoff/$(date +%F).md" \
-        "_polaris/decisions.md" "_polaris/lessons.md" \
-        ".wiki/journal/<file-from-step-1>"   # only files you wrote this session — incl. handoff + any Step 3 append
-git commit -m "chore(polaris): session handoff $(date +%F) @$LOGIN"
+cd "$MAIN_WT"
+SC="${CLAUDE_PLUGIN_ROOT:-}/skills/update/scripts/session_commit.sh"          # plugin install
+[ -x "$SC" ] || SC="$HOME/.agents/skills/update/scripts/session_commit.sh"    # skills-CLI install (npx)
+"$SC" --end "$ROOT/team/$LOGIN/sessions/<file>" "$ROOT/team/$LOGIN/handoff/$(date +%F).md" \
+            "$ROOT/team/$LOGIN/weeks/<file>" "$ROOT/decisions.md" "$ROOT/lessons.md" \
+            ".wiki/journal/<file-from-step-1>"   # ONLY the files you wrote this session
 ```
+
+`--end` is the mode that may commit `decisions.md` / `lessons.md` (they are this command's vetted
+promotion); it still refuses `state/current.md` and `.env*`, and never pushes. On a **deferred** run
+say plainly that the handoff is on disk and not yet committed — the dense copy in the cockpit is what
+the next panel resumes from meanwhile. If a later `git checkout <default>` in that tree is refused
+because of the deferred file, git is protecting the append: copy aside, switch, re-append, re-run. **Both resolver
+candidates missing** (say which you tried): on the default branch only, `git add --` those exact
+paths and `git commit -m "chore(polaris): session handoff $(date +%F) @$LOGIN"` — never `git add -A`;
+on any other branch commit nothing and report the handoff as deferred on disk.
 
 Never commit or push without an explicit request. After committing, if the branch is ahead of its
 remote, remind the contributor there is unpushed work:

@@ -3,6 +3,33 @@
 All notable changes to Polaris Team OS. The installed version is pinned in
 `polaris/.claude-plugin/plugin.json`.
 
+## 0.15.0
+
+### Fixed
+- **Session state can no longer strand on a feature branch.** `session_commit.sh` now commits only
+  from the repository's default branch (resolved from `origin/HEAD`, falling back to a local
+  `main`/`master`) and **defers** everywhere else: the file stays on disk as the single copy and the
+  next default-branch session lands it. Supersedes the 2026-07-19 "Option A" (commit-on-current-branch),
+  which stranded daily session logs on branches that were paused or never merged — invisible to
+  `/start` until merge — and produced N diverging branch copies of one append-only file.
+- **`/end` no longer hand-commits in prose.** Step 5 now calls the same script with the new `--end`
+  mode, so the handoff, session log, weekly plan, `decisions.md`, `lessons.md` and the `polmem`
+  journal line inherit the identical guard: pathspec-only, default-branch-only, no `git add -A`,
+  no foreign-file drag, honest failure reporting. `--end` may commit the two ledgers (its vetted
+  promotion) but still refuses `state/current.md` and `.env*`.
+- **The guard is reachable from the skills-CLI install.** The script moved to
+  `skills/update/scripts/session_commit.sh` so `npx skills` ships it with the skill (previously it
+  lived outside any skill directory, so on a skills-CLI machine `$CLAUDE_PLUGIN_ROOT/scripts/…`
+  resolved to nothing and the whole "enforced in code" step silently did nothing). Both skills
+  resolve plugin-root first, then `~/.agents/skills/…`, with an explicit same-rule manual fallback.
+
+### Added
+- Six adversarial self-checks covering every new branch: off-default defer (nothing committed, file
+  intact on disk), deferred content landing on the next default-branch run, `--end` promoting the
+  ledgers, `--end` still refusing state/secrets, `--end` deferring off-default, `origin/HEAD`-driven
+  default resolution, and a `master`-default repository. Each guard was mutation-tested: breaking it
+  fails a named check.
+
 ## 0.10.0
 
 ### Added

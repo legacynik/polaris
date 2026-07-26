@@ -106,7 +106,7 @@ may be the only copy of a handoff.
 If the file holds another owner's fresher checkpoint line, you may be on another panel's checkout —
 confirm before touching it.
 
-## Step 4 — Land the checkpoint in git (your branch, pathspec-only)
+## Step 4 — Land the checkpoint in git (default branch only, pathspec-only)
 
 A checkpoint left uncommitted is an orphaned handoff — the exact failure Polaris exists to prevent.
 Run the script **from the MAIN worktree** (where One home wrote the files). It commits only when
@@ -116,8 +116,9 @@ copy and the next main-tree session lands it. Hygiene is enforced in code, never
 ```bash
 LOGIN="$(git config --local --get polaris.login || gh api user --jq .login)"
 cd "$MAIN_WT"; ROOT="_polaris"; [ -f "_polaris/config.yml" ] || ROOT="."
-"$CLAUDE_PLUGIN_ROOT/scripts/session_commit.sh" \
-  "$ROOT/team/$LOGIN/sessions/$(date +%F)-@$LOGIN.md"    # the session log Step 1 wrote (under the resolved Polaris root)
+SC="${CLAUDE_PLUGIN_ROOT:-}/skills/update/scripts/session_commit.sh"          # plugin install
+[ -x "$SC" ] || SC="$HOME/.agents/skills/update/scripts/session_commit.sh"    # skills-CLI install (npx)
+"$SC" "$ROOT/team/$LOGIN/sessions/$(date +%F)-@$LOGIN.md"   # the session log Step 1 wrote (under the resolved Polaris root)
   # add the weekly plan "$ROOT/team/$LOGIN/weeks/$(date +%G-W%V).md" as a 2nd arg ONLY if Step 2 ticked it
 ```
 
@@ -127,6 +128,16 @@ commit would find nothing and skip, leaving the checkpoint orphaned (the exact b
 
 The script is pathspec-only, refuses `state/current.md` / `decisions.md` / `lessons.md` / `.env*`,
 commits only from the default branch (defers elsewhere), never checks out and never pushes.
+
+When the checkpoint is **deferred**, say so in your closing line — it is not committed yet. If a later
+`git checkout <default>` in that tree is refused because of the deferred file, that is git protecting
+the append, never losing it: copy the file aside, switch, re-append, re-run the script. Never `-f`.
+
+**Both resolver candidates missing** (neither install path present — say which you tried): apply the
+same rule by hand, never a looser one. On the default branch, `git add --` the exact session-log path
+then `git commit -m "chore(session): checkpoint @$LOGIN $(date +%F)" -- <that path>`; on any other
+branch commit NOTHING and report the checkpoint as deferred on disk. Never `git add -A`, never add
+`state/current.md`, `decisions.md`, `lessons.md` or `.env*`.
 
 ## Cockpit append (dense session state — EVERY contributor; multi-panel is the norm)
 
