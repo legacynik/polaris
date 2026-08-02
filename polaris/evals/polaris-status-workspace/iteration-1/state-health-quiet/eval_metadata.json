@@ -1,0 +1,12 @@
+{
+  "eval_id": 0,
+  "eval_name": "state-health-quiet",
+  "prompt": "polaris status  (fixture: 5 thread aperti, 3 blocchi cockpit — sotto ogni soglia)",
+  "proves": "sotto soglia la skill NON paga l'analisi costosa: misura, dichiara sano, prosegue",
+  "assertions": [
+    {"text": "dichiara lo stato sano invece di indagare", "kind": "output_mentions", "value": "healthy"},
+    {"text": "NON esegue l'investigazione per-repo", "kind": "did_investigate", "value": false},
+    {"text": "non tocca i thread (5 prima, 5 dopo)", "kind": "open_threads", "value": 5},
+    {"text": "non ruota il cockpit (3 prima, 3 dopo)", "kind": "cockpit_blocks", "value": 3}
+  ]
+}

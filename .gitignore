@@ -1,3 +1,6 @@
 __pycache__/
 .pytest_cache/
 .superpowers/
+
+# eval workspace: snapshot del baseline (ricostruibile da git) e run intermedi
+polaris/evals/*-workspace/skill-snapshot/

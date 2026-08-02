@@ -1,0 +1,9 @@
+{
+  "run_id": "state-health-quiet-with_skill",
+  "expectations": [
+    {"text": "dichiara lo stato sano invece di indagare", "passed": true, "evidence": "output: 'state healthy, sotto soglia (>10 thread/>8KB, >20 blocchi/>50KB) — nessuno sweep di allineamento eseguito'"},
+    {"text": "NON esegue l'investigazione per-repo", "passed": true, "evidence": "DID_INVESTIGATE: no — 'never ran state_reconcile.py or the per-repo investigation dispatch'"},
+    {"text": "non tocca i thread (5 prima, 5 dopo)", "passed": true, "evidence": "OPEN_THREADS_AFTER: 5"},
+    {"text": "non ruota il cockpit (3 prima, 3 dopo)", "passed": true, "evidence": "COCKPIT_BLOCKS_AFTER: 3"}
+  ]
+}

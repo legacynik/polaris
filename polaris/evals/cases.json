@@ -1,0 +1,59 @@
+{
+  "_comment": "Behavioural evals for the Polaris session skills. Every case states what it PROVES and the skill version it must be RED on — a case green on both sides tests nothing. Assertions read filesystem and git, never prose.",
+  "cases": [
+    {
+      "id": "state-health-quiet",
+      "skill": "polaris-status",
+      "proves": "sotto soglia non indaga: 5 thread e 3 blocchi sono sani, l'analisi costosa non parte",
+      "fails_before": "9ccd6a4 (nessun check di salute: lo sweep partiva sempre)",
+      "fixture": { "threads": 5, "blocks": 3 },
+      "prompt": "polaris status",
+      "assertions": [
+        { "name": "dichiara lo stato sano", "kind": "output_mentions", "value": "healthy" },
+        { "name": "non propone purghe", "kind": "output_omits", "value": "superseded" },
+        { "name": "non tocca i thread", "kind": "open_threads", "value": 5 },
+        { "name": "non ruota il cockpit", "kind": "cockpit_blocks", "value": 3 }
+      ]
+    },
+    {
+      "id": "state-health-alarm",
+      "skill": "polaris-status",
+      "proves": "sopra soglia dichiara i numeri e SI FERMA a chiedere: non purga di sua iniziativa",
+      "fails_before": "9ccd6a4 (nessuna soglia, nessuna domanda)",
+      "fixture": { "threads": 14, "blocks": 25 },
+      "prompt": "polaris status",
+      "assertions": [
+        { "name": "riporta il conteggio dei thread", "kind": "output_mentions", "value": "14" },
+        { "name": "riporta i blocchi del cockpit", "kind": "output_mentions", "value": "25" },
+        { "name": "NON rimuove nulla senza conferma", "kind": "open_threads", "value": 14 },
+        { "name": "NON ruota senza conferma", "kind": "cockpit_blocks", "value": 25 }
+      ]
+    },
+    {
+      "id": "update-defers-off-default",
+      "skill": "update",
+      "proves": "checkpoint su feature branch: resta su disco, NON committato (la regola single-physical-path)",
+      "fails_before": "7426307 (Option A: committava sul branch corrente, strandando l'handoff)",
+      "fixture": { "threads": 3, "blocks": 2, "branch": "feat/x" },
+      "prompt": "/update — fatto il wiring del resolver, prossimo passo il gate, nessun blocker",
+      "assertions": [
+        { "name": "nessun commit sul feature branch", "kind": "commits", "value": 1 },
+        { "name": "dichiara il differimento", "kind": "output_mentions", "value": "defer" }
+      ]
+    },
+    {
+      "id": "update-commits-on-default",
+      "skill": "update",
+      "proves": "sul branch di default il checkpoint atterra, e atterra il SOLO session log",
+      "fails_before": "— (comportamento preesistente: è il caso di controllo, deve restare verde)",
+      "fixture": { "threads": 3, "blocks": 2 },
+      "prompt": "/update — fatto il wiring del resolver, prossimo passo il gate, nessun blocker",
+      "assertions": [
+        { "name": "il checkpoint è committato", "kind": "commits", "value": 2 },
+        { "name": "il commit contiene il session log", "kind": "head_files_contain", "value": "sessions/" },
+        { "name": "current.md resta fuori dal commit", "kind": "head_files_contain", "value": "current.md", "_negated_by_design": "questa asserzione va invertita: vedi nota" }
+      ]
+    }
+  ],
+  "_todo": "una asserzione 'head_files_omits' manca nel runner — il caso update-commits-on-default la dichiara di proposito per far vedere che il gap esiste (il runner segnala 'tipo ignoto' invece di passare in silenzio)"
+}

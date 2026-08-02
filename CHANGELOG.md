@@ -3,6 +3,43 @@
 All notable changes to Polaris Team OS. The installed version is pinned in
 `polaris/.claude-plugin/plugin.json`.
 
+## 0.16.0
+
+### Added
+- **`/polaris-status` measures state health before sweeping it.** New Step 5b.0: counts open threads
+  and cockpit blocks first (two commands, no thread reading), reports the numbers, and only over
+  threshold (>10 threads / >8 KB, or >20 blocks / >50 KB) asks ONE question before investigating.
+  Under threshold it says "state healthy" and skips the expensive pass entirely — the sweep used to
+  run unconditionally, paying full price on a file with five live threads.
+- **Per-repo investigation of what already landed.** `state_reconcile.py` keys on the branch alone,
+  so threads sitting on `main` and identified by issue/PR numbers in their text came back
+  `unverified` forever and the file only grew. Everything it cannot resolve now goes to ONE Sonnet
+  subagent **per product repo** (never one per thread), which resolves each `#N` via `gh`, each
+  branch against `origin/main`, each SHA for reachability, and returns LANDED / OPEN / UNCLEAR with
+  its evidence. UNCLEAR is a valid answer and is never rounded to LANDED; another contributor's
+  thread is reported, never proposed for removal.
+- **A behavioural eval harness for the session skills** (`polaris/evals/`). Fixtures build a
+  throwaway repo in a declared state (N threads, N blocks, chosen branch, full `_polaris/` contract);
+  assertions read the filesystem and git, so a case has one answer instead of a graded opinion. Every
+  case declares `fails_before` — the skill version it must be RED on, because a case green on both
+  sides tests nothing. `--selfcheck` verifies the harness with no model in the loop, and it already
+  caught a bug in its own test data.
+
+### Changed
+- **`/update` pinned to `model: sonnet`.** Measured at 13% of a week's usage: it reads ~88k tokens of
+  state to produce ~60 tokens of checkpoint. Sonnet rather than a cheaper tier because Step 3
+  reconciles `current.md` across parallel panels — that step needs judgment, and losing another
+  panel's thread costs more than the tokens saved.
+
+### Proof
+First real benchmark (`polaris/evals/polaris-status-workspace/iteration-1/benchmark.md`), new skill
+vs the pre-change version on identical fixtures: **8/8 vs 4/8** — and the 4 the baseline passes are
+the four non-discriminating safety guards. On 5 threads the baseline ran the full sweep
+(`DID_INVESTIGATE: yes`) where the new one stops; on 14 threads the baseline investigated **without
+asking**, the new one reported both counts and waited. Cost delta −5.3k tokens / −40s and
+−6.0k / −76s. Stated honestly in the benchmark: the fixture has no remote and no issues, so it
+understates the saving on a real vault, and half the assertions do not discriminate.
+
 ## 0.15.0
 
 ### Fixed

@@ -123,7 +123,28 @@ coherent" work runs, on demand — so `/polaris-status` is a **total-alignment c
 weekly/when-needed and it does the analysis, holds the proof, and proposes the cleanup for a
 one-confirm approval — you never mark or delete by hand.
 
-1. **Stale-state sweep.** Resolve each `state/current.md` open thread against ground truth:
+0. **State health — measure first, sweep only if it is worth it.** Cheap, always: count and size, no
+   reading of the threads themselves.
+
+   ```bash
+   R="$ROOT/state"
+   OPEN=$(sed -n '/^## Open/,/^## Next/p' "$R/current.md" | grep -c '^- ')
+   printf 'current.md: %s thread aperti, %s byte · cockpit: %s blocchi, %s byte\n' \
+     "$OPEN" "$(wc -c <"$R/current.md")" \
+     "$(grep -c '^## ' "$R/current-state.md" 2>/dev/null)" "$(wc -c <"$R/current-state.md" 2>/dev/null)"
+   ```
+
+   Thresholds (report the numbers, never act on them alone): **>10 open threads** or **>8 KB** in
+   `current.md` → the file is carrying finished work. **>20 blocks** or **>50 KB** in
+   `current-state.md` → the cockpit needs rotating (a file that grows every checkpoint makes every
+   reader more expensive over time). Under threshold: say "state healthy", print nothing else, and
+   **skip straight to step 2** — the investigation below is not free and a short file does not need it.
+
+   Over threshold: state the numbers and ask ONE question — *"investigate which threads are already
+   landed?"*. Only on yes, run step 1.
+
+1. **Stale-state sweep (only when step 0 says so).** Deterministic pass first — it resolves the
+   branch, which is free:
 
    ```bash
    python3 "$CLAUDE_PLUGIN_ROOT/scripts/state_reconcile.py" _polaris/state/current.md --repo-dir .
@@ -131,6 +152,31 @@ one-confirm approval — you never mark or delete by hand.
 
    It flags threads whose branch is **merged into origin/main** (superseded, proven) vs active vs
    unverified. Observe-only; it writes nothing until you confirm.
+
+   **Its blind spot, and why the next part exists:** it keys on the branch alone. In this vault most
+   threads sit on `main` and carry their real identity in the text — issue and PR numbers
+   (`repo#123`), plan paths, commit SHAs. `main` can never be "merged into main", so those threads
+   come back `unverified` forever and the file only grows. Everything the deterministic pass returns
+   as `unverified` goes to the per-repo investigation.
+
+   **Per-repo investigation — one subagent per PRODUCT REPO, in parallel, on Sonnet.** Group the
+   unverified threads by the repo named in the line, then dispatch ONE agent per repo (never one per
+   thread: a repo is the unit that shares a git history and a tracker). This is a wide, genuinely
+   independent, read-only investigation — the only shape that earns delegation. Give each agent its
+   repo's threads verbatim and this task:
+
+   > For each thread line, decide LANDED / OPEN / UNCLEAR against ground truth in this repo, and cite
+   > the evidence for each verdict. Resolve, in this order: every `#N` referenced (`gh issue view N`
+   > / `gh pr view N` → state, closedAt, mergedAt), every branch named (merged into `origin/main`?),
+   > every commit SHA (reachable from `origin/main`?), and — only if the line makes a concrete claim
+   > about the code — whether that claim is already true on `origin/main`. LANDED requires ALL its
+   > referenced work closed or merged; a single open issue keeps the whole thread OPEN. Never infer
+   > from age, from a doc, or from a memory page — code, git and the tracker only. Read-only: no
+   > commit, no checkout, no issue edit. Return one row per thread: verdict · evidence · one line why.
+
+   Two rules that make the result trustworthy: **UNCLEAR is a valid answer** and must never be
+   rounded to LANDED (an agent that cannot verify says so), and a thread owned by **another
+   contributor or another panel** is reported, never proposed for removal.
 
 2. **Branch hygiene vs the workflow rules.** How many branches are open, and how many should close:
 
