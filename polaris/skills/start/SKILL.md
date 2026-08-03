@@ -2,6 +2,7 @@
 name: start
 description: Polaris skill — resume the current objective from the latest local handoff. First use also provisions your own team path.
 user-invocable: true
+version: 1.0.0
 ---
 
 # /start — resume, do not survey

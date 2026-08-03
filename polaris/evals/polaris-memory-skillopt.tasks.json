@@ -27,7 +27,7 @@
     {
       "id": "remember-a-decision",
       "project": "polaris-team-os",
-      "intent": "Ricordati che abbiamo scelto a VPS provider invece di a managed PaaS, per costi e controllo.",
+      "intent": "Ricordati che abbiamo scelto Postgres invece di un KV gestito, per costi e controllo.",
       "context_excerpt": "The user wants to record a durable choice. The skill must use `polmem remember` with the decision kind, not just acknowledge.",
       "outcome": "success",
       "reference_kind": "rule",

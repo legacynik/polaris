@@ -2,6 +2,7 @@
 name: polaris-grill
 description: Polaris skill — run a bounded, repo-grounded product and technical interview that resolves fuzzy intent against live code, backend and database contracts, durable decisions, lessons, repository memory, and version-aware Context7 docs, then produce a decision-complete handoff. Use for "grill this idea", "clarify this feature", "challenge this spec", architecture discovery, or before planning implementation. Do not use for status, session resume, implementation, or autonomous issue creation.
 user-invocable: true
+version: 1.0.0
 ---
 
 # /polaris-grill — clarify before building

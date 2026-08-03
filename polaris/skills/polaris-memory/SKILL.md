@@ -9,6 +9,7 @@ description: >
   CLI (Claude Code, Codex, …). If the user mentions memory, recall, "remember this", past decisions,
   lessons, or "did we already…", reach for this skill.
 user-invocable: true
+version: 1.0.0
 ---
 
 # Polaris Memory (`polmem`)
@@ -27,7 +28,7 @@ decision/history questions it does cover, recall costs one command and routinely
 of files (or re-solving a solved problem).
 
 ```bash
-polmem recall "acme-api deadline sprint"     # search this repo's memory
+polmem recall "acme deadline sprint"     # search this repo's memory
 polmem recall "auth flow" --top 8          # widen the result count
 ```
 
@@ -44,7 +45,7 @@ Resolve current state against code, GitHub, or the database, and treat the page 
 ## Record what's worth keeping
 
 ```bash
-polmem remember "Decision: chose a VPS provider over a managed PaaS — cost + control; revisit at 10 paying users"
+polmem remember "Decision: chose Postgres over a managed KV — cost + control; revisit at scale"
 polmem remember "Lesson: grep-only usage-drift misses renamed callers — use the LSP resolver in prod"
 ```
 

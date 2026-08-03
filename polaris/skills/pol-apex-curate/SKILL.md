@@ -2,6 +2,7 @@
 name: pol-apex-curate
 description: Curate a repo's CLAUDE.md (the always-loaded apex) — distill lessons/decisions into a ≤200-line PROPOSAL, route situational rules to .claude/rules/ with paths:, flag stale project.md/context.md. PROPOSE-ONLY — never writes CLAUDE.md; the apex write is the human's yes/no (G1). Use when polmem health shows apex-cap RED, when /start surfaces an apex alert, or on demand ("curate the apex", "CLAUDE.md è gonfio", "distilla le lezioni in CLAUDE.md").
 user-invocable: true
+version: 1.0.0
 ---
 
 # pol-apex-curate — apex curation (propose-only)

@@ -69,7 +69,7 @@ def scan(wiki_dir: Path, today: datetime.date, max_age: int) -> dict[str, list]:
 
 
 def front_door_lag(wiki_dir: Path, repo_dir: str, max_lag: int) -> list[str]:
-    """The real degrade signal (acme-api audit 2026-07-19): entry points that don't reflect recent work.
+    """The real degrade signal (real-repo audit 2026-07-19): entry points that don't reflect recent work.
     A wiki can be 'clean' on absolute doc-age yet have a stale front door. Uses the doc's own
     `updated:` frontmatter (author-written) — NOT mtime, which git checkout resets to a meaningless
     'now'. Flags hot.md / newest journal entry when their `updated:` lags the newest commit by
@@ -179,7 +179,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"no wiki dir at {wiki_dir}", file=sys.stderr)
         return 0
     print(report(scan(wiki_dir, today, max_age), max_age, wiki_dir, today))
-    # the real degrade signal: entry points that lag recent activity (acme-api audit)
+    # the real degrade signal: entry points that lag recent activity (real-repo audit)
     fd = front_door_lag(wiki_dir, str(wiki_dir.parent), max_lag)
     if fd:
         print(f"═══ FRONT-DOOR STALE — entry points don't reflect recent work (>{max_lag}d behind newest commit) ═══")

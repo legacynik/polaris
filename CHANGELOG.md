@@ -355,7 +355,7 @@ understates the saving on a real vault, and half the assertions do not discrimin
 
 ### Changed
 - **`/report` is a real report now, not a diff table.** Modeled on the production weekly reports
-  (acme-api W20–W27): `TL;DR` → `Planned versus actual` → `Day by day` (from the contributor's session
+  (a product repo, W20–W27): `TL;DR` → `Planned versus actual` → `Day by day` (from the contributor's session
   logs, each linked) → `Merged PRs` (ground truth from `gh`, LOC + merge SHA; where logs and `gh`
   disagree, `gh` wins) → `Decisions in range` → `Blockers and incidents` → `Metrics` (derived at
   report time, never copied) → `PM action` (what the CEO must decide) → `Next week`. Scales
@@ -375,7 +375,7 @@ understates the saving on a real vault, and half the assertions do not discrimin
   front door in every product repo: structure table (who writes what), the locked rules (single
   root, own-path provisioning, CEO signature gate, tracker stays the execution truth) and the
   privacy boundaries (no personal capacity data, no mentor/investor terms, neutral commit
-  messages). Evolved from the acme-api pre-Team-OS README.
+  messages). Evolved from a product repo's pre-Team-OS README.
 - **`AGENTS.md` bridge** — the five skills are consumable by non-Claude agent CLIs (Codex, etc.)
   from a plain repo checkout: skill index with relative paths, `$CLAUDE_PLUGIN_ROOT` substitution
   note, contract root and boundary rules. Contract-tested.

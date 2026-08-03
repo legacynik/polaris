@@ -489,7 +489,7 @@ def test_evidence_skills_ship_concrete_tracker_commands() -> None:
 
 def test_report_is_a_real_report_not_just_a_diff_table() -> None:
     # Locked 2026-07-13: "il report non deve essere solo planned/actual" — the
-    # real weekly reports (acme-api W20–W27) carry a TL;DR, day-by-day evidence,
+    # real weekly reports (a product repo, W20–W27) carry a TL;DR, day-by-day evidence,
     # merged-PR ground truth, metrics, and an explicit PM-action section. The
     # skill and template pin that structure, and scale down honestly.
     report = (SKILLS / "report" / "SKILL.md").read_text()

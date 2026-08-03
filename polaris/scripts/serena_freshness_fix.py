@@ -32,7 +32,7 @@ Still a monkeypatch/wrapper — no vendored edit.
 
 ponytail: gather_source_files() re-walks + pathspec-matches every source file per SYMBOLIC query
   (now find_symbol/get_symbols_overview too, not just references) — O(source files). Measured within
-  the warm latency envelope on acme-api-backend (~1700 files). Ceiling for >10k-file monorepos: cache
+  the warm latency envelope on a real backend (~1700 files). Ceiling for >10k-file monorepos: cache
   the file list, os.stat on a TTL, or move to a real fs-watcher (Option B in the upstream proposal).
 ponytail: retry-on-empty gated to first-ever query per (name_path, relative_path); global lock on the
   _seen set. Upgrade path if a symbol is legitimately empty AND hot: it already only retries once ever.
