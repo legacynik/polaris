@@ -1,172 +1,189 @@
 ---
 name: real-testing
-description: Il gate adversariale prima di dire "fatto" — unit test verdi non sono la prova che una cosa funziona. Deriva il perimetro da testare dal codice realmente toccato con serena-code-graph (simboli cambiati, chi li chiama, contratti al bordo), poi esegue le prove su staging/reale — API, browser, DB, trace — coprendo OGNI ramo nuovo, non il primo che passa. Usala prima di ogni merge/deploy, dopo una fix, quando un playbook di test del repo va verificato contro il codice attuale, o quando ti chiedono "è testato davvero / real test / verifica che funzioni". Vale per ogni repo: il metodo è uno, la specificità la deriva il grafo.
+description: "Gate adversariale pre-merge e post-deploy. Deriva il perimetro dal diff reale con Serena, classifica ogni cambiamento incluse config/CI/docs/migrazioni/dipendenze/delezioni, collega ogni conseguenza a una prova osservabile, verifica happy path, failure path e bordi sul livello piu reale disponibile, e chiude lasciando in CI il test che protegge cio che hai trovato. Usala prima di ogni merge o deploy, dopo una fix o un refactor, e quando ti chiedono se una PR e davvero testata o mergiabile."
 user-invocable: true
 model: sonnet
-version: 1.0.0
+version: 1.1.0
 ---
 
-# Real Testing Skill
+# Real Testing
 
 ## Regola
 
-**Unit test VERDI ≠ Funziona. VERIFICA SEMPRE manualmente.**
+**Test verdi non provano che il cambiamento funzioni. Ogni hunk deve avere una conseguenza dichiarata e ogni conseguenza una prova osservabile.**
 
----
+Non eseguire rituali estranei al diff. Browser, DB, provider e trace sono obbligatori solo quando il percorso cambiato li attraversa o il playbook del repo li richiede.
 
-## 0. Playbook verticali del repo — controlla PRIMA di usare il checklist generico
+## 0. Fissa branch, base e delta
 
-Prima di improvvisare, cerca `_project_specs/testing-protocol/INDEX.md` (o convenzione equivalente) nella root del repo corrente. Se esiste: **è la fonte primaria**, non uno dei tanti — descrive i moduli verticali reali del prodotto (generazione/onboarding/edit/ecc.), con tenant/fixture/comandi esatti e i gate specifici di quel modulo. Il checklist generico sotto resta il fallback per repo senza un protocollo scritto, o per coprire quello che il protocollo verticale non menziona esplicitamente.
+Prima di testare:
 
-**Prima di seguire QUALSIASI playbook (generico o verticale), verifica col code-graph che descriva ancora la realtà**: `find_symbol` sui file/funzioni che il playbook nomina (**serena-code-graph**, LSP-live: risponde sul codice di adesso, non su un indice ricostruito ieri). Un doc scritto un mese fa può descrivere un call-chain che nel frattempo è cambiato. Usa il doc come mappa, verifica i nomi contro il grafo prima di eseguire i comandi. Se il grafo diverge dal doc, il doc è stale — segnalalo invece di eseguire un playbook che punta a codice che non esiste più.
+1. Verifica branch e worktree secondo le regole del repo.
+2. Determina la base reale della PR; preferisci la base dichiarata dalla PR, poi l'upstream configurato. Non assumere `main`.
+3. Aggiorna la base se è sicuro e consentito. Se non puoi, registra commit e freschezza della base come gap.
+4. Raccogli almeno:
+   - `git diff --name-status <base>..HEAD`
+   - `git diff --stat <base>..HEAD`
+   - `git diff --check <base>..HEAD`
+   - commit inclusi e stato sporco del worktree
+5. Simula l'integrazione senza modificare il worktree, per esempio con `git merge-tree --write-tree <base> HEAD`. Un conflitto rende la PR non mergiabile.
 
-## 0b. Il perimetro da testare si DERIVA dal codice toccato, non si indovina
+Non testare file staged isolati se il verdetto richiesto riguarda una PR: testa esattamente il delta `<base>..HEAD`.
 
-Questa skill è una sola per tutti i repo, e resta tale: ciò che cambia da repo a repo non è il metodo ma **quali contratti tocchi**, e quello lo dice il grafo — per-cambiamento, non per-repo. Un playbook verticale scritto a mano invecchia; il grafo no.
+## 1. Carica il playbook verticale
 
-### Primo: stabilisci COSA stai testando e portalo su disco
+Cerca prima `_project_specs/testing-protocol/INDEX.md` o l'equivalente indicato dalle istruzioni del repo. È la fonte primaria per tenant, fixture, credenziali, comandi e soglie reali.
 
-Serena risponde **su ciò che è sul disco in questo momento**. Se il codice sotto test non è in checkout, ogni risposta riguarda un altro codice — e non te lo dice: ottieni un perimetro plausibile, completo, e della cosa sbagliata. È il modo più facile di dichiarare un real-test verde su qualcosa che non hai testato.
+Prima di eseguirlo, verifica con Serena che file, simboli e call-chain nominati esistano ancora. Se divergono, marca il playbook come stale e testa il codice attuale; non eseguire comandi obsoleti alla cieca.
 
-Quindi prima di tutto, dichiara la **base** e la **testa**, e verifica di averle:
+Il playbook e il perimetro derivato dal diff si sommano: il playbook conosce l'ambiente, Serena conosce il blast radius.
 
-| stai testando | base..testa | come lo metti su disco |
+## 2. Classifica OGNI cambiamento
+
+Costruisci una matrice. Ogni file/hunk deve comparire, individualmente o in un gruppo semanticamente equivalente:
+
+| Classe | Conseguenze da cercare | Prova minima reale |
 |---|---|---|
-| il tuo lavoro locale | `origin/main..HEAD` | ci sei già |
-| **la PR di qualcun altro** | `origin/main...pr/<n>` | `gh pr checkout <n>` — **in un worktree separato**, mai nel tuo albero |
-| cosa gira su staging | `<sha deployato>..origin/main` | leggi lo SHA dal deploy, non dalla memoria |
-| una release / un batch | `<tag precedente>..<tag>` | checkout del tag |
-| un hotfix su prod | `<sha prod>..<branch fix>` | worktree dal fix |
+| Simbolo applicativo | chiamanti, fallback, tipi, errori | Serena + percorso reale di ogni chiamante |
+| API/CLI/tool/event/schema | contratto pubblico e consumatori | invocazione reale + forma output + errore |
+| Config/permission/hook/CI | parsing, precedenza, deny/allow, comando avviato | carica config + caso positivo e negativo |
+| Dipendenza/lock/build | fresh install, import, packaging, vulnerabilità | ambiente pulito + build/import/audit |
+| DB/migrazione/storage | fresh install, upgrade, vincoli, dati, recovery | DB reale + schema/dati prima/dopo |
+| Frontend | build, routing, rete, console, stati UI | browser vero + network + console |
+| LLM/agent/prompt/toolset | provider, tool call, output, fallback, usage, trace | chiamata provider-backed + trace, se toccato |
+| Delezione/rename | riferimenti attivi, config, processo, binario, sostituto | vecchio percorso assente + sostituto funzionante |
+| Docs/guidance/history | link, comandi copiabili, residui, gate contenuto | link/checker/search mirata; niente stack se non rilevante |
+| Test-only | test che fallisce davvero sul difetto e copre il contratto | prova negativa o mutation mirata |
 
-Per una PR altrui, tre cose che non sono opzionali:
+Puoi raggruppare decine di file documentali modificati dalla stessa sostituzione solo se una ricerca repo-wide e il content gate provano l'intero gruppo. Non usare il raggruppamento per nascondere eccezioni.
 
-```bash
-gh pr view <n> --json headRefName,headRepositoryOwner,mergeable,files
-git worktree add ../.rt-pr<n> && cd ../.rt-pr<n> && gh pr checkout <n>   # isolato: non tocchi il tuo lavoro
+Per ogni riga registra:
+
+```text
+file/hunk -> contratto o comportamento -> consumatori -> failure mode -> prova -> PASS/FAIL/GAP
 ```
 
-1. **In un worktree separato.** Testare la PR di un altro nel tuo albero ti fa perdere il lavoro in corso e mescola i due cambiamenti nel diff — cioè nel perimetro.
-2. **Poi `activate_project` su QUELLA directory**, o Serena continua a risolvere sul tuo albero. Se salti questo passo, tutto il resto è sbagliato in silenzio.
-3. **La base è il merge-base, non `main` di oggi**: `git merge-base origin/main HEAD`. Con `..` semplice ti prendi anche i commit di main che la PR non ha, e ti inventi un perimetro che non è suo.
+Un file non classificato rende il gate incompleto.
 
-Casi che vanno detti invece di aggirati: una PR **da un fork** può non essere risolvibile localmente senza fetch del remoto — dichiaralo, non testare a metà. Una PR **con conflitti** (`mergeable: CONFLICTING`) non è testabile come sarà dopo il merge: il real-test vale per lo stato attuale, e va scritto così.
+## 3. Deriva il blast radius con Serena
 
-E se stai testando il lavoro di qualcun altro, ricorda cosa **non** puoi derivare dal grafo: perché l'ha fatto e cosa considerava fatto. Quello sta nella issue e nella descrizione della PR — leggile, perché i criteri di accettazione sono suoi, non tuoi.
+Attiva Serena sul worktree esatto della PR, poi per ogni simbolo modificato:
 
-### Poi: deriva il perimetro
+1. `find_symbol`: firma, tipi e corpo attuale.
+2. `find_referencing_symbols`: chiamanti diretti.
+3. Ripeti sui chiamanti quando attraversano un boundary pubblico o un adapter.
+4. Identifica endpoint, CLI, schema, evento, migrazione, tool agente o file configurazione che espongono il cambiamento.
 
-Da `git diff --name-only <base>...<testa>` ricava i **simboli** cambiati, poi con serena-code-graph:
+Zero riferimenti non significa automaticamente codice morto: controlla entrypoint, registrazione dinamica, framework routing, reflection, string lookup e file non analizzabili. Se il simbolo dovrebbe avere chiamanti e Serena restituisce zero, correggi progetto/path/query prima di proseguire.
 
-1. **`find_symbol`** su ogni simbolo toccato → firma attuale, tipi, file reale. È anche il controllo che stai testando la cosa giusta.
-2. **`find_referencing_symbols`** su ognuno → **chi lo chiama**. Ogni chiamante è un percorso che il tuo cambiamento può rompere anche se il suo file non compare nel diff: sono i test che nessuno pensa a fare, e il posto da cui esce la maggior parte delle regressioni.
-3. **I contratti sul bordo** — endpoint/route, schema o modello di risposta, migrazione DB, evento emesso, tool o funzione esposta a un agente, firma pubblica di un modulo. Quando il diff tocca uno di questi, **il contratto è la cosa da testare**, non l'implementazione interna: chi lo consuma non vede il tuo refactor, vede la forma che gli arriva.
-4. **Dichiara il perimetro PRIMA di testare**, in questa forma — così è verificabile invece che affermato:
+Dichiara il perimetro prima delle prove:
 
-```
-Perimetro derivato (serena):
-  simboli toccati:  pricing_v4.py::_resolve_tier1, schemas.py::QuoteOut
-  chiamanti:        3 (generate.py::run, api/quote.py::post_quote, tasks/batch.py::replay)
-  contratti al bordo: POST /v1/quote (response QuoteOut), migrazione 041
-  → prove necessarie: <una riga per contratto e per chiamante>
-```
-
-**Due segnali che il grafo sta rispondendo sul codice sbagliato** — entrambi vogliono dire "fermati", non "prosegui con quello che ho":
-
-- `find_symbol` **non trova un simbolo che il diff dice aggiunto** → non sei sul codice sotto test (checkout mancante, o `activate_project` puntato altrove).
-- `find_referencing_symbols` restituisce **zero chiamanti per un simbolo non nuovo** → quasi sempre un errore di risoluzione, non un fatto.
-
-Entrambi producono un perimetro vuoto o parziale, e un gate verde a vuoto. Verifica prima su quale directory Serena è attiva.
-
-Il perimetro derivato **si somma** al playbook verticale del repo, non lo sostituisce: il playbook sa cose che il grafo non può sapere (quale tenant usare, quale fixture è realistica, quale latenza è accettabile). Il grafo sa cosa hai rotto. Servono entrambi.
-
-**Completezza, non happy-path**: un loop/agente autonomo che esegue questo skill non è "finito" solo perché un comando ha girato senza errori — deve coprire esplicitamente ogni ramo/edge-case che il modulo/playbook elenca (non solo il primo che passa), e riportare per ognuno pass/fail, non un verdetto aggregato tipo "sembra ok". Se un playbook verticale elenca N verifiche, un real-test che ne copre N-1 e dichiara successo è un gate INCOMPLETO — vale la stessa regola "real-test = adversariale, mai happy-path" a prescindere dal repo.
-
-**Langfuse (se il progetto ne usa uno)**: se il repo ha una configurazione Langfuse (variabili `LANGFUSE_*`, un client SDK importato, o una skill `langfuse` locale), il real-test include SEMPRE una verifica trace — non solo curl/browser/DB. Trace atomica (parent + figli, zero orfani), nessun errore/warning nella finestra della chiamata testata, tag/versione coerenti col deploy testato. Non limitarti a quello: è UNA delle superfici da controllare (insieme a API/browser/DB/log), non un sostituto delle altre.
-
----
-
-## Dopo ogni feature
-
-### Backend/API
-```bash
-# 1. Avvia l'app
-# 2. Chiama l'endpoint realmente
-curl -X POST http://localhost:3000/api/users -d '{"email":"test@test.com"}'
-
-# 3. Verifica DB
-psql -c "SELECT * FROM users WHERE email='test@test.com'"
-
-# 4. Controlla i log
-tail -f logs/app.log
+```text
+Perimetro derivato:
+  delta: <base>..<head>, N file
+  simboli: ...
+  chiamanti: ...
+  cambiamenti non simbolici: ...
+  contratti al bordo: ...
+  prove richieste: ...
+  superfici escluse perché non attraversate: ...
 ```
 
-### Frontend/UI
+Una superficie estranea al diff è **fuori perimetro**, non un gap. Esempio: nessun cambiamento al runtime Pydantic/LLM significa che l'assenza di credenziali provider non blocca quella PR.
+
+## 4. Progetta prove avversariali
+
+Per ogni ramo nuovo o modificato esegui almeno:
+
+- happy path realistico;
+- failure path atteso;
+- bordo rilevante: vuoto, malformed, limite, duplicato, timeout, stato assente o config stale;
+- fallback/degraded path, se esiste;
+- persistenza e side effect, se esistono;
+- log senza errori/warning inattesi nella finestra della prova.
+
+Verifica il contratto, non solo l'exit code: status, payload, record DB, file generato, evento, tool call, UI, trace o processo devono avere la forma attesa.
+
+Quando possibile, dimostra che la prova è sensibile al difetto: fixture negativa, assertion sul ramo rotto o confronto controllato. Un comando che passerebbe anche senza il cambiamento non è evidenza sufficiente.
+
+Completezza obbligatoria: se playbook o matrice elencano N prove, riporta N risultati. N-1 non è verde.
+
+## 5. Usa il livello più reale pertinente
+
+Procedi dal più economico al più reale e fermati quando il contratto è provato:
+
+1. test mirati;
+2. CLI/modulo reale;
+3. stack locale reale con DB/queue/storage;
+4. browser locale reale;
+5. provider sandbox/staging;
+6. staging deployato con browser, DB e trace.
+
+Regole di rilevanza:
+
+- **Frontend:** browser obbligatorio se cambiano UI, build, routing, API base o wiring frontend/backend.
+- **DB:** DB reale obbligatorio se cambiano query, schema, migrazioni, transazioni o mapping persistiti.
+- **LLM/provider:** chiamata provider-backed obbligatoria se cambiano modello, prompt, toolset, output validator, routing o fallback. Se mancano credenziali, il gate è `NOT MERGEABLE` salvo che il repo definisca esplicitamente quel controllo come gate post-merge.
+- **Langfuse/trace:** obbligatorio quando il percorso testato invoca un LLM o cambia observability. Verifica parent/children, zero orfani, errori, versione/tag e usage.
+- **API:** chiamata HTTP reale obbligatoria se cambia route, middleware, auth, serialization o wiring runtime.
+- **Docs/config-only:** non avviare l'intero prodotto salvo che il file controlli realmente boot/build/runtime.
+
+Non stampare segreti. Per provider a pagamento dichiara numero massimo di chiamate e usa la fixture minima che prova il contratto.
+
+## 6. Gate di merge locale
+
+Esegui, quando applicabili al delta:
+
+- test mirati dei comportamenti toccati;
+- suite/lint/typecheck/build richiesti dal repo;
+- install/build puliti quando cambiano dipendenze o packaging;
+- smoke reale sulle superfici individuate;
+- `git diff --check`;
+- simulazione merge contro la base;
+- verifica worktree finale e artefatti non intenzionali;
+- verifica che ogni nuovo test sia incluso nel runner CI corretto.
+
+CI verde remoto e peer review restano requisiti separati se il repo li impone. Il gate locale non deve fingere di averli eseguiti.
+
+## 7. Verdetto obbligatorio
+
+Concludi con uno solo di questi:
+
+- **MERGEABLE**: tutte le prove richieste dal delta e dal playbook pre-merge passano; integrazione pulita; nessun gap rilevante.
+- **MERGEABLE CON GAP**: il delta è provato e integra pulito, ma resta un controllo esterno/non bloccante esplicitamente post-merge o post-deploy. Indica proprietario e momento del gate.
+- **NOT MERGEABLE**: conflitto, prova fallita, file non classificato o prova rilevante mancante.
+
+Formato:
+
+```text
+VERDETTO: MERGEABLE | MERGEABLE CON GAP | NOT MERGEABLE
+Base/HEAD: <sha> / <sha>
+Perimetro: N file, N simboli, N contratti, N prove
+PASS: <una riga per prova>
+FAIL: <una riga per prova>
+GAP: <solo evidenza pertinente non eseguibile>
+FUORI PERIMETRO: <superfici considerate ma non attraversate>
+Artefatti: <log, screenshot, trace, query, output>
 ```
-# 1. Apri il browser
-# 2. Naviga alla feature
-# 3. Screenshot o Playwright MCP per verificare
-# 4. Testa edge cases (form vuoto, errori, loading)
-```
 
-### DB Migration
-```bash
-# 1. Applica migration
-# 2. Verifica schema
-\d table_name
+Non usare “sembra”, “dovrebbe” o un solo verdetto aggregato senza evidenze.
 
-# 3. Testa rollback
-```
+## 8. Dopo un deploy
 
----
+Il deploy aggiunge un gate di promozione, non riscrive retroattivamente il gate locale:
 
-## Checklist Pre-Merge
+1. migration/schema reali se applicabili;
+2. smoke API end-to-end;
+3. browser vero, network same-origin e console;
+4. DB/queue/storage per i side effect;
+5. trace provider-backed per flussi LLM;
+6. log e metriche nella finestra della prova.
 
-- [ ] App avviata e testata manualmente
-- [ ] Endpoint chiamati con curl/Postman
-- [ ] Dati verificati in DB
-- [ ] UI verificata visivamente (screenshot se possibile)
-- [ ] Edge cases testati (errori, vuoti, limiti)
-- [ ] Log controllati per errori/warning
+Se uno fallisce, la release non è promuovibile anche se la PR era mergiabile.
 
----
 
-## Real-testing su STAGING dopo OGNI deploy (obbligatorio)
+## 9. Raccolto — il real-test NON è finito finché non ha lasciato un test in CI
 
-**curl NON basta. Apri il BROWSER vero (Playwright).** curl colpisce il backend
-giusto, ma il frontend deployato puo' essere buildato/wirato male: un solo errore
-di build e l'utente vede "Failed to fetch" mentre curl dice 200. Solo una sessione
-browser reale becca i bug di frontend/build/wiring.
-
-### 1. Smoke API end-to-end (prima di dire "fatto")
-```bash
-SMOKE_EMAIL=... SMOKE_PASSWORD=... scripts/smoke-staging.sh
-# login -> onboard create+fetch -> dossier PDF -> screening, contro staging live
-```
-
-### 2. Browser reale (Playwright MCP) - il passo che mancava sempre
-```
-mcp__plugin_playwright_playwright__browser_navigate  -> dashboard
-browser_fill_form + browser_click                    -> login + submit feature
-browser_network_requests                             -> le chiamate vanno a /api (200)?
-browser_console_messages (level=error)               -> errori?
-```
-Verifica che le chiamate vadano a **same-origin /api**, NON a `localhost:8001`.
-
-### 3. I 3 gotcha di deploy che nascondono i bug (incidente 2026-06-17)
-- **Migration NON auto-applicate ad Aurora** (solo nova-db locale al primo boot).
-  Dopo deploy: applica le migration pending + verifica che le colonne esistano,
-  altrimenti 500 (`column ... does not exist`).
-- **Frontend buildato con `.env.local`** (`VITE_API_URL=http://localhost:8001/api`):
-  Vite lo prioritizza su `.env`. Builda con **`VITE_API_URL=/api`** (sposta via
-  `.env.local`), poi deploy in `/var/www/dashboard-staging`. Caddy proxa `/api/*`
-  same-origin.
-- **Verifica nel browser** che login + la feature funzionino davvero, non solo l'API.
-
-Sequenza corretta deploy: **migrate Aurora -> deploy(app) -> build+deploy frontend(/api) -> smoke API -> smoke BROWSER.**
-
----
-
-## Raccolto — il real-test NON è finito finché non ha lasciato un test in CI
 
 Uno sweep manuale è conoscenza che evapora: la prossima persona (o il prossimo te
 fra tre giorni) ripete lo stesso lavoro, o non lo ripete e la regressione passa.
