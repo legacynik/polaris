@@ -3,190 +3,106 @@ name: update
 description: Polaris skill — record a short repository-first checkpoint during an active session. Trigger after meaningful progress, a blocker, a context switch, or on "checkpoint / save progress / /update".
 user-invocable: true
 model: sonnet
-version: 1.2.0
+version: 2.0.0
 ---
 
 # /update — leave the work legible
 
-Use the same resolver as `/start` (including the root-is-`_polaris` vault case): the Polaris root is `_polaris/`, and the contributor is their own
-GitHub login (`gh api user --jq .login`) with the matching `team/<login>/profile.yml`. If your
-profile is missing, run `/start` first — it provisions your own path. If the root itself is missing,
-stop and point to `docs/TEAM-ONBOARDING.md`.
+```bash
+"${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/update/scripts/checkpoint.sh" prepare
+```
 
-## What a good checkpoint contains
+Root, login, branch, worktree, session-log path, harvest offset and the hygiene sweep all come from
+that command. If it fails, read its message and stop — never guess a path.
 
-Three facts, no narration: **Done** (verified, not "worked on"), **Next** (one concrete step),
-**Blocker** (exact, or none). No transcript, no tool dumps, no essay. If you cannot name a verified
-result yet, say "in progress" — do not inflate.
+## The entry
 
+```md
+## HH:MM — <titolo: cosa è successo> · wt: <worktree> · branch: <branch>
+- Done: <verificato, con la prova>
+- In progress: <cosa è a metà, così chi riprende sa dove sta>
+- Next: <un passo concreto>
+- Blocker: <esatto, oppure none>
+- Key context: <la decisione presa e perché · la scelta architetturale · la scoperta che ribalta
+  una conclusione · l'errore e la regola che ne segue · la decisione superata e cosa la supera>
+  — tag: #decisione #architettura #scoperta #errore #superata #incidente
+- Files: <path · simbolo toccato (funzione/classe) · perché>
+```
 
-## One home (write-target for ALL session-state)
+**Il titolo porta la entry.** "checkpoint" non dice nulla; `#1010 chiuso end-to-end: prod deployato`
+dice tutto prima ancora dei bullet.
 
-Every write in this skill — session log, plan tick, `current.md`, `current-state.md` — lands in the
-**MAIN worktree**, whichever worktree/branch this panel sits in. One home = every panel appends to
-the same file in time order; per-worktree copies diverge on N branches and lose data at merge.
-Provenance lives in the entry header (`wt:`/`branch:`), not in the file's location.
+**`In progress` non è riempitivo**: lavoro al 50% senza una riga è lavoro che riparte da zero.
+
+**`Key context` è il campo che conta** — è l'unico posto dove finisce ciò che non è avanzamento:
+perché è stata presa una decisione, cosa si è scoperto che ribalta una conclusione precedente,
+**quale errore hai fatto e che regola ne discende**. I tag lo rendono contabile su mesi di log: i
+pattern si trovano contando, e si conta solo ciò che ha una forma.
+
+Quando il founder ti corregge, quella correzione è la riga più preziosa della sessione e **tu sei
+il suo unico testimone** — lo scratchpad conserva le tue risposte finite, non le strade sbagliate.
+Scrivila prima che sparisca, con: cosa credevi, cosa era vero, cosa lo prova, la regola che resta.
+
+**`Files` è un indice inverso sul codice, non un elenco.** Il campo esisteva nel design originale e
+si è perso nella prosa. Scritto come `path · simbolo · perché` diventa la cosa più utile del log:
+da un file si risale alla sessione, alla decisione e al motivo. Il **simbolo** (funzione, classe,
+metodo) lo dai perché Serena naviga per simbolo, non per riga — così mesi dopo un
+`find_referencing_symbols` e questo log si incontrano sullo stesso nome, e sai *quando* e *perché*
+quel simbolo è cambiato. Un path nudo obbliga a rileggere il diff; `path · simbolo · perché` no.
+
+Una scelta architetturale che qualifica (supera una decisione precedente o fissa una direzione con
+impatto 30gg+) non si esaurisce qui: `Key context` la registra e la propone come **ADR**, che è
+l'unico posto dove vive legata al codice.
+
+Tre righe vuote sono legittime (`Blocker: none`, `Key context:` assente su una sessione tranquilla).
+Un `Key context` inventato per sembrare produttivi è peggio di nessun `Key context`.
+
+**Gli SHA, i conteggi e i numeri si VERIFICANO, non si ricordano.** `git log`, non memoria: in un test
+A/B su una sessione reale entrambe le versioni hanno scritto lo stesso SHA sbagliato, ricordandolo
+invece di leggerlo. Un numero errato in un log è peggio di un numero assente — verrà creduto.
+
+**Un numero da solo non è informazione: dagli il suo confronto e il suo "quindi".** "79 cloni" non
+dice nulla; "79 cloni ma solo 4 view → traffico quasi certamente automatico, non persone" è una
+conclusione su cui si decide. Stessa regola per i limiti: se una cosa non è reversibile, o un dato
+non è verificabile, scrivilo — è la parte che tra tre settimane evita di ri-derivare tutto.
+
+## Harvest del delta
+
+`prepare` ha stampato `HARVEST_FROM`. Leggi lo scratch **solo da quell'offset** — mai tutto il file.
+Ciò che trovi diventa `Key context`. Poi `"$CHECKPOINT" harvest-done` sposta il watermark: si sposta
+comunque, harvestato o no, altrimenti ogni run successivo ripropone gli stessi byte.
+
+## Lessons e decisioni: scrivi nell'archivio, proponi per l'apex
+
+Due superfici, due regole opposte — e la distinzione è la ragione per cui il sistema regge:
+
+- **Archivio** (`lessons.md`, `decisions.md`): **scrivi sempre**, append-only, newest on top. È
+  storico, non viene mai caricato in contesto: il rumore lì costa nulla, una lezione persa costa
+  tanto. Una lezione che aspetta un'approvazione è una lezione che muore col contesto.
+- **Apex** (`CLAUDE.md`, `rules/*.md`): **mai** da qui. Ogni riga dell'apex si paga in ogni
+  sessione di ogni repo — ci arriva solo via `pol-apex-curate`, che propone e lascia scrivere
+  all'umano. Se una lezione merita l'apex, dillo in una riga di chiusura; non promuoverla tu.
+- **ADR**: una scelta architetturale che qualifica va proposta come ADR, non sepolta in
+  `decisions.md` — è l'unico posto dove vive legata al codice e viene segnalata quando il codice
+  cambia sotto di lei.
+
+## Landing
 
 ```bash
-MAIN_WT="$(git worktree list --porcelain | head -1 | sed 's|^worktree ||')"
-ROOT="$MAIN_WT/_polaris"; [ -f "$ROOT/config.yml" ] || ROOT="$MAIN_WT"
+"$CHECKPOINT" commit    # pathspec-only, mai -A, mai .env*, mai state/current.md
+"$CHECKPOINT" verify    # fallisce rumorosamente se un passo è stato saltato
 ```
 
-## State hygiene (every run — the skills are the writers AND the janitors)
+`verify` esiste perché un passo che vive solo nella prosa prima o poi viene saltato — anche da chi
+l'ha scritto. Se `commit` rinvia, **dillo nella riga di chiusura**: la entry è su disco, non in git.
+Una entry che non raggiunge un ref è una entry che non esiste (misurato: 46% delle entry recenti di
+un repo, e 74 file di journal non committati sulle 4 repo al 2026-08-08).
 
-Before writing, sweep the CURRENT repo's Polaris root for strays (multi-panel machines drift:
-older sessions write with pre-patch instructions):
+Su repo con `main` protetto da status check, il commit di journal **non passa dal branch di lavoro**:
+scrive nel worktree agganciato a main che `prepare` risolve. Il diario non deve superare i cancelli
+del codice.
 
-1. Session **logs** in the LEGACY top-level `<root>/sessions/` — that is `*.md` files at the top
-   level of that directory, never its subdirectories: `git mv` (or mv, if untracked) each into
-   `team/<login>/sessions/`, adding a `-legacy` suffix on filename collision. Note the move in one
-   line of this run's checkpoint — never silently. **Before moving, grep the repo for readers of
-   that path** (`build-home`-style generators, hooks, healthchecks) and migrate them in the same
-   commit, or the move silently empties whatever they render.
-   **Leave `<root>/sessions/` subdirectories alone.** `sessions/scratch/` in particular is a *live*
-   write target for the founder vault by explicit design, not debris — the scratchpad hook routes
-   contract repos to `team/<login>/sessions/scratch/` and keeps the legacy shape for the vault. An
-   empty-but-for-subdirs `sessions/` is CLEAN; do not re-flag it on later runs.
-2. Non-canonical `current` variants in `<root>/state/` (anything beyond `current.md`,
-   `current-state.md`, `goals.md`, `backlog*.md`): FLAG them in your output with their mtime and
-   first heading; fold their still-live content into the cockpit only on explicit confirmation.
-   **Flag each stray at most once per week**: if the previous checkpoint in
-   `team/<login>/sessions/` already names it and nothing about it changed, stay silent. A flag that
-   reprints identically every run is noise, and noise is what makes the one real flag get skipped.
-Skip silently when the repo is already clean. Never delete anything in this step.
+## Mai
 
-## Step 1 — Append to the session log
-
-Append to `$ROOT/team/<login>/sessions/YYYY-MM-DD-@<github-login>.md` **in the MAIN worktree**
-(per the write-target rule above; create it if today's file does not exist):
-
-```md
-## HH:MM — checkpoint · wt: <worktree name or main> · branch: <branch>
-- Done: <verified progress, with proof if any>
-- Next: <one concrete next step>
-- Blocker: <none, or exact blocker>
-```
-
-Keep the whole entry **≤10 lines**. This session log is shared history and is committed with the code.
-
-## Step 2 — Tick the plan cell (only if state changed)
-
-If the current weekly-plan item (`team/<login>/weeks/$(date +%G-W%V).md`) changed state, update only
-its `Status`, `Proof` or `Blocker` cell. Do not rewrite the plan and do not create a new plan.
-
-## Step 3 — Reconcile `state/current.md` (the convergence point) — add and flag, never close
-
-Path per the **One home** rule: `$ROOT/state/current.md` (gitignored — it never travels with a
-branch; one file keeps every parallel panel legible from one place).
-
-Because every panel converges here, **the branch is a thread's identity**: one panel, one worktree,
-one branch. Tag each thread with its branch and `/end` can ask git whether the work actually landed
-instead of guessing — and no panel has to know which of the others is alive.
-
-**Reconcile, never blind-overwrite and never blind-append**: read the existing file first, then
-apply your changes to your own thread. **`/update` has no closing authority** — only `/end` may
-remove a thread; `/update` adds one, updates its own thread's context, or flags one stale. Two
-invariants, in priority order:
-
-1. **Nothing open is ever lost, and `/update` never closes anything — even its own thread.** Many
-   panels write this one file, sometimes within the same hour. The only reliable way for that to
-   never eat someone's thread is for no delete path to exist here at all.
-2. **Only open truth lives here.** No narrative of shipped work (→ session log), no decisions taken
-   (→ decisions.md), no history. Size is an OUTPUT of that discipline, never a constraint: 10
-   genuinely live threads = 10 threads in the file, each with 1–3 lines of context (a thread
-   stripped of its why/where is half-lost). Never trim a live thread to make the file smaller.
-
-```md
-# Current — live threads
-Updated: YYYY-MM-DD HH:MM by @login — <one line on what this session moved>
-
-## Open
-- `feat/123-short-name` — <1–3 lines: where it stands, what unblocks it> · since YYYY-MM-DD · touched YYYY-MM-DD
-- `fix/456-other-panel` — <another panel's thread — not yours to remove> · since YYYY-MM-DD · touched YYYY-MM-DD
-
-## Next
-- `feat/123-short-name`: <one concrete first step>
-- `fix/456-other-panel`: <their next step — never overwrite it with yours>
-```
-
-A thread **untouched** >14 days gets flagged `stale?` — it stays until `/end` closes or promotes it,
-never auto-dropped. `stale?` is a question, not a verdict: parked work on a live branch is still work.
-
-Idle is measured on `touched:`, never on `since:`. `since:` is the date the thread OPENED and only
-ever grows — reading idleness off it flags every long-running thread, including the ones edited an
-hour ago, and a flag that fires on everything is a flag nobody reads. So each thread carries both,
-and **whoever edits a thread's context line updates its `touched:` in the same edit**:
-
-```md
-- `feat/123-short-name` — <1–3 lines> · since 2026-07-04 · touched 2026-08-08
-```
-
-A thread with no `touched:` yet predates this rule: treat it as untouched-unknown and **do not flag
-it** — backfill `touched:` the first time you genuinely update that thread, and let the clock start
-there. Never infer a `touched:` date you cannot source.
-
-If a `state/current.md` also exists in the **non-main** worktree you are in, it predates this rule:
-say so once and offer to fold its live threads into the main file. Do not delete it silently — it
-may be the only copy of a handoff.
-If the file holds another owner's fresher checkpoint line, you may be on another panel's checkout —
-confirm before touching it.
-
-## Step 4 — Land the checkpoint in git (default branch only, pathspec-only)
-
-A checkpoint left uncommitted is an orphaned handoff — the exact failure Polaris exists to prevent.
-Run the script **from the MAIN worktree** (where One home wrote the files). It commits only when
-that tree is on the default branch and defers otherwise — the file stays as the single on-disk
-copy and the next main-tree session lands it. Hygiene is enforced in code, never left to prose:
-
-```bash
-LOGIN="$(git config --local --get polaris.login || gh api user --jq .login)"
-cd "$MAIN_WT"; ROOT="_polaris"; [ -f "_polaris/config.yml" ] || ROOT="."
-SC="${CLAUDE_PLUGIN_ROOT:-}/skills/update/scripts/session_commit.sh"          # plugin install
-[ -x "$SC" ] || SC="$HOME/.agents/skills/update/scripts/session_commit.sh"    # skills-CLI install (npx)
-"$SC" "$ROOT/team/$LOGIN/sessions/$(date +%F)-@$LOGIN.md"   # the session log Step 1 wrote (under the resolved Polaris root)
-  # add the weekly plan "$ROOT/team/$LOGIN/weeks/$(date +%G-W%V).md" as a 2nd arg ONLY if Step 2 ticked it
-```
-
-The paths MUST be under the resolved Polaris root (`_polaris/` in a normal repo, `.` in the vault): the
-session log lives at `$ROOT/team/$LOGIN/sessions/`, and a bare `team/$LOGIN/...` would miss it — the
-commit would find nothing and skip, leaving the checkpoint orphaned (the exact bug this step prevents).
-
-The script is pathspec-only, refuses `state/current.md` / `decisions.md` / `lessons.md` / `.env*`,
-commits only from the default branch (defers elsewhere), never checks out and never pushes.
-
-When the checkpoint is **deferred**, say so in your closing line — it is not committed yet. If a later
-`git checkout <default>` in that tree is refused because of the deferred file, that is git protecting
-the append, never losing it: copy the file aside, switch, re-append, re-run the script. Never `-f`.
-
-**Both resolver candidates missing** (neither install path present — say which you tried): apply the
-same rule by hand, never a looser one. On the default branch, `git add --` the exact session-log path
-then `git commit -m "chore(session): checkpoint @$LOGIN $(date +%F)" -- <that path>`; on any other
-branch commit NOTHING and report the checkpoint as deferred on disk. Never `git add -A`, never add
-`state/current.md`, `decisions.md`, `lessons.md` or `.env*`.
-
-## Cockpit append (dense session state — EVERY contributor; multi-panel is the norm)
-
-ALWAYS append the same dense block to the CURRENT repo's `<polaris-root>/state/current-state.md`
-(gitignored per contract — `state/` is ephemeral; append-only, never pruned here). This is each
-contributor's per-repo cockpit — every contributor runs parallel panels, not just the founder.
-
-Additionally, if `$HOME/Desktop/All Vibe Proj/_polaris` exists (the founder vault) and is not the
-current root, ALSO append a dense block to
-`<vault>/state/current-state.md` (gitignored, append-only, NEVER pruned by /update — the dense
-cockpit file). No vault on this machine → the per-repo cockpit above is the only (and sufficient) copy.
-
-```markdown
-## Update: {YYYY-MM-DD HH:MM} · {repo} · {branch}{ · wt: <path> se non-main}
-- {cosa fatto, 1-3 bullet DENSI — non comprimere}
-- Files: {file toccati con stato}
-- Commits: {`git log --oneline` degli sha di QUESTA sessione su questo branch, o "nessuno"}
-- Next: {passo concreto}
-```
-
-## Boundaries
-
-- Do not write a founder vault, global memo, private workspace or automatic lesson.
-- Do not create or assign issues, branches, pull requests or deployments.
-- Do not claim completion without a linked proof.
-
-Finish by showing the session checkpoint and the `Next` line from `state/current.md`.
+Creare issue, branch, PR o deployment · dichiarare completo senza prova linkata · toccare
+`state/current.md` di un altro panel · `git add -A`.
