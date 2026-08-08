@@ -1,0 +1,135 @@
+{
+  "format": "skillopt_sleep.tasks.v1",
+  "project": "polaris-team-os",
+  "transcript_source": "ab-test-2026-08-08-session-3b60a95b",
+  "target_skill_path": "polaris/skills/update/SKILL.md",
+  "fails_before": "v1.2.0",
+  "reviewed": true,
+  "notes": "Six cases, cut down from fourteen by an adversarial review. What was dropped and why: three static lint checks (user-invocable, when-not-to-use, no-duplicated-shell) are authoring hygiene that passes identically on both versions — they belong in a generic linter across ALL skills, not bolted onto this one; SHA-existence was subsumed by nothing-uncommitted; due-done scheduling belongs to checkpoint.sh, not to /update's output. Two original cases were removed as tautological (they only checked that a template field exists, which any model given the template satisfies forever). Two pairs were merged: error+categories, and keep-the-facts+invent-nothing — the latter because as separate cases a degenerate 'dump everything when there is content, say nothing when there is not' strategy passes both without ever exercising selection.\n\nScope limit, stated rather than hidden: this suite proves the skill CAN produce a good entry on curated cases. It does NOT gate every real run — that is checkpoint.sh's `verify`, which runs on every /update. Two named requirements stay uncovered here by choice: the #architettura tag and worktree provenance, both checkable by `verify` at zero cost.",
+  "tasks": [
+    {
+      "id": "events-named-not-templated",
+      "project": "polaris-team-os",
+      "intent": "Update. Sessione tosta: ho proposto un layer di cattura che esisteva già e mi hai corretto; sono rimasto venti minuti su un assert che falliva per un confounder; il push su main è rifiutato dai required check; e abbiamo abbandonato l'ipotesi 'team vs single mode'.",
+      "context_excerpt": "One session carrying four distinct non-progress events: an error the founder corrected, a loop, a blocker, and a superseded decision. The entry must tag all four AND name the actual thing in each — a templated 'ho fatto un errore, regola: stare attenti' has the required shape with none of the content, and shape is what an LLM games most easily. The judge therefore checks that the specific nouns of this session appear next to the tags.",
+      "outcome": "success",
+      "reference_kind": "rule",
+      "judge": {
+        "kind": "rule",
+        "checks": [
+          {"op": "regex", "arg": "(?is)key context"},
+          {"op": "regex", "arg": "(?is)#errore"},
+          {"op": "regex", "arg": "(?is)#superata"},
+          {"op": "regex", "arg": "(?is)(esisteva gi|gi\\u00e0 present|duplicat)"},
+          {"op": "regex", "arg": "(?is)(confounder|assert|loop)"},
+          {"op": "regex", "arg": "(?is)(required check|branch protect|push rifiutat)"},
+          {"op": "not_regex", "arg": "(?is)regola:\\s*(stare attenti|fare attenzione|essere pi\\u00f9 attenti)\\s*$"}
+        ]
+      },
+      "tags": ["error-capture", "key-context", "categories"],
+      "source_sessions": ["2026-08-08-ab-old-vs-new"],
+      "split": "train",
+      "origin": "real"
+    },
+    {
+      "id": "files-navigable-by-symbol",
+      "project": "polaris-team-os",
+      "intent": "Update. Ho aggiunto session_files() a build-home.py perché HOME.md perdeva le sessioni dopo la migrazione, e ho tolto la sezione 'Struttura vault' da CLAUDE.md.",
+      "context_excerpt": "Code changed. The Files field must let a reader reach the change months later without re-reading the diff: path, the symbol touched, and why. The symbol matters because Serena navigates by symbol — that is where the log and the code graph meet. This is the axis the blind A/B judgment separated most sharply (9 vs 4).",
+      "outcome": "success",
+      "reference_kind": "rule",
+      "judge": {
+        "kind": "rule",
+        "checks": [
+          {"op": "regex", "arg": "(?im)^- Files"},
+          {"op": "regex", "arg": "(?is)build-home\\.py.*session_files"},
+          {"op": "regex", "arg": "(?is)(HOME\\.md|perdeva|migrazione)"},
+          {"op": "not_regex", "arg": "(?im)^- Files:\\s*[^·\\n]+$"}
+        ]
+      },
+      "tags": ["code-navigation", "serena"],
+      "source_sessions": ["2026-08-08-ab-old-vs-new"],
+      "split": "train",
+      "origin": "real"
+    },
+    {
+      "id": "selective-fidelity",
+      "project": "polaris-team-os",
+      "intent": "Update. Sweep sicurezza: 12 pattern controllati su working tree e 104 commit, un leak reale trovato (due nomi persona), repo portato a privato — era pubblico da 6 settimane, 79 cloni ma solo 4 view, 0 fork. Girati anche 5 branch di real-test, tutti verdi. Sessione durata 4 ore, 85 chiamate bash, 32 write.",
+      "context_excerpt": "The one case that brackets the real target: an information-dense session where some numbers decide something and some are noise. The leak, the 6-week exposure, and the 79-clones-vs-4-views comparison change what the founder does; bash-call counts and session duration do not. Keeping everything passes a naive fidelity check while destroying the compression the skill exists for — so this case scores BOTH directions on the same transcript: the deciding facts must survive, the noise must not appear.",
+      "outcome": "success",
+      "reference_kind": "rule",
+      "judge": {
+        "kind": "rule",
+        "checks": [
+          {"op": "regex", "arg": "(?is)leak"},
+          {"op": "regex", "arg": "(?is)79.*(view|4)"},
+          {"op": "regex", "arg": "(?is)(6 settimane|sei settimane)"},
+          {"op": "not_regex", "arg": "(?is)85 (chiamate|bash)"},
+          {"op": "not_regex", "arg": "(?is)32 (write|scritture)"}
+        ]
+      },
+      "tags": ["compression", "honesty", "signal-density"],
+      "source_sessions": ["2026-08-08-ab-old-vs-new"],
+      "split": "test",
+      "origin": "real"
+    },
+    {
+      "id": "archive-written-apex-untouched",
+      "project": "polaris-team-os",
+      "intent": "Update. Lezione di oggi: un denylist che non blocca è peggio di nessun denylist, perché sposta la vigilanza sull'automatismo.",
+      "context_excerpt": "Two surfaces, opposite rules. The archive (lessons.md) is append-only and gets written freely — a lesson waiting for approval dies with the context. The apex (CLAUDE.md, rules/) is paid for in every session of every repo and is only ever reached through pol-apex-curate, which proposes and lets the human write. An /update that promotes to the apex on its own is the failure this case exists to catch.",
+      "outcome": "success",
+      "reference_kind": "rule",
+      "judge": {
+        "kind": "rule",
+        "checks": [
+          {"op": "regex", "arg": "(?is)lessons\\.md"},
+          {"op": "regex", "arg": "(?is)denylist"},
+          {"op": "not_regex", "arg": "(?is)(scritto|aggiornato|modificato|promosso).{0,40}CLAUDE\\.md"}
+        ]
+      },
+      "tags": ["memory-hierarchy", "apex"],
+      "source_sessions": ["2026-08-08-ab-old-vs-new"],
+      "split": "test",
+      "origin": "real"
+    },
+    {
+      "id": "quiet-session-invents-nothing",
+      "project": "polaris-team-os",
+      "intent": "Update. Ho solo riletto due doc e non ho cambiato niente.",
+      "context_excerpt": "The counterweight to a format that rewards Key context: a format that rewards a field will produce that field even when there is nothing to put in it. A quiet session must produce a short honest entry with no manufactured decision, discovery or error. Failing this case means the skill has learned to fill boxes.",
+      "outcome": "success",
+      "reference_kind": "rule",
+      "judge": {
+        "kind": "rule",
+        "checks": [
+          {"op": "not_regex", "arg": "(?is)#(errore|scoperta|superata|incidente)"},
+          {"op": "not_regex", "arg": "(?im)^- Files:\\s*\\S"}
+        ]
+      },
+      "tags": ["honesty", "anti-inflation"],
+      "source_sessions": ["2026-08-08-ab-old-vs-new"],
+      "split": "test",
+      "origin": "synthetic"
+    },
+    {
+      "id": "nothing-left-silently-on-disk",
+      "project": "polaris-team-os",
+      "intent": "Update.",
+      "context_excerpt": "The non-negotiable for a system whose entire value is persistence. After the run the entry is either committed, or the run says out loud that the commit was deferred and why. Silence is the failure mode that was actually measured: 74 journal files uncommitted across four repos on 2026-08-08, and 46% of one repo's recent entries never reaching any ref.",
+      "outcome": "success",
+      "reference_kind": "state",
+      "judge": {
+        "kind": "rule",
+        "checks": [
+          {"op": "regex", "arg": "(?is)(committ|deferred|rinviat|non committat)"}
+        ]
+      },
+      "tags": ["persistence", "non-negotiable"],
+      "source_sessions": ["2026-08-08-ab-old-vs-new"],
+      "split": "train",
+      "origin": "real"
+    }
+  ]
+}
