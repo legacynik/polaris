@@ -164,7 +164,7 @@ def test_plans_and_reports_are_authored_by_their_owner() -> None:
     assert "Never write another contributor's plan" in " ".join(plan.split())
     for text in (plan, report):
         assert "team/jeanpierre" not in text
-        assert "team/giovanni" not in text
+        assert "team/somebody-else" not in text
 
 
 def test_start_is_a_bounded_local_resume_not_a_status_command() -> None:
