@@ -37,12 +37,22 @@ ROOT="$MAIN_WT/_polaris"; [ -f "$ROOT/config.yml" ] || ROOT="$MAIN_WT"
 Before writing, sweep the CURRENT repo's Polaris root for strays (multi-panel machines drift:
 older sessions write with pre-patch instructions):
 
-1. Session files in the LEGACY top-level `<root>/sessions/` (not `team/<login>/sessions/`):
-   `git mv` (or mv, if untracked) each into `team/<login>/sessions/`, adding a `-legacy` suffix
-   on filename collision. Note the move in one line of this run's checkpoint — never silently.
+1. Session **logs** in the LEGACY top-level `<root>/sessions/` — that is `*.md` files at the top
+   level of that directory, never its subdirectories: `git mv` (or mv, if untracked) each into
+   `team/<login>/sessions/`, adding a `-legacy` suffix on filename collision. Note the move in one
+   line of this run's checkpoint — never silently. **Before moving, grep the repo for readers of
+   that path** (`build-home`-style generators, hooks, healthchecks) and migrate them in the same
+   commit, or the move silently empties whatever they render.
+   **Leave `<root>/sessions/` subdirectories alone.** `sessions/scratch/` in particular is a *live*
+   write target for the founder vault by explicit design, not debris — the scratchpad hook routes
+   contract repos to `team/<login>/sessions/scratch/` and keeps the legacy shape for the vault. An
+   empty-but-for-subdirs `sessions/` is CLEAN; do not re-flag it on later runs.
 2. Non-canonical `current` variants in `<root>/state/` (anything beyond `current.md`,
    `current-state.md`, `goals.md`, `backlog*.md`): FLAG them in your output with their mtime and
    first heading; fold their still-live content into the cockpit only on explicit confirmation.
+   **Flag each stray at most once per week**: if the previous checkpoint in
+   `team/<login>/sessions/` already names it and nothing about it changed, stay silent. A flag that
+   reprints identically every run is noise, and noise is what makes the one real flag get skipped.
 Skip silently when the repo is already clean. Never delete anything in this step.
 
 ## Step 1 — Append to the session log
@@ -91,16 +101,29 @@ invariants, in priority order:
 Updated: YYYY-MM-DD HH:MM by @login — <one line on what this session moved>
 
 ## Open
-- `feat/123-short-name` — <1–3 lines: where it stands, what unblocks it> · since YYYY-MM-DD
-- `fix/456-other-panel` — <another panel's thread — not yours to remove>
+- `feat/123-short-name` — <1–3 lines: where it stands, what unblocks it> · since YYYY-MM-DD · touched YYYY-MM-DD
+- `fix/456-other-panel` — <another panel's thread — not yours to remove> · since YYYY-MM-DD · touched YYYY-MM-DD
 
 ## Next
 - `feat/123-short-name`: <one concrete first step>
 - `fix/456-other-panel`: <their next step — never overwrite it with yours>
 ```
 
-A thread idle >14 days gets flagged `stale?` — it stays until `/end` closes or promotes it, never
-auto-dropped. `stale?` is a question, not a verdict: parked work on a live branch is still work.
+A thread **untouched** >14 days gets flagged `stale?` — it stays until `/end` closes or promotes it,
+never auto-dropped. `stale?` is a question, not a verdict: parked work on a live branch is still work.
+
+Idle is measured on `touched:`, never on `since:`. `since:` is the date the thread OPENED and only
+ever grows — reading idleness off it flags every long-running thread, including the ones edited an
+hour ago, and a flag that fires on everything is a flag nobody reads. So each thread carries both,
+and **whoever edits a thread's context line updates its `touched:` in the same edit**:
+
+```md
+- `feat/123-short-name` — <1–3 lines> · since 2026-07-04 · touched 2026-08-08
+```
+
+A thread with no `touched:` yet predates this rule: treat it as untouched-unknown and **do not flag
+it** — backfill `touched:` the first time you genuinely update that thread, and let the clock start
+there. Never infer a `touched:` date you cannot source.
 
 If a `state/current.md` also exists in the **non-main** worktree you are in, it predates this rule:
 say so once and offer to fold its live threads into the main file. Do not delete it silently — it
