@@ -3,7 +3,7 @@ name: update
 description: Polaris skill — record a short repository-first checkpoint during an active session. Trigger after meaningful progress, a blocker, a context switch, or on "checkpoint / save progress / /update".
 user-invocable: true
 model: sonnet
-version: 1.1.0
+version: 1.2.0
 ---
 
 # /update — leave the work legible
@@ -168,7 +168,7 @@ branch commit NOTHING and report the checkpoint as deferred on disk. Never `git 
 
 ALWAYS append the same dense block to the CURRENT repo's `<polaris-root>/state/current-state.md`
 (gitignored per contract — `state/` is ephemeral; append-only, never pruned here). This is each
-contributor's per-repo cockpit: Gio/JP run parallel panels too.
+contributor's per-repo cockpit — every contributor runs parallel panels, not just the founder.
 
 Additionally, if `$HOME/Desktop/All Vibe Proj/_polaris` exists (the founder vault) and is not the
 current root, ALSO append a dense block to

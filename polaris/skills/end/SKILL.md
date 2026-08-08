@@ -2,7 +2,7 @@
 name: end
 description: Polaris skill — close a repository-first team session with a handoff, decisions/lessons written to the ledgers, a plan tick and a pathspec-only commit. Trigger when stopping work, before a multi-day pause, or on "wrap up / end session / /end".
 user-invocable: true
-version: 1.1.0
+version: 1.1.1
 ---
 
 # /end — close without losing the handoff
@@ -98,7 +98,7 @@ personal view; THIS is the structured one a teammate (or you in 3 days) resumes 
 
 ALWAYS append the same dense block to the CURRENT repo's `<polaris-root>/state/current-state.md`
 (gitignored per contract — `state/` is ephemeral; append-only, never pruned here). This is each
-contributor's per-repo cockpit: Gio/JP run parallel panels too.
+contributor's per-repo cockpit — every contributor runs parallel panels, not just the founder.
 
 Additionally, if `$HOME/Desktop/All Vibe Proj/_polaris` exists (the founder vault) and is not the
 current root, ALSO append the FULL handoff
