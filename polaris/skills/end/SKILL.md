@@ -2,7 +2,7 @@
 name: end
 description: Polaris skill — close a repository-first team session with a handoff, decisions/lessons written to the ledgers, a plan tick and a pathspec-only commit. Trigger when stopping work, before a multi-day pause, or on "wrap up / end session / /end".
 user-invocable: true
-version: 1.1.1
+version: 1.2.0
 ---
 
 # /end — close without losing the handoff
@@ -45,12 +45,26 @@ Skip silently when the repo is already clean. Never delete anything in this step
 
 Append to `team/<login>/sessions/YYYY-MM-DD-@<github-login>.md`:
 
+**Stesso formato di `/update`** — è lo stesso file, letto dalla stessa persona tre settimane dopo:
+due grammatiche nello stesso log costringono a leggere due volte e rendono il log non contabile.
+`/end` cambia solo la parola dopo l'orario (`session end`) e chiude con `Next session`.
+
 ```md
-## HH:MM — session end
-- Shipped / verified: <evidence-backed result>
-- Still open: <one concrete thread>
-- Next session: <first step>
+## HH:MM — session end · <titolo: cosa lascia questa sessione> · wt: <worktree> · branch: <branch>
+- Done: <risultato verificato, con la prova>
+- In progress: <cosa resta a metà, e dove sta>
+- Next session: <primo comando da eseguire>
+- Blocker: <esatto, oppure none>
+- Key context: <decisione e perché · scelta architetturale · scoperta che ribalta una conclusione ·
+  errore e regola che ne segue · decisione superata e cosa la supera>
+  — tag: #decisione #architettura #scoperta #errore #superata #incidente
+- Files: <path · simbolo toccato · perché>
 ```
+
+`Key context` e `Files` valgono qui più che altrove: la sessione finisce, e quello che non è scritto
+adesso non esiste più. `Files` come `path · simbolo · perché` è ciò che permette a Serena e a questo
+log di incontrarsi sullo stesso simbolo mesi dopo. SHA e numeri si leggono da `git log`, non si
+ricordano.
 
 Then feed the repository memory with the same handoff, one machine-readable line — the offline
 distill decides later what is durable, so never skip this because the session felt routine.

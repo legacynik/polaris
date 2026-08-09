@@ -86,6 +86,9 @@ Due superfici, due regole opposte — e la distinzione è la ragione per cui il 
   `decisions.md` — è l'unico posto dove vive legata al codice e viene segnalata quando il codice
   cambia sotto di lei.
 
+`/end` applica le stesse tre regole e usa lo stesso formato di entry: un log con due grammatiche si
+legge due volte e non si conta.
+
 ## Landing
 
 ```bash
