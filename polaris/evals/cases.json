@@ -38,7 +38,7 @@
       "prompt": "/update — fatto il wiring del resolver, prossimo passo il gate, nessun blocker",
       "assertions": [
         { "name": "nessun commit sul feature branch", "kind": "commits", "value": 1 },
-        { "name": "dichiara il differimento", "kind": "output_mentions", "value": "defer" }
+        { "name": "dichiara il differimento", "kind": "output_mentions", "value": "defer|rinvi|differi" }
       ]
     },
     {
@@ -51,7 +51,7 @@
       "assertions": [
         { "name": "il checkpoint è committato", "kind": "commits", "value": 2 },
         { "name": "il commit contiene il session log", "kind": "head_files_contain", "value": "sessions/" },
-        { "name": "current.md resta fuori dal commit", "kind": "head_files_contain", "value": "current.md", "_negated_by_design": "questa asserzione va invertita: vedi nota" }
+        { "name": "current.md resta fuori dal commit", "kind": "head_files_omit", "value": "current.md" }
       ]
     }
   ],

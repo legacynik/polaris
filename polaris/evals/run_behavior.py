@@ -39,6 +39,10 @@ def invoke(repo: Path, prompt: str, model: str | None) -> str:
     if model:
         cmd += ["--model", model]
     r = subprocess.run(cmd, cwd=repo, capture_output=True, text=True, timeout=TIMEOUT)
+    try:  # a red assertion with no transcript costs a whole re-run to diagnose
+        (repo / "_eval_output.txt").write_text(r.stdout + "\n--- STDERR ---\n" + r.stderr)
+    except Exception:
+        pass
     return r.stdout
 
 
@@ -56,8 +60,16 @@ def check(case: dict, repo: Path, out: str) -> list[tuple[str, bool, str]]:
         elif kind == "head_files_contain":
             got = any(want in f for f in fixtures.head_files(repo))
             want = True
+        elif kind == "head_files_omit":
+            # the pathspec guard is a negative claim: proving a file did NOT land
+            # needs its own kind, otherwise the case has to be written inverted
+            # and reads as red on correct behaviour (which it did, until 2026-08-09)
+            got = not any(want in f for f in fixtures.head_files(repo))
+            want = True
         elif kind == "output_mentions":
-            got = want.lower() in out.lower()
+            # value may be "a|b" — the skills write Italian, some vocabulary is English:
+            # an assertion tied to one language reds on correct behaviour (observed 2026-08-09)
+            got = any(w.strip() in out.lower() for w in want.lower().split("|"))
             want = True
         elif kind == "output_omits":
             got = want.lower() not in out.lower()
