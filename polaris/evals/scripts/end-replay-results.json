@@ -1,0 +1,20 @@
+[
+ {
+  "id": "architectural-decision-proposed",
+  "old": true,
+  "new": true,
+  "verdict": "non-discriminante"
+ },
+ {
+  "id": "routine-progress-not-logged",
+  "old": true,
+  "new": true,
+  "verdict": "non-discriminante"
+ },
+ {
+  "id": "loop-blocker-becomes-lesson",
+  "old": true,
+  "new": true,
+  "verdict": "non-discriminante"
+ }
+]
