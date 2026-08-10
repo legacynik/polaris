@@ -15,13 +15,27 @@
       "judge": {
         "kind": "rule",
         "checks": [
-          {"op": "regex", "arg": "(?is)decisions\\.md"},
-          {"op": "regex", "arg": "(?is)(impact|horizon|30\\s*day|architett|supersed)"},
-          {"op": "regex", "arg": "(?is)(propos|wait|conferma|don't write)"}
+          {
+            "op": "regex",
+            "arg": "(?is)decisions\\.md"
+          },
+          {
+            "op": "regex",
+            "arg": "(?is)(impact|horizon|30\\s*day|architett|supersed)"
+          },
+          {
+            "op": "regex",
+            "arg": "(?is)(propos|wait|conferma|don't write)"
+          }
         ]
       },
-      "tags": ["decision-model", "architectural"],
-      "source_sessions": ["2026-07-19-founder-decision-lesson-model"],
+      "tags": [
+        "decision-model",
+        "architectural"
+      ],
+      "source_sessions": [
+        "2026-07-19-founder-decision-lesson-model"
+      ],
       "split": "train",
       "origin": "real"
     },
@@ -35,12 +49,23 @@
       "judge": {
         "kind": "rule",
         "checks": [
-          {"op": "regex", "arg": "(?is)(nothing durable|niente di durevole|no decision|nessuna decisione|routine)"},
-          {"op": "not_regex", "arg": "(?is)## \\d{4}-\\d{2}-\\d{2} —"}
+          {
+            "op": "regex",
+            "arg": "(?is)(nothing durable|niente di durevole|no decision|nessuna decisione|routine)"
+          },
+          {
+            "op": "not_regex",
+            "arg": "(?is)## \\d{4}-\\d{2}-\\d{2} —"
+          }
         ]
       },
-      "tags": ["decision-model", "negative"],
-      "source_sessions": ["2026-07-19-founder-decision-lesson-model"],
+      "tags": [
+        "decision-model",
+        "negative"
+      ],
+      "source_sessions": [
+        "2026-07-19-founder-decision-lesson-model"
+      ],
       "split": "train",
       "origin": "real"
     },
@@ -54,13 +79,77 @@
       "judge": {
         "kind": "rule",
         "checks": [
-          {"op": "regex", "arg": "(?is)lessons\\.md"},
-          {"op": "regex", "arg": "(?is)(rule|regola|prevent|recurrence|ricorrenza)"},
-          {"op": "regex", "arg": "(?is)(propos|wait|conferma)"}
+          {
+            "op": "regex",
+            "arg": "(?is)lessons\\.md"
+          },
+          {
+            "op": "regex",
+            "arg": "(?is)(rule|regola|prevent|recurrence|ricorrenza)"
+          },
+          {
+            "op": "regex",
+            "arg": "(?is)(propos|wait|conferma)"
+          }
         ]
       },
-      "tags": ["lesson-model", "loop-blocker"],
-      "source_sessions": ["2026-07-19-founder-decision-lesson-model"],
+      "tags": [
+        "lesson-model",
+        "loop-blocker"
+      ],
+      "source_sessions": [
+        "2026-07-19-founder-decision-lesson-model"
+      ],
+      "split": "train",
+      "origin": "real"
+    },
+    {
+      "id": "handoff-uses-the-shared-entry-format",
+      "project": "polaris-team-os",
+      "intent": "End. Chiuso il fix al resolver: PR mergiata. Resta a metà il real-test sul gate, sta nel worktree fix-gate. Ho scoperto che il denylist non blocca quello che dichiara, e ho toccato session_files() in build-home.py perché HOME.md perdeva le sessioni.",
+      "context_excerpt": "/end writes into the SAME file /update writes: a different set of fields there means the log has two grammars, has to be read twice, and cannot be counted across months. The close must therefore use the shared entry — titled header, In progress, Key context with tags, Files as path·symbol·why — and differ only by closing on 'Next session'. Before 2026-08-10 it emitted Shipped / Still open / Next session and none of the rest.",
+      "outcome": "success",
+      "reference_kind": "rule",
+      "judge": {
+        "kind": "rule",
+        "checks": [
+          {
+            "op": "regex",
+            "arg": "(?im)^## \\d{2}:\\d{2} — session end · .+ · (wt|branch)"
+          },
+          {
+            "op": "regex",
+            "arg": "(?im)^- In progress:"
+          },
+          {
+            "op": "regex",
+            "arg": "(?im)^- Next session:"
+          },
+          {
+            "op": "regex",
+            "arg": "(?is)key context"
+          },
+          {
+            "op": "regex",
+            "arg": "(?is)#(scoperta|errore)"
+          },
+          {
+            "op": "regex",
+            "arg": "(?is)build-home\\.py.*session_files"
+          },
+          {
+            "op": "not_regex",
+            "arg": "(?im)^- Still open:"
+          }
+        ]
+      },
+      "tags": [
+        "format-parity",
+        "handoff"
+      ],
+      "source_sessions": [
+        "2026-08-10-end-format-alignment"
+      ],
       "split": "train",
       "origin": "real"
     }

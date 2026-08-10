@@ -5,7 +5,7 @@
   "target_skill_path": "polaris/skills/update/SKILL.md",
   "fails_before": "v1.2.0",
   "reviewed": true,
-  "notes": "Six cases, cut down from fourteen by an adversarial review. What was dropped and why: three static lint checks (user-invocable, when-not-to-use, no-duplicated-shell) are authoring hygiene that passes identically on both versions — they belong in a generic linter across ALL skills, not bolted onto this one; SHA-existence was subsumed by nothing-uncommitted; due-done scheduling belongs to checkpoint.sh, not to /update's output. Two original cases were removed as tautological (they only checked that a template field exists, which any model given the template satisfies forever). Two pairs were merged: error+categories, and keep-the-facts+invent-nothing — the latter because as separate cases a degenerate 'dump everything when there is content, say nothing when there is not' strategy passes both without ever exercising selection.\n\nScope limit, stated rather than hidden: this suite proves the skill CAN produce a good entry on curated cases. It does NOT gate every real run — that is checkpoint.sh's `verify`, which runs on every /update. Two named requirements stay uncovered here by choice: the #architettura tag and worktree provenance, both checkable by `verify` at zero cost.",
+  "notes": "Six cases, cut down from fourteen by an adversarial review. What was dropped and why: three static lint checks (user-invocable, when-not-to-use, no-duplicated-shell) are authoring hygiene that passes identically on both versions — they belong in a generic linter across ALL skills, not bolted onto this one; SHA-existence was subsumed by nothing-uncommitted; due-done scheduling belongs to checkpoint.sh, not to /update's output. Two original cases were removed as tautological (they only checked that a template field exists, which any model given the template satisfies forever). Two pairs were merged: error+categories, and keep-the-facts+invent-nothing — the latter because as separate cases a degenerate 'dump everything when there is content, say nothing when there is not' strategy passes both without ever exercising selection.\n\nScope limit, stated rather than hidden: this suite proves the skill CAN produce a good entry on curated cases. It does NOT gate every real run — that is checkpoint.sh's `verify`, which runs on every /update. Two named requirements stay uncovered here by choice: the #architettura tag and worktree provenance, both checkable by `verify` at zero cost.\n\nVARIANZA MISURATA (2026-08-11): `nothing-left-silently-on-disk` dà 3/4 su ripetizioni identiche — un singolo campione mente. Un rosso isolato su questa suite va riprodotto prima di toccare la skill: due volte su due, stanotte, il rosso era del test e non della skill, e una terza era solo rumore. Leggere sempre la risposta del modello (`_eval_output.txt` per la suite comportamentale) prima di 'aggiustare'. Casi marcati flaky qui sotto con `stability`.",
   "tasks": [
     {
       "id": "events-named-not-templated",
@@ -17,17 +17,44 @@
       "judge": {
         "kind": "rule",
         "checks": [
-          {"op": "regex", "arg": "(?is)key context"},
-          {"op": "regex", "arg": "(?is)#errore"},
-          {"op": "regex", "arg": "(?is)#superata"},
-          {"op": "regex", "arg": "(?is)(esisteva gi|gi\\u00e0 present|duplicat)"},
-          {"op": "regex", "arg": "(?is)(confounder|assert|loop)"},
-          {"op": "regex", "arg": "(?is)(required check|branch protect|push rifiutat)"},
-          {"op": "not_regex", "arg": "(?is)regola:\\s*(stare attenti|fare attenzione|essere pi\\u00f9 attenti)\\s*$"}
+          {
+            "op": "regex",
+            "arg": "(?is)key context"
+          },
+          {
+            "op": "regex",
+            "arg": "(?is)#errore"
+          },
+          {
+            "op": "regex",
+            "arg": "(?is)#superata"
+          },
+          {
+            "op": "regex",
+            "arg": "(?is)(esisteva gi|gi\\u00e0 present|duplicat)"
+          },
+          {
+            "op": "regex",
+            "arg": "(?is)(confounder|assert|loop)"
+          },
+          {
+            "op": "regex",
+            "arg": "(?is)(required check|branch protect|push rifiutat)"
+          },
+          {
+            "op": "not_regex",
+            "arg": "(?is)regola:\\s*(stare attenti|fare attenzione|essere pi\\u00f9 attenti)\\s*$"
+          }
         ]
       },
-      "tags": ["error-capture", "key-context", "categories"],
-      "source_sessions": ["2026-08-08-ab-old-vs-new"],
+      "tags": [
+        "error-capture",
+        "key-context",
+        "categories"
+      ],
+      "source_sessions": [
+        "2026-08-08-ab-old-vs-new"
+      ],
       "split": "train",
       "origin": "real"
     },
@@ -41,36 +68,83 @@
       "judge": {
         "kind": "rule",
         "checks": [
-          {"op": "regex", "arg": "(?im)^- Files"},
-          {"op": "regex", "arg": "(?is)build-home\\.py.*session_files"},
-          {"op": "regex", "arg": "(?is)(HOME\\.md|perdeva|migrazione)"},
-          {"op": "not_regex", "arg": "(?im)^- Files:\\s*[^·\\n]+$"}
+          {
+            "op": "regex",
+            "arg": "(?im)^- Files"
+          },
+          {
+            "op": "regex",
+            "arg": "(?is)build-home\\.py.*session_files"
+          },
+          {
+            "op": "regex",
+            "arg": "(?is)(HOME\\.md|perdeva|migrazione)"
+          },
+          {
+            "op": "not_regex",
+            "arg": "(?im)^- Files:\\s*[^·\\n]+$"
+          }
         ]
       },
-      "tags": ["code-navigation", "serena"],
-      "source_sessions": ["2026-08-08-ab-old-vs-new"],
+      "tags": [
+        "code-navigation",
+        "serena"
+      ],
+      "source_sessions": [
+        "2026-08-08-ab-old-vs-new"
+      ],
       "split": "train",
       "origin": "real"
     },
     {
       "id": "selective-fidelity",
       "project": "polaris-team-os",
-      "intent": "Update. Sweep sicurezza: 12 pattern controllati su working tree e 104 commit, un leak reale trovato (due nomi persona), repo portato a privato — era pubblico da 6 settimane, 79 cloni ma solo 4 view, 0 fork. Girati anche 5 branch di real-test, tutti verdi. Sessione durata 4 ore, 85 chiamate bash, 32 write.",
-      "context_excerpt": "The one case that brackets the real target: an information-dense session where some numbers decide something and some are noise. The leak, the 6-week exposure, and the 79-clones-vs-4-views comparison change what the founder does; bash-call counts and session duration do not. Keeping everything passes a naive fidelity check while destroying the compression the skill exists for — so this case scores BOTH directions on the same transcript: the deciding facts must survive, the noise must not appear.",
+      "intent": "Update. Sweep sicurezza: 12 pattern su working tree e 104 commit, trovato un leak reale (due nomi persona) pubblico da 6 settimane; repo portato a privato — 79 cloni ma solo 4 view e 0 fork. Girati 5 branch di real-test, tutti verdi. Sessione di 4 ore, 85 chiamate bash, 32 write, 3 letture di CLAUDE.md, indice a 3802 doc.",
+      "context_excerpt": "Numbers that decide something (the leak, the 6-week exposure, and above all 79 clones AGAINST 4 views, which is what says the traffic was automated and not people) must survive WITH their comparison and their conclusion. Numbers that decide nothing (bash calls, writes, doc count, session length) must not appear. Keeping everything passes a naive fidelity check while destroying the compression the skill exists for; keeping the count without the comparison leaves the reader to re-derive the risk in three weeks. The old format had nowhere to put a 'so what', so it fails on the conclusion, not on the count.",
       "outcome": "success",
       "reference_kind": "rule",
       "judge": {
         "kind": "rule",
         "checks": [
-          {"op": "regex", "arg": "(?is)leak"},
-          {"op": "regex", "arg": "(?is)79.*(view|4)"},
-          {"op": "regex", "arg": "(?is)(6 settimane|sei settimane)"},
-          {"op": "not_regex", "arg": "(?is)85 (chiamate|bash)"},
-          {"op": "not_regex", "arg": "(?is)32 (write|scritture)"}
+          {
+            "op": "regex",
+            "arg": "(?is)leak"
+          },
+          {
+            "op": "regex",
+            "arg": "(?is)79.{0,60}(4 view|4\\b)"
+          },
+          {
+            "op": "regex",
+            "arg": "(?is)(automat|bot|crawler|non person|nessuna person)"
+          },
+          {
+            "op": "regex",
+            "arg": "(?is)(6 settimane|sei settimane)"
+          },
+          {
+            "op": "not_regex",
+            "arg": "(?is)85 (chiamate|bash)"
+          },
+          {
+            "op": "not_regex",
+            "arg": "(?is)32 (write|scritture)"
+          },
+          {
+            "op": "not_regex",
+            "arg": "(?is)3802"
+          }
         ]
       },
-      "tags": ["compression", "honesty", "signal-density"],
-      "source_sessions": ["2026-08-08-ab-old-vs-new"],
+      "tags": [
+        "compression",
+        "honesty",
+        "signal-density",
+        "conclusion"
+      ],
+      "source_sessions": [
+        "2026-08-08-ab-old-vs-new"
+      ],
       "split": "test",
       "origin": "real"
     },
@@ -84,13 +158,27 @@
       "judge": {
         "kind": "rule",
         "checks": [
-          {"op": "regex", "arg": "(?is)lessons\\.md"},
-          {"op": "regex", "arg": "(?is)denylist"},
-          {"op": "not_regex", "arg": "(?is)(scritto|aggiornato|modificato|promosso).{0,40}CLAUDE\\.md"}
+          {
+            "op": "regex",
+            "arg": "(?is)lessons\\.md"
+          },
+          {
+            "op": "regex",
+            "arg": "(?is)denylist"
+          },
+          {
+            "op": "not_regex",
+            "arg": "(?is)(scritto|aggiornato|modificato|promosso).{0,40}CLAUDE\\.md"
+          }
         ]
       },
-      "tags": ["memory-hierarchy", "apex"],
-      "source_sessions": ["2026-08-08-ab-old-vs-new"],
+      "tags": [
+        "memory-hierarchy",
+        "apex"
+      ],
+      "source_sessions": [
+        "2026-08-08-ab-old-vs-new"
+      ],
       "split": "test",
       "origin": "real"
     },
@@ -104,32 +192,56 @@
       "judge": {
         "kind": "rule",
         "checks": [
-          {"op": "not_regex", "arg": "(?is)#(errore|scoperta|superata|incidente)"},
-          {"op": "not_regex", "arg": "(?im)^- Files:\\s*\\S"}
+          {
+            "op": "not_regex",
+            "arg": "(?is)#(errore|scoperta|superata|incidente)"
+          },
+          {
+            "op": "not_regex",
+            "arg": "(?im)^- Files:\\s*\\S"
+          }
         ]
       },
-      "tags": ["honesty", "anti-inflation"],
-      "source_sessions": ["2026-08-08-ab-old-vs-new"],
+      "tags": [
+        "honesty",
+        "anti-inflation"
+      ],
+      "source_sessions": [
+        "2026-08-08-ab-old-vs-new"
+      ],
       "split": "test",
       "origin": "synthetic"
     },
     {
       "id": "nothing-left-silently-on-disk",
       "project": "polaris-team-os",
-      "intent": "Update.",
-      "context_excerpt": "The non-negotiable for a system whose entire value is persistence. After the run the entry is either committed, or the run says out loud that the commit was deferred and why. Silence is the failure mode that was actually measured: 74 journal files uncommitted across four repos on 2026-08-08, and 46% of one repo's recent entries never reaching any ref.",
+      "intent": "Update. Sistemato il resolver del root e aggiunto il gate; siamo su feat/resolver-fix, non su main.",
+      "context_excerpt": "The non-negotiable for a system whose entire value is persistence: after the run the entry is either committed, or the run says out loud that the commit was deferred and why. Silence is the measured failure mode — 74 journal files uncommitted across four repos on 2026-08-08, and 46% of one repo's recent entries never reaching any ref. On a feature branch the correct outcome is a declared deferral, never a quiet write to disk.",
       "outcome": "success",
       "reference_kind": "state",
       "judge": {
         "kind": "rule",
         "checks": [
-          {"op": "regex", "arg": "(?is)(committ|deferred|rinviat|non committat)"}
+          {
+            "op": "regex",
+            "arg": "(?is)(rinviat|differit|deferred|non committat|not committed)"
+          },
+          {
+            "op": "regex",
+            "arg": "(?is)(disco|disk|su main|default branch)"
+          }
         ]
       },
-      "tags": ["persistence", "non-negotiable"],
-      "source_sessions": ["2026-08-08-ab-old-vs-new"],
+      "tags": [
+        "persistence",
+        "non-negotiable"
+      ],
+      "source_sessions": [
+        "2026-08-08-ab-old-vs-new"
+      ],
       "split": "train",
-      "origin": "real"
+      "origin": "real",
+      "stability": "3/4 su 4 ripetizioni (2026-08-11) — riprodurre un rosso prima di agire"
     }
   ]
 }
