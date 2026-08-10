@@ -3,6 +3,50 @@
 All notable changes to Polaris Team OS. The installed version is pinned in
 `polaris/.claude-plugin/plugin.json`.
 
+## 0.17.0
+
+### Changed
+- **`/update` 2.0.0 — the entry carries what is not progress.** The 31-Jan design had
+  Completed / In Progress / Key Context / Files Modified; three of those fields eroded away over
+  seven months of rewrites, leaving Done/Next/Blocker with nowhere to record a decision, a
+  discovery, or a mistake — so that content either went missing or got improvised into an
+  unstructured `Nota:` line. Restored as **In progress**, **Key context** (tagged
+  `#decisione #architettura #scoperta #errore #superata #incidente`) and **Files**, plus a titled
+  header and `wt:`/`branch:` provenance for multi-panel work. `Files` is written
+  `path · symbol · why`: Serena navigates by symbol, so that is where the log and the code graph
+  meet months later. Body down from 192 to 111 lines — the deterministic half moved to a script.
+- **`/end` 1.2.0 — same entry format as `/update`.** It emitted Shipped / Still open / Next session
+  while `/update` emitted a different set: same file, same reader, two grammars. It now writes the
+  same entry, changing only the word after the timestamp and closing on `Next session`.
+- **Both skills follow one memory rule.** Archive (`lessons.md`, `decisions.md`): write always,
+  append-only — a lesson waiting for approval dies with the session. Apex (`CLAUDE.md`, `rules/`):
+  never from a session skill; it is reached only through `/pol-apex-curate`, which proposes.
+  Architectural choices are proposed as ADRs, where they stay linked to the code.
+
+### Added
+- **`skills/update/scripts/checkpoint.sh`** — the deterministic half of the checkpoint: `prepare`
+  (root, login, branch, worktree, paths, harvest offset, hygiene), `harvest-done`, `commit`,
+  `verify`, `due-done`. It costs no context and cannot be skipped by a model in a hurry.
+- **`verify` fails loudly when a step was skipped.** It exists because a step that lives only in
+  prose eventually gets skipped — including by whoever wrote it: on 2026-08-08 the author of the
+  harvest step skipped it the same day he added it.
+- **Recurring work rides the ritual that actually runs.** `state/due.md` lists jobs as
+  `YYYY-MM-DD · name · every Nd`; `prepare` prints whatever is due and `due-done` moves the date
+  forward by itself. Hung off `/update`, which runs daily, rather than `/end`, which often does not.
+- **Six behavioural eval cases for `/update`**, cut down from fourteen by an adversarial review that
+  removed the tautological ones (checks any model passes forever) and merged two pairs — notably
+  keep-the-facts and invent-nothing, which as separate cases are both satisfied by a degenerate
+  "dump everything, then say nothing" strategy that never exercises selection.
+
+### Fixed
+- **Two eval assertions were wrong, not the skill.** `current.md resta fuori dal commit` was written
+  inverted and said so in a `_negated_by_design` field nobody ever closed, so it reported red on
+  correct behaviour; new `head_files_omit` lets a negative claim be stated directly. `dichiara il
+  differimento` looked for the English word `defer` while the skills write Italian logs — the model
+  had correctly written "rinviato"; `output_mentions` now accepts `a|b` alternatives.
+- **The harness keeps the model output** (`_eval_output.txt`). A red assertion with no transcript
+  costs a full re-run to diagnose, and reading it is what showed the skill was right both times.
+
 ## 0.16.0
 
 ### Added
