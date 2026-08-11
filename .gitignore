@@ -4,3 +4,4 @@ __pycache__/
 
 # eval workspace: snapshot del baseline (ricostruibile da git) e run intermedi
 polaris/evals/*-workspace/skill-snapshot/
+polaris/evals/scripts/*-replay-results.json
