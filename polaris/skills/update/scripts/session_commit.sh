@@ -48,6 +48,68 @@ _default_branch() {
     echo "${d:-main}"
 }
 
+# The upgrade path this file declared in 2026-07-25 and never got: DEFER used to leave the entry
+# on disk on a tracked path, waiting for "the next default-branch session" — which on a checkout
+# parked on a long-lived branch never comes. Measured 2026-08-11: one repo's main checkout sat on a
+# recovery branch 184 commits behind, the journal was drained by hand three days earlier and had
+# already refilled with 16 entries; another repo's main checkout is detached, so its deferral was
+# permanent (45 files). Deferral that never drains is data loss with a reassuring message.
+#
+# The spool lives under the COMMON git dir: one per repo, shared by every worktree, independent of
+# what branch any of them is on. Nothing here ever switches a branch.
+_spool_dir() { echo "$(git rev-parse --git-common-dir 2>/dev/null)/polaris-deferred"; }
+
+# A worktree already sitting on the default branch is the cheapest drain: no checkout, no risk.
+_wt_on_default() {
+    local def="$1" wt="" line
+    while IFS= read -r line; do
+        case "$line" in
+            worktree\ *) wt="${line#worktree }" ;;
+            branch\ refs/heads/"$def") [ -n "$wt" ] && { echo "$wt"; return 0; } ;;
+        esac
+    done < <(git worktree list --porcelain 2>/dev/null)
+    return 1
+}
+
+_spool_put() {
+    local spool; spool="$(_spool_dir)"; [ -n "$spool" ] || return 1
+    local p; for p in "$@"; do
+        [ -f "$p" ] || continue
+        mkdir -p "$spool/$(dirname "$p")" && cp -f "$p" "$spool/$p" || return 1
+    done
+}
+
+# Drain runs on every default-branch commit: whatever a parked checkout spooled lands here.
+_spool_drain() {
+    local mode="$1" spool; spool="$(_spool_dir)"
+    [ -n "$spool" ] && [ -d "$spool" ] || return 0
+    local drained=() f rel
+    while IFS= read -r f; do
+        rel="${f#$spool/}"
+        _forbidden "$mode" "$rel" && continue
+        mkdir -p "$(dirname "$rel")"
+        # NOT a blind copy. The spooled version is not always a superset: the target may have been
+        # appended to after the spool was written, and overwriting would delete that. These files are
+        # append-only journals, so reconcile by lines and never lose either side.
+        # (Caught by S11 on 2026-08-11: a blind cp silently dropped an entry written after spooling.)
+        if [ ! -f "$rel" ]; then
+            cp -f "$f" "$rel"
+        elif cmp -s "$f" "$rel"; then
+            :                                             # already landed, nothing to do
+        elif [ -z "$(grep -Fxv -f "$rel" "$f" 2>/dev/null)" ]; then
+            :                                             # target already contains every spooled line
+        else
+            grep -Fxv -f "$rel" "$f" >> "$rel" 2>/dev/null \
+                || { echo "session_commit: cannot reconcile ${rel} — left in the spool" >&2; continue; }
+        fi
+        drained+=("$rel"); rm -f "$f"
+    done < <(find "$spool" -type f 2>/dev/null)
+    [ ${#drained[@]} -gt 0 ] || return 0
+    find "$spool" -type d -empty -delete 2>/dev/null
+    echo "session_commit: drained ${#drained[@]} deferred file(s) from the spool"
+    printf '%s\n' "${drained[@]}"
+}
+
 _commit() {
     local mode="$1"; shift
     local p; for p in "$@"; do
@@ -55,9 +117,27 @@ _commit() {
     done
     git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "session_commit: not a git repo, skip"; return 0; }
     local branch def; branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo '?')"; def="$(_default_branch)"
-    [ "$branch" = "$def" ] || {
-        echo "session_commit: on '${branch}' (not ${def}) — session-state saved on disk, commit deferred to a ${def} session"
-        return 0
+    if [ "$branch" != "$def" ]; then
+        local wt; wt="$(_wt_on_default "$def")" || wt=""
+        if [ -n "$wt" ] && [ -d "$wt" ]; then
+            # Hand the work to the worktree that is already on the default branch. The file itself
+            # travels through the spool, because that worktree holds the default branch's copy.
+            _spool_put "$@" || { echo "session_commit: spool write failed — file stays on disk" >&2; return 1; }
+            echo "session_commit: on '${branch}' — committing from the ${def} worktree at ${wt}"
+            ( cd "$wt" && _commit "$mode" ) && return 0
+            echo "session_commit: the ${def} worktree refused it — entry is in the spool, not lost" >&2
+            return 1
+        fi
+        _spool_put "$@" && {
+            echo "session_commit: on '${branch}' (not ${def}) and no ${def} worktree — spooled to $(_spool_dir), drains on the next ${def} run"
+            return 0
+        }
+        echo "session_commit: on '${branch}' and the spool is unwritable — file stays on disk, commit it by hand" >&2
+        return 1
+    fi
+    local extra; extra="$(_spool_drain "$mode")" && [ -n "$extra" ] && {
+        echo "$extra" | head -1 >/dev/null
+        while IFS= read -r f; do case "$f" in session_commit:*) ;; "") ;; *) set -- "$@" "$f" ;; esac; done <<< "$extra"
     }
     git add -- "$@" 2>/dev/null || true
     local staged; staged="$(git diff --cached --name-only -- "$@")"
