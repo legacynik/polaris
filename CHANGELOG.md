@@ -3,6 +3,15 @@
 All notable changes to Polaris Team OS. The installed version is pinned in
 `polaris/.claude-plugin/plugin.json`.
 
+## 0.18.0
+
+### Removed
+- `real-testing`: the skill moved to its single source in the Polaris suite
+  (`skills-suite/real-testing` v2.0.0, installed by symlink via `_standard/install.sh`).
+  The plugin no longer ships a copy — a second distribution channel is exactly the
+  divergence the 2026-08-16 single-source refactor removed (see the suite CHANGELOG
+  and `docs/skill-refactor/2026-08-16-real-testing/`).
+
 ## 0.17.0
 
 ### Changed
