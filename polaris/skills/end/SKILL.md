@@ -2,7 +2,7 @@
 name: end
 description: Polaris skill — close a repository-first team session with a handoff, decisions/lessons written to the ledgers, a plan tick and a pathspec-only commit. Trigger when stopping work, before a multi-day pause, or on "wrap up / end session / /end".
 user-invocable: true
-version: 1.2.0
+version: 1.3.0
 ---
 
 # /end — close without losing the handoff
@@ -39,7 +39,21 @@ older sessions write with pre-patch instructions):
 2. Non-canonical `current` variants in `<root>/state/` (anything beyond `current.md`,
    `current-state.md`, `goals.md`, `backlog*.md`): FLAG them in your output with their mtime and
    first heading; fold their still-live content into the cockpit only on explicit confirmation.
-Skip silently when the repo is already clean. Never delete anything in this step.
+3. **Worktree sweep** — the founder works wt-first and `/end` is the only janitor he runs:
+
+   ```bash
+   bash "$SKILL_DIR/scripts/wt_sweep.sh"        # /end: apply
+   ```
+
+   Deterministic and safe by construction (`--selfcheck` proves it): a worktree that is
+   **clean AND already merged** into the default branch is removed (content lives on main;
+   branch deleted with `-d`, which refuses unmerged) · a **dirty** worktree is NEVER touched —
+   reported as `sporco, NON tocco` (lesson 2026-08-03: other panels' uncommitted work) · a
+   **clean but unmerged** worktree is a pause — reported with age, kept alive · `git worktree
+   prune` always. Paste the script's summary line into the handoff so the removals are on
+   record. If a paused worktree carries an Open thread, its path must already be in the
+   `## Open` line (see Step 4) — the sweep report is how you notice when it isn't.
+Skip silently when the repo is already clean. Never delete anything in steps 1–2.
 
 ## Step 1 — Write the handoff
 

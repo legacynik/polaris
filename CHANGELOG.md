@@ -3,6 +3,19 @@
 All notable changes to Polaris Team OS. The installed version is pinned in
 `polaris/.claude-plugin/plugin.json`.
 
+## Unreleased
+
+### Added
+- `end` 1.3.0: **worktree sweep** in the State-hygiene pass (`scripts/wt_sweep.sh`).
+  The founder works worktree-first and `/end` is the only janitor he runs: a worktree
+  that is clean AND merged into the default branch is removed (branch deleted with
+  `-d`); a dirty worktree is NEVER touched (reported); clean-but-unmerged is a pause,
+  reported with age; `git worktree prune` always. `--selfcheck` proves all four
+  behaviors on a fixture repo; report-mode real-test on a 29-worktree repo found
+  11 removable / 11 dirty (untouched) / 7 paused.
+- `update` 2.1.0: after landing, one hygiene line via `wt_sweep.sh --report` —
+  count only, `/update` never removes.
+
 ## 0.18.0
 
 ### Removed

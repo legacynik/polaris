@@ -3,7 +3,7 @@ name: update
 description: Polaris skill — record a short repository-first checkpoint during an active session. Trigger after meaningful progress, a blocker, a context switch, or on "checkpoint / save progress / /update".
 user-invocable: true
 model: sonnet
-version: 2.0.0
+version: 2.1.0
 ---
 
 # /update — leave the work legible
@@ -104,6 +104,15 @@ un repo, e 74 file di journal non committati sulle 4 repo al 2026-08-08).
 Su repo con `main` protetto da status check, il commit di journal **non passa dal branch di lavoro**:
 scrive nel worktree agganciato a main che `prepare` risolve. Il diario non deve superare i cancelli
 del codice.
+
+Dopo il landing, una riga di igiene worktree — **solo report, `/update` non rimuove mai**:
+
+```bash
+bash "$(dirname "$CHECKPOINT")/../../end/scripts/wt_sweep.sh" --report | tail -1
+```
+
+Se la riga dice `N rimovibili`, riportala nella entry: è il conto di ciò che il prossimo `/end`
+pulirà da solo (rimuove SOLO worktree puliti e già mergiati; gli sporchi non si toccano mai).
 
 ## Mai
 
