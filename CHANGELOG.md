@@ -5,6 +5,16 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
+### Fixed
+- `update` 2.2.0: **the `state/current.md` reconcile step is back.** The v2.0.0 rewrite
+  (498ed70, released in 0.17.0) silently dropped "Step 3 — Reconcile state/current.md"
+  without a changelog line — the removal is hereby declared, late. Consequence observed
+  2026-08-17: a session that checkpoints with `/update` but never runs `/end` leaves the
+  open-items ledger stale, and whether it got refreshed depended on panel habit. Restored
+  as a short prose step (Updated: line overwrite + Open add-and-flag, never close another
+  owner's line) enforced by `checkpoint.sh verify`, which now FAILs when `current.md`
+  predates today's session log.
+
 ### Added
 - `end` 1.3.0: **worktree sweep** in the State-hygiene pass (`scripts/wt_sweep.sh`).
   The founder works worktree-first and `/end` is the only janitor he runs: a worktree

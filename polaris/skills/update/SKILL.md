@@ -3,7 +3,7 @@ name: update
 description: Polaris skill — record a short repository-first checkpoint during an active session. Trigger after meaningful progress, a blocker, a context switch, or on "checkpoint / save progress / /update".
 user-invocable: true
 model: sonnet
-version: 2.1.0
+version: 2.2.0
 ---
 
 # /update — leave the work legible
@@ -88,6 +88,14 @@ Due superfici, due regole opposte — e la distinzione è la ragione per cui il 
 
 `/end` applica le stesse tre regole e usa lo stesso formato di entry: un log con due grammatiche si
 legge due volte e non si conta.
+
+## Reconcile `state/current.md` — add and flag, never close
+
+`current.md` (nel MAIN worktree, regola One home) è il ledger degli open item: le lane aperte
+vivono lì, non nella memoria dei panel. Dopo la entry: sovrascrivi la riga `Updated:` con data e
+titolo del checkpoint; se la sessione ha aperto o chiuso una lane, aggiungila o barrala **con data
+e prova** negli `## Open`. Mai chiudere o riscrivere la riga di un altro owner — si flagga.
+`verify` fallisce se il file resta più vecchio del session log di oggi.
 
 ## Landing
 

@@ -137,6 +137,14 @@ cmd_verify() {
     grep -q "harvested: $today" "$SCRATCH" || { echo "FAIL: scratch not harvested today (run harvest-done)"; fail=1; }
   fi
 
+  # current.md is the open-items ledger (v0.8.1: nothing open is ever lost). A checkpoint
+  # that leaves it older than the session log strands every open lane on panel memory.
+  # Restored 2026-08-17 — dropped without a changelog line in the v2.0.0 rewrite (498ed70).
+  local CUR="$ROOT/state/current.md"
+  if [ -f "$CUR" ] && [ -f "$SESSION_LOG" ] && [ "$CUR" -ot "$SESSION_LOG" ]; then
+    echo "FAIL: state/current.md predates today's session log — reconcile it (Updated: line + Open add-and-flag, never close another owner's line)"; fail=1
+  fi
+
   [ "$fail" = "0" ] && echo "checkpoint: verified"
   return "$fail"
 }
