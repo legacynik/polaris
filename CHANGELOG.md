@@ -3,6 +3,17 @@
 All notable changes to Polaris Team OS. The installed version is pinned in
 `polaris/.claude-plugin/plugin.json`.
 
+## 0.20.0 — 2026-08-18
+
+### Fixed
+- `update` 2.3.0: **the plan tick is back — the SECOND undeclared drop of the v2.0.0
+  rewrite (498ed70), restored by founder verdict (polaris-os#85: plans are the roadmap).**
+  Owed ONLY when `team/<login>/weeks/<current-week>.md` exists: absent file, zero noise
+  (no gate that fails on nothing); present and untouched by the checkpoint, `verify`
+  FAILs naming the file. `prepare` now prints `WEEKLY=` and `commit` takes N paths so
+  the ticked plan lands with the session log in one pathspec-only commit. Fixture-proven:
+  no-weekly pass · untouched-weekly exit 1 · ticked pass · multi-path commit.
+
 ## 0.19.0 — 2026-08-18
 
 ### Fixed

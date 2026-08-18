@@ -3,7 +3,7 @@ name: update
 description: Polaris skill — record a short repository-first checkpoint during an active session. Trigger after meaningful progress, a blocker, a context switch, or on "checkpoint / save progress / /update".
 user-invocable: true
 model: sonnet
-version: 2.2.0
+version: 2.3.0
 ---
 
 # /update — leave the work legible
@@ -88,6 +88,14 @@ Due superfici, due regole opposte — e la distinzione è la ragione per cui il 
 
 `/end` applica le stesse tre regole e usa lo stesso formato di entry: un log con due grammatiche si
 legge due volte e non si conta.
+
+## Plan tick — owed only when the weekly plan exists
+
+If `prepare` resolved a `team/<login>/weeks/<current-week>.md`, record the checkpoint's progress
+on it: one line under the outcome it advanced (or its blocker), dated. Then pass it as the second
+argument to `commit` so plan and log land together. No weekly file = no step, no noise. `verify`
+fails when the file exists but predates today's session log. Plans are the roadmap (founder,
+polaris-os#85): a plan nobody ticks is a wish, not a plan.
 
 ## Reconcile `state/current.md` — add and flag, never close
 

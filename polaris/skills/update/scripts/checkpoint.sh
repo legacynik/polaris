@@ -28,6 +28,7 @@ resolve() {
   BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
   WT="$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")"
   SESSION_LOG="$ROOT/team/$LOGIN/sessions/$(date +%F)-@$LOGIN.md"
+  WEEKLY="$ROOT/team/$LOGIN/weeks/$(date +%G-W%V).md"
   SCRATCH="$(ls -t "$ROOT/team/$LOGIN/sessions/scratch/"*.md "$ROOT/sessions/scratch/$LOGIN/"*.md 2>/dev/null | head -1)"
 }
 
@@ -48,6 +49,7 @@ LOGIN=$LOGIN
 BRANCH=$BRANCH
 WT=$WT
 SESSION_LOG=$SESSION_LOG
+WEEKLY=$([ -f "$WEEKLY" ] && echo "$WEEKLY" || echo none)
 SCRATCH=${SCRATCH:-none}
 HARVEST_FROM_LINE=$(harvest_from)
 EOF
@@ -104,10 +106,12 @@ cmd_harvest_done() {
 
 cmd_commit() {
   resolve
-  local target="${1:-$SESSION_LOG}"
+  [ $# -gt 0 ] || set -- "$SESSION_LOG"
   local sc="$HERE/session_commit.sh"
   [ -x "$sc" ] || { echo "checkpoint: session_commit.sh missing at $sc — commit by hand, pathspec-only" >&2; return 1; }
-  ( cd "$MAIN_WT" && "$sc" "${target#$MAIN_WT/}" )
+  local rel=(); local p
+  for p in "$@"; do rel+=("${p#$MAIN_WT/}"); done
+  ( cd "$MAIN_WT" && "$sc" "${rel[@]}" )   # session_commit takes N paths; ticked weekly plan rides along
 }
 
 # verify exists because a step that lives only in prose eventually gets skipped —
@@ -145,6 +149,13 @@ cmd_verify() {
     echo "FAIL: state/current.md predates today's session log — reconcile it (Updated: line + Open add-and-flag, never close another owner's line)"; fail=1
   fi
 
+  # Plan tick — the OTHER undeclared drop of the v2.0.0 rewrite, restored by founder
+  # verdict (polaris-os#85): plans are the roadmap. Owed ONLY when the weekly file
+  # exists — absent file, zero noise; present and untouched by the checkpoint, red.
+  if [ -f "$WEEKLY" ] && [ -f "$SESSION_LOG" ] && [ "$WEEKLY" -ot "$SESSION_LOG" ]; then
+    echo "FAIL: weekly plan $(basename "$WEEKLY") exists but was not ticked — record progress on its outcome, then commit it with the session log"; fail=1
+  fi
+
   [ "$fail" = "0" ] && echo "checkpoint: verified"
   return "$fail"
 }
@@ -152,7 +163,7 @@ cmd_verify() {
 case "${1:-}" in
   prepare)      cmd_prepare ;;
   harvest-done) cmd_harvest_done ;;
-  commit)       shift; cmd_commit "${1:-}" ;;
+  commit)       shift; cmd_commit "$@" ;;
   due-done)     shift; cmd_due_done "${1:-}" ;;
   verify)       cmd_verify ;;
   *) echo "usage: checkpoint.sh {prepare|due-done <name>|harvest-done|commit [path]|verify}" >&2; exit 64 ;;
