@@ -3,7 +3,7 @@
 All notable changes to Polaris Team OS. The installed version is pinned in
 `polaris/.claude-plugin/plugin.json`.
 
-## Unreleased
+## 0.19.0 — 2026-08-18
 
 ### Fixed
 - `update` 2.2.0: **the `state/current.md` reconcile step is back.** The v2.0.0 rewrite
