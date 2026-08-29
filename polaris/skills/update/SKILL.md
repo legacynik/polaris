@@ -3,7 +3,8 @@ name: update
 description: Polaris skill — record a short repository-first checkpoint during an active session. Trigger after meaningful progress, a blocker, a context switch, or on "checkpoint / save progress / /update".
 user-invocable: true
 model: sonnet
-version: 2.3.0
+version: 2.4.0
+invokes: [git-power]
 ---
 
 # /update — leave the work legible
@@ -107,13 +108,23 @@ e prova** negli `## Open`. Mai chiudere o riscrivere la riga di un altro owner �
 
 ## Landing
 
+Prima del checkpoint, chiudi il lavoro della lane: assegna ogni path dirty a un owner; per i path
+propri usa staging esatto, `git-power commit-check` e un Lore commit. Un path foreign o unknown
+blocca `/update`; non fare `git add -A`, stash o commit per conto di un altro panel.
+
 ```bash
+GP="$HOME/.agents/skills/git-power/scripts/cantiere.py"
+git add -- <exact-owned-paths>
+python3 "$GP" commit-check --repo "$PWD"
+# split/receipt on exit 3, then Lore commit; finally require:
+python3 "$GP" phase checkpoint --repo "$PWD"
+
 "$CHECKPOINT" commit    # pathspec-only, mai -A, mai .env*, mai state/current.md
 "$CHECKPOINT" verify    # fallisce rumorosamente se un passo è stato saltato
 ```
 
 `verify` esiste perché un passo che vive solo nella prosa prima o poi viene saltato — anche da chi
-l'ha scritto. Se `commit` rinvia, **dillo nella riga di chiusura**: la entry è su disco, non in git.
+l'ha scritto. Se `commit` rinvia, `/update` è fallito e non emette la riga di completamento: la entry è su disco, non in git.
 Una entry che non raggiunge un ref è una entry che non esiste (misurato: 46% delle entry recenti di
 un repo, e 74 file di journal non committati sulle 4 repo al 2026-08-08).
 
@@ -121,14 +132,17 @@ Su repo con `main` protetto da status check, il commit di journal **non passa da
 scrive nel worktree agganciato a main che `prepare` risolve. Il diario non deve superare i cancelli
 del codice.
 
-Dopo il landing, una riga di igiene worktree — **solo report, `/update` non rimuove mai**:
+Dopo il landing, prova che anche il worktree principale è clean. `/update` non censisce e non
+rimuove worktree, ma non può terminare dirty:
 
 ```bash
-bash "$(dirname "$CHECKPOINT")/../../end/scripts/wt_sweep.sh" --report | tail -1
+GP="$HOME/.agents/skills/git-power/scripts/cantiere.py"
+MAIN_WT="$(git worktree list --porcelain | sed -n '1s/^worktree //p')"
+python3 "$GP" phase checkpoint --repo "$MAIN_WT"
 ```
 
-Se la riga dice `N rimovibili`, riportala nella entry: è il conto di ciò che il prossimo `/end`
-pulirà da solo (rimuove SOLO worktree puliti e già mergiati; gli sporchi non si toccano mai).
+`BLOCKED_DIRTY` è un fallimento, mai un warning. `/update` è completo solo quando entrambi i
+checkpoint riportano `CLEAN` e `git status --short` è vuoto.
 
 ## Mai
 
