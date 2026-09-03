@@ -2,7 +2,7 @@
 name: report
 description: Polaris skill — produce a real weekly repository report for a FINISHED Sunday-to-Saturday week (asks confirmation first, refuses the current week) — TL;DR, day-by-day from session logs, merged-PR ground truth from gh, decisions, metrics, PM actions — anchored on the approved plan (planned versus actual). Trigger at week end, before a team review, or on "weekly report / what shipped this week / planned vs actual".
 user-invocable: true
-version: 1.1.0
+version: 1.2.0
 ---
 
 # /report — the week, with evidence
@@ -107,6 +107,44 @@ Verify authorship, not just the PR list: a PR *authored* by `$LOGIN` can be a br
 ("merge main into …") whose commits belong to someone else — counting it would credit their work to
 this contributor. Confirm with `gh pr view <n> --json commits` before you cite it.
 
+### Per-PR size — code and docs, measured apart
+
+`additions`/`deletions` from `gh` count **every** changed line: Markdown dossiers, CHANGELOG entries,
+skill bodies. Labelled "LOC" they read as engineering volume that did not happen. Measured on one
+real day of 26 merged PRs: **21,314 lines touched, of which 12,169 were code** — prose inflated the
+headline 1.8×, and four PRs were pure Markdown. Report that unlabelled and the reader draws a
+conclusion the week does not support.
+
+`gh` cannot filter by path, so derive the split from the `mergeCommit.oid` each PR already returns.
+**docs = `*.md`; everything else is code-or-config.** There is no other classifier, no extension
+table and no config file — that is the whole rule, and its simplicity is the point:
+
+```bash
+git show --numstat --format= "$SHA" -- ':!*.md'   # code  +/−
+git show --numstat --format= "$SHA" -- '*.md'     # docs  +/−
+```
+
+Report **both, labelled** — `code +X/−Y · docs +A/−B` — per PR, never one merged total. The docs
+count is real work; what must never appear again is a single number that reads as engineering. A PR
+whose code column is `+0/−0` **is** a docs PR: that is how the report names which ones were docs and
+proves it, instead of asserting a count nobody can check.
+
+What the number means, and when it does not:
+
+- **Squash merge** (one parent) — the numstat *is* the PR diff. Exact. This is the normal case.
+- **Merge commit** (two or more parents) — `git show` prints no diff for a merge, so the row would
+  render `+0/−0` and the PR would be mislabelled as docs. Use
+  `git diff --numstat "$SHA^1" "$SHA" -- <same pathspec>`, which is what the merge put on the base.
+- **Rebase merge** — `mergeCommit` is the PR's *last* commit, not the PR. Do not present it as the
+  PR's size: report that PR `UNKNOWN` and say why.
+- **Commit not fetched locally** — `UNKNOWN`, never `0`. A missing measurement rendered as zero is a
+  lie the report carries forward into every trend built on it.
+- The split separates prose from code. It does **not** separate authored code from vendored code: a
+  PR that pins a third-party template counts its `.py`/`.sh` as code. Say so when it dominates a row.
+
+Reconcile before publishing: `code + docs` must equal `gh`'s `additions`/`deletions` for the same PR.
+If it does not, the merge shape is not the one you assumed — find out rather than print the number.
+
 ### Local work that never reached the remote (or `gh` reports a fraction of the week)
 
 `gh` only knows what was pushed. Work committed on a local branch, or in a worktree that was never
@@ -162,9 +200,12 @@ it measures against) from the plugin template
 2. `## Planned versus actual` — the plan-row diff from Step 3, one row per planned item.
 3. `## Day by day` — one short block per working day, distilled from the session logs, each linked
    (`[log](../sessions/YYYY-MM-DD-@login.md)`). Skip days with no session log.
-4. `## Merged PRs` — the table from `gh` (number, title, +/− LOC, merge SHA, date) plus the closed
-   issues. This is ground truth, not the logs' claims — where they disagree, `gh` wins and the
-   discrepancy is worth a line.
+4. `## Merged PRs` — the table from `gh`, **one row per PR carrying its own size**: number, title,
+   code +/−, docs +/−, merge SHA, date. The size belongs per-PR, not in a total: without it a
+   six-row table says nothing about which PR was a two-line fix and which was a rewrite, which is
+   the whole reason the table is read. Code `+0/−0` marks a docs PR — list them, do not just count
+   them. Plus the closed issues. This is ground truth, not the logs' claims — where they disagree,
+   `gh` wins and the discrepancy is worth a line.
 5. `## Local, not pushed` — work that exists only on this machine: commits on no remote ref, the
    branches and worktrees carrying them, and how far ahead each is. Labelled as local evidence,
    never mixed into section 4, deduplicated against it by subject. Omit the section only when the
@@ -172,9 +213,12 @@ it measures against) from the plugin template
 6. `## Decisions in range` — entries the contributor logged in `decisions.md`/`lessons.md` this week.
 7. `## Blockers and incidents` — resolved in-week (with how) and carry-over (with the blocker and
    the next decision).
-8. `## Metrics` — small table: PRs merged, issues closed, LOC delta, decisions logged, open PRs at
-   report time, incidents. Counts are **derived from the evidence above at report time** — never
-   copied from a previous report or estimated.
+8. `## Metrics` — small table: PRs merged (split code / docs), issues closed, **code LOC delta**,
+   **docs LOC delta on its own row** — never summed into one, never labelled plain "LOC" — decisions
+   logged, open PRs at report time, incidents. Counts are **derived from the evidence above at report
+   time** — never copied from a previous report, never estimated. An estimated aggregate is worse
+   than no row: drop the row before you guess it, and write `UNKNOWN` for any PR you could not
+   measure rather than letting it fall in as zero.
 9. `## Bottleneck` — **mandatory, never "none"**: the single biggest thing that slowed this week
    (a wait, a flaky gate, a missing access, a review queue — from the evidence, not vibes) + ONE
    concrete removal proposal. This is the continuous bottleneck-hunt, run per-person and async —

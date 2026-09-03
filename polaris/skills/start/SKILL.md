@@ -2,7 +2,7 @@
 name: start
 description: Polaris skill — resume the current objective from the latest local handoff. First use also provisions your own team path.
 user-invocable: true
-version: 1.0.0
+version: 1.1.0
 ---
 
 # /start — resume, do not survey
@@ -65,11 +65,38 @@ grep -q "^github: $LOGIN$" "_polaris/team/$LOGIN/profile.yml" \
   || { echo "STOP: profile github: does not match cached login ($LOGIN) — fix it first"; exit 1; }
 ```
 
+## Step 2b — Read the contributor profile (voice and language)
+
+`_polaris/team/$LOGIN/profile.yml` already carries `language:` and `voice:`. Older copies predate
+those fields: when either is missing, fall back to `en` / `plain` and say nothing — never invent the
+value, never write the file from `/start`.
+
+`language` sets the CONVERSATION language only. Code, commit messages, technical documents and skill
+bodies stay English whatever it says.
+
+**What `voice` means** — the field named a tone but nothing defined it, so it was inert. It is not a
+personality costume: it changes how a conclusion is delivered, never whether it is true.
+
+| `voice` | behaviour |
+|---|---|
+| `cynical` | Direct, no preamble. Assumes broken until seen running. Says a thing is wrong BEFORE acting on it, not in the post-mortem. Cites a path or a number, or does not make the claim. Marks *verified* apart from *assumed*. No moralising bolted onto technical work. |
+| `plain` | Same substance, softer edges. The fallback when the field is absent. |
+| free text | Any line the contributor wrote describing the tone they want — honour it as written. |
+
+Two rules hold under EVERY voice, because they are about honesty and not about tone: never
+manufacture disagreement to look rigorous, and say "I do not know" when that is the true answer
+instead of filling the gap with prose.
+
+`explain_as: vibe-coder` (optional) means plain language and analogies in conversation, with paths,
+numbers and citations kept for the written documents. `push_back: false` (optional, default true)
+means execute without pressure-testing; a contributor can also suspend it for one session by saying so.
+
 ## Step 3 — Read only the resume set
 
 Read these local files, in order:
 
-1. `team/<login>/profile.yml` — only `language:` plus identity fields needed for the brief.
+1. `team/<login>/profile.yml` — already read in Step 2b for voice and language; here take only the
+   assignment fields needed for the brief.
 2. `team/<login>/weeks/$(date +%G-W%V).md` — current outcome, branch, blocker and next proof. This is
    the contributor's own focus: brief it as active work, never as something
    awaiting permission. If `lead_review:` records a reorder, surface it as priority information.

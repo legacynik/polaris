@@ -149,6 +149,24 @@ cmd_verify() {
     echo "FAIL: state/current.md predates today's session log — reconcile it (Updated: line + Open add-and-flag, never close another owner's line)"; fail=1
   fi
 
+  # State is OVERWRITTEN, never stacked: one Updated: line, the newest. The prose has
+  # said so since v0.8.1 and got skipped anyway — measured 2026-08-31, with the rule
+  # already written: 13 stacked lines in one repo, 5 in another, 1 only where a human
+  # had pruned by hand. A rule with no gate is a wish; this is the gate.
+  if [ -f "$CUR" ]; then
+    local n_upd words
+    n_upd=$(grep -c '^Updated:' "$CUR" 2>/dev/null) || true
+    if [ "${n_upd:-0}" -gt 1 ]; then
+      echo "FAIL: state/current.md has $n_upd 'Updated:' lines — keep the newest and overwrite it; the history belongs to the session log"; fail=1
+    fi
+    # Size WARNs, never blocks. The file is frequently another panel's mid-session state,
+    # and stranding that session costs more than one oversized file. /end owns the pruning.
+    words=$(wc -w < "$CUR" | tr -d ' ')
+    if [ "${words:-0}" -gt 1500 ]; then
+      echo "WARN: state/current.md is ~$(( words * 4 / 3 )) tokens (target <2000) — prune the closed threads at /end"
+    fi
+  fi
+
   # Plan tick — the OTHER undeclared drop of the v2.0.0 rewrite, restored by founder
   # verdict (polaris-os#85): plans are the roadmap. Owed ONLY when the weekly file
   # exists — absent file, zero noise; present and untouched by the checkpoint, red.
@@ -160,11 +178,64 @@ cmd_verify() {
   return "$fail"
 }
 
+# --- selfcheck ----------------------------------------------------------------
+# Adversarial fixtures for the current.md gates (polaris-os#202). Every branch the
+# gate introduces gets an input that forces it — a probe that only walks the happy
+# path proves the code ran, not that it works.
+cmd_selfcheck() {
+  local tmp pass=0 fail=0 out
+  tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' RETURN
+  git -C "$tmp" init -q .
+  git -C "$tmp" config --local polaris.login probe
+  mkdir -p "$tmp/_polaris/team/probe/sessions" "$tmp/_polaris/state"
+  : > "$tmp/_polaris/config.yml"
+  printf '## 10:00 — probe entry\n- Key context: x\n- Files: y\n' \
+    > "$tmp/_polaris/team/probe/sessions/$(date +%F)-@probe.md"
+
+  # $1 name · $2 current.md body ("" = no file) · $3 expected regex · $4 expected exit (0|1)
+  case_() {
+    local name="$1" body="$2" want="$3" wantrc="$4" rc
+    if [ -z "$body" ]; then rm -f "$tmp/_polaris/state/current.md"
+    else printf '%b' "$body" > "$tmp/_polaris/state/current.md"; sleep 1; touch "$tmp/_polaris/state/current.md"; fi
+    out="$( cd "$tmp" && "$HERE/checkpoint.sh" verify 2>&1 )"; rc=$?
+    if [ "$rc" = "$wantrc" ] && printf '%s' "$out" | grep -qE "$want"; then
+      pass=$((pass+1)); echo "  ok   $name"
+    else
+      fail=$((fail+1)); echo "  FAIL $name (rc=$rc want=$wantrc) :: $(printf '%s' "$out" | tr '\n' '|')"
+    fi
+  }
+
+  echo "checkpoint selfcheck — current.md gates"
+  case_ "stacked Updated: lines are refused" \
+        "Updated: 2026-08-30 — a\nUpdated: 2026-08-31 — b\n# Priorita\n" \
+        "FAIL:.*2 'Updated:' lines" 1
+  case_ "three stacked lines name the real count" \
+        "Updated: a\nUpdated: b\nUpdated: c\n" \
+        "FAIL:.*3 'Updated:' lines" 1
+  case_ "one Updated: line passes" \
+        "Updated: 2026-08-31 — a\n# Priorita attive\n1. lane\n" \
+        "checkpoint: verified" 0
+  case_ "no Updated: line does not crash the gate" \
+        "# Priorita attive\n1. lane\n" \
+        "checkpoint: verified" 0
+  case_ "'Last Updated:' mid-line is not a state line" \
+        "Updated: a\nsee Last Updated: b below\n" \
+        "checkpoint: verified" 0
+  case_ "absent current.md is skipped, not invented" "" "checkpoint: verified" 0
+  case_ "oversized file warns with its own number" \
+        "Updated: a\n$(python3 -c 'print("word "*1600)')\n" \
+        "WARN: state/current.md is ~[0-9]+ tokens" 0
+
+  echo "selfcheck: $pass passed, $fail failed"
+  [ "$fail" = "0" ]
+}
+
 case "${1:-}" in
   prepare)      cmd_prepare ;;
   harvest-done) cmd_harvest_done ;;
   commit)       shift; cmd_commit "$@" ;;
   due-done)     shift; cmd_due_done "${1:-}" ;;
   verify)       cmd_verify ;;
-  *) echo "usage: checkpoint.sh {prepare|due-done <name>|harvest-done|commit [path]|verify}" >&2; exit 64 ;;
+  --selfcheck)  cmd_selfcheck ;;
+  *) echo "usage: checkpoint.sh {prepare|due-done <name>|harvest-done|commit [path]|verify|--selfcheck}" >&2; exit 64 ;;
 esac

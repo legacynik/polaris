@@ -2,7 +2,8 @@
 name: end
 description: Polaris skill — close a repository-first team session with a handoff, decisions/lessons written to the ledgers, a plan tick and a pathspec-only commit. Trigger when stopping work, before a multi-day pause, or on "wrap up / end session / /end".
 user-invocable: true
-version: 1.3.0
+version: 1.4.0
+invokes: [git-power]
 ---
 
 # /end — close without losing the handoff
@@ -39,20 +40,15 @@ older sessions write with pre-patch instructions):
 2. Non-canonical `current` variants in `<root>/state/` (anything beyond `current.md`,
    `current-state.md`, `goals.md`, `backlog*.md`): FLAG them in your output with their mtime and
    first heading; fold their still-live content into the cockpit only on explicit confirmation.
-3. **Worktree sweep** — the founder works wt-first and `/end` is the only janitor he runs:
+3. **Branch state** — classify only the current lane before writing the handoff:
 
    ```bash
-   bash "$SKILL_DIR/scripts/wt_sweep.sh"        # /end: apply
+   GP="$HOME/.agents/skills/git-power/scripts/cantiere.py"
+   python3 "$GP" phase post-push --repo "$PWD"
    ```
 
-   Deterministic and safe by construction (`--selfcheck` proves it): a worktree that is
-   **clean AND already merged** into the default branch is removed (content lives on main;
-   branch deleted with `-d`, which refuses unmerged) · a **dirty** worktree is NEVER touched —
-   reported as `sporco, NON tocco` (lesson 2026-08-03: other panels' uncommitted work) · a
-   **clean but unmerged** worktree is a pause — reported with age, kept alive · `git worktree
-   prune` always. Paste the script's summary line into the handoff so the removals are on
-   record. If a paused worktree carries an Open thread, its path must already be in the
-   `## Open` line (see Step 4) — the sweep report is how you notice when it isn't.
+   `KEEP` means the worktree stays in the handoff. `READY_FINALIZE` means it may close only after
+   the handoff commit. Unknown or unverifiable PR state is never cleanup permission.
 Skip silently when the repo is already clean. Never delete anything in steps 1–2.
 
 ## Step 1 — Write the handoff
@@ -197,6 +193,18 @@ by branch, nothing open lost, other panels' threads and `Next` lines untouched) 
 difference. **`/end` is the only Team OS command with closing authority**, and it spends it against
 ground truth rather than impression.
 
+**Closing means REMOVING, not annotating.** A thread proven landed comes **out** of the file; a
+`~~struck~~` line that stays is still tokens the next session reads and reconciles. Donor: marvin
+`end.md` step 5, `Update State (MANDATORY)` — *«Mark completed items as done or remove them»*,
+*«Ensure open threads reflect reality (remove resolved, add new)»*. Same pass:
+collapse the state line to **one** `Updated:` — date, login, one clause on what changed — and let the
+history live in the session log. Target after pruning: under 2,000 tokens; `checkpoint.sh verify`
+fails on a second `Updated:` line and warns above the size.
+
+**`state/goals.md` is NOT touched here.** Goals change by explicit decision, never by session
+inertia. If it is empty or untouched for more than 30 days, say so in the closing summary and ask
+once — do not write it.
+
 **The thread line is the handoff that survives.** A session log committed on a branch is
 INVISIBLE to `/start` until that branch merges — for a paused worktree that can be days. So the
 thread line in `current.md` must carry the resume-essence on its own, written as if it is the only
@@ -205,13 +213,9 @@ wt: <worktree path if not main> · since YYYY-MM-DD`. Pausing WITHOUT a PR is no
 worktree alive, record its path in the line, and the next session reopens that same worktree from
 `/start` — never feel forced to PR early just to make work visible.
 
-**Branch discipline (superpowers:finishing-a-development-branch).** If this session produced
-commits on a feature branch, invoke `superpowers:finishing-a-development-branch` before the
-handoff. It does NOT force closure — its menu includes "keep as-is", which IS the pause path:
-the discipline it adds is that tests get verified and the branch's fate is an EXPLICIT recorded
-choice (merge / PR / keep / discard), never silent limbo. One adaptation: if tests are RED on
-work-in-progress, do not treat that as a blocker — skip the menu, park the branch in the handoff
-(thread line + cockpit) and note the red state. Session end ≠ branch end.
+**Branch discipline (`git-power`).** Live GitHub state decides branch fate: an OPEN PR stays in
+the handoff; a paused branch without a merged PR stays alive; only `READY_FINALIZE` may close after
+the handoff has landed. Session end is not automatically branch end.
 
 **A thread closes only when its work actually landed.** Ask git and the tracker; never infer death
 from "nothing moved lately". Work parked on a live branch while its owner spent the week elsewhere
@@ -271,6 +275,18 @@ git status -sb | head -1   # e.g. "## main...origin/main [ahead 1]"
 ```
 
 ## Finish
+
+After the handoff commit, close only the current lane when it is already remote-merged:
+
+```bash
+GP="$HOME/.agents/skills/git-power/scripts/cantiere.py"
+python3 "$GP" phase post-push --repo "$PWD"
+# only after READY_FINALIZE:
+python3 "$GP" phase finalize --repo "$PWD" --confirm "$PWD"
+```
+
+`finalize` preserves dirty/divergent main and removes only the current clean merged feature
+worktree plus its exact branch ref.
 
 Summarize the handoff in three bullets (shipped, open, next). This command never writes outside the
 current repository and never mutates the tracker.
