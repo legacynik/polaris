@@ -108,10 +108,8 @@ def _survivors(lines: list[str], span: tuple[int, int], keys: set[str]) -> list[
         if not span[0] <= i < span[1]:
             keep.append(ln)                      # outside `## Open`: never ours to remove
             continue
-        if ln.strip() and not ln[:1].isspace():  # a thread header, not one of its children
-            dropping = _lane_id(ln) in keys
-        elif not ln.strip():
-            dropping = False                     # a blank line ends the thread
+        if ln.strip() and not ln[:1].isspace():  # a thread header ends the previous block
+            dropping = _lane_id(ln) in keys      # a blank line does NOT: children straddle it
         if not dropping:
             keep.append(ln)
     return keep
@@ -128,11 +126,12 @@ def apply_cleanup(state_path: Path, superseded: list[dict]) -> int:
     keys = {_lane_id(t["line"]) for t in superseded}
     if not keys:
         return 0
+    removed = len(keys)                          # threads, not lines: a thread has children
     with _locked(state_path):
         lines = state_path.read_text().splitlines()
         keep = _survivors(lines, _section(lines, "thread"), keys)
         _write_atomic(state_path, "\n".join(keep) + "\n")
-    return len(lines) - len(keep)
+    return removed
 
 
 def _selfcheck_apply(txt: str, b: dict) -> None:

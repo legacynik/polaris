@@ -101,26 +101,41 @@ def _stamp_updated(lines: list[str], owner: str, now: str) -> None:
         del lines[i]
 
 
+def _claim(lock: Path, mine: str) -> bool:
+    """Create the lock carrying who holds it, or steal one older than 30s. False = busy."""
+    try:
+        fd = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+    except FileExistsError:
+        with contextlib.suppress(OSError):
+            if time.time() - lock.stat().st_mtime > 30:
+                lock.unlink()      # its holder is not coming back
+        return False
+    os.write(fd, mine.encode())
+    os.close(fd)
+    return True
+
+
 @contextlib.contextmanager
 def _locked(path: Path):
-    """One writer at a time: read-modify-write is not atomic, and six panels lost 7 of 60."""
-    lock, mine = path.with_suffix(path.suffix + ".lock"), False
+    """One writer at a time: read-modify-write is not atomic, and six panels lost 7 of 60.
+
+    The lock carries WHO holds it. Without that, a holder that stalled past the stale age
+    and returned would unlink the lock its thief was using, and a third writer would walk
+    into the middle of someone's read-modify-write.
+    """
+    lock, mine = path.with_suffix(path.suffix + ".lock"), f"{os.getpid()}:{time.time_ns()}"
     for _ in range(400):                     # ~20s, then a lock older than 30s is abandoned
-        try:
-            os.close(os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY))
-            mine = True
+        if _claim(lock, mine):
             break
-        except FileExistsError:
-            with contextlib.suppress(OSError):
-                if time.time() - lock.stat().st_mtime > 30:
-                    lock.unlink()
-            time.sleep(0.05)
-    if not mine:                             # never proceed unlocked: that IS the lost update
+        time.sleep(0.05)
+    else:                                    # never proceed unlocked: that IS the lost update
         raise UpsertError("LOCKED", f"{lock} held by another writer — nothing was written")
     try:
         yield
     finally:
-        lock.unlink(missing_ok=True)         # only ever the one this process created
+        with contextlib.suppress(OSError):
+            if lock.read_text() == mine:     # only ever the one this process still holds
+                lock.unlink()
 
 
 def _write_atomic(path: Path, body: str) -> None:
