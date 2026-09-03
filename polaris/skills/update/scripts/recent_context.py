@@ -3,9 +3,9 @@
 
 The donor keeps recent history INSIDE the state file and caps it explicitly
 (`references/marvin-template-1.1.0/state/current.md`: "Last 5 session summaries, newest
-first"). Polaris moved that section out into `state/current-state.md` and dropped the cap:
-measured 2026-09-01, 188 KB and 93 blocks, last written nine days earlier — it had died and
-nobody noticed. So the ring comes back, in the file everyone actually opens, with the cap.
+first"). Polaris moved that section out into a separate dense file and dropped the cap: measured
+2026-09-01, 188 KB and 93 blocks, last written nine days earlier — it had died and nobody noticed,
+while `current.md` kept being updated. So the ring comes back, in the file everyone opens, capped.
 
 Three surfaces, three jobs (#240): `Updated:` carries date and owner, THIS section carries
 the session summary, and the session log carries the full handoff. Only `/end` writes here.

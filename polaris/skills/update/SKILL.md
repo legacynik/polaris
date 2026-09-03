@@ -171,14 +171,17 @@ Se il checkpoint fa avanzare un item che sta in `## Active` di `state/todos.md`,
 riga**, non ne aggiungere una seconda:
 
 ```bash
-printf '%s\n' "- #<issue> — <stato in una riga>" \
+printf '%s\n' "| #<issue> — <stato in una riga> | | <context> |" \
   | python3 "${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/update/scripts/state_upsert.py" \
-      week "$ROOT/state/todos.md" --week "W$(date +%V)"
+      week "$ROOT/state/todos.md" --week "W$(date +%V)" --no-add
 ```
 
-Si porta dietro il `· Added:` originale: quel timbro dice **da quante settimane** una cosa non si
-fa, ed è il segnale che serve per accorgersene — ri-timbrarlo fa sembrare nuovo del lavoro fermo da
-tre settimane. Nessun `state/todos.md` nella repo: nessun passo, zero rumore.
+Il file è nella forma donor a **tabelle**, e la seconda cella è `Added`: si porta dietro quella
+originale perché il timbro dice **da quante settimane** una cosa non si fa — ri-timbrarlo fa
+sembrare nuovo del lavoro fermo da tre settimane. `--no-add` non è decorativo: **`/update` aggiorna
+il TESTO di una riga che il thread cita e non ne crea nessuna**; `plan-week` riconcilia la sezione,
+`/end` sposta in `Completed`. Chiave sconosciuta → exit 2, e non scrive. Nessun `state/todos.md`
+nella repo: nessun passo, zero rumore.
 
 ## Landing
 
@@ -194,11 +197,13 @@ python3 "$GP" commit-check --repo "$PWD"
 python3 "$GP" phase checkpoint --repo "$PWD"
 
 "$CHECKPOINT" commit    # pathspec-only, mai -A, mai .env*, mai state/current.md
-"$CHECKPOINT" verify    # fallisce rumorosamente se un passo è stato saltato
+"$CHECKPOINT" verify "<titolo della entry appena scritta>"   # lega il cockpit a QUESTA run
 ```
 
 `verify` esiste perché un passo che vive solo nella prosa prima o poi viene saltato — anche da chi
-l'ha scritto. Se `commit` rinvia, `/update` è fallito e non emette la riga di completamento: la entry è su disco, non in git.
+l'ha scritto. **Passagli il titolo** della entry: senza, il gate sa solo che il cockpit porta oggi e
+il tuo nome; con, sa che l'ultima voce del log è la tua, e un cockpit ri-datato a mano senza
+checkpoint non passa. Il titolo non entra in `Updated:` — sta nel log e in `Recent Context`. Se `commit` rinvia, `/update` è fallito e non emette la riga di completamento: la entry è su disco, non in git.
 Una entry che non raggiunge un ref è una entry che non esiste (misurato: 46% delle entry recenti di
 un repo, e 74 file di journal non committati sulle 4 repo al 2026-08-08).
 

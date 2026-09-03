@@ -2,26 +2,19 @@
 """T6 — a thread line is UPDATED in place, never appended a second time.
 
 Founder, 2026-09-03: *«Non è che dentro current fa un'altra riga, ma va semplicemente ad
-aggiornare l'update precedente. Invece all'interno della session mette sempre un'altra
-riga.»* `/update`'s own heading said the opposite («i thread si aggiungono»), so two
-sessions on one lane left two lines in the cockpit and the older one never died. The
-session log is the ledger; the cockpit is state, and state is overwritten.
+aggiornare l'update precedente. Invece all'interno della session mette sempre un'altra riga.»*
+The session log is the ledger; the cockpit is state, and state is overwritten. The weekly plan is
+the same operation in another section: merging `Active` must keep the week an item was FIRST added
+in, bullet form or the donor's table form alike, or every carried item reads as this week's news.
 
-The weekly plan is the same operation with a different section: merging `Active` must keep
-the week an item was FIRST added in, or every carried item reads as this week's news.
-
-One upsert, two doors: replace the line whose key matches, carry its first-seen stamp
-forward, append only what is genuinely new. The key is `state_staleness._lane_id` — the
-identity the vault already uses for a lane, so a line reads the same to both tools. Two
-existing lines sharing a key refuse rather than guess: the key falls back to a 60-character
-lead, and overwriting the wrong lane is worse than a re-run.
-
-Writes are serialised and atomic. Six panels updating six different lanes lost 7 of 60
-updates, each reporting success, because every one read the file before the previous write
-landed. ponytail: a lock FILE with a stale-age escape rather than fcntl, because the cockpit
-is also written by shell and by hand; move to flock if this ever guards more than markdown.
-
-Reads the new line on stdin, prints a JSON receipt. Exit 2 rather than guessing a place.
+One upsert, two doors: replace the line whose key matches, carry its first-seen stamp forward,
+append only what is genuinely new — and with `--no-add`, refuse even that: `/update` refreshes a
+row the thread cites, only `plan-week` reconciles the section (polaris-os#240). The key is `state_staleness._lane_id`, the identity the vault already uses, so a line reads the
+same to both tools. Two lines sharing a key refuse rather than guess: overwriting the wrong lane is
+worse than a re-run. Writes are serialised and atomic — six panels on six lanes lost 7 of 60
+updates, each reporting success, because every one read the file before the previous write landed.
+ponytail: a lock FILE with a stale-age escape, not fcntl — the cockpit is also written by shell
+and by hand; move to flock if this ever guards more than markdown.
 """
 from __future__ import annotations
 
@@ -32,15 +25,16 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from state_lines import kinds, lane_id, read, section, write  # noqa: E402
+from state_lines import kinds, lane_id, read, section, table_row, write  # noqa: E402
 from state_lock import LockError, locked, still_mine, write_atomic  # noqa: E402
 
-HEADING = re.compile(r"^#{1,6}\s")
 ADDED = re.compile(r"·?\s*Added:\s*(W\d+)", re.I)
-UPDATED = re.compile(r"^Updated:", re.I)
 FOOTER = "<!-- pol:state-contract -->"  # the file's own contract closes it; nothing goes below
 SECTIONS = {"thread": re.compile(r"^#{1,6}\s+open\b", re.I),
-            "week": re.compile(r"^#{1,6}\s+active\b", re.I)}
+            "week": re.compile(r"^#{1,6}\s+active\s*$", re.I)}
+# `## Active Priorities` in a cockpit also starts with "active": the week door means the todos
+# file's own `## Active`. NO_ADD: the writer may refresh a row, never create one (--no-add).
+NO_ADD = False
 
 
 class UpsertError(Exception):
@@ -51,16 +45,25 @@ class UpsertError(Exception):
 
 def _section(lines: list[str], door: str) -> tuple[int, int]:
     """The section body, via the shared fence-aware model. Refuses rather than guessing."""
-    span = section(lines, SECTIONS[door])
-    if span is None:
-        raise UpsertError("NO_OPEN_SECTION",
-                          f"no `{door}` section in this file — refusing to invent a place for "
-                          "the line. Add the heading the contract expects, then re-run.")
+    if (span := section(lines, SECTIONS[door])) is None:
+        raise UpsertError("NO_OPEN_SECTION", f"no `{door}` section here — refusing to invent a "
+                          "place. Add the heading the contract expects, then re-run.")
     return span
+
+
+def _carry_cell(cells: list[str], old: str, week: str) -> str:
+    """The donor's table form: `Added` is the SECOND cell, and it is carried, never re-stamped."""
+    was = table_row(old) or []
+    cells = cells + [""] * (3 - len(cells))
+    cells[1] = was[1] if len(was) > 1 and was[1] else week
+    return "| " + " | ".join(cells) + " |"
 
 
 def _carry_stamp(old: str, new: str, week: str) -> str:
     """The stamp says when work FIRST appeared. Carrying it is the whole point of the merge."""
+    cells = table_row(new)
+    if cells is not None:
+        return _carry_cell(cells, old, week)
     was = ADDED.search(old or "")
     stamped = ADDED.sub("", new).rstrip(" ·\t")
     return f"{stamped} · Added: {was.group(1) if was else week}"
@@ -71,13 +74,15 @@ def _replace(lines: list[str], span: tuple[int, int], line: str) -> tuple[str, i
     key, tags = lane_id(line), kinds(lines)
     hits = [i for i in range(*span) if tags[i] == "thread" and lane_id(lines[i]) == key]
     if len(hits) > 1:
-        raise UpsertError("AMBIGUOUS_KEY",
-                          f"{len(hits)} lines share the key {key!r} (lines "
-                          f"{', '.join(str(i + 1) for i in hits)}) — refusing to guess which "
-                          "one this update replaces. Make the lane ids distinct, then re-run.")
+        raise UpsertError("AMBIGUOUS_KEY", f"{len(hits)} lines share the key {key!r} (lines "
+                          f"{', '.join(str(i + 1) for i in hits)}) — refusing to guess. "
+                          "Make the lane ids distinct, then re-run.")
     if hits:
         lines[hits[0]] = line
         return "replaced", hits[0]
+    if NO_ADD:
+        raise UpsertError("NO_SUCH_ROW", f"no row keyed {key!r}, and --no-add may not create one: "
+                          "plan-week reconciles the section, /update refreshes (polaris-os#240)")
     at = span[1]
     while at > span[0] and not lines[at - 1].strip():  # keep the blank line before what follows
         at -= 1
@@ -116,7 +121,7 @@ def upsert(path: Path, line: str, opts: argparse.Namespace) -> dict:
 
 
 def _selfcheck_thread(f: Path) -> list[bool]:
-    """Replace, append above the contract footer, one `Updated:` line, and a loud refusal."""
+    """Replace, append above the footer, one `Updated:` line, a loud refusal."""
     opts = argparse.Namespace(door="thread", owner="ada", now="2026-09-03", week="")
     f.write_text(f"Updated: 2026-09-01 — @ada\n\n## Open\n\n- `a` — uno · since 2026-09-01\n\n{FOOTER}\n")
     ok = []
@@ -125,8 +130,8 @@ def _selfcheck_thread(f: Path) -> list[bool]:
         ok.append(f.read_text().count("`a`") == 1 and "due" in f.read_text())
         ok.append(upsert(f, "- `b` — nuova · since 2026-09-03", opts)["action"] == "appended")
     body = f.read_text()
-    ok.append(body.index("- `b`") < body.index(FOOTER))     # never under the file's contract
-    ok.append(body.count("Updated:") == 1 and "@ada" in body)
+    ok += [body.index("- `b`") < body.index(FOOTER),        # never under the file's contract
+           body.count("Updated:") == 1 and "@ada" in body]
     f.write_text("# nothing\n")
     try:
         with locked(f):
@@ -141,12 +146,19 @@ def cmd_selfcheck() -> int:
     """One fixture per branch that would silently corrupt a cockpit or a plan."""
     import tempfile
     with tempfile.TemporaryDirectory() as d:
-        f = Path(d) / "current.md"
-        ok = _selfcheck_thread(f)
+        f = Path(d) / "current.md"; ok = _selfcheck_thread(f)
         f.write_text("## Active\n\n- #1 — x · Added: W32\n")
+        week = argparse.Namespace(door="week", owner="", now="", week="W34")
         with locked(f):
-            upsert(f, "- #1 — y", argparse.Namespace(door="week", owner="", now="", week="W34"))
+            upsert(f, "- #1 — y", week)
         ok.append("Added: W32" in f.read_text())            # the stamp is carried, not reset
+        # The donor's TABLE form, which is what the vault and the shipped template really use.
+        f.write_text("## Active\n\n| Task | Added | Context |\n|---|---|---|\n"
+                     "| #1 — x | W32 | ctx |\n")
+        with locked(f):
+            ok.append(upsert(f, "| #1 — y | | |", week)["action"] == "replaced")
+        body = f.read_text()
+        ok += [body.count("#1") == 1, "| W32 |" in body, "W34" not in body]
     print(f"state_upsert selfcheck: {sum(ok)}/{len(ok)} branches OK")
     return 0 if all(ok) else 1
 
@@ -156,19 +168,22 @@ def _parser() -> argparse.ArgumentParser:
     ap.add_argument("door", nargs="?", choices=["thread", "week"],
                     help="thread: a lane in current.md's `Open`. week: an item in `Active`.")
     ap.add_argument("path", nargs="?", type=Path)
-    ap.add_argument("--owner", default="", help="thread: the login for the `Updated:` line")
-    ap.add_argument("--now", default="", help="thread: ISO date for the `Updated:` line")
+    ap.add_argument("--owner", default="", help="thread: login for the `Updated:` line")
+    ap.add_argument("--now", default="", help="thread: ISO date for `Updated:`")
     ap.add_argument("--week", default="", help="week: the stamp for a genuinely new item")
+    ap.add_argument("--no-add", action="store_true",
+                    help="refuse to append: only replace a row that already exists")
     ap.add_argument("--selfcheck", action="store_true")
     return ap
 
 
 def main() -> int:
+    global NO_ADD
     opts = _parser().parse_args()
     if opts.selfcheck:
         return cmd_selfcheck()
-    line = sys.stdin.read().strip()
-    if not line:
+    NO_ADD = opts.no_add
+    if not (line := sys.stdin.read().strip()):
         print("state_upsert: nothing on stdin — a line to place is required", file=sys.stderr)
         return 2
     try:

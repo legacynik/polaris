@@ -80,10 +80,25 @@ class VerifyReadsContent(unittest.TestCase):
         out = checkpoint(repo, "verify")
         self.assertEqual(out.returncode, 0, out.stdout)
 
-    def test_the_selfcheck_grew_by_the_two_new_cases(self):
+    def test_every_bypass_this_gate_closes_has_its_own_fixture(self):
         out = run_script("update", "checkpoint.sh", "--selfcheck")
         self.assertEqual(out.returncode, 0, out.stdout)
-        self.assertIn("content", out.stdout, "the new content branch has no fixture")
+        for bypass in ("bypass 1", "bypass 2", "bypass 3", "no checkpoint of ours"):
+            self.assertIn(bypass, out.stdout, f"no fixture forces {bypass}")
+        self.assertIn("11 passed", out.stdout, "polaris-os#84 owes at least 2 more cases than 7")
+
+    def test_a_cockpit_redated_by_hand_without_a_checkpoint_is_refused(self):
+        """The date-only gate passed this; the run binding does not."""
+        repo, current = self.prepared()
+        current.write_text(f"Updated: {TODAY} — @{LOGIN}\n\n## Open\n\n- `a` — x\n")
+        out = checkpoint(repo, "verify", "un titolo che questa run non ha mai scritto")
+        self.assertEqual(out.returncode, 1, out.stdout)
+        self.assertIn("wrote no checkpoint", out.stdout)
+
+    def test_a_cockpit_with_no_updated_line_is_refused(self):
+        repo, current = self.prepared()
+        current.write_text("## Open\n\n- `a` — x\n")
+        self.assertEqual(checkpoint(repo, "verify").returncode, 1)
 
 
 class TheHarvestIsCapped(unittest.TestCase):

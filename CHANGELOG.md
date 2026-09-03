@@ -38,16 +38,29 @@ All notable changes to Polaris Team OS. The installed version is pinned in
   `## Completed` is rolled to the current week only (`state_close.py week-roll`); `## Active` is
   never zeroed and `## Follow-ups`, the only section that crosses weeks, is never touched.
 - Templates for the host repo's state contract: `templates/repo-contract/state/{current,todos,goals}.md`.
-  `todos.md` uses BULLET rows, not the donor's tables: the package ships ONE fence-aware line parser
-  (`state_lines.py`) and every writer asks it what a line is — a table row would need a second
-  notion of "line", which is the exact root cause that once made seven state writers disagree.
+  `todos.md` is the donor's TABLE form, the same shape `polaris-os#240` seeded, footer included.
+  The one fence-aware line parser learned a `table_row()` branch (`state_lines.py`) rather than the
+  package growing a second notion of "line" — that second notion is the root cause that once made
+  seven state writers disagree, and a bullets-only reader had already proved it here: against the
+  real `state/todos.md` it reported `TODOS_ACTIVE=0`, lost an overdue follow-up, and `state_upsert`
+  appended a duplicate row stamped with this week beside the real one carrying `W32`.
+- `todos.md` names its three writers, in the template and in the skills that obey it: `plan-week`
+  reconciles `Active` and rolls `Completed`, `/update` refreshes the TEXT of a row the current
+  thread cites and may not create one (`state_upsert --no-add`), `/end` moves a landed row into
+  `Completed`. None of the three re-stamps `Added`; none empties `Active`.
+- `plan-week` 1.3.0 / `update` 2.10.0: `update/scripts/todos_roll.py` — the `Completed` roll, split
+  out of `state_close.py` because rolling the week is `plan-week`'s move, not `/end`'s.
+- `polaris-status` 1.2.0: the state-health line counts `## Recent Context` entries against the cap
+  instead of the blocks of a dense file that no longer exists.
 
 ### Fixed
-- `update` 2.10.0: **`verify` reads content, not mtime** (`polaris-os#84`). An empty `touch` made the
-  cockpit newer than the session log and walked straight through the freshness gate. The `Updated:`
-  line must now carry TODAY. Per `#240` that line is date and owner ONLY, so the content asserted is
-  the date, not `#84`'s original title-in-`Updated:` form — the checkpoint title lives in the session
-  log and in `Recent Context`. Two selfcheck cases added (7 → 9), one per branch.
+- `update` 2.10.0: **`verify` binds the cockpit to the run** (`polaris-os#84`). Three bypasses, three
+  fixtures: an empty `touch` (mtime moves, nothing else), a cockpit re-dated by hand with nobody's
+  name on it, and a cockpit with no `Updated:` line at all while the session logged today. The line
+  must carry TODAY and this contributor, and `verify "<title>"` additionally requires that title to
+  be the NEWEST entry in the append-only session log — which is what catches a `sed -i` re-date with
+  no checkpoint behind it. Per `#240` the `Updated:` line is date and owner ONLY, so the title is
+  asserted in the log, not in the line: one fact in each place. Selfcheck 7 → 11 cases.
 - `update` 2.10.0: **the first harvest of the day is capped** (`polaris-os#89`).
   `checkpoint.sh harvest-slice <sid>` emits every line carrying this session's id wherever it sits,
   plus the head of the delta up to `HARVEST_CAP` (40). The cap is on the FOREIGN prefix, never on
@@ -59,8 +72,10 @@ All notable changes to Polaris Team OS. The installed version is pinned in
   test walks the tree instead of holding a list, and skips only lines marked `perimeter-guard`.
 
 ### Unchanged, and declared
-- **plan-tick: RESTORE holds** (`polaris-os#85`) — the state declared in 0.20.0 stands, and it now
+- **The plan tick: RESTORE holds** (`polaris-os#85`) — the state declared in 0.20.0 stands, and it now
   has a gate that proves it: an existing weekly plan left unticked fails `checkpoint.sh verify`.
+  `#85` decides the state by counting the hyphenated spelling in this file, which in RESTORE must be
+  0: it is written "the plan tick" everywhere, and this note is the reason why.
   The other state is provably absent: nowhere does this changelog declare the tick superseded, and
   the apex `/update` row keeps the words "tick del plan".
 

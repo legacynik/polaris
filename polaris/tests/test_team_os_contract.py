@@ -96,7 +96,7 @@ def test_every_command_is_repo_first_and_not_founder_vault_based() -> None:
         text = skill.read_text()
         assert "user-invocable: true" in text
         assert "POLARIS_VAULT" not in text
-        assert "Desktop/All Vibe Proj" not in text  # perimeter-guard
+        assert "Desktop/All Vibe Proj" not in text
 
 
 def test_the_new_commands_have_one_shared_team_contract() -> None:
@@ -653,12 +653,18 @@ def test_onboarding_contains_a_real_tooling_preflight() -> None:
 def test_the_shipped_tree_carries_no_machine_path_and_no_real_login() -> None:
     """polaris#5 — the public package never leaves the private perimeter.
 
-    A walk, not a list: a guard that names seven files has a hole the size of the eighth.
-    The repository's OWN public slug in the installer and the plugin author URL is identity,
-    not leakage, so those two files are named explicitly.
+    A walk, not a list of files to check: a guard that names seven files has a hole the size of the
+    eighth. What IS a list, deliberately, is the exemption — three paths, each named with its
+    reason, so an exemption cannot be granted by accident the way a `# perimeter-guard` comment
+    anywhere in the tree could.
     """
-    allowed = {"polaris/bin/polaris-update", "polaris/.claude-plugin/plugin.json"}
-    needles = re.compile(r"/Users/|All Vibe|nichome|legacynik")  # perimeter-guard
+    allowed = {
+        "polaris/bin/polaris-update": "the repository's own public slug, in its own installer",
+        "polaris/.claude-plugin/plugin.json": "the plugin author URL — identity, not leakage",
+        "polaris/scripts/check_skills.sh": "the denylist guard: the needles ARE its subject",
+        "polaris/tests/test_team_os_contract.py": "this test: the needles are its subject too",
+    }
+    needles = re.compile(r"/Users/|All Vibe|nichome|legacynik")
     offenders = []
     for path in ROOT.rglob("*"):
         relative = path.relative_to(ROOT.parent).as_posix()
@@ -669,7 +675,7 @@ def test_the_shipped_tree_carries_no_machine_path_and_no_real_login() -> None:
         except (UnicodeDecodeError, OSError):
             continue
         offenders += [f"{relative}:{n}" for n, line in enumerate(text.splitlines(), 1)
-                      if needles.search(line) and "perimeter-guard" not in line]
+                      if needles.search(line)]
     assert offenders == [], f"the package ships a private-perimeter string: {offenders}"
 
 

@@ -2,18 +2,19 @@
 """`/end` is the only command with closing authority, and closing means REMOVING.
 
 A `~~struck~~` line that stays is still tokens the next session reads and reconciles
-(polaris-os#202). So a closed thread leaves `## Open`, its todo row leaves `## Active` and
-lands in `## Completed`, and the `Updated:` line collapses to date and owner — the session
-summary belongs to `## Recent Context` and the full handoff to the session log (#240).
+(polaris-os#202). So a closed thread leaves `## Open`, its todo row leaves `## Active` and lands in
+`## Completed`, and `Updated:` collapses to date and owner — the session summary belongs to
+`## Recent Context` and the full handoff to the session log (#240).
 
-What this deliberately does NOT do is decide WHICH thread is closed. Automatic removal of
-threads citing a merged PR is parked on polaris-os#268: `merge_truth` returns `None` when
-the branch ref is gone, which is the normal case after `--delete-branch`, so a remover would
-report success and remove nothing. `candidates` lists them and a human closes them. A
-declared manual step beats a remover that silently no-ops.
+What this deliberately does NOT do is decide WHICH thread is closed. Automatic removal is parked on
+polaris-os#268: `merge_truth` returns `None` once the branch ref is gone, the normal case after
+`--delete-branch`, so a remover would report success and remove nothing. `candidates` lists them and
+a human closes. A declared manual step beats a remover that silently no-ops.
 
-Every write goes through the same lock and the same fence-aware line model as `/update`:
-two notions of "what a line is" is the root cause the package already paid for once.
+A close touches two files, so `precheck` refuses BEFORE the first byte: the earlier version wrote
+the cockpit and only then found the todos file had no `## Completed`. Both files go through the same
+lock and the same fence-aware line model as `/update` — two notions of "what a line is" is the root
+cause the package already paid for once.
 """
 from __future__ import annotations
 
@@ -25,7 +26,7 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from state_lines import kinds, lane_id, read, section, write  # noqa: E402
+from state_lines import kinds, lane_id, read, section, table_row, write  # noqa: E402
 from state_lock import LockError, locked, write_atomic  # noqa: E402
 from state_upsert import UpsertError, _stamp_updated  # noqa: E402
 
@@ -34,13 +35,12 @@ ACTIVE = re.compile(r"^#{1,6}\s+active\s*$", re.I)
 COMPLETED = re.compile(r"^#{1,6}\s+completed\s*$", re.I)
 CITES = re.compile(r"#\d+|\bPR\s*\d+", re.I)
 STAMP = re.compile(r"·?\s*Added:\s*W\d+", re.I)
-DONE_ON = re.compile(r"Completed:\s*(\d{4}-\d{2}-\d{2})")
-PARKED = ("removal stays MANUAL until polaris-os#268 lands a merge truth that survives a "
-          "branch deleted at merge — verify each candidate on GitHub, then close by hand")
+PARKED = ("removal stays MANUAL until polaris-os#268 lands a merge truth that survives a branch "
+          "deleted at merge — verify each candidate on GitHub, then close by hand")
 
 
 def find(lines: list[str], span: tuple[int, int], key: str) -> int:
-    """The one line in `span` whose lane id is `key`, or -1."""
+    """The ONE line in `span` whose lane id is `key`, or -1. Two matches are not one."""
     tags = kinds(lines)
     hits = [i for i in range(*span) if tags[i] == "thread" and lane_id(lines[i]) == key]
     return hits[0] if len(hits) == 1 else -1
@@ -49,18 +49,14 @@ def find(lines: list[str], span: tuple[int, int], key: str) -> int:
 def take(lines: list[str], name: re.Pattern, key: str) -> str:
     """Remove that line from the named section and hand it back. "" when it is not there."""
     span = section(lines, name)
-    if span is None:
-        return ""
-    at = find(lines, span, key)
+    at = find(lines, span, key) if span else -1
     return lines.pop(at) if at >= 0 else ""
 
 
 def put(lines: list[str], name: re.Pattern, line: str) -> None:
     """Append a line to the end of the named section, above whatever follows it."""
-    span = section(lines, name)
-    if span is None:
-        raise UpsertError("NO_SECTION", f"no section matching {name.pattern!r} — refusing to "
-                                        "invent a place for a closed row")
+    if (span := section(lines, name)) is None:
+        raise UpsertError("NO_SECTION", f"no section matching {name.pattern!r}")
     at = span[1]
     while at > span[0] and not lines[at - 1].strip():
         at -= 1
@@ -68,27 +64,55 @@ def put(lines: list[str], name: re.Pattern, line: str) -> None:
 
 
 def close_todo(path: Path, key: str, now: str) -> str:
-    """Move the row out of `Active` and into `Completed`, stamped with the day it landed."""
+    """Move the row out of `Active` into `Completed`, stamped with the day it landed.
+
+    The donor writes state as tables, so the row is re-celled, not string-patched: the second cell
+    of `Active` is `Added`, of `Completed` it is the date.
+    """
     lines, newline, bom = read(path)
     row = take(lines, ACTIVE, key)
     if not row:
         return "absent"
-    put(lines, COMPLETED, f"{STAMP.sub('', row).rstrip(' ·')} · Completed: {now}")
+    cells = table_row(row)
+    done = f"| {cells[0]} | {now} | {(cells + ['', '', ''])[2]} |" if cells else \
+        f"{STAMP.sub('', row).rstrip(' ·')} · Completed: {now}"
+    put(lines, COMPLETED, done)
     write_atomic(path, write(path, lines, newline, bom))
     return "moved"
 
 
+def precheck(opts: argparse.Namespace) -> None:
+    """Every refusal happens BEFORE the first byte is written.
+
+    The first version wrote the cockpit and only then discovered the todos file had no
+    `## Completed`: exit 2 with the thread already gone from `## Open` and nothing recording it.
+    A close touches two files, so both are validated first, then both are written.
+    """
+    lines, _, _ = read(Path(opts.path))
+    if find(lines, section(lines, OPEN) or (0, 0), opts.key) < 0:
+        raise UpsertError("UNKNOWN_THREAD", f"no single `{opts.key}` under `## Open` in "
+                          f"{opts.path} — refusing to remove a line this key does not name")
+    if not opts.todos:
+        return
+    rows, _, _ = read(Path(opts.todos))
+    for name in (ACTIVE, COMPLETED):
+        if section(rows, name) is None:
+            raise UpsertError("NO_SECTION", f"{opts.todos} has no section matching "
+                              f"{name.pattern!r} — nothing is written until it does")
+
+
 def cmd_close(opts: argparse.Namespace) -> int:
-    """Remove the thread, move its todo, collapse `Updated:`. Refuses an unknown key."""
+    """Remove the thread, move its todo, collapse `Updated:`. Validates before it writes."""
+    precheck(opts)
     path = Path(opts.path)
     lines, newline, bom = read(path)
-    if not take(lines, OPEN, opts.key):
-        print(f"UNKNOWN_THREAD: no single `{opts.key}` under `## Open` in {path} — refusing to "
-              "remove a line this key does not name", file=sys.stderr)
-        return 2
+    take(lines, OPEN, opts.key)
     _stamp_updated(lines, opts.owner, opts.now)
     write_atomic(path, write(path, lines, newline, bom))
-    todo = close_todo(Path(opts.todos), opts.key, opts.now) if opts.todos else "skipped"
+    todo = "skipped"
+    if opts.todos:
+        with locked(Path(opts.todos)):       # its own lock: a second file, a second writer
+            todo = close_todo(Path(opts.todos), opts.key, opts.now)
     print(json.dumps({"closed": opts.key, "todo": todo, "path": str(path)}))
     return 0
 
@@ -106,34 +130,23 @@ def cmd_candidates(opts: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_week_roll(opts: argparse.Namespace) -> int:
-    """`Completed` is the current week only; `Active` and `Follow-ups` are never touched."""
-    path = Path(opts.path)
-    lines, newline, bom = read(path)
-    span, tags = section(lines, COMPLETED), kinds(lines)
-    week = date.fromisoformat(opts.now).isocalendar()[:2]
-    drop = [i for i in range(*(span or (0, 0))) if tags[i] == "thread"
-            and _week_of(lines[i]) not in (week, None)]
-    for i in reversed(drop):
-        del lines[i]
-    write_atomic(path, write(path, lines, newline, bom))
-    print(json.dumps({"dropped": len(drop), "path": str(path)}))
-    return 0
-
-
-def _week_of(line: str):
-    """The ISO (year, week) a completed row belongs to; None when it carries no date."""
-    found = DONE_ON.search(line)
-    return date.fromisoformat(found.group(1)).isocalendar()[:2] if found else None
-
-
 def _fixture(path: Path, todos: Path) -> None:
     path.write_text("Updated: 2026-09-01 — @ada: cinquanta parole di riassunto\n\n## Open\n\n"
                     "- `feat/a` (acme) — uno · since 2026-09-01\n"
                     "- `feat/b` (acme) — chiude #77 · since 2026-09-02\n")
-    todos.write_text("## Active\n\n- `feat/a` — uno · Added: W32\n- `feat/b` — due · Added: W36\n"
-                     "\n## Completed\n\n- `old` — vecchia · Completed: 2026-08-10\n"
-                     "\n## Follow-ups\n\n- riprendi · Review: 2026-10-01\n")
+    head, rule = "| Task | Added | Context |", "|---|---|---|"
+    todos.write_text(f"## Active\n\n{head}\n{rule}\n| `feat/a` — uno | W32 | x |\n"
+                     f"| `feat/b` — due | W36 | y |\n\n## Completed\n\n{head}\n{rule}\n"
+                     f"| `old` — vecchia | 2026-08-10 | |\n\n## Follow-ups\n\n{head}\n{rule}\n"
+                     "| riprendi | 2026-10-01 | |\n")
+
+
+def _refuses(opts: argparse.Namespace) -> bool:
+    """A close that must not happen: it raises, and nothing on disk moved."""
+    try:
+        return bool(cmd_close(opts)) and False
+    except UpsertError:
+        return True
 
 
 def cmd_selfcheck() -> int:
@@ -149,35 +162,34 @@ def cmd_selfcheck() -> int:
         body, rows = path.read_text(), todos.read_text()
         ok += ["feat/a" not in body, "feat/b" in body,
                body.count("Updated:") == 1 and "cinquanta" not in body,
-               "- `feat/b` — due · Added: W36" in rows.split("## Completed")[0],
-               "Completed: 2026-09-03" in rows.split("## Completed")[1]]
+               "| `feat/b` — due | W36 | y |" in rows.split("## Completed")[0],
+               "| `feat/a` — uno | 2026-09-03 | x |" in rows.split("## Completed")[1]]
         opts.key = "feat/nope"
-        ok.append(cmd_close(opts) == 2)
-        cmd_week_roll(argparse.Namespace(path=str(todos), now="2026-09-03"))
-        rows = todos.read_text()
-        ok += ["vecchia" not in rows, "riprendi" in rows, "Added: W36" in rows]
+        ok.append(_refuses(opts))
+        # M1: a todos file without `## Completed` must leave BOTH files untouched.
+        _fixture(path, todos)
+        todos.write_text("## Active\n\n| Task | Added | Context |\n|---|---|---|\n"
+                         "| `feat/a` — uno | W32 | x |\n")
+        opts.key, before = "feat/a", path.read_text()
+        ok += [_refuses(opts), path.read_text() == before, "feat/a" in todos.read_text()]
     print(f"state_close selfcheck: {sum(ok)}/{len(ok)} branches OK")
     return 0 if all(ok) else 1
 
 
-def _parser() -> argparse.ArgumentParser:
-    ap = argparse.ArgumentParser(description="close a thread, list candidates, roll the week")
-    ap.add_argument("mode", nargs="?", choices=["close", "candidates", "week-roll"])
+def main() -> int:
+    ap = argparse.ArgumentParser(description="close a thread, or list the candidates")
+    ap.add_argument("mode", nargs="?", choices=["close", "candidates"])
     ap.add_argument("path", nargs="?")
     ap.add_argument("--key", default="", help="the lane id to close")
     ap.add_argument("--todos", default="", help="the host repo's state/todos.md")
     ap.add_argument("--owner", default="")
     ap.add_argument("--now", default=date.today().isoformat())
     ap.add_argument("--selfcheck", action="store_true")
-    return ap
-
-
-def main() -> int:
-    opts = _parser().parse_args()
+    opts = ap.parse_args()
     if opts.selfcheck:
         return cmd_selfcheck()
-    runner = {"close": cmd_close, "candidates": cmd_candidates, "week-roll": cmd_week_roll}
-    if not opts.mode or not opts.path:
+    runner = {"close": cmd_close, "candidates": cmd_candidates}
+    if not (opts.mode and opts.path):
         print("state_close: a mode and a path are required", file=sys.stderr)
         return 64
     try:

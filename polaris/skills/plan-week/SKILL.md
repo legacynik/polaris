@@ -144,9 +144,15 @@ piano sopra. Se la repo ospite non ha `state/todos.md`, copialo da
 `$CLAUDE_PLUGIN_ROOT/templates/repo-contract/state/todos.md` e riempilo dal piano — vuoto, se il
 piano non esiste: una vista onesta di un piano che non c'è è vuota, non inventata.
 
-Ogni riga di `## Active` porta `· Added: W<settimana>`: la settimana in cui il lavoro è **comparso**,
-non quella in cui è stato ritoccato. Un item portato avanti che si ri-timbra fa sembrare nuovo del
-lavoro fermo da tre settimane, ed è esattamente il segnale che serve per accorgersene.
+Il file è nella forma donor a **tabelle** (`| Task | Added | Context |`) e la seconda cella di
+`## Active` è `Added`: la settimana in cui il lavoro è **comparso**, non quella in cui è stato
+ritoccato. Un item portato avanti che si ri-timbra fa sembrare nuovo del lavoro fermo da tre
+settimane, ed è esattamente il segnale che serve per accorgersene.
+
+**Tre comandi toccano questo file e ognuno possiede una mossa sola** (la tabella nel template lo
+dichiara, ed è la stessa frase): `plan-week` **riconcilia** `Active` e rolla `Completed`; `/update`
+aggiorna il **testo** di una riga che il thread cita, e non ne aggiunge (`--no-add`); `/end` sposta
+in `Completed` una riga atterrata. Nessuno dei tre ri-timbra `Added`, nessuno azzera `Active`.
 
 ```bash
 eval "$("${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/start/scripts/resume_paths.sh")"
@@ -154,7 +160,7 @@ WEEKLY="$ROOT/team/$LOGIN/weeks/$(date +%G-W%V).md"   # the committed plan: the 
 TODOS="$ROOT/state/todos.md"                          # the live view: what this step reconciles
 UP="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/update/scripts/state_upsert.py"
 [ -f "$UP" ] || { echo "STOP: state_upsert non risolto — non mergiare Active a mano"; exit 1; }
-printf '%s\n' "- #<issue> — <risultato in una riga>" \
+printf '%s\n' "| #<issue> — <risultato in una riga> | | <context> |" \
   | python3 "$UP" week "$TODOS" --week "W$(date +%V)"
 ```
 
@@ -167,8 +173,8 @@ questo passo pota è `## Completed`, che vale **solo per la settimana corrente**
 
 ```bash
 TODOS="$ROOT/state/todos.md"
-python3 "${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/update/scripts/state_close.py" \
-  week-roll "$TODOS" --now "$(date +%F)"
+python3 "${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/update/scripts/todos_roll.py" \
+  "$TODOS" --now "$(date +%F)"
 ```
 
 `## Follow-ups` è l'unica sezione che **attraversa** le settimane e il roll non la tocca: è la

@@ -15,6 +15,7 @@ import unittest
 
 from host_repo import host_repo, run_script, seed_state
 
+HEAD, RULE = "| Task | Added | Context |", "|------|-------|---------|"
 COCKPIT = ("Updated: 2026-09-01 — @acme-dev: ho fatto molte cose e le racconto qui in "
            "cinquanta parole, che e' esattamente il difetto\n\n"
            "## Active Priorities\n\n1. lane A\n\n## Open\n\n"
@@ -22,9 +23,9 @@ COCKPIT = ("Updated: 2026-09-01 — @acme-dev: ho fatto molte cose e le racconto
            "- `feat/b` (acme-api) — chiude #77 · since 2026-09-02\n\n"
            "## Recent Context\n\n<!-- Last 5 session summaries, newest first -->\n")
 
-TODOS = ("## Active\n\n- `feat/a` — primo giro · Added: W32\n"
-         "- `feat/b` — chiude #77 · Added: W36\n\n"
-         "## Completed\n\n## Follow-ups\n\n- riprendi #9 · Review: 2026-10-01\n")
+TODOS = (f"## Active\n\n{HEAD}\n{RULE}\n| `feat/a` — primo giro | W32 | x |\n"
+         f"| `feat/b` — chiude #77 | W36 | y |\n\n## Completed\n\n{HEAD}\n{RULE}\n"
+         f"\n## Follow-ups\n\n{HEAD}\n{RULE}\n| riprendi #9 | 2026-10-01 | |\n")
 
 
 def cockpit_of(repo):
@@ -54,14 +55,13 @@ class ClosingRemoves(unittest.TestCase):
         todos = (repo / "_polaris" / "state" / "todos.md").read_text()
         self.assertNotIn("feat/a", body, "closing means removing, not striking through")
         self.assertIn("feat/b", body, "another panel's live lane is untouched")
-        self.assertIn("Completed: 2026-09-03", todos)
-        self.assertIn("- `feat/a`", todos.split("## Completed")[1])
+        self.assertIn("| `feat/a` — primo giro | 2026-09-03 | x |", todos.split("## Completed")[1])
 
     def test_active_is_never_zeroed_and_added_is_never_restamped(self):
         repo = host_repo()
         close(repo, "feat/a")
         active = (repo / "_polaris" / "state" / "todos.md").read_text().split("## Completed")[0]
-        self.assertIn("- `feat/b` — chiude #77 · Added: W36", active,
+        self.assertIn("| `feat/b` — chiude #77 | W36 | y |", active,
                       "the surviving row must come back byte-identical, stamp included")
 
     def test_updated_collapses_to_date_and_owner(self):
@@ -135,20 +135,21 @@ class TheWeekRolls(unittest.TestCase):
     def test_last_weeks_completed_is_dropped_and_followups_survive(self):
         repo = host_repo()
         path = todos_of(repo)
-        path.write_text(TODOS.replace("## Completed\n\n",
-                                      "## Completed\n\n- `old` — vecchia · Completed: 2026-08-10\n"
-                                      "- `new` — fresca · Completed: 2026-09-03\n"))
-        out = run_script("update", "state_close.py", "week-roll", str(path), "--now", "2026-09-03")
+        path.write_text(TODOS.replace(f"## Completed\n\n{HEAD}\n{RULE}\n",
+                                      f"## Completed\n\n{HEAD}\n{RULE}\n"
+                                      "| `old` — vecchia | 2026-08-10 | |\n"
+                                      "| `new` — fresca | 2026-09-03 | |\n"))
+        out = run_script("update", "todos_roll.py", str(path), "--now", "2026-09-03")
         self.assertEqual(out.returncode, 0, out.stderr)
         body = path.read_text()
         self.assertNotIn("vecchia", body)
         self.assertIn("fresca", body)
         self.assertIn("riprendi #9", body, "Follow-ups are the only section crossing weeks")
-        self.assertIn("Added: W32", body, "Active is untouched by the roll")
+        self.assertIn("| W32 |", body, "Active is untouched by the roll")
         self.assertEqual(json.loads(out.stdout)["dropped"], 1)
 
     def test_selfcheck_is_a_real_check(self):
-        for name in ("state_close.py", "recent_context.py"):
+        for name in ("state_close.py", "recent_context.py", "todos_roll.py"):
             with self.subTest(script=name):
                 out = run_script("update", name, "--selfcheck")
                 self.assertEqual(out.returncode, 0, out.stdout + out.stderr)

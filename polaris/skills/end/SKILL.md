@@ -33,9 +33,9 @@ non-zero rather than guessing — not a git checkout, no contract, no resolvable
 instead of writing to an invented path. Three copies of this rule used to live in the package.
 
 
-`$CURRENT` is THE cockpit of this repo: the migrated `team/<login>/current.md` when it exists, the
-legacy `state/current.md` otherwise. Write `$CURRENT`, never a cwd-relative `state/current.md` —
-inside a worktree that path is gitignored and never comes back.
+`$CURRENT` is THE cockpit of this repo — one per repo, whatever path the resolver hands back. Write
+`$CURRENT`, never a cwd-relative `state/current.md`: inside a worktree that path is gitignored and
+never comes back. There is no second cockpit to keep in step, and nothing here writes one.
 
 ## State hygiene (every run — the skills are the writers AND the janitors)
 
@@ -50,9 +50,10 @@ older sessions write with pre-patch instructions):
    `python3 "$ROOT/scripts/state_home.py" migrate`, which refuses loudly on an occupied
    destination and collects into `team/<login>/handoff/strays/<worktree>-<date>.md`. Never move
    them silently.
-3. Non-canonical `current` variants in `<root>/state/` (anything beyond `current.md`,
-   `current-state.md`, `goals.md`, `backlog*.md`): FLAG them in your output with their mtime and
-   first heading; fold their still-live content into the cockpit only on explicit confirmation.
+3. Non-canonical `current` variants in `<root>/state/` (anything beyond `current.md`, `todos.md`,
+   `goals.md`, `backlog*.md`): FLAG them in your output with their mtime and first heading; fold
+   their still-live content into the cockpit only on explicit confirmation. A repo that still
+   carries an older dense cockpit beside `current.md` is exactly this case, not an exception.
 4. **Branch state** — classify only the current lane before writing the handoff:
 
    ```bash
@@ -148,36 +149,29 @@ the session log carries the full handoff. Exit 2 means the cockpit has no `## Re
 section — add the heading the contract declares (`templates/repo-contract/state/current.md`), never
 let the entry land at EOF.
 
-Additionally, if this repo DECLARES a vault and it is not the current root, ALSO append the FULL
-handoff to `$VAULT/state/current-state.md` (gitignored, append-only — the CROSS-REPO everything-file:
-next steps, tasks, resume instructions, nothing compressed away). It is explicitly NOT a cockpit and
-never authority: the authority of this repo's state is `$CURRENT`, and the vault copy exists only so
-work done here is visible from there.
+Additionally, if this repo DECLARES a vault and it is not the current root, put the SAME one-line
+entry in the vault's own ring, so work done here is visible from there without growing a second
+everything-file anywhere:
 
 ```bash
 VAULT="$(git config --get polaris.vault_root || true)"   # declared per repo, never guessed
 [ -n "$VAULT" ] && [ -d "$VAULT" ] && [ "$VAULT" != "$ROOT" ] || VAULT=""
 ```
 
-No declaration, or a declared path that is not there → no second copy, and the per-repo cockpit is
-the only one. A literal path used to live here, which meant every install looked for a directory
-that exists on one machine and the public package carried a home directory. Set it once per repo:
-`git config polaris.vault_root <path>`, the same mechanism `polaris.login` already uses.
-
-```markdown
-## Session end: {YYYY-MM-DD HH:MM} · {repo} · {branch}{ · wt: <path>}
-### Topics
-### Decisions
-### Files modified
-### Open threads
-### Next actions
-### Commits (history)     ← `git log --oneline <base>..HEAD` del branch: gli sha SONO il log
-### Resume instructions   ← come riprendere ESATTAMENTE: worktree, branch, comando, primo passo
+```bash
+RC="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/update/scripts/recent_context.py"
+[ -n "$VAULT" ] && python3 "$RC" "$VAULT/state/current.md" \
+  --entry "### $(date +%F) — <repo>: <cosa lascia questa sessione> · branch <branch>"
 ```
 
-That block is written ONLY into the declared vault, and it is IN ADDITION to the thread line in
-`current.md` (thin index), the `## Recent Context` entry (summary) and the committed session log
-(team history). Where no vault is declared, those three are the whole record and nothing is missing.
+No declaration, or a declared path that is not there → no copy, and this repo's cockpit is the only
+record. A literal path used to live here, which meant every install looked for a directory that
+exists on one machine and the public package carried a home directory. Set it once per repo:
+`git config polaris.vault_root <path>`, the same mechanism `polaris.login` already uses.
+
+Three surfaces carry a session and no fourth exists: the thread line in `current.md` (thin index),
+the `## Recent Context` entry (summary, capped), the committed session log (full handoff). The
+richer per-session document is `handoff/YYYY-MM-DD.md` from Step 1b, which is committed history.
 
 ## Step 2 — Tick the plan
 
@@ -271,8 +265,8 @@ CT="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/git-power/scripts/cantiere.py"
 if [ ! -f "$CT" ]; then
   echo "NOTA: git-power non installato — handoff senza censimento del cantiere"
 else
-  OUT="$(python3 "$CT" census --tsv --repo "$MAIN_WT" 2>&1)"; RC=$?
-  if [ "$RC" = "2" ]; then          # solo "unknown flag": exit 1 significa "c'è da agire"
+  OUT="$(python3 "$CT" census --tsv --repo "$MAIN_WT" 2>&1)"; CENSUS_RC=$?
+  if [ "$CENSUS_RC" = "2" ]; then   # solo "unknown flag": exit 1 significa "c'è da agire"
     echo "NOTA: git-power precede il contratto TSV — censimento in prosa"
     python3 "$CT" census --repo "$MAIN_WT"
   else

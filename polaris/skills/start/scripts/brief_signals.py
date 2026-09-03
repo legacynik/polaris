@@ -21,25 +21,40 @@ import sys
 from datetime import date
 from pathlib import Path
 
+# ONE line model for the whole package: the donor writes state as TABLES, and a bullet-only reader
+# reported `TODOS_ACTIVE=0` on the real file while quietly losing an overdue follow-up.
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "update" / "scripts"))
+from state_lines import kinds, table_row  # noqa: E402
+
 # The sections a state file owes. `state_contract.py` in a repo that has one is asked first;
 # this is the answer for the host repos that ship only the package.
 REGISTRY = {"current.md": ("## Active Priorities", "## Open", "## Recent Context"),
             "todos.md": ("## Active", "## Completed", "## Follow-ups")}
-BULLET = re.compile(r"^[-*+]\s+")
-REVIEW = re.compile(r"Review:\s*(\d{4}-\d{2}-\d{2})")
+PLACEHOLDER = re.compile(r"^[\s|*]*(none|nessuno)?[\s|*]*$", re.I)
+DATE = re.compile(r"(\d{4}-\d{2}-\d{2})")
 ENTRY = re.compile(r"^###\s+(.*)$")
 MAX_ROWS = 5
 
 
 def section(text: str, name: str) -> list[str]:
-    """The bullet lines under `name`, empty when the section is not there."""
-    out, inside = [], False
-    for line in text.splitlines():
+    """The state lines under `name` — bullets or table rows — minus the empty placeholders."""
+    lines = text.splitlines()
+    tags, out, inside = kinds(lines), [], False
+    for i, line in enumerate(lines):
         if line.startswith("## "):
             inside = line.strip() == name
-        elif inside and BULLET.match(line) and "<" not in line[:12]:
+        elif inside and tags[i] == "thread" and not PLACEHOLDER.match(line):
             out.append(line.strip())
     return out
+
+
+def due_on(row: str) -> str:
+    """The review date of a follow-up: the second cell of a table row, or the bullet's own date."""
+    cells = table_row(row)
+    if cells:
+        return cells[1] if len(cells) > 1 and DATE.match(cells[1]) else ""
+    found = re.search(r"Review(?: Date)?:\s*(\d{4}-\d{2}-\d{2})", row)
+    return found.group(1) if found else ""
 
 
 def emit_todos(root: Path, today: str) -> list[str]:
@@ -51,8 +66,8 @@ def emit_todos(root: Path, today: str) -> list[str]:
     active = section(text, "## Active")
     rows = [f"TODOS_ACTIVE={len(active)}"] + [f"TODO={row}" for row in active[:MAX_ROWS]]
     for row in section(text, "## Follow-ups"):
-        due = REVIEW.search(row)
-        if due and due.group(1) <= today:
+        due = due_on(row)
+        if due and due <= today:
             rows.append(f"FOLLOWUP_DUE={row}")
     return rows
 
@@ -76,26 +91,25 @@ def git(root: Path, *args: str) -> str:
     return done.stdout.strip() if done.returncode == 0 else ""
 
 
-def emit_spool(main_wt: Path) -> list[str]:
-    """#243 signal 1 — the deferred spool, counted where session_commit.sh really puts it."""
-    common = git(main_wt, "rev-parse", "--git-common-dir")
-    if not common:
-        return []
-    spool = Path(common if Path(common).is_absolute() else main_wt / common) / "polaris-deferred"
-    entries = [p for p in spool.iterdir() if p.is_file()] if spool.is_dir() else []
-    return [f"DEFERRED={len(entries)} — session-log entries spooled, not committed"] if entries else []
+def emit_git(main_wt: Path, login: str) -> list[str]:
+    """#243 signals 1 and 2 — the deferred spool, and the MAIN worktree parked off its default.
 
-
-def emit_drift(main_wt: Path, login: str) -> list[str]:
-    """#243 signal 2 — the MAIN worktree parked on someone else's branch, with their files."""
+    The spool is counted under the git COMMON dir, which is where `session_commit.sh` really puts
+    it: read as `.git/polaris-deferred` from a worktree, the count is always zero.
+    """
+    out, common = [], git(main_wt, "rev-parse", "--git-common-dir")
+    if common:
+        spool = Path(common if Path(common).is_absolute() else main_wt / common) / "polaris-deferred"
+        n = len([p for p in spool.iterdir() if p.is_file()]) if spool.is_dir() else 0
+        out += [f"DEFERRED={n} — session-log entries spooled, not committed"] if n else []
     branch = git(main_wt, "rev-parse", "--abbrev-ref", "HEAD")
     default = git(main_wt, "symbolic-ref", "--short", "refs/remotes/origin/HEAD").split("/")[-1]
     default = default or ("main" if git(main_wt, "rev-parse", "--verify", "-q", "main") else "master")
     if not branch or branch == default:
-        return []
+        return out
     status = [ln for ln in git(main_wt, "status", "--porcelain").splitlines() if ln.strip()]
     foreign = [ln for ln in status if f"team/{login}/" not in ln]
-    return [f"DRIFT={branch} · {len(foreign)} modified files not yours in the main worktree"]
+    return out + [f"DRIFT={branch} · {len(foreign)} modified files not yours in the main worktree"]
 
 
 def emit_sections(root: Path, current: Path) -> list[str]:
@@ -128,8 +142,8 @@ def report(opts: argparse.Namespace) -> list[str]:
     """Every signal, in brief order. Read-only, and a missing input is a silent line."""
     root, current = Path(opts.root), Path(opts.current)
     main_wt = Path(opts.main_wt) if opts.main_wt else root.parent
-    return (emit_todos(root, opts.now) + emit_recent(current) + emit_spool(main_wt)
-            + emit_drift(main_wt, opts.login) + emit_sections(root, current) + emit_pack(root))
+    return (emit_todos(root, opts.now) + emit_recent(current)
+            + emit_git(main_wt, opts.login) + emit_sections(root, current) + emit_pack(root))
 
 
 def _fixture(tmp: Path) -> tuple[Path, Path]:
@@ -137,8 +151,10 @@ def _fixture(tmp: Path) -> tuple[Path, Path]:
     root = tmp / "_polaris"
     (root / "state").mkdir(parents=True)
     (root / "state" / "todos.md").write_text(
-        "## Active\n\n- #1 — x · Added: W32\n\n## Completed\n\n## Follow-ups\n\n"
-        "- scaduto · Review: 2000-01-01\n- futuro · Review: 2999-01-01\n")
+        "## Active\n\n| Task | Added | Context |\n|---|---|---|\n| #1 — x | W32 | |\n"
+        "| | | |\n\n## Completed\n\n| Task | Completed | Note |\n|---|---|---|\n"
+        "| *None* | | |\n\n## Follow-ups\n\n| Item | Review Date | Note |\n|---|---|---|\n"
+        "| scaduto | 2000-01-01 | |\n| futuro | 2999-01-01 | |\n")
     current = root / "state" / "current.md"
     current.write_text("Updated: 2026-09-03 — @ada\n\n## Recent Context\n\n### b\n\n### a\n")
     return root, current

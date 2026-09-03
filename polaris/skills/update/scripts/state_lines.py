@@ -23,6 +23,15 @@ HEADING = re.compile(r"^#{1,6}\s")
 # The ONE predicate for "this line is a thread". Every writer asks here: two
 # notions of a bullet is how `*` and `1.` threads became invisible to one side.
 THREAD = re.compile(r"^(?:[-*+]\s+|\d+[.)]\s+)")
+# The donor writes state as TABLES (references/marvin-template-1.1.0/state/todos.md), and the
+# vault's own `state/todos.md` follows it. A bullet-only predicate read that file as zero rows and
+# then APPENDED a bullet under it — a duplicate row carrying a fresh stamp beside the real one.
+# So the table row is a branch of the SAME predicate, never a second model: one `table_row`, and
+# every writer keeps asking `kinds()` what a line is.
+TABLE_ROW = re.compile(r"^\s*\|(.+)\|\s*$")
+# At least one dash, or the donor's empty placeholder row `| | | |` reads as a rule and
+# demotes the real row above it to structure.
+TABLE_RULE = re.compile(r"^\s*\|[\s:|-]*-[\s:|-]*\|\s*$")
 UPDATED = re.compile(r"^Updated:", re.I)
 LIST_ITEM = re.compile(r"^(?:[-*+]\s+|\d+[.)]\s+)")
 LANE_BRANCH = re.compile(r"^(?:[-*+]\s+|\d+[.)]\s+)`([^`]+)`")
@@ -46,12 +55,26 @@ def write(path, lines: list[str], newline: str, bom: str) -> str:
     return bom + body.replace("\n", newline)
 
 
+def table_row(line: str) -> list[str] | None:
+    """The cells of a data row, or None for a header rule, a header, or a non-row.
+
+    A header (`| Task | Added |`) and its rule (`|---|---|`) are structure, not content: only the
+    rows under them are state. The header is told apart by the rule that follows it, which the
+    caller knows and this predicate does not — so `kinds()` owns that one bit of context and this
+    function stays a pure line test.
+    """
+    m = TABLE_ROW.match(line)
+    if not m or TABLE_RULE.match(line):
+        return None
+    return [c.strip() for c in m.group(1).split("|")]
+
+
 def _kind(line: str) -> str:
     """Outside a fence: heading | updated | thread | other."""
     for tag, pat in (("heading", HEADING), ("updated", UPDATED), ("thread", THREAD)):
         if pat.match(line):
             return tag
-    return "other"
+    return "thread" if table_row(line) is not None else "other"
 
 
 def kinds(lines: list[str]) -> list[str]:
@@ -70,6 +93,10 @@ def kinds(lines: list[str]) -> list[str]:
             out.append("other")                    # anything else inside is content
             continue
         out.append("fence" if run else _kind(line))
+    # A row immediately above a `|---|` rule is that table's HEADER — structure, not state.
+    for i, tag in enumerate(out):
+        if tag == "thread" and i + 1 < len(lines) and TABLE_RULE.match(lines[i + 1]):
+            out[i] = "other"
     return out
 
 
@@ -77,6 +104,12 @@ def lane_id(text: str) -> str:
     """The branch in backticks if the line follows the documented format, else its bold lead, else
     the lead before the ` — ` separator. This id is what a consumer acts on, so it must never be a
     mid-token truncation of prose (real case in a product repo: current.md:48, branch not in backticks)."""
+    cells = table_row(text)
+    if cells:                       # a table row's identity is its FIRST cell, same rules as a lane
+        m = re.match(r"^`([^`]+)`", cells[0]) or re.match(r"^\*\*([^*]+)\*\*", cells[0])
+        if m:
+            return m.group(1).strip()
+        return re.split(r"\s+[—–-]\s+", cells[0], maxsplit=1)[0].strip()[:60]
     for pat in (LANE_BRANCH, LANE_BOLD):
         m = pat.match(text)
         if m:
@@ -108,6 +141,13 @@ def _selfcheck() -> int:
           tags[9] == "heading", tags[11] == "thread",      # the real H1 section and a `*` lane
           tags[13] == "other",                             # inside the second fence
           section(body, re.compile(r"^#{1,6}\s+open\b", re.I)) == (10, 15)]
+    # The donor's table form: header and rule are structure, the row under them is state.
+    table = ["| Task | Added | Context |", "|------|-------|---------|",
+             "| #11 — primo | W32 | x |", "| | | |"]
+    tags = kinds(table)
+    ok += [tags[0] == "other", tags[1] == "other", tags[2] == "thread",
+           lane_id(table[2]) == "#11", table_row(table[1]) is None,
+           lane_id("| `feat/a` | W32 | |") == "feat/a"]
     print(f"state_lines selfcheck: {sum(ok)}/{len(ok)} branches OK")
     return 0 if all(ok) else 1
 
