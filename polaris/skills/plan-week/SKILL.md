@@ -2,7 +2,7 @@
 name: plan-week
 description: Polaris skill — build your own weekly focus from live GitHub/Linear issues and current team ownership. You author it and you execute it; the lead may reorder priorities, but only red work waits for a named approver. Trigger at the start of a week, when the lead asks what you are picking up, or on "plan my week / propose work / weekly plan".
 user-invocable: true
-version: 1.0.0
+version: 1.2.0
 ---
 
 # /plan-week — propose one week of useful work
@@ -134,6 +134,26 @@ The template's section headers make this concrete — write under exactly these:
 outcome that matters), `## Not starting` (what is deliberately deferred, visible not silent), and
 `## Evidence` (proof of done with its date). Keep them identical to the template so the plan reads the
 same across the team.
+
+## Step 6b — Merge `Active` without re-stamping what was already there
+
+Il piano della settimana ha una sezione `## Active` e ogni riga porta `· Added: W<settimana>`: la
+settimana in cui il lavoro è **comparso**, non quella in cui è stato ritoccato. Un item portato
+avanti che si ri-timbra fa sembrare nuovo del lavoro fermo da tre settimane, ed è esattamente il
+segnale che serve per accorgersene.
+
+```bash
+eval "$("${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/start/scripts/resume_paths.sh")"
+WEEKLY="$ROOT/team/$LOGIN/weeks/$(date +%G-W%V).md"
+UP="$ROOT/scripts/state_upsert.py"
+[ -f "$UP" ] || UP="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/update/scripts/state_upsert.py"
+[ -f "$UP" ] || { echo "STOP: state_upsert non risolto — non mergiare Active a mano"; exit 1; }
+printf '%s\n' "- #<issue> — <risultato in una riga>" \
+  | python3 "$UP" week "$WEEKLY" --week "W$(date +%V)"
+```
+
+Sostituisce la riga con la stessa chiave portandosi dietro il suo `Added:` originale, e timbra con
+la settimana corrente **solo** ciò che non c'era. Gli altri item tornano byte-identici.
 
 ## Step 7 — Ownership boundary (the plan does not wait for permission)
 

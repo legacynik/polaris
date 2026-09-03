@@ -5,3 +5,6 @@ __pycache__/
 # eval workspace: snapshot del baseline (ricostruibile da git) e run intermedi
 polaris/evals/*-workspace/skill-snapshot/
 polaris/evals/scripts/*-replay-results.json
+
+# state writer lock left by a killed holder — runtime artifact, never tracked
+*.md.lock

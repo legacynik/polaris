@@ -2,7 +2,7 @@
 name: end
 description: Polaris skill — close a repository-first team session with a handoff, decisions/lessons written to the ledgers, a plan tick and a pathspec-only commit. Trigger when stopping work, before a multi-day pause, or on "wrap up / end session / /end".
 user-invocable: true
-version: 1.5.0
+version: 1.10.0
 invokes: [git-power]
 ---
 
@@ -217,6 +217,12 @@ by branch, nothing open lost, other panels' threads and `Next` lines untouched) 
 difference. **`/end` is the only Team OS command with closing authority**, and it spends it against
 ground truth rather than impression.
 
+Prima di potare, **elenca i candidati e chiudi a mano**. La rimozione automatica dei thread
+superati è parcheggiata su `task/T6-prune-parked` (`polaris-os#202`): dipende da una verità di
+merge che sopravviva a un branch cancellato dopo il merge, e quella non è ancora provata. Finché
+quel ramo non regge, `/end` **non cancella nulla da solo**: leggi i thread di `$CURRENT`, verifica
+su GitHub quali PR sono mergiate, e togli quelle righe con la stessa mano che scrive l'handoff.
+
 **Closing means REMOVING, not annotating.** A thread proven landed comes **out** of the file; a
 `~~struck~~` line that stays is still tokens the next session reads and reconciles. Donor: marvin
 `end.md` step 5, `Update State (MANDATORY)` — *«Mark completed items as done or remove them»*,
@@ -224,6 +230,38 @@ ground truth rather than impression.
 collapse the state line to **one** `Updated:` — date, login, one clause on what changed — and let the
 history live in the session log. Target after pruning: under 2,000 tokens; `checkpoint.sh verify`
 fails on a second `Updated:` line and warns above the size.
+
+### Il censimento del cantiere entra nell'handoff
+
+```bash
+CT="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/git-power/scripts/cantiere.py"
+[ -f "$CT" ] || CT="$HOME/.agents/skills/git-power/scripts/cantiere.py"
+if [ ! -f "$CT" ]; then
+  echo "NOTA: git-power non installato — handoff senza censimento del cantiere"
+else
+  OUT="$(python3 "$CT" census --tsv --repo "$MAIN_WT" 2>&1)"; RC=$?
+  if [ "$RC" = "2" ]; then          # solo "unknown flag": exit 1 significa "c'è da agire"
+    echo "NOTA: git-power precede il contratto TSV — censimento in prosa"
+    python3 "$CT" census --repo "$MAIN_WT"
+  else
+    printf '%s\n' "$OUT"
+  fi
+fi
+```
+
+Righe TSV `VERDETTO\tbranch\tpath\tnote`, exit 0 pulito / 1 c'è da agire / 2 errore (contratto
+T13, `polaris-os#254`). Copia nell'handoff, verbatim, sotto una riga `**Cantiere**`, ogni riga il
+cui verdetto non è `MAIN`: `CLOSABLE` è ciò che si può chiudere, `DIRTY` ciò che ha lavoro non
+committato o file ignorati non vuoti. Sono le due cose che chi riprende deve sapere senza rileggere
+il grafo. `/end` **non chiude nulla** — elenca, e la chiusura resta un atto esplicito.
+
+`git-power` non viaggia in questo pacchetto: se non si risolve, l'handoff lo **dichiara** e prosegue
+senza la sezione cantiere. Il fallback scatta **solo su exit 2**, che è «flag sconosciuto»: exit 1
+vuol dire «c'è da agire» ed è un risultato valido, non un errore da ripetere in prosa. Una copia
+più vecchia del contratto rifiuta `--tsv` e il fallback stampa la stessa
+cosa in prosa italiana, un elemento per riga col verdetto fra parentesi quadre. In entrambi i casi
+vale la stessa regola: **leggi i verdetti che il comando stampa**, non quelli che questa riga
+ricorda. Il vocabolario è del tool, e questa prosa invecchia prima di lui.
 
 **`state/goals.md` is NOT touched here.** Goals change by explicit decision, never by session
 inertia. If it is empty or untouched for more than 30 days, say so in the closing summary and ask
