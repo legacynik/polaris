@@ -82,7 +82,8 @@ def still_mine(path: Path) -> None:
 def write_atomic(path: Path, body: str) -> None:
     """Same directory, then rename: a reader never sees a half-written file."""
     tmp = path.with_suffix(path.suffix + f".{os.getpid()}.tmp")
-    tmp.write_text(body)
+    with tmp.open("w", encoding="utf-8", newline="") as fh:   # never translate terminators
+        fh.write(body)
     os.replace(tmp, path)
 
 

@@ -32,13 +32,19 @@ def git_merged(branch: str, repo_dir: str) -> bool | None:
     """True merged, False not, None unverifiable — and None means the caller KEEPS it."""
     prs = _capture(["gh", "pr", "list", "--state", "merged", "--head", branch,
                     "--json", "headRefOid", "--limit", "5"], repo_dir)
-    tip = _capture(["git", "rev-parse", branch], repo_dir)
-    if prs is None or not tip:
+    if prs is None:
         return None
     try:
-        return any(row.get("headRefOid") == tip.strip() for row in json.loads(prs))
-    except (json.JSONDecodeError, AttributeError, TypeError):
+        merged = json.loads(prs)
+    except (json.JSONDecodeError, TypeError):
         return None
+    tip = _capture(["git", "rev-parse", branch], repo_dir)
+    if not tip:
+        # `--delete-branch` at merge is the normal case, so the local ref is usually gone.
+        # A merged PR for this head with no ref left IS the evidence; requiring the tip made
+        # the removal fire almost never.
+        return bool(merged)
+    return any(row.get("headRefOid") == tip.strip() for row in merged)
 
 
 def cmd_selfcheck() -> int:

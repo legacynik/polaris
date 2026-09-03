@@ -2,7 +2,7 @@
 name: end
 description: Polaris skill — close a repository-first team session with a handoff, decisions/lessons written to the ledgers, a plan tick and a pathspec-only commit. Trigger when stopping work, before a multi-day pause, or on "wrap up / end session / /end".
 user-invocable: true
-version: 1.7.0
+version: 1.9.0
 invokes: [git-power]
 ---
 
@@ -244,18 +244,24 @@ fails on a second `Updated:` line and warns above the size.
 ### Il censimento del cantiere entra nell'handoff
 
 ```bash
-python3 "$HOME/.agents/skills/git-power/scripts/cantiere.py" census --repo "$MAIN_WT"
+CT="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/git-power/scripts/cantiere.py"
+[ -f "$CT" ] || CT="$HOME/.agents/skills/git-power/scripts/cantiere.py"
+[ -f "$CT" ] || { echo "NOTA: git-power non installato — handoff senza censimento del cantiere"; CT=""; }
+[ -z "$CT" ] || python3 "$CT" census --tsv --repo "$MAIN_WT" || python3 "$CT" census --repo "$MAIN_WT"
 ```
 
-Il tool **installato oggi** stampa prosa italiana, una riga per elemento, con il verdetto fra
-parentesi quadre: `[pericoloso]`, `[vivo]`, `[mergiato-da-chiudere]`. Copia nell'handoff **le righe
-`[mergiato-da-chiudere]` e `[pericoloso]`**, verbatim, sotto una riga `**Cantiere**`: sono
-rispettivamente ciò che si può chiudere e ciò che ha lavoro non committato. `/end` **non chiude
-nulla** — elenca, e la chiusura resta un atto esplicito.
+Righe TSV `VERDETTO\tbranch\tpath\tnote`, exit 0 pulito / 1 c'è da agire / 2 errore (contratto
+T13, `polaris-os#254`). Copia nell'handoff, verbatim, sotto una riga `**Cantiere**`, ogni riga il
+cui verdetto non è `MAIN`: `CLOSABLE` è ciò che si può chiudere, `DIRTY` ciò che ha lavoro non
+committato o file ignorati non vuoti. Sono le due cose che chi riprende deve sapere senza rileggere
+il grafo. `/end` **non chiude nulla** — elenca, e la chiusura resta un atto esplicito.
 
-Quando T13 (`polaris-os#254`) atterra, lo stesso comando emette TSV
-`VERDETTO\tbranch\tpath\tnote` con exit 0 pulito / 1 c'è da agire / 2 errore, e il verdetto da
-elencare diventa `CLOSABLE`. Leggi ciò che il comando stampa, non ciò che questa riga ricorda.
+`git-power` non viaggia in questo pacchetto: se non si risolve, l'handoff lo **dichiara** e prosegue
+senza la sezione cantiere, invece di fallire in silenzio con exit 2. Una copia più vecchia del
+contratto rifiuta `--tsv` e il fallback stampa la stessa
+cosa in prosa italiana, un elemento per riga col verdetto fra parentesi quadre. In entrambi i casi
+vale la stessa regola: **leggi i verdetti che il comando stampa**, non quelli che questa riga
+ricorda. Il vocabolario è del tool, e questa prosa invecchia prima di lui.
 
 **`state/goals.md` is NOT touched here.** Goals change by explicit decision, never by session
 inertia. If it is empty or untouched for more than 30 days, say so in the closing summary and ask

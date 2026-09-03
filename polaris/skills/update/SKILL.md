@@ -3,7 +3,7 @@ name: update
 description: Polaris skill — record a short repository-first checkpoint during an active session. Trigger after meaningful progress, a blocker, a context switch, or on "checkpoint / save progress / /update".
 user-invocable: true
 model: sonnet
-version: 2.8.0
+version: 2.9.0
 invokes: [git-power]
 ---
 
@@ -121,11 +121,16 @@ Non farlo a mano — la riga si posa per chiave:
 UP="$ROOT/scripts/state_upsert.py"
 [ -f "$UP" ] || UP="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/update/scripts/state_upsert.py"
 [ -f "$UP" ] || { echo "STOP: state_upsert non risolto — non scrivere la riga a mano"; exit 1; }
-printf '%s\n' "- \`<branch>\` — <stato in una riga> · since <YYYY-MM-DD>" \
+printf '%s\n' "- \`<branch>\` (<repo>) — <stato in una riga> · since <YYYY-MM-DD>" \
   | python3 "$UP" thread "$CURRENT" --owner "$LOGIN" --now "$(date +%F)"
 ```
 
-Sostituisce la riga con la stessa chiave di lane, altrimenti la accoda, e riscrive l'unica riga
+**Il `(<repo>)` non è decorativo**: il cockpit è cross-repo, e l'identità di un thread è la coppia
+`(branch, repo)`. Un thread senza repo non è «mio», è **non verificabile**, e `/end` non lo chiude
+mai — meglio una riga che resta di una lane viva cancellata perché un altro repo aveva un branch
+con lo stesso nome.
+
+Sostituisce la riga con la stessa chiave, altrimenti la accoda, e riscrive l'unica riga
 `Updated:` con data e owner. Ogni altro byte torna identico: le lane parcheggiate degli altri
 pannelli non si toccano. Il repo ospite non ha bisogno degli script del vault: il pacchetto ne spedisce una copia. Se
 nemmeno quella si risolve, **fermati e dillo** — non scrivere la riga a mano: appenderla è

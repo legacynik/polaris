@@ -32,6 +32,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from state_lines import kinds, read, section, write  # noqa: E402
 from state_lock import LockError, locked, still_mine, write_atomic  # noqa: E402
 from state_staleness import _lane_id  # noqa: E402  (sibling script, no package on disk)
 
@@ -50,15 +51,13 @@ class UpsertError(Exception):
 
 
 def _section(lines: list[str], door: str) -> tuple[int, int]:
-    """(first, last+1) line indices of the section body. Refuses rather than guessing."""
-    start = next((i for i, ln in enumerate(lines) if SECTIONS[door].match(ln)), None)
-    if start is None:
+    """The section body, via the shared fence-aware model. Refuses rather than guessing."""
+    span = section(lines, SECTIONS[door])
+    if span is None:
         raise UpsertError("NO_OPEN_SECTION",
                           f"no `{door}` section in this file — refusing to invent a place for "
                           "the line. Add the heading the contract expects, then re-run.")
-    stop = [i for i in range(start + 1, len(lines))
-            if HEADING.match(lines[i]) or lines[i].startswith(FOOTER)]
-    return start + 1, stop[0] if stop else len(lines)
+    return span
 
 
 def _carry_stamp(old: str, new: str, week: str) -> str:
@@ -70,8 +69,8 @@ def _carry_stamp(old: str, new: str, week: str) -> str:
 
 def _replace(lines: list[str], span: tuple[int, int], line: str) -> tuple[str, int]:
     """Overwrite the line with the same key, else append. Two matches refuse: see the module."""
-    key = _lane_id(line)
-    hits = [i for i in range(*span) if lines[i].strip() and _lane_id(lines[i]) == key]
+    key, tags = _lane_id(line), kinds(lines)
+    hits = [i for i in range(*span) if tags[i] == "thread" and _lane_id(lines[i]) == key]
     if len(hits) > 1:
         raise UpsertError("AMBIGUOUS_KEY",
                           f"{len(hits)} lines share the key {key!r} (lines "
@@ -89,7 +88,7 @@ def _replace(lines: list[str], span: tuple[int, int], line: str) -> tuple[str, i
 
 def _stamp_updated(lines: list[str], owner: str, now: str) -> None:
     """ONE `Updated:` line, overwritten. The history lives in the session log."""
-    keep = [i for i, ln in enumerate(lines) if UPDATED.match(ln)]
+    keep = [i for i, t in enumerate(kinds(lines)) if t == "updated"]
     fresh = f"Updated: {now} — @{owner}"
     if not keep:
         lines.insert(0, fresh)
@@ -102,7 +101,7 @@ def _stamp_updated(lines: list[str], owner: str, now: str) -> None:
 def upsert(path: Path, line: str, opts: argparse.Namespace) -> dict:
     """Read, place the line by key, write back. Every other byte comes back untouched."""
     still_mine(path)                  # the lock may have been stolen while we stalled
-    lines = path.read_text().splitlines()
+    lines, newline, bom = read(path)
     span = _section(lines, opts.door)
     if opts.door == "week":
         key = _lane_id(line)
@@ -113,7 +112,7 @@ def upsert(path: Path, line: str, opts: argparse.Namespace) -> dict:
     if opts.door == "thread":
         _stamp_updated(lines, opts.owner, opts.now)
     still_mine(path)                  # and again immediately before the write
-    write_atomic(path, "\n".join(lines) + "\n")
+    write_atomic(path, write(path, lines, newline, bom))
     return {"action": action, "key": _lane_id(line), "line": at + 1, "path": str(path)}
 
 

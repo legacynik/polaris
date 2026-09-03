@@ -26,8 +26,9 @@ import sys as _sys
 
 _sys.path.insert(0, __file__.rsplit('/', 1)[0])
 from merge_truth import git_merged  # noqa: E402  (sibling script, no package on disk)
-from state_lock import locked, write_atomic  # noqa: E402  (one lock, one writer)
-from state_upsert import _section  # noqa: E402
+from state_lines import kinds, section  # noqa: E402  (one line model)
+from state_prune import apply_cleanup  # noqa: E402  (judging and removing are two jobs)
+from state_upsert import SECTIONS  # noqa: E402
 
 # is_merged(branch) -> True (merged into origin/main), False (not), None (unverified). Injected for tests.
 MergeChecker = Callable[[str], "bool | None"]
@@ -41,12 +42,14 @@ _THREAD = re.compile(r"^-\s+`([^`]+)`(?:\s+\(([^)]+)\))?.*?(?:since\s+([\d-]+))?
 
 def parse_threads(text: str) -> list[dict]:
     """Threads from the `## Open` section: {branch, repo, since, line}. First backtick token = branch."""
-    out, in_open = [], False
-    for no, line in enumerate(text.splitlines()):
-        if line.startswith("## "):
-            in_open = line.strip().lower().startswith("## open")
+    lines = text.split("\n")
+    span = section(lines, SECTIONS["thread"])
+    tags = kinds(lines)
+    out = []
+    for no, line in enumerate(lines):
+        if span is None or not span[0] <= no < span[1] or tags[no] != "thread":
             continue
-        m = _THREAD.match(line) if in_open else None
+        m = _THREAD.match(line)
         if m:
             out.append({"branch": m.group(1), "repo": m.group(2) or "", "no": no,
                         "since": m.group(3) or "", "line": line})
@@ -59,19 +62,26 @@ def classify(threads: list[dict], is_merged: MergeChecker, here: str = "") -> di
     A thread carries the repo it belongs to and the cockpit is explicitly cross-repo. Judging
     a foreign branch against whatever repo was passed deletes live work whenever the name
     happens to exist here too, and then credits the local evidence to the other repo. A
-    foreign thread is UNVERIFIED, never closed: the burden of proof is on removing.
+    foreign thread is UNVERIFIED, never closed — and so is one that names NO repo, because
+    "unnamed" is not "mine": the burden of proof is on removing.
     """
     buckets: dict[str, list[dict]] = {"superseded": [], "unverified": [], "active": []}
-    for t in threads:
-        if t["branch"] in ("main", "master", ""):  # trunk threads aren't feature branches; leave to human
-            buckets["active"].append(t)
-            continue
-        if t["repo"] and here and t["repo"] != here:
-            buckets["unverified"].append(dict(t, why="other repository"))
-            continue
-        m = is_merged(t["branch"])
-        buckets["superseded" if m is True else "unverified" if m is None else "active"].append(t)
+    for th in threads:
+        bucket, extra = _bucket(th, is_merged, here)
+        buckets[bucket].append(dict(th, **extra))
     return buckets
+
+
+def _bucket(th: dict, is_merged: MergeChecker, here: str) -> tuple[str, dict]:
+    """Where this one thread belongs, and why if it could not be judged."""
+    if th["branch"] in ("main", "master", ""):     # trunk work is not a feature branch
+        return "active", {}
+    if not th["repo"]:
+        return "unverified", {"why": "no repository named"}
+    if here and th["repo"] != here:
+        return "unverified", {"why": "other repository"}
+    m = is_merged(th["branch"])
+    return ("superseded" if m is True else "unverified" if m is None else "active"), {}
 
 
 def report(buckets: dict[str, list[dict]]) -> str:
@@ -104,51 +114,6 @@ def reconcile(state_path: Path, repo_dir: str, apply: bool = False) -> str:
         return report(buckets)
     removed = apply_cleanup(state_path, buckets["superseded"])
     return f"{report(buckets)}\nAPPLIED: {removed} superseded thread(s) removed"
-
-
-def _thread_key(line: str) -> tuple[str, str] | None:
-    """(branch, repo) — the identity `classify` judges. The bare branch is NOT it: two repos
-    can carry `feat/login`, and collapsing them deleted a live foreign thread."""
-    m = _THREAD.match(line)
-    return (m.group(1), m.group(2) or "") if m else None
-
-
-def _survivors(lines: list[str], span: tuple[int, int], keys: set) -> list[str]:
-    """Every line except the settled threads inside `span` — header and everything under it.
-
-    Only a thread header ends a block. A blank line does not (children straddle it), and
-    neither does any other column-0 line: a code fence under a condemned thread used to
-    reset the flag and survive as an orphan.
-    """
-    keep, dropping = [], False
-    for i, ln in enumerate(lines):
-        if not span[0] <= i < span[1]:
-            keep.append(ln)                      # outside `## Open`: never ours to remove
-            continue
-        if (key := _thread_key(ln)) is not None:
-            dropping = key in keys
-        if not dropping:
-            keep.append(ln)
-    return keep
-
-
-def apply_cleanup(state_path: Path, superseded: list[dict]) -> int:
-    """Remove settled threads — header and children — by key, in `## Open`, under the lock.
-
-    Text-matching swept `## Next` too; parse-time indices were worse, because any write
-    between the read and the apply (another panel's /update, or the stamp collapsing three
-    stacked `Updated:` lines) shifted them and deleted a LIVE lane. Re-resolve by key on the
-    content about to be written, inside the writer's own lock, and replace atomically.
-    """
-    keys = {(t["branch"], t["repo"]) for t in superseded}
-    if not keys:
-        return 0
-    removed = len(keys)                          # threads, not lines: a thread has children
-    with locked(state_path):
-        lines = state_path.read_text().splitlines()
-        keep = _survivors(lines, _section(lines, "thread"), keys)
-        write_atomic(state_path, "\n".join(keep) + "\n")
-    return removed
 
 
 def _selfcheck() -> None:
