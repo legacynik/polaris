@@ -98,19 +98,17 @@ def main_worktree(start: Path) -> Path | None:
     return Path(first[len("worktree "):]) if first.startswith("worktree ") else None
 
 
-def cockpit(repo: Path) -> Path | None:
-    """The one cockpit of this repo: the migrated home if it exists, else the legacy path."""
-    root = _polaris_root(repo)
-    home = next(iter(sorted(root.glob("team/*/current.md"))), None)
-    return home or ((cur := root / "state" / "current.md").exists() and cur or None)
-
-
 def scan(repo: Path) -> None:
     rows = stray_currents(repo, repo) + branch_only_sessions(repo) + uncommitted_sessions(repo)
     print(f"## {repo.name}: " + ("tutto convergiuto su main ✓" if not rows else ""))
     for row in rows:
         print(row)
-    if cur := cockpit(repo):
+    # The one cockpit of this repo: the migrated home if it exists, else the legacy path.
+    root = _polaris_root(repo)
+    legacy = root / "state" / "current.md"
+    cur = next(iter(sorted(root.glob("team/*/current.md"))), None) or \
+        (legacy if legacy.exists() else None)
+    if cur:
         print(f"\n## Convergenza ({cur})")
         for line in cur.read_text().splitlines():
             if line.startswith(("Updated:", "- `", "## ")):

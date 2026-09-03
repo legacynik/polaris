@@ -139,9 +139,19 @@ never a cwd-relative `<polaris-root>/`, which is how a panel in a worktree grows
 there (gitignored per contract — `state/` is ephemeral; append-only, never pruned here). This is
 each contributor's per-repo cockpit — every contributor runs parallel panels, not just the founder.
 
-Additionally, if `$HOME/Desktop/All Vibe Proj/_polaris` exists (the founder vault) and is not the
-current root, ALSO append the FULL handoff
-to `<vault>/state/current-state.md` (gitignored, append-only — the everything-file: next steps, tasks, resume instructions, nothing compressed away). No vault → the per-repo cockpit is the only copy.
+Additionally, if this repo DECLARES a vault and it is not the current root, ALSO append the FULL
+handoff to `$VAULT/state/current-state.md` (gitignored, append-only — the everything-file: next
+steps, tasks, resume instructions, nothing compressed away):
+
+```bash
+VAULT="$(git config --get polaris.vault_root || true)"   # declared per repo, never guessed
+[ -n "$VAULT" ] && [ -d "$VAULT" ] && [ "$VAULT" != "$ROOT" ] || VAULT=""
+```
+
+No declaration, or a declared path that is not there → no second copy, and the per-repo cockpit is
+the only one. A literal path used to live here, which meant every install looked for a directory
+that exists on one machine and the public package carried a home directory. Set it once per repo:
+`git config polaris.vault_root <path>`, the same mechanism `polaris.login` already uses.
 
 ```markdown
 ## Session end: {YYYY-MM-DD HH:MM} · {repo} · {branch}{ · wt: <path>}
