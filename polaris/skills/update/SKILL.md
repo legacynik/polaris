@@ -3,7 +3,7 @@ name: update
 description: Polaris skill — record a short repository-first checkpoint during an active session. Trigger after meaningful progress, a blocker, a context switch, or on "checkpoint / save progress / /update".
 user-invocable: true
 model: sonnet
-version: 2.7.0
+version: 2.8.0
 invokes: [git-power]
 ---
 
@@ -124,8 +124,9 @@ printf '%s\n' "- \`<branch>\` — <stato in una riga> · since <YYYY-MM-DD>" \
 
 Sostituisce la riga con la stessa chiave di lane, altrimenti la accoda, e riscrive l'unica riga
 `Updated:` con data e owner. Ogni altro byte torna identico: le lane parcheggiate degli altri
-pannelli non si toccano. Senza lo script nel repo, applica la stessa regola a mano e **cerca la
-riga esistente prima di scriverne una**.
+pannelli non si toccano. Il repo ospite non ha bisogno degli script del vault: il pacchetto ne spedisce una copia. Se
+nemmeno quella si risolve, **fermati e dillo** — non scrivere la riga a mano: appenderla è
+esattamente il difetto che questo passo esiste per chiudere.
 
 Le prime righe del file sono le **priorità attive**: l'ordine del lavoro, non un archivio.
 `/end` resta l'unico che chiude un thread.

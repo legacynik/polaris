@@ -2,7 +2,7 @@
 name: plan-week
 description: Polaris skill — build your own weekly focus from live GitHub/Linear issues and current team ownership. You author it and you execute it; the lead may reorder priorities, but only red work waits for a named approver. Trigger at the start of a week, when the lead asks what you are picking up, or on "plan my week / propose work / weekly plan".
 user-invocable: true
-version: 1.1.0
+version: 1.2.0
 ---
 
 # /plan-week — propose one week of useful work
@@ -143,8 +143,13 @@ avanti che si ri-timbra fa sembrare nuovo del lavoro fermo da tre settimane, ed 
 segnale che serve per accorgersene.
 
 ```bash
+eval "$("${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/start/scripts/resume_paths.sh")"
+WEEKLY="$ROOT/team/$LOGIN/weeks/$(date +%G-W%V).md"
+UP="$ROOT/scripts/state_upsert.py"
+[ -f "$UP" ] || UP="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/update/scripts/state_upsert.py"
+[ -f "$UP" ] || { echo "STOP: state_upsert non risolto — non mergiare Active a mano"; exit 1; }
 printf '%s\n' "- #<issue> — <risultato in una riga>" \
-  | python3 "$ROOT/scripts/state_upsert.py" week "$WEEKLY" --week "W$(date +%V)"
+  | python3 "$UP" week "$WEEKLY" --week "W$(date +%V)"
 ```
 
 Sostituisce la riga con la stessa chiave portandosi dietro il suo `Added:` originale, e timbra con

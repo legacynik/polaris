@@ -2,7 +2,7 @@
 name: end
 description: Polaris skill — close a repository-first team session with a handoff, decisions/lessons written to the ledgers, a plan tick and a pathspec-only commit. Trigger when stopping work, before a multi-day pause, or on "wrap up / end session / /end".
 user-invocable: true
-version: 1.6.0
+version: 1.7.0
 invokes: [git-power]
 ---
 
@@ -221,12 +221,16 @@ Prima di potare, **misura e togli il superato** — è parte del ciclo, non un c
 deve ricordarsi:
 
 ```bash
-python3 "$ROOT/scripts/state_staleness.py" "$CURRENT"                 # verdetto per lane
-python3 "$ROOT/scripts/state_reconcile.py" "$CURRENT" --repo-dir "$MAIN_WT" --apply
+PS="$ROOT/scripts"; [ -f "$PS/state_reconcile.py" ] || PS="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/update/scripts"
+[ -f "$PS/state_reconcile.py" ] || { echo "STOP: nessuno script di stato risolto"; exit 1; }
+python3 "$PS/state_staleness.py" "$CURRENT"                 # verdetto per lane
+python3 "$PS/state_reconcile.py" "$CURRENT" --repo-dir "$MAIN_WT" --apply
 ```
 
-`--apply` rimuove **solo** i thread il cui branch è provatamente mergiato in `origin/main`; un
-branch non verificabile resta `unverified` e non si tocca. Il thread esce dal cockpit e **resta nel
+`--apply` rimuove **solo** i thread la cui PR risulta mergiata (`gh pr list --state merged`, con
+l'`headRefOid` che combacia): questo repo fa squash-merge, quindi l'ancestry non vede nulla. Senza
+`gh`, senza auth o su un thread che nomina **un altro repo**, il verdetto è `unverified` e la riga
+**resta**. Se lo script non si risolve, `/end` si ferma: non toglie thread a mano. Il thread esce dal cockpit e **resta nel
 session log**: il log è la storia, il cockpit è adesso.
 
 **Closing means REMOVING, not annotating.** A thread proven landed comes **out** of the file; a
@@ -243,10 +247,15 @@ fails on a second `Updated:` line and warns above the size.
 python3 "$HOME/.agents/skills/git-power/scripts/cantiere.py" census --repo "$MAIN_WT"
 ```
 
-Righe TSV `VERDETTO\tbranch\tpath\tnote`, exit 0 pulito / 1 c'è da agire / 2 errore (contratto
-T13). Ogni worktree **CLOSABLE** va elencato nell'handoff con il suo verdetto e la sua nota: chi
-riprende deve sapere cosa si può chiudere senza rileggere il grafo. `/end` **non chiude nulla** da
-sé — elenca, e la chiusura resta un atto esplicito.
+Il tool **installato oggi** stampa prosa italiana, una riga per elemento, con il verdetto fra
+parentesi quadre: `[pericoloso]`, `[vivo]`, `[mergiato-da-chiudere]`. Copia nell'handoff **le righe
+`[mergiato-da-chiudere]` e `[pericoloso]`**, verbatim, sotto una riga `**Cantiere**`: sono
+rispettivamente ciò che si può chiudere e ciò che ha lavoro non committato. `/end` **non chiude
+nulla** — elenca, e la chiusura resta un atto esplicito.
+
+Quando T13 (`polaris-os#254`) atterra, lo stesso comando emette TSV
+`VERDETTO\tbranch\tpath\tnote` con exit 0 pulito / 1 c'è da agire / 2 errore, e il verdetto da
+elencare diventa `CLOSABLE`. Leggi ciò che il comando stampa, non ciò che questa riga ricorda.
 
 **`state/goals.md` is NOT touched here.** Goals change by explicit decision, never by session
 inertia. If it is empty or untouched for more than 30 days, say so in the closing summary and ask
