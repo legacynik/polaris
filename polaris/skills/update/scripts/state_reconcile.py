@@ -26,11 +26,16 @@ import sys as _sys
 
 _sys.path.insert(0, __file__.rsplit('/', 1)[0])
 from merge_truth import git_merged  # noqa: E402  (sibling script, no package on disk)
-from state_staleness import _lane_id  # noqa: E402
-from state_upsert import _locked, _section, _write_atomic  # noqa: E402  (one lock, one writer)
+from state_lock import locked, write_atomic  # noqa: E402  (one lock, one writer)
+from state_upsert import _section  # noqa: E402
 
 # is_merged(branch) -> True (merged into origin/main), False (not), None (unverified). Injected for tests.
 MergeChecker = Callable[[str], "bool | None"]
+_SAMPLE = ("# Current\n## Open\n"
+           "- `feat/done-123` (_polaris) — shipped · since 2026-07-01\n"
+           "- `feat/live-456` (acme-web) — in progress · since 2026-07-18\n"
+           "- `main` (_polaris) — trunk work · since 2026-07-19\n"
+           "## Next\n- `feat/live-456`: next step\n")
 _THREAD = re.compile(r"^-\s+`([^`]+)`(?:\s+\(([^)]+)\))?.*?(?:since\s+([\d-]+))?\s*$")
 
 
@@ -101,15 +106,27 @@ def reconcile(state_path: Path, repo_dir: str, apply: bool = False) -> str:
     return f"{report(buckets)}\nAPPLIED: {removed} superseded thread(s) removed"
 
 
-def _survivors(lines: list[str], span: tuple[int, int], keys: set[str]) -> list[str]:
-    """Every line except the settled threads inside `span` — header and indented children."""
+def _thread_key(line: str) -> tuple[str, str] | None:
+    """(branch, repo) — the identity `classify` judges. The bare branch is NOT it: two repos
+    can carry `feat/login`, and collapsing them deleted a live foreign thread."""
+    m = _THREAD.match(line)
+    return (m.group(1), m.group(2) or "") if m else None
+
+
+def _survivors(lines: list[str], span: tuple[int, int], keys: set) -> list[str]:
+    """Every line except the settled threads inside `span` — header and everything under it.
+
+    Only a thread header ends a block. A blank line does not (children straddle it), and
+    neither does any other column-0 line: a code fence under a condemned thread used to
+    reset the flag and survive as an orphan.
+    """
     keep, dropping = [], False
     for i, ln in enumerate(lines):
         if not span[0] <= i < span[1]:
             keep.append(ln)                      # outside `## Open`: never ours to remove
             continue
-        if ln.strip() and not ln[:1].isspace():  # a thread header ends the previous block
-            dropping = _lane_id(ln) in keys      # a blank line does NOT: children straddle it
+        if (key := _thread_key(ln)) is not None:
+            dropping = key in keys
         if not dropping:
             keep.append(ln)
     return keep
@@ -123,35 +140,19 @@ def apply_cleanup(state_path: Path, superseded: list[dict]) -> int:
     stacked `Updated:` lines) shifted them and deleted a LIVE lane. Re-resolve by key on the
     content about to be written, inside the writer's own lock, and replace atomically.
     """
-    keys = {_lane_id(t["line"]) for t in superseded}
+    keys = {(t["branch"], t["repo"]) for t in superseded}
     if not keys:
         return 0
     removed = len(keys)                          # threads, not lines: a thread has children
-    with _locked(state_path):
+    with locked(state_path):
         lines = state_path.read_text().splitlines()
         keep = _survivors(lines, _section(lines, "thread"), keys)
-        _write_atomic(state_path, "\n".join(keep) + "\n")
+        write_atomic(state_path, "\n".join(keep) + "\n")
     return removed
 
 
-def _selfcheck_apply(txt: str, b: dict) -> None:
-    """--apply removes ONLY the superseded line; active/main/Next survive byte-for-byte."""
-    import tempfile
-    with tempfile.TemporaryDirectory() as d:
-        sp = Path(d) / "s.md"
-        sp.write_text(txt)
-        n = apply_cleanup(sp, b["superseded"])
-        after = sp.read_text()
-        assert n == 1 and "feat/done-123" not in after, after
-        assert "feat/live-456" in after and "`main`" in after and "## Next" in after, after
-
-
 def _selfcheck() -> None:
-    txt = ("# Current\n## Open\n"
-           "- `feat/done-123` (_polaris) — shipped · since 2026-07-01\n"
-           "- `feat/live-456` (acme-web) — in progress · since 2026-07-18\n"
-           "- `main` (_polaris) — trunk work · since 2026-07-19\n"
-           "## Next\n- `feat/live-456`: next step\n")
+    txt = _SAMPLE
     threads = parse_threads(txt)
     assert [t["branch"] for t in threads] == ["feat/done-123", "feat/live-456", "main"], threads
     fake = {"feat/done-123": True, "feat/live-456": False}.get  # merged / not / (main handled separately)
@@ -161,7 +162,14 @@ def _selfcheck() -> None:
     assert classify(threads, lambda _b: None)["unverified"][0]["branch"] == "feat/done-123"  # graceful
     out = report(b)
     assert "PROPOSE CLOSE" in out and "feat/done-123" in out and "feat/live-456" not in out.split("ACTIVE")[0]
-    _selfcheck_apply(txt, b)
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        sp = Path(d) / "s.md"
+        sp.write_text(txt)
+        n = apply_cleanup(sp, b["superseded"])
+        after = sp.read_text()
+        assert n == 1 and "feat/done-123" not in after, after
+        assert "feat/live-456" in after and "`main`" in after and "## Next" in after, after
     print("SELF-CHECK OK: parse Open, merged->superseded, main/unverified stay, propose-only, --apply surgical")
 
 

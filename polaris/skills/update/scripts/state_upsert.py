@@ -26,15 +26,13 @@ Reads the new line on stdin, prints a JSON receipt. Exit 2 rather than guessing 
 from __future__ import annotations
 
 import argparse
-import contextlib
 import json
-import os
 import re
 import sys
-import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from state_lock import LockError, locked, still_mine, write_atomic  # noqa: E402
 from state_staleness import _lane_id  # noqa: E402  (sibling script, no package on disk)
 
 HEADING = re.compile(r"^#{1,6}\s")
@@ -101,52 +99,9 @@ def _stamp_updated(lines: list[str], owner: str, now: str) -> None:
         del lines[i]
 
 
-def _claim(lock: Path, mine: str) -> bool:
-    """Create the lock carrying who holds it, or steal one older than 30s. False = busy."""
-    try:
-        fd = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-    except FileExistsError:
-        with contextlib.suppress(OSError):
-            if time.time() - lock.stat().st_mtime > 30:
-                lock.unlink()      # its holder is not coming back
-        return False
-    os.write(fd, mine.encode())
-    os.close(fd)
-    return True
-
-
-@contextlib.contextmanager
-def _locked(path: Path):
-    """One writer at a time: read-modify-write is not atomic, and six panels lost 7 of 60.
-
-    The lock carries WHO holds it. Without that, a holder that stalled past the stale age
-    and returned would unlink the lock its thief was using, and a third writer would walk
-    into the middle of someone's read-modify-write.
-    """
-    lock, mine = path.with_suffix(path.suffix + ".lock"), f"{os.getpid()}:{time.time_ns()}"
-    for _ in range(400):                     # ~20s, then a lock older than 30s is abandoned
-        if _claim(lock, mine):
-            break
-        time.sleep(0.05)
-    else:                                    # never proceed unlocked: that IS the lost update
-        raise UpsertError("LOCKED", f"{lock} held by another writer — nothing was written")
-    try:
-        yield
-    finally:
-        with contextlib.suppress(OSError):
-            if lock.read_text() == mine:     # only ever the one this process still holds
-                lock.unlink()
-
-
-def _write_atomic(path: Path, body: str) -> None:
-    """Same directory, then rename: a reader never sees a half-written cockpit."""
-    tmp = path.with_suffix(path.suffix + f".{os.getpid()}.tmp")
-    tmp.write_text(body)
-    os.replace(tmp, path)
-
-
 def upsert(path: Path, line: str, opts: argparse.Namespace) -> dict:
     """Read, place the line by key, write back. Every other byte comes back untouched."""
+    still_mine(path)                  # the lock may have been stolen while we stalled
     lines = path.read_text().splitlines()
     span = _section(lines, opts.door)
     if opts.door == "week":
@@ -157,32 +112,72 @@ def upsert(path: Path, line: str, opts: argparse.Namespace) -> dict:
     action, at = _replace(lines, span, line)
     if opts.door == "thread":
         _stamp_updated(lines, opts.owner, opts.now)
-    _write_atomic(path, "\n".join(lines) + "\n")
+    still_mine(path)                  # and again immediately before the write
+    write_atomic(path, "\n".join(lines) + "\n")
     return {"action": action, "key": _lane_id(line), "line": at + 1, "path": str(path)}
+
+
+def _selfcheck_thread(f: Path) -> list[bool]:
+    """Replace, append above the contract footer, one `Updated:` line, and a loud refusal."""
+    opts = argparse.Namespace(door="thread", owner="ada", now="2026-09-03", week="")
+    f.write_text(f"Updated: 2026-09-01 — @ada\n\n## Open\n\n- `a` — uno · since 2026-09-01\n\n{FOOTER}\n")
+    ok = []
+    with locked(f):
+        ok.append(upsert(f, "- `a` — due · since 2026-09-01", opts)["action"] == "replaced")
+        ok.append(f.read_text().count("`a`") == 1 and "due" in f.read_text())
+        ok.append(upsert(f, "- `b` — nuova · since 2026-09-03", opts)["action"] == "appended")
+    body = f.read_text()
+    ok.append(body.index("- `b`") < body.index(FOOTER))     # never under the file's contract
+    ok.append(body.count("Updated:") == 1 and "@ada" in body)
+    f.write_text("# nothing\n")
+    try:
+        with locked(f):
+            upsert(f, "- `z` — x", opts)
+        ok.append(False)                                    # must have refused
+    except UpsertError as exc:
+        ok.append(exc.code == "NO_OPEN_SECTION")
+    return ok
+
+
+def cmd_selfcheck() -> int:
+    """One fixture per branch that would silently corrupt a cockpit or a plan."""
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        f = Path(d) / "current.md"
+        ok = _selfcheck_thread(f)
+        f.write_text("## Active\n\n- #1 — x · Added: W32\n")
+        with locked(f):
+            upsert(f, "- #1 — y", argparse.Namespace(door="week", owner="", now="", week="W34"))
+        ok.append("Added: W32" in f.read_text())            # the stamp is carried, not reset
+    print(f"state_upsert selfcheck: {sum(ok)}/{len(ok)} branches OK")
+    return 0 if all(ok) else 1
 
 
 def _parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(description="upsert one line into a state or plan section")
-    ap.add_argument("door", choices=["thread", "week"],
+    ap.add_argument("door", nargs="?", choices=["thread", "week"],
                     help="thread: a lane in current.md's `Open`. week: an item in `Active`.")
-    ap.add_argument("path", type=Path)
+    ap.add_argument("path", nargs="?", type=Path)
     ap.add_argument("--owner", default="", help="thread: the login for the `Updated:` line")
     ap.add_argument("--now", default="", help="thread: ISO date for the `Updated:` line")
     ap.add_argument("--week", default="", help="week: the stamp for a genuinely new item")
+    ap.add_argument("--selfcheck", action="store_true")
     return ap
 
 
 def main() -> int:
     opts = _parser().parse_args()
+    if opts.selfcheck:
+        return cmd_selfcheck()
     line = sys.stdin.read().strip()
     if not line:
         print("state_upsert: nothing on stdin — a line to place is required", file=sys.stderr)
         return 2
     try:
-        with _locked(opts.path):
+        with locked(opts.path):
             print(json.dumps(upsert(opts.path, line, opts), indent=2))
-    except (UpsertError, OSError) as exc:
-        code = exc.code if isinstance(exc, UpsertError) else "UNREADABLE"
+    except (UpsertError, LockError, OSError) as exc:
+        code = getattr(exc, "code", "UNREADABLE")
         print(f"{code}: {exc}", file=sys.stderr)
         return 2
     return 0

@@ -39,3 +39,19 @@ def git_merged(branch: str, repo_dir: str) -> bool | None:
         return any(row.get("headRefOid") == tip.strip() for row in json.loads(prs))
     except (json.JSONDecodeError, AttributeError, TypeError):
         return None
+
+
+def cmd_selfcheck() -> int:
+    """Fail-closed is the whole contract: unverifiable must be None, never False."""
+    import tempfile
+    d = tempfile.mkdtemp()
+    ok = [git_merged("feat/nope", d) is None,          # no repo, no gh: unverifiable
+          _capture(["definitely-not-a-binary"], d) is None,
+          _capture(["true"], d) is not None]
+    print(f"merge_truth selfcheck: {sum(ok)}/{len(ok)} branches OK")
+    return 0 if all(ok) else 1
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(cmd_selfcheck())

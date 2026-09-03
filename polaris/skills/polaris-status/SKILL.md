@@ -148,8 +148,9 @@ one-confirm approval — you never mark or delete by hand.
    branch, which is free:
 
    ```bash
-   python3 "$CLAUDE_PLUGIN_ROOT/skills/update/scripts/state_reconcile.py" \
-     _polaris/state/current.md --repo-dir .
+   RC="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/update/scripts/state_reconcile.py"
+   [ -f "$RC" ] || { echo "STOP: state_reconcile non risolto — non potare a mano"; exit 1; }
+   python3 "$RC" _polaris/state/current.md --repo-dir .
    ```
 
    It flags threads whose branch is **merged into origin/main** (superseded, proven) vs active vs
