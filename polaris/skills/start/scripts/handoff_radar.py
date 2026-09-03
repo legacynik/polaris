@@ -91,11 +91,18 @@ def uncommitted_sessions(repo: Path) -> list[str]:
     return found[:8]
 
 
-def main_worktree(start: Path) -> Path | None:
-    """git lists the MAIN worktree first — the one home every cockpit resolves against."""
-    out = _git(start, "worktree", "list", "--porcelain")
-    first = out.splitlines()[0] if out else ""
-    return Path(first[len("worktree "):]) if first.startswith("worktree ") else None
+def cockpit(repo: Path) -> Path | None:
+    """THE cockpit of this repo for whoever is running it: the caller's migrated home, else
+    any migrated home, else the legacy file. Taking the alphabetically first `team/*/` printed
+    a colleague's cockpit and called it "the one cockpit of this repo"."""
+    root = _polaris_root(repo)
+    login = _git(repo, "config", "--local", "--get", "polaris.login").strip()
+    mine = root / "team" / login / "current.md" if login else None
+    legacy = root / "state" / "current.md"
+    if mine and mine.exists():
+        return mine
+    return next(iter(sorted(root.glob("team/*/current.md"))), None) or \
+        (legacy if legacy.exists() else None)
 
 
 def scan(repo: Path) -> None:
@@ -103,12 +110,7 @@ def scan(repo: Path) -> None:
     print(f"## {repo.name}: " + ("tutto convergiuto su main ✓" if not rows else ""))
     for row in rows:
         print(row)
-    # The one cockpit of this repo: the migrated home if it exists, else the legacy path.
-    root = _polaris_root(repo)
-    legacy = root / "state" / "current.md"
-    cur = next(iter(sorted(root.glob("team/*/current.md"))), None) or \
-        (legacy if legacy.exists() else None)
-    if cur:
+    if cur := cockpit(repo):
         print(f"\n## Convergenza ({cur})")
         for line in cur.read_text().splitlines():
             if line.startswith(("Updated:", "- `", "## ")):
@@ -120,16 +122,21 @@ def main() -> int:
     ap.add_argument("--repo", action="append", type=Path, default=[],
                     help="repository to scan; repeatable. Default: the repo of the cwd.")
     repos = [p.resolve() for p in ap.parse_args().repo]
-    if not repos:
-        here = main_worktree(Path.cwd())
-        if here is None:
+    if not repos:  # git lists the MAIN worktree first — the one home cockpits resolve against
+        first = (_git(Path.cwd(), "worktree", "list", "--porcelain").splitlines() or [""])[0]
+        if not first.startswith("worktree "):
             print("handoff_radar: not a git repository — pass --repo <path>", file=sys.stderr)
             return 2
-        repos = [here]
+        repos = [Path(first[len("worktree "):])]
+    # A named repo that is not one is a typo, not an all-clear: printing "tutto convergiuto"
+    # over a directory the radar cannot read is a false green.
+    for repo in repos:
+        if not _git(repo, "rev-parse", "--git-dir").strip():
+            print(f"handoff_radar: not a git repository: {repo}", file=sys.stderr)
+            return 2
     print("# Handoff radar — tutti gli end-of-session, tutti i panel\n")
     for repo in repos:
-        if repo.is_dir():
-            scan(repo)
+        scan(repo)
     return 0
 
 

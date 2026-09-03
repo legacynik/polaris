@@ -25,18 +25,17 @@ sits in. One home = appends from every panel land in one file, in time order; pe
 diverge on N branches and lose data at merge. Provenance lives in the block header (`wt:`/`branch:`).
 
 ```bash
-MAIN_WT="$(git worktree list --porcelain | head -1 | sed 's|^worktree ||')"
-ROOT="$MAIN_WT/_polaris"; [ -f "$ROOT/config.yml" ] || ROOT="$MAIN_WT"
-LOGIN="$(git config --local --get polaris.login || gh api user --jq .login)"
-CURRENT="$(python3 "$ROOT/scripts/state_home.py" path 2>/dev/null)"   # the one resolver (#212)
-[ -n "$CURRENT" ] || CURRENT="$ROOT/team/$LOGIN/current.md"           # same rule, no script needed
-[ -f "$CURRENT" ] || CURRENT="$ROOT/state/current.md"
+eval "$("${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/start/scripts/resume_paths.sh")"
 ```
 
-`$CURRENT` is THE cockpit of this repo — the migrated `team/<login>/current.md` when it exists, the
-legacy `state/current.md` otherwise — resolved by `$ROOT/scripts/state_home.py path` where the repo
-carries it, by the identical inline rule where it does not. Write `$CURRENT`, never a
-cwd-relative `state/current.md`: inside a worktree that path is gitignored and never comes back.
+One resolver, shared with `/start`: `MAIN_WT`, `ROOT`, `LOGIN`, `CURRENT` and `RADAR`. It exits
+non-zero rather than guessing — not a git checkout, no contract, no resolvable login all stop here
+instead of writing to an invented path. Three copies of this rule used to live in the package.
+
+
+`$CURRENT` is THE cockpit of this repo: the migrated `team/<login>/current.md` when it exists, the
+legacy `state/current.md` otherwise. Write `$CURRENT`, never a cwd-relative `state/current.md` —
+inside a worktree that path is gitignored and never comes back.
 
 ## State hygiene (every run — the skills are the writers AND the janitors)
 
