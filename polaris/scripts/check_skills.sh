@@ -16,7 +16,8 @@ for f in skills/*/SKILL.md; do
     *) echo "FAIL command: $name"; fail=1;;
   esac
   [[ "$desc" == "Polaris skill — "* ]] || { echo "FAIL desc prefix: $name"; fail=1; }
-  if grep -nE 'POLARIS_VAULT|Desktop/All Vibe Proj|pol-bootstrap|pol-report|pol-base-workflow' "$f"; then
+  BANNED='POLARIS_VAULT|Desktop/All Vibe Proj|pol-bootstrap|pol-report|pol-base-workflow'
+  if grep -nE "$BANNED" "$f"; then
     echo "FAIL legacy or founder-vault reference: $name"; fail=1
   fi
 done

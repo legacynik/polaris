@@ -109,6 +109,22 @@ cmd_due_done() {
   echo "checkpoint: $name → prossima $next"
 }
 
+# The first harvest of the day used to read the scratch from offset 0. On a multi-panel machine
+# that file is SHARED: measured 146 lines read, almost all of them another panel's flow
+# (polaris-os#89). The cap is on the FOREIGN prefix, never on position: every line carrying this
+# session's id is emitted wherever it sits, and the head is trimmed to fit what is left of the cap.
+# A cap applied by position would drop exactly the own-id line that arrived last.
+cmd_harvest_slice() {
+  resolve
+  local sid="${1:-${POLARIS_SID:-}}" from cap
+  [ -n "${SCRATCH:-}" ] && [ -f "$SCRATCH" ] || { echo "checkpoint: no scratch, nothing to read"; return 0; }
+  from="$(harvest_from)"; cap="${HARVEST_CAP:-40}"
+  awk -v from="$from" -v sid="$sid" -v cap="$cap" '
+    NR > from { line[++n] = $0; if (sid != "" && index($0, sid)) { own[n] = 1; o++ } }
+    END { head = cap - o; if (head < 0) head = 0
+          for (i = 1; i <= n; i++) if (own[i] || i <= head) print line[i] }' "$SCRATCH"
+}
+
 cmd_harvest_done() {
   resolve
   [ -n "${SCRATCH:-}" ] && [ -f "$SCRATCH" ] || { echo "checkpoint: no scratch, nothing to mark"; return 0; }
@@ -129,6 +145,7 @@ cmd_commit() {
 # verify exists because a step that lives only in prose eventually gets skipped —
 # including by whoever wrote the prose. Observed 2026-08-08: the author of the harvest
 # step skipped it on the same day he added it.
+# `verify [<checkpoint title>]` — the title binds the run to the cockpit; see the content gate.
 cmd_verify() {
   resolve
   local fail=0 today
@@ -171,6 +188,24 @@ cmd_verify() {
     if [ "${n_upd:-0}" -gt 1 ]; then
       echo "FAIL: $CUR has $n_upd 'Updated:' lines — keep the newest and overwrite it; the history belongs to the session log"; fail=1
     fi
+    # CONTENT, and bound to THIS run (polaris-os#84). An empty `touch` makes the file newer than
+    # the log and walks through the freshness gate above; a `sed -i` that only re-dates `Updated:`
+    # walks through a date-only gate. So the cockpit must carry today AND this contributor, and the
+    # title this run wrote must be the newest entry in the append-only session log. Per #240 the
+    # `Updated:` line is date and owner ONLY — the title lives in the log and in `Recent Context`,
+    # which is why the title is asserted THERE and the date HERE, one fact in each place.
+    if [ -f "$SESSION_LOG" ]; then
+      if [ "${n_upd:-0}" = "0" ]; then
+        echo "FAIL: $CUR has no 'Updated:' line but this session logged today — the checkpoint never reached the cockpit"; fail=1
+      elif ! grep -qE "^Updated: *$today.*@?$LOGIN([^A-Za-z0-9_-]|\$)" "$CUR"; then
+        echo "FAIL: $CUR carries '$(grep -m1 '^Updated:' "$CUR")' — expected '$today' and '@$LOGIN'; a touch is not a checkpoint, re-run the state_upsert step"; fail=1
+      fi
+      # The title is optional ONLY because an older caller does not pass it; when /update passes the
+      # entry it just wrote, a re-dated cockpit with no new log entry is caught here and nowhere else.
+      if [ -n "${TITLE:-}" ] && ! grep "^## " "$SESSION_LOG" | tail -1 | grep -qF -- "$TITLE"; then
+        echo "FAIL: the newest entry in $(basename "$SESSION_LOG") is not '$TITLE' — this run wrote no checkpoint, so nothing in the cockpit belongs to it"; fail=1
+      fi
+    fi
     # Size WARNs, never blocks. The file is frequently another panel's mid-session state,
     # and stranding that session costs more than one oversized file. /end owns the pruning.
     words=$(wc -w < "$CUR" | tr -d ' ')
@@ -209,7 +244,7 @@ cmd_selfcheck() {
     local name="$1" body="$2" want="$3" wantrc="$4" rc
     if [ -z "$body" ]; then rm -f "$tmp/_polaris/state/current.md"
     else printf '%b' "$body" > "$tmp/_polaris/state/current.md"; sleep 1; touch "$tmp/_polaris/state/current.md"; fi
-    out="$( cd "$tmp" && "$HERE/checkpoint.sh" verify 2>&1 )"; rc=$?
+    out="$( cd "$tmp" && "$HERE/checkpoint.sh" verify "${TITLE:-}" 2>&1 )"; rc=$?
     if [ "$rc" = "$wantrc" ] && printf '%s' "$out" | grep -qE "$want"; then
       pass=$((pass+1)); echo "  ok   $name"
     else
@@ -217,26 +252,44 @@ cmd_selfcheck() {
     fi
   }
 
+  local TODAY; TODAY="$(date +%F)"
   echo "checkpoint selfcheck — current.md gates"
   case_ "stacked Updated: lines are refused" \
-        "Updated: 2026-08-30 — a\nUpdated: 2026-08-31 — b\n# Priorita\n" \
+        "Updated: 2026-08-30 — a\nUpdated: $TODAY — b\n# Priorita\n" \
         "FAIL:.*2 'Updated:' lines" 1
   case_ "three stacked lines name the real count" \
         "Updated: a\nUpdated: b\nUpdated: c\n" \
         "FAIL:.*3 'Updated:' lines" 1
   case_ "one Updated: line passes" \
-        "Updated: 2026-08-31 — a\n# Priorita attive\n1. lane\n" \
-        "checkpoint: verified" 0
-  case_ "no Updated: line does not crash the gate" \
-        "# Priorita attive\n1. lane\n" \
+        "Updated: $TODAY — @probe\n# Priorita attive\n1. lane\n" \
         "checkpoint: verified" 0
   case_ "'Last Updated:' mid-line is not a state line" \
-        "Updated: a\nsee Last Updated: b below\n" \
+        "Updated: $TODAY — @probe\nsee Last Updated: b below\n" \
         "checkpoint: verified" 0
   case_ "absent current.md is skipped, not invented" "" "checkpoint: verified" 0
   case_ "oversized file warns with its own number" \
-        "Updated: a\n$(python3 -c 'print("word "*1600)')\n" \
+        "Updated: $TODAY — @probe\n$(python3 -c 'print("word "*1600)')\n" \
         "WARN: .*current\.md is ~[0-9]+ tokens" 0   # the gate names the RESOLVED cockpit
+
+  # polaris-os#84 — the bypasses this gate exists to close, one fixture each.
+  case_ "bypass 1: an empty touch on a stale cockpit" \
+        "Updated: 2026-08-30 — @probe\n# Priorita attive\n1. lane\n" \
+        "FAIL:.*a touch is not a checkpoint" 1
+  case_ "bypass 2: a cockpit re-dated by hand, with nobody's name on it" \
+        "Updated: $TODAY — a\n# Priorita attive\n1. lane\n" \
+        "FAIL:.*expected .*@probe" 1
+  case_ "bypass 3: no Updated: line at all, while the session logged today" \
+        "# Priorita attive\n1. lane\n" \
+        "FAIL:.*no 'Updated:' line" 1
+
+  # The run binding: the title /update just wrote must be the NEWEST entry in the log.
+  TITLE="probe entry" case_ "the title of this run is the newest log entry" \
+        "Updated: $TODAY — @probe\n1. lane\n" "checkpoint: verified" 0
+  TITLE="una cosa mai scritta" case_ "a re-dated cockpit with no checkpoint of ours is refused" \
+        "Updated: $TODAY — @probe\n1. lane\n" "FAIL:.*wrote no checkpoint" 1
+  # A login is matched EXACTLY: `@probeur` is a different person from `@probe`.
+  case_ "a longer login that merely starts with ours does not pass" \
+        "Updated: $TODAY — @probeur\n1. lane\n" "FAIL:.*expected .*@probe" 1
 
   echo "selfcheck: $pass passed, $fail failed"
   [ "$fail" = "0" ]
@@ -244,10 +297,11 @@ cmd_selfcheck() {
 
 case "${1:-}" in
   prepare)      cmd_prepare ;;
+  harvest-slice) shift; cmd_harvest_slice "${1:-}" ;;
   harvest-done) cmd_harvest_done ;;
   commit)       shift; cmd_commit "$@" ;;
   due-done)     shift; cmd_due_done "${1:-}" ;;
-  verify)       cmd_verify ;;
+  verify)       shift; TITLE="${1:-}" cmd_verify ;;
   --selfcheck)  cmd_selfcheck ;;
-  *) echo "usage: checkpoint.sh {prepare|due-done <name>|harvest-done|commit [path]|verify|--selfcheck}" >&2; exit 64 ;;
+  *) echo "usage: checkpoint.sh {prepare|due-done <name>|harvest-slice [sid]|harvest-done|commit [path]|verify [title]|--selfcheck}" >&2; exit 64 ;;
 esac

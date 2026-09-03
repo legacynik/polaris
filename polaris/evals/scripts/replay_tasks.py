@@ -9,11 +9,18 @@ green while testing nothing. Every run therefore prints, per case, whether it
 DISCRIMINATES, is a regression guard, or is dead weight.
 """
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
 
-VENDOR = Path("/Users/nichome/Desktop/All Vibe Proj/_polaris/vendor")
+# The vendored skillopt_sleep backend lives in the private OS repository, which is not this
+# package. Declare it per machine — a literal home directory in a public package looks for a
+# folder that exists on exactly one laptop, and ships that laptop's owner with it.
+VENDOR = Path(os.environ.get("POLARIS_VENDOR_DIR", Path.home() / ".polaris" / "vendor"))
+if not VENDOR.is_dir():
+    sys.exit(f"replay_tasks: no vendored skillopt_sleep at {VENDOR} — "
+             "set POLARIS_VENDOR_DIR to the checkout that carries it")
 sys.path.insert(0, str(VENDOR))
 
 from skillopt_sleep.backend import ClaudeCliBackend  # noqa: E402

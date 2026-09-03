@@ -2,7 +2,7 @@
 name: start
 description: Polaris skill — resume the current objective from the latest local handoff. First use also provisions your own team path.
 user-invocable: true
-version: 1.2.0
+version: 1.3.0
 ---
 
 # /start — resume, do not survey
@@ -29,9 +29,9 @@ plan's branch. Do not fetch to answer this question.
 eval "$("${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/start/scripts/resume_paths.sh")"
 ```
 
-`ROOT`, `LOGIN`, `CURRENT` (this repo's ONE cockpit) and `RADAR` all resolve against the MAIN
+`MAIN_WT`, `ROOT`, `LOGIN`, `CURRENT` (this repo's ONE cockpit) and `RADAR` all resolve against the MAIN
 worktree. Non-zero exit: read the message and stop, never guess a path. The script resolves the
-contract (`_polaris/config.yml`, else where the repository root is itself named `_polaris` and
+contract in `_polaris/` (`_polaris/config.yml`, else where the repository root is itself named `_polaris` and
 carries `./config.yml`,
 else stop and point to `docs/TEAM-ONBOARDING.md`) and the identity
 (`git config --local --get polaris.login`, else `gh auth status` and `gh api user --jq .login`
@@ -72,12 +72,13 @@ Read these local files, in order:
 2. `$ROOT/team/$LOGIN/weeks/$(date +%G-W%V).md` — outcome, branch, blocker, next proof. This is
    the contributor's own focus: brief it as active work, never as something
    awaiting permission. A `lead_review:` reorder is priority information; only a **red** item
-   waiting on its **named** approver is blocked. If the file is absent, say there is no current
-   weekly plan; its absence never blocks urgent or clearly-owned work.
-3. `$CURRENT` if present — only the current checkpoint and `## Open` item for this branch or
-   contributor. It is a pointer, not session history; never rewrite it from `/start`.
-4. The newest file in `$ROOT/team/$LOGIN/sessions/` — its handoff and concrete next action.
-   Do not scan `team/*/sessions/`.
+   waiting on its **named** approver is blocked. Absent file, say there is no current weekly plan;
+   that never blocks urgent or clearly-owned work.
+3. `$CURRENT` if present — the numbered `## Active Priorities`, then only the `## Open` item for
+   this branch or contributor. It is the repo's ONE cockpit and a pointer, not session history:
+   never rewrite it from `/start`, and never look for a second one beside it.
+4. The newest file in `$ROOT/team/<login>/sessions/` (`$ROOT/team/$LOGIN/sessions/`) — its handoff
+   and concrete next action. Do not scan `team/*/sessions/`.
 4b. `$ROOT/state/goals.md` if present — the goals the briefing anchors to. If empty or stale (>30 days
    untouched), ask once: "Goals aggiornati?". (Origin property; also mandated by the founder's
    global CLAUDE.md.)
@@ -87,15 +88,21 @@ Read these local files, in order:
    It surfaces the handoffs main cannot see: stray per-worktree `state/current.md`, session logs
    on unmerged branches, uncommitted logs in worktrees. Put any ⚠ rows under a
    `**Handoff sparsi**` line — with parallel panels that is the context that goes missing.
-   `RADAR=none` → inline fallback:
-   `git worktree list` → flag any `state/current.md` or `current-state.md` living in an extra
-   worktree (stray cockpit), and
+   `RADAR=none` → inline fallback: `git worktree list` to flag a stray `state/current.md` in an
+   extra worktree, and
    `git log --all --not main --since='14 days ago' --oneline -- '*sessions/*.md' | head -5`.
-6. **Cockpit tail (ALWAYS)** — the last 2 blocks of `$(dirname "$CURRENT")/current-state.md`:
-   the dense record with next steps. Prefer it for `Checkpoint`/`Next action` when fresher than
-   the session log.
+6. **The signals this repo already produces (ALWAYS)** — read-only, under a second:
 
-Do not read lessons, `.wiki/hot.md`, or unrelated files speculatively (decisions: last 5 only, per 4c). Memory is not
+   ```bash
+   python3 "${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/start/scripts/brief_signals.py" \
+     --root "$ROOT" --current "$CURRENT" --login "$LOGIN" --main-wt "$MAIN_WT"
+   ```
+
+   Each line is self-describing and appears only when it has something to say, so read what comes
+   back: todos, follow-ups due and `RECENT` go with the work, `DEFERRED`/`DRIFT`/`SECTIONS_MISSING`
+   under `**Segnali**`. A missing line is nothing to report, never an error.
+
+Do not read lessons, `.wiki/hot.md`, or unrelated files speculatively. Memory is not
 current state and recall is never mandatory at session start.
 
 Compare the local branch from Step 1 with the current plan's branch. If both are present and differ,

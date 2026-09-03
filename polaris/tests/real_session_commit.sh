@@ -9,8 +9,8 @@ cp -R "$SRC/skills/update/scripts" "$FAKE_HOME/.agents/skills/update/scripts"   
 
 # --- a real repo with the contract layout, a feature branch, and a linked worktree
 R="$W/repo"; mkdir -p "$R"; cd "$R" || exit 1
-git init -q -b main; git config user.email t@t; git config user.name t; git config polaris.login legacynik
-mkdir -p _polaris/team/legacynik/{sessions,weeks,handoff} _polaris/state .wiki/journal
+git init -q -b main; git config user.email t@t; git config user.name t; git config polaris.login acme-dev
+mkdir -p _polaris/team/acme-dev/{sessions,weeks,handoff} _polaris/state .wiki/journal
 printf '_polaris/state/current.md\n_polaris/state/current-state.md\n' > .gitignore
 echo "root: _polaris" > _polaris/config.yml
 git add .gitignore _polaris/config.yml; git commit -qm init
@@ -33,7 +33,7 @@ SC="${CLAUDE_PLUGIN_ROOT:-}/skills/update/scripts/session_commit.sh"
 [ -x "$SC" ] && ck ok "resolver finds the script on a skills-CLI (npx) machine, PLUGIN_ROOT unset" || ck no "resolver empty"
 
 # R1 main worktree parked on feat/y → checkpoint must DEFER, file must survive on disk
-LOG="$ROOT/team/legacynik/sessions/$(date +%F)-@legacynik.md"
+LOG="$ROOT/team/acme-dev/sessions/$(date +%F)-@acme-dev.md"
 echo "## 10:00 — checkpoint from the linked worktree" > "$LOG"
 cd "$MAIN_WT" || exit 1
 OUT="$("$SC" "$LOG" 2>&1)"; echo "$OUT" | grep -q deferred && ck ok "R1 defer on a parked feature branch" || ck no "R1 $OUT"
@@ -45,14 +45,14 @@ echo "SECRET=1" > .env; echo junk > junk.txt; git add -f .env junk.txt
 git checkout -q main
 OUT="$("$SC" "$LOG" 2>&1)"; echo "$OUT" | grep -q "committed on main" && ck ok "R2 deferred checkpoint lands on main" || ck no "R2 $OUT"
 git show --name-only --format= HEAD | grep -qE '\.env|junk.txt' && ck no "R2 dragged a foreign staged file" || ck ok "R2 no foreign drag (.env/junk excluded)"
-git show HEAD:"_polaris/team/legacynik/sessions/$(date +%F)-@legacynik.md" | grep -q "10:00" && ck ok "R2 content intact after defer→land" || ck no "R2 content lost"
+git show HEAD:"_polaris/team/acme-dev/sessions/$(date +%F)-@acme-dev.md" | grep -q "10:00" && ck ok "R2 content intact after defer→land" || ck no "R2 content lost"
 
 # R3 /end mode: ledgers + journal line, on main → committed together with the handoff subject
-echo "## $(date +%F) — decision (@legacynik)" > "$ROOT/decisions.md"
-echo "## $(date +%F) — lesson (@legacynik)" > "$ROOT/lessons.md"
-echo "session $(date +%F) @legacynik" > .wiki/journal/2026-07-26.md
-printf '# Handoff\n' > "$ROOT/team/legacynik/handoff/$(date +%F).md"
-OUT="$("$SC" --end "$LOG" "$ROOT/team/legacynik/handoff/$(date +%F).md" "$ROOT/decisions.md" "$ROOT/lessons.md" ".wiki/journal/2026-07-26.md" 2>&1)"
+echo "## $(date +%F) — decision (@acme-dev)" > "$ROOT/decisions.md"
+echo "## $(date +%F) — lesson (@acme-dev)" > "$ROOT/lessons.md"
+echo "session $(date +%F) @acme-dev" > .wiki/journal/2026-07-26.md
+printf '# Handoff\n' > "$ROOT/team/acme-dev/handoff/$(date +%F).md"
+OUT="$("$SC" --end "$LOG" "$ROOT/team/acme-dev/handoff/$(date +%F).md" "$ROOT/decisions.md" "$ROOT/lessons.md" ".wiki/journal/2026-07-26.md" 2>&1)"
 git log -1 --format=%s | grep -q "session handoff" && ck ok "R3 --end commits with the handoff subject" || ck no "R3 $OUT"
 for f in _polaris/decisions.md _polaris/lessons.md .wiki/journal/2026-07-26.md; do
   git show --name-only --format= HEAD | grep -qx "$f" && ck ok "R3 --end committed $f" || ck no "R3 missing $f"
@@ -83,7 +83,7 @@ else
   grep -q "20:00" "$LOG" && ck ok "R7 checkout carried the deferred append to main" || ck no "R7 append silently dropped by checkout"
 fi
 "$SC" "$LOG" >/dev/null 2>&1
-git show HEAD:"_polaris/team/legacynik/sessions/$(date +%F)-@legacynik.md" | grep -q "20:00" && ck ok "R7 the deferred append finally lands on main" || ck no "R7 never landed"
+git show HEAD:"_polaris/team/acme-dev/sessions/$(date +%F)-@acme-dev.md" | grep -q "20:00" && ck ok "R7 the deferred append finally lands on main" || ck no "R7 never landed"
 
 # R6 neither install path present → resolver empty, so the skill must fall back to the manual rule
 SC2="${CLAUDE_PLUGIN_ROOT:-}/skills/update/scripts/session_commit.sh"

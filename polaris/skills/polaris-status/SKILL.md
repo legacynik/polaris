@@ -2,7 +2,7 @@
 name: polaris-status
 description: Polaris skill — render an explicit, comprehensive status across a portfolio or one product repository, including live Git/GitHub pulse, active outcomes, team collisions, freshness, memory health, and the highest-leverage next move. Use for "polaris status", "pol status", "status completo", cross-repo priorities, portfolio briefing, or an explicit request to see everything. Do not use for "start", "resume", "continue", session recovery, or a single implementation task — `/start` is a local resume-only workflow.
 user-invocable: true
-version: 1.1.0
+version: 1.2.0
 ---
 
 # /polaris-status — observe the whole system
@@ -130,15 +130,15 @@ one-confirm approval — you never mark or delete by hand.
    ```bash
    R="$ROOT/state"
    OPEN=$(sed -n '/^## Open/,/^## Next/p' "$R/current.md" | grep -c '^- ')
-   printf 'current.md: %s thread aperti, %s byte · cockpit: %s blocchi, %s byte\n' \
-     "$OPEN" "$(wc -c <"$R/current.md")" \
-     "$(grep -c '^## ' "$R/current-state.md" 2>/dev/null)" "$(wc -c <"$R/current-state.md" 2>/dev/null)"
+   RING=$(sed -n '/^## Recent Context/,/^## /p' "$R/current.md" | grep -c '^### ')
+   printf 'current.md: %s thread aperti, %s byte · Recent Context: %s voci\n' \
+     "$OPEN" "$(wc -c <"$R/current.md")" "$RING"
    ```
 
    Thresholds (report the numbers, never act on them alone): **>10 open threads** or **>8 KB** in
-   `current.md` → the file is carrying finished work. **>20 blocks** or **>50 KB** in
-   `current-state.md` → the cockpit needs rotating (a file that grows every checkpoint makes every
-   reader more expensive over time). Under threshold: say "state healthy", print nothing else, and
+   `current.md` → the file is carrying finished work. **more than 5 `Recent Context` entries** →
+   something is writing that section without its cap, which is how the previous dense surface grew
+   to 188 KB before anyone noticed it had died. Under threshold: say "state healthy", print nothing else, and
    **skip straight to step 2** — the investigation below is not free and a short file does not need it.
 
    Over threshold: state the numbers and ask ONE question — *"investigate which threads are already

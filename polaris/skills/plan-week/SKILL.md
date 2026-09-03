@@ -2,7 +2,7 @@
 name: plan-week
 description: Polaris skill — build your own weekly focus from live GitHub/Linear issues and current team ownership. You author it and you execute it; the lead may reorder priorities, but only red work waits for a named approver. Trigger at the start of a week, when the lead asks what you are picking up, or on "plan my week / propose work / weekly plan".
 user-invocable: true
-version: 1.2.0
+version: 1.3.0
 ---
 
 # /plan-week — propose one week of useful work
@@ -135,25 +135,54 @@ outcome that matters), `## Not starting` (what is deliberately deferred, visible
 `## Evidence` (proof of done with its date). Keep them identical to the template so the plan reads the
 same across the team.
 
-## Step 6b — Merge `Active` without re-stamping what was already there
+## Step 6b — Riconcilia `state/todos.md`, la vista viva della settimana
 
-Il piano della settimana ha una sezione `## Active` e ogni riga porta `· Added: W<settimana>`: la
-settimana in cui il lavoro è **comparso**, non quella in cui è stato ritoccato. Un item portato
-avanti che si ri-timbra fa sembrare nuovo del lavoro fermo da tre settimane, ed è esattamente il
-segnale che serve per accorgersene.
+Il piano committato (`team/<login>/weeks/YYYY-Www.md`) è **storia**: possiede l'impegno e non si
+riscrive mai. `state/todos.md` è **stato**: la fetta di quel piano che è viva adesso, riconciliata
+ogni lunedì. Stesso taglio append/overwrite che il repo ha già fra session log e `current.md`, un
+piano sopra. Se la repo ospite non ha `state/todos.md`, copialo da
+`$CLAUDE_PLUGIN_ROOT/templates/repo-contract/state/todos.md` e riempilo dal piano — vuoto, se il
+piano non esiste: una vista onesta di un piano che non c'è è vuota, non inventata.
+
+Il file è nella forma donor a **tabelle** (`| Task | Added | Context |`) e la seconda cella di
+`## Active` è `Added`: la settimana in cui il lavoro è **comparso**, non quella in cui è stato
+ritoccato. Un item portato avanti che si ri-timbra fa sembrare nuovo del lavoro fermo da tre
+settimane, ed è esattamente il segnale che serve per accorgersene.
+
+**Tre comandi toccano questo file e ognuno possiede una mossa sola** (la tabella nel template lo
+dichiara, ed è la stessa frase): `plan-week` **riconcilia** `Active` e rolla `Completed`; `/update`
+aggiorna il **testo** di una riga che il thread cita, e non ne aggiunge (`--no-add`); `/end` sposta
+in `Completed` una riga atterrata. Nessuno dei tre ri-timbra `Added`, nessuno azzera `Active`.
 
 ```bash
 eval "$("${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/start/scripts/resume_paths.sh")"
-WEEKLY="$ROOT/team/$LOGIN/weeks/$(date +%G-W%V).md"
-UP="$ROOT/scripts/state_upsert.py"
-[ -f "$UP" ] || UP="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/update/scripts/state_upsert.py"
+WEEKLY="$ROOT/team/$LOGIN/weeks/$(date +%G-W%V).md"   # the committed plan: the SOURCE of the view
+TODOS="$ROOT/state/todos.md"                          # the live view: what this step reconciles
+UP="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/update/scripts/state_upsert.py"
 [ -f "$UP" ] || { echo "STOP: state_upsert non risolto — non mergiare Active a mano"; exit 1; }
-printf '%s\n' "- #<issue> — <risultato in una riga>" \
-  | python3 "$UP" week "$WEEKLY" --week "W$(date +%V)"
+printf '%s\n' "| #<issue> — <risultato in una riga> | | <context> |" \
+  | python3 "$UP" week "$TODOS" --week "W$(date +%V)"
 ```
 
 Sostituisce la riga con la stessa chiave portandosi dietro il suo `Added:` originale, e timbra con
 la settimana corrente **solo** ciò che non c'era. Gli altri item tornano byte-identici.
+
+**`Active` non si azzera mai** — azzerarla mangerebbe il lavoro in volo. Una riga esce per un solo
+motivo: il suo lavoro è atterrato davvero, e a toglierla è `/end`, non questo passo. Quello che
+questo passo pota è `## Completed`, che vale **solo per la settimana corrente**:
+
+```bash
+TODOS="$ROOT/state/todos.md"
+python3 "${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/update/scripts/todos_roll.py" \
+  "$TODOS" --now "$(date +%F)"
+```
+
+Lo stesso comando fa la **promozione** che dà senso a `## Follow-ups`, l'unica sezione che attraversa
+le settimane: quando la sua `Review Date` è arrivata, la riga **torna in `Active`** — timbrata con la
+settimana in cui è scaduta, non con quella corrente, perché `Added` porta l'età dell'item e non la
+data dell'ultimo tocco. È la ragione per cui questo file sta accanto a GitHub invece di duplicarlo:
+una issue può essere aperta, non può essere *dormiente fino a una data*. `/start` mostra le righe
+scadute il giorno stesso (`FOLLOWUP_DUE=`), e il roll le sposta al prossimo `plan-week`.
 
 ## Step 7 — Ownership boundary (the plan does not wait for permission)
 
