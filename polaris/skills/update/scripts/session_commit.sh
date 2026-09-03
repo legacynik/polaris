@@ -164,9 +164,9 @@ commit_end() { _commit end "$@"; }
 
 _selfcheck() {
     local d; d="$(mktemp -d)"; cd "$d" || exit 1
-    git init -q; git config user.email t@t; git config user.name t; git config polaris.login legacynik
-    mkdir -p team/legacynik/sessions state
-    local LOG=team/legacynik/sessions/2026-07-19.md
+    git init -q; git config user.email t@t; git config user.name t; git config polaris.login acme-dev
+    mkdir -p team/acme-dev/sessions state
+    local LOG=team/acme-dev/sessions/2026-07-19.md
     echo init > README; git add README; git commit -qm init
     local DEF; DEF="$(git rev-parse --abbrev-ref HEAD)"   # this repo's default branch (init.defaultBranch)
 

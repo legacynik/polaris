@@ -3,6 +3,67 @@
 All notable changes to Polaris Team OS. The installed version is pinned in
 `polaris/.claude-plugin/plugin.json`.
 
+## Unreleased
+
+### Added
+- `start` 1.3.0: **the three signals the system already computed and never showed**
+  (`polaris-os#243`), plus the two surfaces the donor's four-file form landed with no reader
+  (`#240`). One shipped script, `start/scripts/brief_signals.py`, prints a line ONLY when it has
+  something to say: `TODOS_ACTIVE`/`TODO`/`FOLLOWUP_DUE` from `state/todos.md`, `RECENT` from the
+  `## Recent Context` ring, `DEFERRED` (the `polaris-deferred` spool, counted under the git COMMON
+  dir so a worktree sees the same number), `DRIFT` (the branch the MAIN worktree is parked on plus
+  the count of modified files that are not this contributor's) and `SECTIONS_MISSING`. A repo
+  without `state/todos.md` gets one line and exit 0, never an error.
+  **Feature-detect for the typed backbone** (`#155`): `PACK=<id>` appears only where the host repo
+  carries both `decisions/manifest.json` and `scripts/contextpack.py`; everywhere else the brief is
+  exactly what it was. The `/start` word budget moved 900 → 940 ONCE for this step, declared in the
+  test; the byte cap did not move.
+- `end` 1.11.0: **`## Recent Context` is a real ring again** — `update/scripts/recent_context.py`,
+  cap 5, newest first, idempotent, and every byte outside the section comes back identical. It
+  replaces the per-repo `state/current-state.md` append: that surface was measured at 188 KB /
+  93 blocks, last written nine days before anyone noticed it had died. `current-state.md` survives
+  ONLY as the declared cross-repo vault copy (`git config polaris.vault_root`), explicitly not a
+  cockpit and never authority.
+- `end` 1.11.0: **closing means removing** — `update/scripts/state_close.py close` takes the thread
+  out of `## Open`, moves its `state/todos.md` row from `## Active` to `## Completed` with today's
+  date, and collapses `Updated:` to date and owner. An unknown key exits 2 and touches nothing.
+  Automatic removal stays PARKED on `polaris-os#268` (`merge_truth` answers `None` once the branch
+  ref is gone, the normal case after `--delete-branch`): `state_close.py candidates` lists the
+  threads citing an issue or a PR, read-only, and the human closes them one line at a time.
+- `update` 2.10.0: **the todo of the week follows the thread** — a checkpoint that advances a row in
+  `state/todos.md` updates THAT row through `state_upsert.py week`, carrying its original `· Added:`
+  stamp. The stamp is the age signal; re-stamping makes three-week-old work read as news.
+- `plan-week` 1.3.0: Step 6b now reconciles `state/todos.md` (the live view) instead of writing
+  `## Active` into the weekly plan, which has no such section — the merge could never have run.
+  `## Completed` is rolled to the current week only (`state_close.py week-roll`); `## Active` is
+  never zeroed and `## Follow-ups`, the only section that crosses weeks, is never touched.
+- Templates for the host repo's state contract: `templates/repo-contract/state/{current,todos,goals}.md`.
+  `todos.md` uses BULLET rows, not the donor's tables: the package ships ONE fence-aware line parser
+  (`state_lines.py`) and every writer asks it what a line is — a table row would need a second
+  notion of "line", which is the exact root cause that once made seven state writers disagree.
+
+### Fixed
+- `update` 2.10.0: **`verify` reads content, not mtime** (`polaris-os#84`). An empty `touch` made the
+  cockpit newer than the session log and walked straight through the freshness gate. The `Updated:`
+  line must now carry TODAY. Per `#240` that line is date and owner ONLY, so the content asserted is
+  the date, not `#84`'s original title-in-`Updated:` form — the checkpoint title lives in the session
+  log and in `Recent Context`. Two selfcheck cases added (7 → 9), one per branch.
+- `update` 2.10.0: **the first harvest of the day is capped** (`polaris-os#89`).
+  `checkpoint.sh harvest-slice <sid>` emits every line carrying this session's id wherever it sits,
+  plus the head of the delta up to `HARVEST_CAP` (40). The cap is on the FOREIGN prefix, never on
+  position: a positional cap drops exactly the own-id line that arrived last. Measured on the
+  issue's fixture: 150-line scratch, 80% foreign → 38 lines read, 30/30 own lines kept.
+- Release hygiene (`polaris#5`): the package no longer ships a founder machine path
+  (`evals/scripts/replay_tasks.py` now reads `POLARIS_VENDOR_DIR`) or a real GitHub login in a
+  fixture (`session_commit.sh` and `tests/real_session_commit.sh` use `acme-dev`). The perimeter
+  test walks the tree instead of holding a list, and skips only lines marked `perimeter-guard`.
+
+### Unchanged, and declared
+- **plan-tick: RESTORE holds** (`polaris-os#85`) — the state declared in 0.20.0 stands, and it now
+  has a gate that proves it: an existing weekly plan left unticked fails `checkpoint.sh verify`.
+  The other state is provably absent: nowhere does this changelog declare the tick superseded, and
+  the apex `/update` row keeps the words "tick del plan".
+
 ## 0.20.0 — 2026-08-18
 
 ### Fixed

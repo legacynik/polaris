@@ -109,6 +109,22 @@ cmd_due_done() {
   echo "checkpoint: $name → prossima $next"
 }
 
+# The first harvest of the day used to read the scratch from offset 0. On a multi-panel machine
+# that file is SHARED: measured 146 lines read, almost all of them another panel's flow
+# (polaris-os#89). The cap is on the FOREIGN prefix, never on position: every line carrying this
+# session's id is emitted wherever it sits, and the head is trimmed to fit what is left of the cap.
+# A cap applied by position would drop exactly the own-id line that arrived last.
+cmd_harvest_slice() {
+  resolve
+  local sid="${1:-${POLARIS_SID:-}}" from cap
+  [ -n "${SCRATCH:-}" ] && [ -f "$SCRATCH" ] || { echo "checkpoint: no scratch, nothing to read"; return 0; }
+  from="$(harvest_from)"; cap="${HARVEST_CAP:-40}"
+  awk -v from="$from" -v sid="$sid" -v cap="$cap" '
+    NR > from { line[++n] = $0; if (sid != "" && index($0, sid)) { own[n] = 1; o++ } }
+    END { head = cap - o; if (head < 0) head = 0
+          for (i = 1; i <= n; i++) if (own[i] || i <= head) print line[i] }' "$SCRATCH"
+}
+
 cmd_harvest_done() {
   resolve
   [ -n "${SCRATCH:-}" ] && [ -f "$SCRATCH" ] || { echo "checkpoint: no scratch, nothing to mark"; return 0; }
@@ -171,6 +187,16 @@ cmd_verify() {
     if [ "${n_upd:-0}" -gt 1 ]; then
       echo "FAIL: $CUR has $n_upd 'Updated:' lines — keep the newest and overwrite it; the history belongs to the session log"; fail=1
     fi
+    # CONTENT, not mtime (polaris-os#84). An empty `touch` makes the file newer than the log and
+    # walks straight through the gate above — measured as the bypass that closes this hole. So the
+    # `Updated:` line must actually carry TODAY: the checkpoint's own stamp, written by
+    # state_upsert.py, not a timestamp anybody can forge with one command. Per #240 that line is
+    # date and owner ONLY — the checkpoint title lives in the session log and in `Recent Context`,
+    # so the content asserted here is the date, not #84's original title-in-Updated form.
+    # Fires only where an `Updated:` line exists: a cockpit shaped otherwise is a different case.
+    if [ -f "$SESSION_LOG" ] && [ "${n_upd:-0}" = "1" ] && ! grep -q "^Updated:.*$today" "$CUR"; then
+      echo "FAIL: $CUR carries '$(grep -m1 '^Updated:' "$CUR")' but this session logged today — a touch is not a checkpoint; re-run the state_upsert step"; fail=1
+    fi
     # Size WARNs, never blocks. The file is frequently another panel's mid-session state,
     # and stranding that session costs more than one oversized file. /end owns the pruning.
     words=$(wc -w < "$CUR" | tr -d ' ')
@@ -217,26 +243,36 @@ cmd_selfcheck() {
     fi
   }
 
+  local TODAY; TODAY="$(date +%F)"
   echo "checkpoint selfcheck — current.md gates"
   case_ "stacked Updated: lines are refused" \
-        "Updated: 2026-08-30 — a\nUpdated: 2026-08-31 — b\n# Priorita\n" \
+        "Updated: 2026-08-30 — a\nUpdated: $TODAY — b\n# Priorita\n" \
         "FAIL:.*2 'Updated:' lines" 1
   case_ "three stacked lines name the real count" \
         "Updated: a\nUpdated: b\nUpdated: c\n" \
         "FAIL:.*3 'Updated:' lines" 1
   case_ "one Updated: line passes" \
-        "Updated: 2026-08-31 — a\n# Priorita attive\n1. lane\n" \
+        "Updated: $TODAY — a\n# Priorita attive\n1. lane\n" \
         "checkpoint: verified" 0
   case_ "no Updated: line does not crash the gate" \
         "# Priorita attive\n1. lane\n" \
         "checkpoint: verified" 0
   case_ "'Last Updated:' mid-line is not a state line" \
-        "Updated: a\nsee Last Updated: b below\n" \
+        "Updated: $TODAY\nsee Last Updated: b below\n" \
         "checkpoint: verified" 0
   case_ "absent current.md is skipped, not invented" "" "checkpoint: verified" 0
   case_ "oversized file warns with its own number" \
-        "Updated: a\n$(python3 -c 'print("word "*1600)')\n" \
+        "Updated: $TODAY\n$(python3 -c 'print("word "*1600)')\n" \
         "WARN: .*current\.md is ~[0-9]+ tokens" 0   # the gate names the RESOLVED cockpit
+
+  # polaris-os#84 — the two cases the content gate adds. A touch moves mtime and nothing else:
+  # the first case is exactly the bypass, the second proves the gate still passes a real one.
+  case_ "content gate: a stale Updated: line is refused however fresh the file is" \
+        "Updated: 2026-08-30 — a\n# Priorita attive\n1. lane\n" \
+        "FAIL:.*a touch is not a checkpoint" 1
+  case_ "content gate: today's stamp passes" \
+        "Updated: $TODAY — @probe\n# Priorita attive\n1. lane\n" \
+        "checkpoint: verified" 0
 
   echo "selfcheck: $pass passed, $fail failed"
   [ "$fail" = "0" ]
@@ -244,10 +280,11 @@ cmd_selfcheck() {
 
 case "${1:-}" in
   prepare)      cmd_prepare ;;
+  harvest-slice) shift; cmd_harvest_slice "${1:-}" ;;
   harvest-done) cmd_harvest_done ;;
   commit)       shift; cmd_commit "$@" ;;
   due-done)     shift; cmd_due_done "${1:-}" ;;
   verify)       cmd_verify ;;
   --selfcheck)  cmd_selfcheck ;;
-  *) echo "usage: checkpoint.sh {prepare|due-done <name>|harvest-done|commit [path]|verify|--selfcheck}" >&2; exit 64 ;;
+  *) echo "usage: checkpoint.sh {prepare|due-done <name>|harvest-slice [sid]|harvest-done|commit [path]|verify|--selfcheck}" >&2; exit 64 ;;
 esac

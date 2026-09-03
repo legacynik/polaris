@@ -2,7 +2,7 @@
 name: end
 description: Polaris skill — close a repository-first team session with a handoff, decisions/lessons written to the ledgers, a plan tick and a pathspec-only commit. Trigger when stopping work, before a multi-day pause, or on "wrap up / end session / /end".
 user-invocable: true
-version: 1.10.0
+version: 1.11.0
 invokes: [git-power]
 ---
 
@@ -19,7 +19,7 @@ git status --short                 # what actually changed this session
 
 ## One home (write-target for ALL session-state)
 
-Every write in this skill — session log, handoff file, plan tick, `current.md`, `current-state.md`,
+Every write in this skill — session log, handoff file, plan tick, `current.md`,
 decisions/lessons appends — lands in the **MAIN worktree**, whichever worktree/branch this panel
 sits in. One home = appends from every panel land in one file, in time order; per-worktree copies
 diverge on N branches and lose data at merge. Provenance lives in the block header (`wt:`/`branch:`).
@@ -128,19 +128,31 @@ Repo: <repo> · wt: <worktree name or main> · branch: <branch> · commits: <sha
 ## Risks / do-not-touch
 ```
 
-This file is committed shared history (Step 5 includes it). The cockpit block stays the dense
-personal view; THIS is the structured one a teammate (or you in 3 days) resumes from.
+This file is committed shared history (Step 5 includes it). The cockpit carries the thin index and
+the capped summary; THIS is the structured one a teammate (or you in 3 days) resumes from.
 
-### Step 1c — Cockpit append (dense session state, every contributor)
+### Step 1c — `## Recent Context` (the session summary, capped at five)
 
-ALWAYS append the same dense block to `$ROOT/state/current-state.md` — the resolved MAIN worktree,
-never a cwd-relative `<polaris-root>/`, which is how a panel in a worktree grows a second cockpit
-there (gitignored per contract — `state/` is ephemeral; append-only, never pruned here). This is
-each contributor's per-repo cockpit — every contributor runs parallel panels, not just the founder.
+The repo has ONE cockpit, `$CURRENT`, and inside it ONE place for session summaries. `/end` is the
+only writer of that section — `/update` never touches it — and it is a ring: five entries, newest
+first, exactly the donor's cap. There is no second per-repo cockpit to append to: a dense file that
+only grows is the surface that died at 188 KB while everyone kept reading `current.md`.
+
+```bash
+RC="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/update/scripts/recent_context.py"
+python3 "$RC" "$CURRENT" --entry "### $(date +%F) — <cosa lascia questa sessione, una riga>"
+```
+
+Three surfaces, three jobs: `Updated:` carries date and owner, THIS section carries the summary,
+the session log carries the full handoff. Exit 2 means the cockpit has no `## Recent Context`
+section — add the heading the contract declares (`templates/repo-contract/state/current.md`), never
+let the entry land at EOF.
 
 Additionally, if this repo DECLARES a vault and it is not the current root, ALSO append the FULL
-handoff to `$VAULT/state/current-state.md` (gitignored, append-only — the everything-file: next
-steps, tasks, resume instructions, nothing compressed away):
+handoff to `$VAULT/state/current-state.md` (gitignored, append-only — the CROSS-REPO everything-file:
+next steps, tasks, resume instructions, nothing compressed away). It is explicitly NOT a cockpit and
+never authority: the authority of this repo's state is `$CURRENT`, and the vault copy exists only so
+work done here is visible from there.
 
 ```bash
 VAULT="$(git config --get polaris.vault_root || true)"   # declared per repo, never guessed
@@ -163,8 +175,9 @@ that exists on one machine and the public package carried a home directory. Set 
 ### Resume instructions   ← come riprendere ESATTAMENTE: worktree, branch, comando, primo passo
 ```
 
-This block is IN ADDITION to the thread line in `current.md` (thin index) and the committed
-session log (team history). The cockpit file is where "tutto" lives.
+That block is written ONLY into the declared vault, and it is IN ADDITION to the thread line in
+`current.md` (thin index), the `## Recent Context` entry (summary) and the committed session log
+(team history). Where no vault is declared, those three are the whole record and nothing is missing.
 
 ## Step 2 — Tick the plan
 
@@ -217,18 +230,37 @@ by branch, nothing open lost, other panels' threads and `Next` lines untouched) 
 difference. **`/end` is the only Team OS command with closing authority**, and it spends it against
 ground truth rather than impression.
 
-Prima di potare, **elenca i candidati e chiudi a mano**. La rimozione automatica dei thread
-superati è parcheggiata su `task/T6-prune-parked` (`polaris-os#202`): dipende da una verità di
-merge che sopravviva a un branch cancellato dopo il merge, e quella non è ancora provata. Finché
-quel ramo non regge, `/end` **non cancella nulla da solo**: leggi i thread di `$CURRENT`, verifica
-su GitHub quali PR sono mergiate, e togli quelle righe con la stessa mano che scrive l'handoff.
+Prima di potare, **elenca i candidati e decidi a mano quali sono chiusi davvero**. La rimozione
+AUTOMATICA è parcheggiata su `polaris-os#268`, ramo `task/T6-prune-parked`: `merge_truth` risponde `None` quando il ref locale
+del branch non esiste più, che è il caso NORMALE dopo un merge con `--delete-branch` — un rimotore
+così riporterebbe successo senza togliere nulla. Quindi il comando elenca, e la verifica resta tua:
+
+```bash
+CL="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/update/scripts/state_close.py"
+python3 "$CL" candidates "$CURRENT"
+```
+
+Ogni `CANDIDATE=` è un thread che cita una issue o una PR: controllane lo stato su GitHub con i tre
+comandi più sotto. Per ognuno **provato mergiato**, e solo per quelli, chiudilo — la chiusura è un
+atto esplicito, uno per riga, mai un giro in blocco:
+
+```bash
+python3 "$CL" close "$CURRENT" --key "<branch>" --todos "$ROOT/state/todos.md" \
+  --owner "$LOGIN" --now "$(date +%F)"
+```
+
+Toglie la riga da `## Open`, sposta la sua riga di `state/todos.md` da `## Active` a `## Completed`
+con la data di oggi, e riduce `Updated:` a **data e owner**. `Active` non si azzera mai e `Added:`
+non si ri-timbra: le altre righe tornano byte-identiche. Una chiave che non nomina un thread solo
+esce `2` e non tocca niente — meglio un rerun che la lane sbagliata cancellata. Senza
+`state/todos.md` il passo funziona lo stesso e lo dice (`"todo": "skipped"`).
 
 **Closing means REMOVING, not annotating.** A thread proven landed comes **out** of the file; a
 `~~struck~~` line that stays is still tokens the next session reads and reconciles. Donor: marvin
 `end.md` step 5, `Update State (MANDATORY)` — *«Mark completed items as done or remove them»*,
 *«Ensure open threads reflect reality (remove resolved, add new)»*. Same pass:
-collapse the state line to **one** `Updated:` — date, login, one clause on what changed — and let the
-history live in the session log. Target after pruning: under 2,000 tokens; `checkpoint.sh verify`
+collapse the state line to **one** `Updated:` — date and login, nothing else: the clause on what
+changed belongs to `## Recent Context`, and the full story to the session log. Target after pruning: under 2,000 tokens; `checkpoint.sh verify`
 fails on a second `Updated:` line and warns above the size.
 
 ### Il censimento del cantiere entra nell'handoff

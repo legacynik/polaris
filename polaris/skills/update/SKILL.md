@@ -3,7 +3,7 @@ name: update
 description: Polaris skill — record a short repository-first checkpoint during an active session. Trigger after meaningful progress, a blocker, a context switch, or on "checkpoint / save progress / /update".
 user-invocable: true
 model: sonnet
-version: 2.9.0
+version: 2.10.0
 invokes: [git-power]
 ---
 
@@ -17,8 +17,9 @@ Root, login, branch, worktree, session-log path, **`CURRENT` (the cockpit)**, ha
 hygiene sweep all come from that command. If it fails, read its message and stop — never guess a
 path. `prepare` resolves `CURRENT` through `$ROOT/scripts/state_home.py path` when the repo carries
 it and applies the identical rule inline when it does not; either way it is the MAIN worktree's
-cockpit, never this panel's. Use `$CURRENT` verbatim — a cwd-relative `state/current.md` written
-from a worktree is gitignored there and never comes back.
+cockpit, never this panel's. Use `$CURRENT` verbatim: **Resolve it from the MAIN worktree, always**
+— a cwd-relative `state/current.md` written from a worktree is gitignored there and never comes
+back. Un secondo cockpit dentro un worktree è una casa che **nobody will ever read**.
 
 ## The entry
 
@@ -73,9 +74,19 @@ non è verificabile, scrivilo — è la parte che tra tre settimane evita di ri-
 
 ## Harvest del delta
 
-`prepare` ha stampato `HARVEST_FROM`. Leggi lo scratch **solo da quell'offset** — mai tutto il file.
-Ciò che trovi diventa `Key context`. Poi `"$CHECKPOINT" harvest-done` sposta il watermark: si sposta
-comunque, harvestato o no, altrimenti ogni run successivo ripropone gli stessi byte.
+Non leggere lo scratch a mano: su una macchina multi-panel quel file è **condiviso**, e il primo
+harvest della giornata partiva da riga 0 — 146 righe lette, quasi tutte flusso di altri pannelli
+(`polaris-os#89`). Il comando taglia per te:
+
+```bash
+"$CHECKPOINT" harvest-slice "$POLARIS_SID"    # o l'id di questa sessione, se non è in ambiente
+```
+
+Emette **tutte** le righe che portano il tuo session id, ovunque stiano nel file, più la testa del
+delta fino al tetto (`HARVEST_CAP`, 40 di default). Il tetto è sul prefisso altrui, mai sulla
+posizione: un tetto posizionale butterebbe proprio la tua riga arrivata per ultima. Ciò che trovi
+diventa `Key context`. Poi `"$CHECKPOINT" harvest-done` sposta il watermark: si sposta comunque,
+harvestato o no, altrimenti ogni run successivo ripropone gli stessi byte.
 
 ## Lessons e decisioni: scrivi nell'archivio, proponi per l'apex
 
@@ -115,7 +126,8 @@ ledger e cresce; il cockpit è **stato** e si sovrascrive — anche se la riga p
 un altro pannello o un altro giorno. Il costo in token non è il cancello: dieci lane vive vanno
 bene, una riga vecchia no.
 
-Non farlo a mano — la riga si posa per chiave:
+**Reconcile, never blind-overwrite**: si legge il file com'è e si posa UNA riga per chiave, senza
+toccare le lane degli altri pannelli. Non farlo a mano:
 
 ```bash
 UP="$ROOT/scripts/state_upsert.py"
@@ -125,19 +137,48 @@ printf '%s\n' "- \`<branch>\` (<repo>) — <stato in una riga> · since <YYYY-MM
   | python3 "$UP" thread "$CURRENT" --owner "$LOGIN" --now "$(date +%F)"
 ```
 
-**Il `(<repo>)` non è decorativo**: il cockpit è cross-repo, e l'identità di un thread è la coppia
-`(branch, repo)`. Un thread senza repo non è «mio», è **non verificabile**, e `/end` non lo chiude
+**Il `(<repo>)` non è decorativo**: il cockpit è cross-repo, e — dove `the branch is a thread's
+identity` — l'identità completa è la coppia `(branch, repo)`. Un thread senza repo non è «mio», è **non verificabile**, e `/end` non lo chiude
 mai — meglio una riga che resta di una lane viva cancellata perché un altro repo aveva un branch
 con lo stesso nome.
 
 Sostituisce la riga con la stessa chiave, altrimenti la accoda, e riscrive l'unica riga
-`Updated:` con data e owner. Ogni altro byte torna identico: le lane parcheggiate degli altri
-pannelli non si toccano. Il repo ospite non ha bisogno degli script del vault: il pacchetto ne spedisce una copia. Se
+`Updated:` con data e owner. Ogni altro byte torna identico: la lane di un altro pannello è
+sua — `never overwrite it with yours`. **Nothing open is ever lost.**
+
+**Never trim a live thread to make the file smaller.** Una riga che sembra vecchia non è
+`stale?` finché non lo provi: una lane parcheggiata su un branch vivo è lavoro normale, e quella
+riga `may be the only copy of a handoff` che il session log, committato su un branch non mergiato,
+non consegna a nessuno. Se non è tua, `not yours to remove` — e anche se lo è, a toglierla è
+`/end` contro la verità di git, non `/update` per fare spazio. Il repo ospite non ha bisogno degli script del vault: il pacchetto ne spedisce una copia. Se
 nemmeno quella si risolve, **fermati e dillo** — non scrivere la riga a mano: appenderla è
 esattamente il difetto che questo passo esiste per chiudere.
 
-Le prime righe del file sono le **priorità attive**: l'ordine del lavoro, non un archivio.
-`/end` resta l'unico che chiude un thread.
+Le prime righe del file sono le **priorità attive** (`## Active Priorities`): l'ordine del lavoro,
+non un archivio. I thread stanno sotto `## Open`, uno per riga, ed è lì che l'upsert posa la sua. La riga
+`Updated:` porta **data e owner**, nient'altro: il riassunto della sessione sta in
+`## Recent Context` (lo scrive `/end`) e l'handoff completo nel session log. `verify` legge il
+CONTENUTO di quella riga, non la data del file: un `touch` a vuoto non è un checkpoint.
+
+**`/update` has no closing authority**, never closes anything, and only `/end` may remove a
+thread — aggiunge e segnala; `/end` resta
+l'unico che chiude un thread, sposta una riga in `Completed` o scrive in `Recent Context`. Il log
+della giornata sta in `team/<login>/sessions/`, e cresce sempre: quello è il ledger.
+
+## Il todo della settimana segue il thread
+
+Se il checkpoint fa avanzare un item che sta in `## Active` di `state/todos.md`, aggiorna **quella
+riga**, non ne aggiungere una seconda:
+
+```bash
+printf '%s\n' "- #<issue> — <stato in una riga>" \
+  | python3 "${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/update/scripts/state_upsert.py" \
+      week "$ROOT/state/todos.md" --week "W$(date +%V)"
+```
+
+Si porta dietro il `· Added:` originale: quel timbro dice **da quante settimane** una cosa non si
+fa, ed è il segnale che serve per accorgersene — ri-timbrarlo fa sembrare nuovo del lavoro fermo da
+tre settimane. Nessun `state/todos.md` nella repo: nessun passo, zero rumore.
 
 ## Landing
 

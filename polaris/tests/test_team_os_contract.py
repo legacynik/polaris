@@ -96,7 +96,7 @@ def test_every_command_is_repo_first_and_not_founder_vault_based() -> None:
         text = skill.read_text()
         assert "user-invocable: true" in text
         assert "POLARIS_VAULT" not in text
-        assert "Desktop/All Vibe Proj" not in text
+        assert "Desktop/All Vibe Proj" not in text  # perimeter-guard
 
 
 def test_the_new_commands_have_one_shared_team_contract() -> None:
@@ -193,9 +193,12 @@ def test_start_is_a_bounded_local_resume_not_a_status_command() -> None:
     assert "`language:`" in start
     # Structural budget: the v0.8.1 start skill was 10,949 bytes / 1,667 words.
     # Keep the resume contract small enough that future features cannot silently
-    # turn it back into a status dashboard.
+    # turn it back into a status dashboard. The word cap moved 900 -> 940 exactly
+    # once, for the declared signals step (polaris-os#243): one command whose output
+    # is self-describing, so the skill carries the routing and not the vocabulary.
+    # The BYTE cap did not move — a step that needs more prose than this fails here.
     assert len(start.encode()) <= 7_000
-    assert len(start.split()) <= 900
+    assert len(start.split()) <= 940
 
 
 def test_codex_review_findings_stay_fixed() -> None:
@@ -273,7 +276,9 @@ def test_current_md_converges_on_the_main_worktree_nothing_open_lost() -> None:
 
     for writer in (update, end):
         # Mechanical resolution — main worktree is the first entry of the list.
-        assert "git worktree list --porcelain | head -1" in writer
+        # The resolver moved out of the prose into the shipped scripts, where a model in a
+        # hurry cannot skip it; `checkpoint.sh`/`resume_paths.sh` carry the porcelain rule now.
+        assert "checkpoint.sh" in writer or "resume_paths.sh" in writer
         assert "MAIN_WT" in writer
     assert "Resolve it from the MAIN worktree, always" in update
     assert "nobody will ever read" in flat
@@ -282,7 +287,10 @@ def test_current_md_converges_on_the_main_worktree_nothing_open_lost() -> None:
     # which is also what makes /end's merge check possible without any panel
     # having to know which others are alive.
     assert "the branch is a thread's identity" in flat
-    assert "`feat/123-short-name`: <one concrete first step>" in update
+    # The thread-line format the shipped body documents TODAY: the pair (branch, repo) plus the
+    # `since` stamp. The old `feat/123-short-name: <one concrete first step>` example predates
+    # both, and pinning it would keep the test green against a format nothing writes.
+    assert r"- \`<branch>\` (<repo>) — <stato in una riga> · since <YYYY-MM-DD>" in update
     assert "never overwrite it with yours" in flat
 
     assert "Nothing open is ever lost" in flat
@@ -640,3 +648,35 @@ def test_onboarding_contains_a_real_tooling_preflight() -> None:
         "codebase-memory-mcp",
     ):
         assert required in onboarding
+
+
+def test_the_shipped_tree_carries_no_machine_path_and_no_real_login() -> None:
+    """polaris#5 — the public package never leaves the private perimeter.
+
+    A walk, not a list: a guard that names seven files has a hole the size of the eighth.
+    The repository's OWN public slug in the installer and the plugin author URL is identity,
+    not leakage, so those two files are named explicitly.
+    """
+    allowed = {"polaris/bin/polaris-update", "polaris/.claude-plugin/plugin.json"}
+    needles = re.compile(r"/Users/|All Vibe|nichome|legacynik")  # perimeter-guard
+    offenders = []
+    for path in ROOT.rglob("*"):
+        relative = path.relative_to(ROOT.parent).as_posix()
+        if not path.is_file() or relative in allowed or "__pycache__" in relative:
+            continue
+        try:
+            text = path.read_text(encoding="utf-8")
+        except (UnicodeDecodeError, OSError):
+            continue
+        offenders += [f"{relative}:{n}" for n, line in enumerate(text.splitlines(), 1)
+                      if needles.search(line) and "perimeter-guard" not in line]
+    assert offenders == [], f"the package ships a private-perimeter string: {offenders}"
+
+
+def test_the_state_templates_a_host_repo_needs_are_shipped() -> None:
+    for name in ("current.md", "todos.md", "goals.md"):
+        assert (TEMPLATES / "state" / name).is_file(), f"no template for state/{name}"
+    todos = (TEMPLATES / "state" / "todos.md").read_text()
+    for section in ("## Active", "## Completed", "## Follow-ups"):
+        assert section in todos
+    assert "## Recent Context" in (TEMPLATES / "state" / "current.md").read_text()
