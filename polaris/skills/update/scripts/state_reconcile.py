@@ -26,6 +26,8 @@ import sys as _sys
 
 _sys.path.insert(0, __file__.rsplit('/', 1)[0])
 from merge_truth import git_merged  # noqa: E402  (sibling script, no package on disk)
+from state_staleness import _lane_id  # noqa: E402
+from state_upsert import _locked, _section, _write_atomic  # noqa: E402  (one lock, one writer)
 
 # is_merged(branch) -> True (merged into origin/main), False (not), None (unverified). Injected for tests.
 MergeChecker = Callable[[str], "bool | None"]
@@ -99,19 +101,38 @@ def reconcile(state_path: Path, repo_dir: str, apply: bool = False) -> str:
     return f"{report(buckets)}\nAPPLIED: {removed} superseded thread(s) removed"
 
 
-def apply_cleanup(state_path: Path, superseded: list[dict]) -> int:
-    """Remove ONLY the confirmed-superseded thread lines, BY POSITION inside `## Open`.
+def _survivors(lines: list[str], span: tuple[int, int], keys: set[str]) -> list[str]:
+    """Every line except the settled threads inside `span` — header and indented children."""
+    keep, dropping = [], False
+    for i, ln in enumerate(lines):
+        if not span[0] <= i < span[1]:
+            keep.append(ln)                      # outside `## Open`: never ours to remove
+            continue
+        if ln.strip() and not ln[:1].isspace():  # a thread header, not one of its children
+            dropping = _lane_id(ln) in keys
+        elif not ln.strip():
+            dropping = False                     # a blank line ends the thread
+        if not dropping:
+            keep.append(ln)
+    return keep
 
-    Dropping by exact text swept the whole file: an identical line under `## Next` or in
-    another panel's block went with it, and the count was `len` of a set — it reported 1
-    while removing 2. The parser already knows which line it read; that index is the only
-    safe handle. Returns the number of lines actually removed.
+
+def apply_cleanup(state_path: Path, superseded: list[dict]) -> int:
+    """Remove settled threads — header and children — by key, in `## Open`, under the lock.
+
+    Text-matching swept `## Next` too; parse-time indices were worse, because any write
+    between the read and the apply (another panel's /update, or the stamp collapsing three
+    stacked `Updated:` lines) shifted them and deleted a LIVE lane. Re-resolve by key on the
+    content about to be written, inside the writer's own lock, and replace atomically.
     """
-    drop = {t["no"] for t in superseded if "no" in t}
-    lines = state_path.read_text().splitlines()
-    kept = [ln for i, ln in enumerate(lines) if i not in drop]
-    state_path.write_text("\n".join(kept) + "\n")
-    return len(lines) - len(kept)
+    keys = {_lane_id(t["line"]) for t in superseded}
+    if not keys:
+        return 0
+    with _locked(state_path):
+        lines = state_path.read_text().splitlines()
+        keep = _survivors(lines, _section(lines, "thread"), keys)
+        _write_atomic(state_path, "\n".join(keep) + "\n")
+    return len(lines) - len(keep)
 
 
 def _selfcheck_apply(txt: str, b: dict) -> None:

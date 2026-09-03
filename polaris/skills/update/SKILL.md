@@ -118,8 +118,11 @@ bene, una riga vecchia no.
 Non farlo a mano — la riga si posa per chiave:
 
 ```bash
+UP="$ROOT/scripts/state_upsert.py"
+[ -f "$UP" ] || UP="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/update/scripts/state_upsert.py"
+[ -f "$UP" ] || { echo "STOP: state_upsert non risolto — non scrivere la riga a mano"; exit 1; }
 printf '%s\n' "- \`<branch>\` — <stato in una riga> · since <YYYY-MM-DD>" \
-  | python3 "$ROOT/scripts/state_upsert.py" thread "$CURRENT" --owner "$LOGIN" --now "$(date +%F)"
+  | python3 "$UP" thread "$CURRENT" --owner "$LOGIN" --now "$(date +%F)"
 ```
 
 Sostituisce la riga con la stessa chiave di lane, altrimenti la accoda, e riscrive l'unica riga
