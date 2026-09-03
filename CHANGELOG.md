@@ -54,6 +54,28 @@ All notable changes to Polaris Team OS. The installed version is pinned in
   instead of the blocks of a dense file that no longer exists.
 
 ### Fixed
+- The shipped line model reads the donor's tables the way the donor writes them, and a section ends
+  where the donor ends it. `state_lines.section()` now stops at a horizontal `---` rule, not only at
+  a heading or the contract sentinel: the shipped `current.md`/`todos.md` separate sections with
+  rules, so a finder that only knew the sentinel ran to EOF — `/end` wrote the `Completed` row
+  BELOW the rule, outside the table, and `/update` appended a thread under the contract line. One
+  rule, one place, four consumers. An escaped pipe (`a\|b`) is content, not a cell boundary: the
+  old split shredded the task name and shifted every later cell left, silently eating the `Added`
+  stamp.
+- `## Recent Context` dedup compares first line with first line. It compared a SAVED entry's first
+  line against a WHOLE incoming block, so it only ever fired on one-line entries: a second `/end`
+  in the same session duplicated its own entry and evicted a real session out of the ring.
+- `/start`'s `DEFERRED=` signal fires at all. `session_commit.sh` spools NESTED (the repo path under
+  the branch it deferred from) and the reader used a flat `iterdir()`, so the count was zero forever
+  and the signal never appeared once since it landed.
+- `/end` validates the todos file before touching the cockpit, and all THREE `cantiere.py` call
+  sites resolve through the same chain with `[ -f ]` and a declared degrade line — two of them
+  hardcoded `$HOME/.agents` with no guard and broke a half-finished `/end` with a raw Python error
+  on a machine without `git-power`.
+- `verify` matches the login EXACTLY: `@adalberto` no longer passes the gate for `ada`.
+- `plan-week` keeps the promise `state/todos.md` makes: a `Follow-up` whose Review Date has arrived
+  returns to `## Active`, stamped with the week it CAME DUE. The template claimed it, `plan-week`
+  denied it, and no code did it.
 - `update` 2.10.0: **`verify` binds the cockpit to the run** (`polaris-os#84`). Three bypasses, three
   fixtures: an empty `touch` (mtime moves, nothing else), a cockpit re-dated by hand with nobody's
   name on it, and a cockpit with no `Updated:` line at all while the session logged today. The line
@@ -82,6 +104,28 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 ## 0.20.0 — 2026-08-18
 
 ### Fixed
+- The shipped line model reads the donor's tables the way the donor writes them, and a section ends
+  where the donor ends it. `state_lines.section()` now stops at a horizontal `---` rule, not only at
+  a heading or the contract sentinel: the shipped `current.md`/`todos.md` separate sections with
+  rules, so a finder that only knew the sentinel ran to EOF — `/end` wrote the `Completed` row
+  BELOW the rule, outside the table, and `/update` appended a thread under the contract line. One
+  rule, one place, four consumers. An escaped pipe (`a\|b`) is content, not a cell boundary: the
+  old split shredded the task name and shifted every later cell left, silently eating the `Added`
+  stamp.
+- `## Recent Context` dedup compares first line with first line. It compared a SAVED entry's first
+  line against a WHOLE incoming block, so it only ever fired on one-line entries: a second `/end`
+  in the same session duplicated its own entry and evicted a real session out of the ring.
+- `/start`'s `DEFERRED=` signal fires at all. `session_commit.sh` spools NESTED (the repo path under
+  the branch it deferred from) and the reader used a flat `iterdir()`, so the count was zero forever
+  and the signal never appeared once since it landed.
+- `/end` validates the todos file before touching the cockpit, and all THREE `cantiere.py` call
+  sites resolve through the same chain with `[ -f ]` and a declared degrade line — two of them
+  hardcoded `$HOME/.agents` with no guard and broke a half-finished `/end` with a raw Python error
+  on a machine without `git-power`.
+- `verify` matches the login EXACTLY: `@adalberto` no longer passes the gate for `ada`.
+- `plan-week` keeps the promise `state/todos.md` makes: a `Follow-up` whose Review Date has arrived
+  returns to `## Active`, stamped with the week it CAME DUE. The template claimed it, `plan-week`
+  denied it, and no code did it.
 - `update` 2.3.0: **the plan tick is back — the SECOND undeclared drop of the v2.0.0
   rewrite (498ed70), restored by founder verdict (polaris-os#85: plans are the roadmap).**
   Owed ONLY when `team/<login>/weeks/<current-week>.md` exists: absent file, zero noise
@@ -93,6 +137,28 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 ## 0.19.0 — 2026-08-18
 
 ### Fixed
+- The shipped line model reads the donor's tables the way the donor writes them, and a section ends
+  where the donor ends it. `state_lines.section()` now stops at a horizontal `---` rule, not only at
+  a heading or the contract sentinel: the shipped `current.md`/`todos.md` separate sections with
+  rules, so a finder that only knew the sentinel ran to EOF — `/end` wrote the `Completed` row
+  BELOW the rule, outside the table, and `/update` appended a thread under the contract line. One
+  rule, one place, four consumers. An escaped pipe (`a\|b`) is content, not a cell boundary: the
+  old split shredded the task name and shifted every later cell left, silently eating the `Added`
+  stamp.
+- `## Recent Context` dedup compares first line with first line. It compared a SAVED entry's first
+  line against a WHOLE incoming block, so it only ever fired on one-line entries: a second `/end`
+  in the same session duplicated its own entry and evicted a real session out of the ring.
+- `/start`'s `DEFERRED=` signal fires at all. `session_commit.sh` spools NESTED (the repo path under
+  the branch it deferred from) and the reader used a flat `iterdir()`, so the count was zero forever
+  and the signal never appeared once since it landed.
+- `/end` validates the todos file before touching the cockpit, and all THREE `cantiere.py` call
+  sites resolve through the same chain with `[ -f ]` and a declared degrade line — two of them
+  hardcoded `$HOME/.agents` with no guard and broke a half-finished `/end` with a raw Python error
+  on a machine without `git-power`.
+- `verify` matches the login EXACTLY: `@adalberto` no longer passes the gate for `ada`.
+- `plan-week` keeps the promise `state/todos.md` makes: a `Follow-up` whose Review Date has arrived
+  returns to `## Active`, stamped with the week it CAME DUE. The template claimed it, `plan-week`
+  denied it, and no code did it.
 - `update` 2.2.0: **the `state/current.md` reconcile step is back.** The v2.0.0 rewrite
   (498ed70, released in 0.17.0) silently dropped "Step 3 — Reconcile state/current.md"
   without a changelog line — the removal is hereby declared, late. Consequence observed
@@ -158,6 +224,28 @@ All notable changes to Polaris Team OS. The installed version is pinned in
   "dump everything, then say nothing" strategy that never exercises selection.
 
 ### Fixed
+- The shipped line model reads the donor's tables the way the donor writes them, and a section ends
+  where the donor ends it. `state_lines.section()` now stops at a horizontal `---` rule, not only at
+  a heading or the contract sentinel: the shipped `current.md`/`todos.md` separate sections with
+  rules, so a finder that only knew the sentinel ran to EOF — `/end` wrote the `Completed` row
+  BELOW the rule, outside the table, and `/update` appended a thread under the contract line. One
+  rule, one place, four consumers. An escaped pipe (`a\|b`) is content, not a cell boundary: the
+  old split shredded the task name and shifted every later cell left, silently eating the `Added`
+  stamp.
+- `## Recent Context` dedup compares first line with first line. It compared a SAVED entry's first
+  line against a WHOLE incoming block, so it only ever fired on one-line entries: a second `/end`
+  in the same session duplicated its own entry and evicted a real session out of the ring.
+- `/start`'s `DEFERRED=` signal fires at all. `session_commit.sh` spools NESTED (the repo path under
+  the branch it deferred from) and the reader used a flat `iterdir()`, so the count was zero forever
+  and the signal never appeared once since it landed.
+- `/end` validates the todos file before touching the cockpit, and all THREE `cantiere.py` call
+  sites resolve through the same chain with `[ -f ]` and a declared degrade line — two of them
+  hardcoded `$HOME/.agents` with no guard and broke a half-finished `/end` with a raw Python error
+  on a machine without `git-power`.
+- `verify` matches the login EXACTLY: `@adalberto` no longer passes the gate for `ada`.
+- `plan-week` keeps the promise `state/todos.md` makes: a `Follow-up` whose Review Date has arrived
+  returns to `## Active`, stamped with the week it CAME DUE. The template claimed it, `plan-week`
+  denied it, and no code did it.
 - **Two eval assertions were wrong, not the skill.** `current.md resta fuori dal commit` was written
   inverted and said so in a `_negated_by_design` field nobody ever closed, so it reported red on
   correct behaviour; new `head_files_omit` lets a negative claim be stated directly. `dichiara il
@@ -206,6 +294,28 @@ understates the saving on a real vault, and half the assertions do not discrimin
 ## 0.15.0
 
 ### Fixed
+- The shipped line model reads the donor's tables the way the donor writes them, and a section ends
+  where the donor ends it. `state_lines.section()` now stops at a horizontal `---` rule, not only at
+  a heading or the contract sentinel: the shipped `current.md`/`todos.md` separate sections with
+  rules, so a finder that only knew the sentinel ran to EOF — `/end` wrote the `Completed` row
+  BELOW the rule, outside the table, and `/update` appended a thread under the contract line. One
+  rule, one place, four consumers. An escaped pipe (`a\|b`) is content, not a cell boundary: the
+  old split shredded the task name and shifted every later cell left, silently eating the `Added`
+  stamp.
+- `## Recent Context` dedup compares first line with first line. It compared a SAVED entry's first
+  line against a WHOLE incoming block, so it only ever fired on one-line entries: a second `/end`
+  in the same session duplicated its own entry and evicted a real session out of the ring.
+- `/start`'s `DEFERRED=` signal fires at all. `session_commit.sh` spools NESTED (the repo path under
+  the branch it deferred from) and the reader used a flat `iterdir()`, so the count was zero forever
+  and the signal never appeared once since it landed.
+- `/end` validates the todos file before touching the cockpit, and all THREE `cantiere.py` call
+  sites resolve through the same chain with `[ -f ]` and a declared degrade line — two of them
+  hardcoded `$HOME/.agents` with no guard and broke a half-finished `/end` with a raw Python error
+  on a machine without `git-power`.
+- `verify` matches the login EXACTLY: `@adalberto` no longer passes the gate for `ada`.
+- `plan-week` keeps the promise `state/todos.md` makes: a `Follow-up` whose Review Date has arrived
+  returns to `## Active`, stamped with the week it CAME DUE. The template claimed it, `plan-week`
+  denied it, and no code did it.
 - **Session state can no longer strand on a feature branch.** `session_commit.sh` now commits only
   from the repository's default branch (resolved from `origin/HEAD`, falling back to a local
   `main`/`master`) and **defers** everywhere else: the file stays on disk as the single copy and the
@@ -361,6 +471,28 @@ understates the saving on a real vault, and half the assertions do not discrimin
 ## 0.7.10
 
 ### Fixed
+- The shipped line model reads the donor's tables the way the donor writes them, and a section ends
+  where the donor ends it. `state_lines.section()` now stops at a horizontal `---` rule, not only at
+  a heading or the contract sentinel: the shipped `current.md`/`todos.md` separate sections with
+  rules, so a finder that only knew the sentinel ran to EOF — `/end` wrote the `Completed` row
+  BELOW the rule, outside the table, and `/update` appended a thread under the contract line. One
+  rule, one place, four consumers. An escaped pipe (`a\|b`) is content, not a cell boundary: the
+  old split shredded the task name and shifted every later cell left, silently eating the `Added`
+  stamp.
+- `## Recent Context` dedup compares first line with first line. It compared a SAVED entry's first
+  line against a WHOLE incoming block, so it only ever fired on one-line entries: a second `/end`
+  in the same session duplicated its own entry and evicted a real session out of the ring.
+- `/start`'s `DEFERRED=` signal fires at all. `session_commit.sh` spools NESTED (the repo path under
+  the branch it deferred from) and the reader used a flat `iterdir()`, so the count was zero forever
+  and the signal never appeared once since it landed.
+- `/end` validates the todos file before touching the cockpit, and all THREE `cantiere.py` call
+  sites resolve through the same chain with `[ -f ]` and a declared degrade line — two of them
+  hardcoded `$HOME/.agents` with no guard and broke a half-finished `/end` with a raw Python error
+  on a machine without `git-power`.
+- `verify` matches the login EXACTLY: `@adalberto` no longer passes the gate for `ada`.
+- `plan-week` keeps the promise `state/todos.md` makes: a `Follow-up` whose Review Date has arrived
+  returns to `## Active`, stamped with the week it CAME DUE. The template claimed it, `plan-week`
+  denied it, and no code did it.
 - The brief renders as plain markdown, **never inside a code fence** — a fenced brief shows
   literal asterisks instead of bold section headers in the terminal (founder caught it live).
 
@@ -471,7 +603,29 @@ understates the saving on a real vault, and half the assertions do not discrimin
 
 ## 0.6.3
 
-### Fixed (second external review, gpt-5.6 — 3 High, 3 Medium)
+### Fixed
+- The shipped line model reads the donor's tables the way the donor writes them, and a section ends
+  where the donor ends it. `state_lines.section()` now stops at a horizontal `---` rule, not only at
+  a heading or the contract sentinel: the shipped `current.md`/`todos.md` separate sections with
+  rules, so a finder that only knew the sentinel ran to EOF — `/end` wrote the `Completed` row
+  BELOW the rule, outside the table, and `/update` appended a thread under the contract line. One
+  rule, one place, four consumers. An escaped pipe (`a\|b`) is content, not a cell boundary: the
+  old split shredded the task name and shifted every later cell left, silently eating the `Added`
+  stamp.
+- `## Recent Context` dedup compares first line with first line. It compared a SAVED entry's first
+  line against a WHOLE incoming block, so it only ever fired on one-line entries: a second `/end`
+  in the same session duplicated its own entry and evicted a real session out of the ring.
+- `/start`'s `DEFERRED=` signal fires at all. `session_commit.sh` spools NESTED (the repo path under
+  the branch it deferred from) and the reader used a flat `iterdir()`, so the count was zero forever
+  and the signal never appeared once since it landed.
+- `/end` validates the todos file before touching the cockpit, and all THREE `cantiere.py` call
+  sites resolve through the same chain with `[ -f ]` and a declared degrade line — two of them
+  hardcoded `$HOME/.agents` with no guard and broke a half-finished `/end` with a raw Python error
+  on a machine without `git-power`.
+- `verify` matches the login EXACTLY: `@adalberto` no longer passes the gate for `ada`.
+- `plan-week` keeps the promise `state/todos.md` makes: a `Follow-up` whose Review Date has arrived
+  returns to `## Active`, stamped with the week it CAME DUE. The template claimed it, `plan-week`
+  denied it, and no code did it. (second external review, gpt-5.6 — 3 High, 3 Medium)
 - **Identity gate now gates** (High): the v0.6.2 `grep || echo` continued on failure and skipped
   pre-existing profiles entirely. The gate hard-stops (`|| { …; exit 1; }`) and runs in BOTH
   branches — fresh or pre-existing profile.
@@ -488,7 +642,29 @@ understates the saving on a real vault, and half the assertions do not discrimin
 
 ## 0.6.2
 
-### Fixed (external Codex review of v0.5.0..v0.6.1 — 3 High, 5 Medium, 2 Low)
+### Fixed
+- The shipped line model reads the donor's tables the way the donor writes them, and a section ends
+  where the donor ends it. `state_lines.section()` now stops at a horizontal `---` rule, not only at
+  a heading or the contract sentinel: the shipped `current.md`/`todos.md` separate sections with
+  rules, so a finder that only knew the sentinel ran to EOF — `/end` wrote the `Completed` row
+  BELOW the rule, outside the table, and `/update` appended a thread under the contract line. One
+  rule, one place, four consumers. An escaped pipe (`a\|b`) is content, not a cell boundary: the
+  old split shredded the task name and shifted every later cell left, silently eating the `Added`
+  stamp.
+- `## Recent Context` dedup compares first line with first line. It compared a SAVED entry's first
+  line against a WHOLE incoming block, so it only ever fired on one-line entries: a second `/end`
+  in the same session duplicated its own entry and evicted a real session out of the ring.
+- `/start`'s `DEFERRED=` signal fires at all. `session_commit.sh` spools NESTED (the repo path under
+  the branch it deferred from) and the reader used a flat `iterdir()`, so the count was zero forever
+  and the signal never appeared once since it landed.
+- `/end` validates the todos file before touching the cockpit, and all THREE `cantiere.py` call
+  sites resolve through the same chain with `[ -f ]` and a declared degrade line — two of them
+  hardcoded `$HOME/.agents` with no guard and broke a half-finished `/end` with a raw Python error
+  on a machine without `git-power`.
+- `verify` matches the login EXACTLY: `@adalberto` no longer passes the gate for `ada`.
+- `plan-week` keeps the promise `state/todos.md` makes: a `Follow-up` whose Review Date has arrived
+  returns to `## Active`, stamped with the week it CAME DUE. The template claimed it, `plan-week`
+  denied it, and no code did it. (external Codex review of v0.5.0..v0.6.1 — 3 High, 5 Medium, 2 Low)
 - **Self-provisioned profile kept `github: octocat`** (High): `/start` now rewrites the login
   (`perl -pi`) and gates on `grep -q "^github: $LOGIN$"` — a template login silently targets the
   wrong GitHub user in every evidence query.
@@ -606,6 +782,28 @@ understates the saving on a real vault, and half the assertions do not discrimin
 Iteration from a live 6-run benchmark (with-skill vs baseline) — objective defects only.
 
 ### Fixed
+- The shipped line model reads the donor's tables the way the donor writes them, and a section ends
+  where the donor ends it. `state_lines.section()` now stops at a horizontal `---` rule, not only at
+  a heading or the contract sentinel: the shipped `current.md`/`todos.md` separate sections with
+  rules, so a finder that only knew the sentinel ran to EOF — `/end` wrote the `Completed` row
+  BELOW the rule, outside the table, and `/update` appended a thread under the contract line. One
+  rule, one place, four consumers. An escaped pipe (`a\|b`) is content, not a cell boundary: the
+  old split shredded the task name and shifted every later cell left, silently eating the `Added`
+  stamp.
+- `## Recent Context` dedup compares first line with first line. It compared a SAVED entry's first
+  line against a WHOLE incoming block, so it only ever fired on one-line entries: a second `/end`
+  in the same session duplicated its own entry and evicted a real session out of the ring.
+- `/start`'s `DEFERRED=` signal fires at all. `session_commit.sh` spools NESTED (the repo path under
+  the branch it deferred from) and the reader used a flat `iterdir()`, so the count was zero forever
+  and the signal never appeared once since it landed.
+- `/end` validates the todos file before touching the cockpit, and all THREE `cantiere.py` call
+  sites resolve through the same chain with `[ -f ]` and a declared degrade line — two of them
+  hardcoded `$HOME/.agents` with no guard and broke a half-finished `/end` with a raw Python error
+  on a machine without `git-power`.
+- `verify` matches the login EXACTLY: `@adalberto` no longer passes the gate for `ada`.
+- `plan-week` keeps the promise `state/todos.md` makes: a `Follow-up` whose Review Date has arrived
+  returns to `## Active`, stamped with the week it CAME DUE. The template claimed it, `plan-week`
+  denied it, and no code did it.
 - **`/report` ISO-week off-by-one.** The report week is now the ISO week of the *period being
   reported* (`date +%G-W%V`; explicit `WEEK` for a past week), and the evidence window is derived
   from that week via `datetime.fromisocalendar`, so filename and evidence can no longer diverge. A

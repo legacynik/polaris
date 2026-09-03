@@ -10,7 +10,7 @@ created twice or aged by the wrong hand:
 
 | Command | May do | May never do |
 |---|---|---|
-| `plan-week` | reconcile `Active` (add the new week's rows, drop what actually landed), roll `Completed` | re-stamp `Added`, empty `Active` |
+| `plan-week` | reconcile `Active`, roll `Completed`, promote a `Follow-up` whose Review Date arrived | re-stamp `Added`, empty `Active` |
 | `/update` | refresh the text of a row the current thread cites | add a row, move a row, touch `Added` |
 | `/end` | move a landed row from `Active` to `Completed` | add a row, prune `Follow-ups` |
 
@@ -51,7 +51,8 @@ issues per project cannot give you.
 
 <!-- The only section that CROSSES weeks, and the reason the file exists beside GitHub: an issue can
      be open, it cannot be *dormant until a date*. Review Date in the past => the row returns to
-     `Active` at the next `plan-week`. -->
+     `Active` at the next `plan-week` (`todos_roll.py`), stamped with the week it CAME DUE — never
+     with today, which would erase the age `Added` exists to carry. -->
 
 | Item | Review Date | Note |
 |------|-------------|------|

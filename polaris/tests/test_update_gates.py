@@ -10,18 +10,22 @@ calling `state_upsert.py` fails here instead of passing.
 """
 from __future__ import annotations
 
+import re
 import subprocess
 import unittest
 from datetime import date
 from pathlib import Path
 
-from host_repo import LOGIN, env_for, host_repo, run_block, run_script, seed_state
+from host_repo import LOGIN, env_for, host_repo, run_block, run_script, seed_state, written
 
-TODAY = date.today().isoformat()
+def today() -> str:
+    """Read the clock at USE, never at import: the shipped scripts call `date +%F` when they run,
+    and a module-level constant disagrees with them for one run a day, at midnight."""
+    return date.today().isoformat()
 
 
 def session_log(repo) -> Path:
-    return repo / "_polaris" / "team" / LOGIN / "sessions" / f"{TODAY}-@{LOGIN}.md"
+    return repo / "_polaris" / "team" / LOGIN / "sessions" / f"{today()}-@{LOGIN}.md"
 
 
 def checkpoint(repo, *args: str) -> subprocess.CompletedProcess:
@@ -76,7 +80,7 @@ class VerifyReadsContent(unittest.TestCase):
 
     def test_todays_checkpoint_in_the_updated_line_passes(self):
         repo, current = self.prepared()
-        current.write_text(f"Updated: {TODAY} — @{LOGIN}\n\n## Open\n\n- `a` — x\n")
+        current.write_text(f"Updated: {today()} — @{LOGIN}\n\n## Open\n\n- `a` — x\n")
         out = checkpoint(repo, "verify")
         self.assertEqual(out.returncode, 0, out.stdout)
 
@@ -85,12 +89,13 @@ class VerifyReadsContent(unittest.TestCase):
         self.assertEqual(out.returncode, 0, out.stdout)
         for bypass in ("bypass 1", "bypass 2", "bypass 3", "no checkpoint of ours"):
             self.assertIn(bypass, out.stdout, f"no fixture forces {bypass}")
-        self.assertIn("11 passed", out.stdout, "polaris-os#84 owes at least 2 more cases than 7")
+        cases = int(re.search(r"selfcheck: (\d+) passed", out.stdout).group(1))
+        self.assertGreaterEqual(cases, 9, "polaris-os#84 owes at least 2 more cases than the 7")
 
     def test_a_cockpit_redated_by_hand_without_a_checkpoint_is_refused(self):
         """The date-only gate passed this; the run binding does not."""
         repo, current = self.prepared()
-        current.write_text(f"Updated: {TODAY} — @{LOGIN}\n\n## Open\n\n- `a` — x\n")
+        current.write_text(f"Updated: {today()} — @{LOGIN}\n\n## Open\n\n- `a` — x\n")
         out = checkpoint(repo, "verify", "un titolo che questa run non ha mai scritto")
         self.assertEqual(out.returncode, 1, out.stdout)
         self.assertIn("wrote no checkpoint", out.stdout)
@@ -104,7 +109,8 @@ class VerifyReadsContent(unittest.TestCase):
 class TheHarvestIsCapped(unittest.TestCase):
     """#89 — a shared scratch is mostly other panels' flow; own lines are never lost."""
 
-    def scratch(self, repo, own: int, foreign: int) -> Path:
+    def scratch(self, repo, mix: tuple) -> Path:
+        own, foreign = mix
         path = repo / "_polaris" / "team" / LOGIN / "sessions" / "scratch"
         path.mkdir(parents=True, exist_ok=True)
         f = path / "flow.md"
@@ -117,7 +123,7 @@ class TheHarvestIsCapped(unittest.TestCase):
 
     def test_an_eighty_percent_foreign_scratch_reads_under_the_cap(self):
         repo = host_repo()
-        self.scratch(repo, own=30, foreign=120)
+        self.scratch(repo, (30, 120))
         out = checkpoint(repo, "harvest-slice", "sid-mine")
         self.assertEqual(out.returncode, 0, out.stderr)
         lines = [ln for ln in out.stdout.splitlines() if ln.strip()]
@@ -134,7 +140,7 @@ class TheHarvestIsCapped(unittest.TestCase):
 
     def test_a_single_panel_scratch_is_read_whole(self):
         repo = host_repo()
-        self.scratch(repo, own=30, foreign=0)
+        self.scratch(repo, (30, 0))
         out = checkpoint(repo, "harvest-slice", "sid-mine")
         self.assertEqual(len([ln for ln in out.stdout.splitlines() if ln.strip()]), 30)
 
@@ -152,7 +158,7 @@ class ThePlanTickIsRestored(unittest.TestCase):
         subprocess.run(["touch", "-t", "202601010000", str(self.weekly(repo))], check=True)
         session_log(repo).write_text("## 10:00 — probe\n- Key context: x\n- Files: y\n")
         (repo / "_polaris" / "state" / "current.md").write_text(
-            f"Updated: {TODAY} — @{LOGIN}\n\n## Open\n\n- `a` — x\n")
+            f"Updated: {today()} — @{LOGIN}\n\n## Open\n\n- `a` — x\n")
         out = checkpoint(repo, "verify")
         self.assertEqual(out.returncode, 1, out.stdout)
         self.assertIn("not ticked", out.stdout)
@@ -167,17 +173,39 @@ class TodosFollowTheThread(unittest.TestCase):
     """D4 — an update that cites a todo refreshes its row, and never re-stamps `Added:`."""
 
     def test_the_active_row_is_replaced_with_its_original_stamp(self):
+        """The file is the SHIPPED template and the first row is placed by the SHIPPED writer."""
         repo = host_repo()
         todos = seed_state(repo, "todos.md")
-        todos.write_text("## Active\n\n- #11 — primo giro · Added: W32\n")
+        written(todos, "| #11 — primo giro | | ctx |", "W32")
         out = run_script("update", "state_upsert.py", "week", str(todos), "--week", "W36",
-                         input="- #11 — secondo giro\n")
+                         input="| #11 — secondo giro | | ctx |\n")
         self.assertEqual(out.returncode, 0, out.stderr)
         body = todos.read_text()
-        self.assertIn("secondo giro", body)
-        self.assertIn("Added: W32", body)
-        self.assertNotIn("Added: W36", body)
+        self.assertIn("| #11 — secondo giro | W32 | ctx |", body)
+        self.assertNotIn("W36", body)
         self.assertEqual(body.count("#11"), 1)
+
+    def test_an_escaped_pipe_in_the_task_keeps_the_stamp_and_the_context(self):
+        """A `\\|` is content: splitting on it shifted every later cell left and ate `Added`."""
+        repo = host_repo()
+        todos = seed_state(repo, "todos.md")
+        written(todos, r"| `a\|b` — nome | | ctx |", "W32")
+        run_script("update", "state_upsert.py", "week", str(todos), "--week", "W36",
+                   input="| `a\\|b` — nuovo | | ctx2 |\n")
+        body = todos.read_text()
+        self.assertIn(r"| `a\|b` — nuovo | W32 | ctx2 |", body)
+        self.assertEqual(body.count(r"a\|b"), 1)
+
+    def test_update_may_refresh_a_row_but_never_create_one(self):
+        repo = host_repo()
+        todos = seed_state(repo, "todos.md")
+        written(todos, "| #11 — primo | | ctx |", "W32")
+        before = todos.read_text()
+        out = run_script("update", "state_upsert.py", "week", str(todos), "--week", "W36",
+                         "--no-add", input="| #99 — mai vista | | |\n")
+        self.assertEqual(out.returncode, 2)
+        self.assertIn("NO_SUCH_ROW", out.stderr)
+        self.assertEqual(todos.read_text(), before)
 
 
 if __name__ == "__main__":

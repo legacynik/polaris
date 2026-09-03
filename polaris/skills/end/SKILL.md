@@ -57,8 +57,10 @@ older sessions write with pre-patch instructions):
 4. **Branch state** — classify only the current lane before writing the handoff:
 
    ```bash
-   GP="$HOME/.agents/skills/git-power/scripts/cantiere.py"
-   python3 "$GP" phase post-push --repo "$PWD"
+   GP="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/git-power/scripts/cantiere.py"
+   [ -f "$GP" ] || GP="$HOME/.agents/skills/git-power/scripts/cantiere.py"
+   [ -f "$GP" ] && python3 "$GP" phase post-push --repo "$PWD" \
+     || echo "NOTA: git-power non installato — nessuna classificazione della lane, si prosegue"
    ```
 
    `KEEP` means the worktree stays in the handoff. `READY_FINALIZE` means it may close only after
@@ -281,8 +283,10 @@ cui verdetto non è `MAIN`: `CLOSABLE` è ciò che si può chiudere, `DIRTY` ci�
 committato o file ignorati non vuoti. Sono le due cose che chi riprende deve sapere senza rileggere
 il grafo. `/end` **non chiude nulla** — elenca, e la chiusura resta un atto esplicito.
 
-`git-power` non viaggia in questo pacchetto: se non si risolve, l'handoff lo **dichiara** e prosegue
-senza la sezione cantiere. Il fallback scatta **solo su exit 2**, che è «flag sconosciuto»: exit 1
+`git-power` non viaggia in questo pacchetto, e i **tre** siti che lo chiamano lo risolvono allo
+stesso modo: catena `$CLAUDE_PLUGIN_ROOT` → `$HOME/.agents`, `[ -f ]`, e una riga di degrado
+dichiarata. Senza quel guard un `/end` a metà si spezzava con un errore Python grezzo su una
+macchina senza `git-power`. Il fallback scatta **solo su exit 2**, che è «flag sconosciuto»: exit 1
 vuol dire «c'è da agire» ed è un risultato valido, non un errore da ripetere in prosa. Una copia
 più vecchia del contratto rifiuta `--tsv` e il fallback stampa la stessa
 cosa in prosa italiana, un elemento per riga col verdetto fra parentesi quadre. In entrambi i casi
@@ -367,10 +371,12 @@ git status -sb | head -1   # e.g. "## main...origin/main [ahead 1]"
 After the handoff commit, close only the current lane when it is already remote-merged:
 
 ```bash
-GP="$HOME/.agents/skills/git-power/scripts/cantiere.py"
-python3 "$GP" phase post-push --repo "$PWD"
+GP="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/git-power/scripts/cantiere.py"
+[ -f "$GP" ] || GP="$HOME/.agents/skills/git-power/scripts/cantiere.py"
+[ -f "$GP" ] || { echo "NOTA: git-power non installato — nessuna chiusura di lane, si prosegue"; GP=""; }
+[ -n "$GP" ] && python3 "$GP" phase post-push --repo "$PWD"
 # only after READY_FINALIZE:
-python3 "$GP" phase finalize --repo "$PWD" --confirm "$PWD"
+[ -n "$GP" ] && python3 "$GP" phase finalize --repo "$PWD" --confirm "$PWD"
 ```
 
 `finalize` preserves dirty/divergent main and removes only the current clean merged feature

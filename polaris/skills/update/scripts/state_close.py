@@ -77,7 +77,7 @@ def close_todo(path: Path, key: str, now: str) -> str:
     done = f"| {cells[0]} | {now} | {(cells + ['', '', ''])[2]} |" if cells else \
         f"{STAMP.sub('', row).rstrip(' ·')} · Completed: {now}"
     put(lines, COMPLETED, done)
-    write_atomic(path, write(path, lines, newline, bom))
+    write_atomic(path, write(lines, newline, bom))
     return "moved"
 
 
@@ -108,7 +108,7 @@ def cmd_close(opts: argparse.Namespace) -> int:
     lines, newline, bom = read(path)
     take(lines, OPEN, opts.key)
     _stamp_updated(lines, opts.owner, opts.now)
-    write_atomic(path, write(path, lines, newline, bom))
+    write_atomic(path, write(lines, newline, bom))
     todo = "skipped"
     if opts.todos:
         with locked(Path(opts.todos)):       # its own lock: a second file, a second writer
@@ -130,53 +130,22 @@ def cmd_candidates(opts: argparse.Namespace) -> int:
     return 0
 
 
-def _fixture(path: Path, todos: Path) -> None:
-    path.write_text("Updated: 2026-09-01 — @ada: cinquanta parole di riassunto\n\n## Open\n\n"
-                    "- `feat/a` (acme) — uno · since 2026-09-01\n"
-                    "- `feat/b` (acme) — chiude #77 · since 2026-09-02\n")
-    head, rule = "| Task | Added | Context |", "|---|---|---|"
-    todos.write_text(f"## Active\n\n{head}\n{rule}\n| `feat/a` — uno | W32 | x |\n"
-                     f"| `feat/b` — due | W36 | y |\n\n## Completed\n\n{head}\n{rule}\n"
-                     f"| `old` — vecchia | 2026-08-10 | |\n\n## Follow-ups\n\n{head}\n{rule}\n"
-                     "| riprendi | 2026-10-01 | |\n")
-
-
-def _refuses(opts: argparse.Namespace) -> bool:
-    """A close that must not happen: it raises, and nothing on disk moved."""
-    try:
-        return bool(cmd_close(opts)) and False
-    except UpsertError:
-        return True
-
-
 def cmd_selfcheck() -> int:
     """One fixture per branch that would remove the wrong line or lose a live one."""
     import tempfile
+    from _selfcheck_parts import check_close, score
+
+    def refuses(opts: argparse.Namespace) -> bool:
+        try:
+            return bool(cmd_close(opts)) and False
+        except UpsertError:
+            return True
+
     with tempfile.TemporaryDirectory() as d:
-        path, todos = Path(d) / "current.md", Path(d) / "todos.md"
-        _fixture(path, todos)
-        opts = argparse.Namespace(path=str(path), todos=str(todos), key="feat/a",
-                                  owner="ada", now="2026-09-03")
-        with locked(path):
-            ok = [cmd_close(opts) == 0]
-        body, rows = path.read_text(), todos.read_text()
-        ok += ["feat/a" not in body, "feat/b" in body,
-               body.count("Updated:") == 1 and "cinquanta" not in body,
-               "| `feat/b` — due | W36 | y |" in rows.split("## Completed")[0],
-               "| `feat/a` — uno | 2026-09-03 | x |" in rows.split("## Completed")[1]]
-        opts.key = "feat/nope"
-        ok.append(_refuses(opts))
-        # M1: a todos file without `## Completed` must leave BOTH files untouched.
-        _fixture(path, todos)
-        todos.write_text("## Active\n\n| Task | Added | Context |\n|---|---|---|\n"
-                         "| `feat/a` — uno | W32 | x |\n")
-        opts.key, before = "feat/a", path.read_text()
-        ok += [_refuses(opts), path.read_text() == before, "feat/a" in todos.read_text()]
-    print(f"state_close selfcheck: {sum(ok)}/{len(ok)} branches OK")
-    return 0 if all(ok) else 1
+        return score("state_close", check_close(Path(d), cmd_close, refuses))
 
 
-def main() -> int:
+def _parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(description="close a thread, or list the candidates")
     ap.add_argument("mode", nargs="?", choices=["close", "candidates"])
     ap.add_argument("path", nargs="?")
@@ -185,7 +154,11 @@ def main() -> int:
     ap.add_argument("--owner", default="")
     ap.add_argument("--now", default=date.today().isoformat())
     ap.add_argument("--selfcheck", action="store_true")
-    opts = ap.parse_args()
+    return ap
+
+
+def main() -> int:
+    opts = _parser().parse_args()
     if opts.selfcheck:
         return cmd_selfcheck()
     runner = {"close": cmd_close, "candidates": cmd_candidates}

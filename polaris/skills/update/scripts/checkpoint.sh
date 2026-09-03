@@ -197,7 +197,7 @@ cmd_verify() {
     if [ -f "$SESSION_LOG" ]; then
       if [ "${n_upd:-0}" = "0" ]; then
         echo "FAIL: $CUR has no 'Updated:' line but this session logged today — the checkpoint never reached the cockpit"; fail=1
-      elif ! grep -q "^Updated: *$today.*@\?$LOGIN" "$CUR"; then
+      elif ! grep -qE "^Updated: *$today.*@?$LOGIN([^A-Za-z0-9_-]|\$)" "$CUR"; then
         echo "FAIL: $CUR carries '$(grep -m1 '^Updated:' "$CUR")' — expected '$today' and '@$LOGIN'; a touch is not a checkpoint, re-run the state_upsert step"; fail=1
       fi
       # The title is optional ONLY because an older caller does not pass it; when /update passes the
@@ -287,6 +287,9 @@ cmd_selfcheck() {
         "Updated: $TODAY — @probe\n1. lane\n" "checkpoint: verified" 0
   TITLE="una cosa mai scritta" case_ "a re-dated cockpit with no checkpoint of ours is refused" \
         "Updated: $TODAY — @probe\n1. lane\n" "FAIL:.*wrote no checkpoint" 1
+  # A login is matched EXACTLY: `@probeur` is a different person from `@probe`.
+  case_ "a longer login that merely starts with ours does not pass" \
+        "Updated: $TODAY — @probeur\n1. lane\n" "FAIL:.*expected .*@probe" 1
 
   echo "selfcheck: $pass passed, $fail failed"
   [ "$fail" = "0" ]

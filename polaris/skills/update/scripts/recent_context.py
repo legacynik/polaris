@@ -75,44 +75,21 @@ def append(path: Path, entry: str) -> dict:
         raise ValueError(f"{path} has no `## Recent Context` section — /end writes into the "
                          "section the contract declares, it does not invent one at EOF")
     intro, entries = split(lines, span)
-    if any(block and block[0].strip() == entry.strip() for block in entries):
-        return {"added": False, "entries": len(entries)}
+    head = entry.strip().splitlines()[0].strip()
+    if any(block and block[0].strip() == head for block in entries):
+        return {"added": False, "entries": len(entries)}   # same session, not a second one
     body = ring(intro, entries, entry)
     lines[span[0]:span[1]] = body
-    write_atomic(path, write(path, lines, newline, bom))
+    write_atomic(path, write(lines, newline, bom))
     return {"added": True, "entries": min(len(entries) + 1, CAP)}
-
-
-def _fixture(path: Path) -> str:
-    head = ("Updated: 2026-09-03 — @ada\n\n## Open\n\n- `a` — x\n\n"
-            "## Recent Context\n\n<!-- Last 5 session summaries, newest first -->\n")
-    path.write_text(head)
-    return head.split("## Recent Context")[0]
 
 
 def cmd_selfcheck() -> int:
     """The cap, the order, the idempotence, and the bytes outside the section."""
     import tempfile
+    from _selfcheck_parts import check_ring, score
     with tempfile.TemporaryDirectory() as d:
-        path = Path(d) / "current.md"
-        head = _fixture(path)
-        for n in range(1, 7):
-            with locked(path):
-                append(path, f"### 2026-09-0{n} — sessione {n}")
-        body = path.read_text()
-        ok = [body.count("### 2026-09-0") == CAP, "sessione 1" not in body,
-              body.index("sessione 6") < body.index("sessione 5"), body.startswith(head)]
-        with locked(path):
-            ok.append(append(path, "### 2026-09-06 — sessione 6")["added"] is False)
-        path.write_text("Updated: x\n")
-        try:
-            with locked(path):
-                append(path, "### y")
-            ok.append(False)
-        except ValueError:
-            ok.append(True)
-    print(f"recent_context selfcheck: {sum(ok)}/{len(ok)} branches OK")
-    return 0 if all(ok) else 1
+        return score("recent_context", check_ring(Path(d), append, locked))
 
 
 def main() -> int:

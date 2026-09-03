@@ -49,6 +49,17 @@ def seed_state(repo: Path, name: str) -> Path:
     return dest
 
 
+def written(path: Path, row: str, week: str = "") -> None:
+    """Place a row with the SHIPPED writer: a hand-typed fixture only proves the reader
+    agrees with itself. A `week` picks the todos door; without one it is a cockpit thread."""
+    script = PKG / "skills" / "update" / "scripts" / "state_upsert.py"
+    args = ["--week", week] if week else ["--owner", LOGIN, "--now", "2026-09-03"]
+    done = subprocess.run([sys.executable, str(script), "week" if week else "thread",
+                           str(path), *args], input=row + "\n", capture_output=True, text=True)
+    if done.returncode:
+        raise AssertionError(f"the shipped writer refused the fixture: {done.stderr.strip()}")
+
+
 def env_for(repo: Path, login: str = LOGIN) -> dict:
     """The environment a session skill resolves before running any of its blocks."""
     root = repo / "_polaris"

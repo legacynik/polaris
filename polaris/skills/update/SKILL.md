@@ -190,7 +190,9 @@ propri usa staging esatto, `git-power commit-check` e un Lore commit. Un path fo
 blocca `/update`; non fare `git add -A`, stash o commit per conto di un altro panel.
 
 ```bash
-GP="$HOME/.agents/skills/git-power/scripts/cantiere.py"
+GP="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/git-power/scripts/cantiere.py"
+[ -f "$GP" ] || GP="$HOME/.agents/skills/git-power/scripts/cantiere.py"
+[ -f "$GP" ] || { echo "NOTA: git-power non installato — landing senza commit-check, si prosegue"; GP=""; }
 git add -- <exact-owned-paths>
 python3 "$GP" commit-check --repo "$PWD"
 # split/receipt on exit 3, then Lore commit; finally require:
@@ -215,9 +217,11 @@ Dopo il landing, prova che anche il worktree principale è clean. `/update` non 
 rimuove worktree, ma non può terminare dirty:
 
 ```bash
-GP="$HOME/.agents/skills/git-power/scripts/cantiere.py"
+GP="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/git-power/scripts/cantiere.py"
+[ -f "$GP" ] || GP="$HOME/.agents/skills/git-power/scripts/cantiere.py"
 MAIN_WT="$(git worktree list --porcelain | sed -n '1s/^worktree //p')"
-python3 "$GP" phase checkpoint --repo "$MAIN_WT"
+[ -f "$GP" ] && python3 "$GP" phase checkpoint --repo "$MAIN_WT" \
+  || echo "NOTA: git-power non installato — resta `git status --short` come prova di pulizia"
 ```
 
 `BLOCKED_DIRTY` è un fallimento, mai un warning. `/update` è completo solo quando entrambi i

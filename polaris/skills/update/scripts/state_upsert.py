@@ -116,7 +116,7 @@ def upsert(path: Path, line: str, opts: argparse.Namespace) -> dict:
     if opts.door == "thread":
         _stamp_updated(lines, opts.owner, opts.now)
     still_mine(path)                  # and again immediately before the write
-    write_atomic(path, write(path, lines, newline, bom))
+    write_atomic(path, write(lines, newline, bom))
     return {"action": action, "key": lane_id(line), "line": at + 1, "path": str(path)}
 
 

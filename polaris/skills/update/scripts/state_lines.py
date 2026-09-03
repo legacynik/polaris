@@ -20,6 +20,7 @@ import re
 BOM = "﻿"
 FENCE = re.compile(r"^[ \t]{0,3}(`{3,}|~{3,})")
 HEADING = re.compile(r"^#{1,6}\s")
+RULE = re.compile(r"^\s{0,3}(?:-{3,}|\*{3,}|_{3,})\s*$")
 # The ONE predicate for "this line is a thread". Every writer asks here: two
 # notions of a bullet is how `*` and `1.` threads became invisible to one side.
 THREAD = re.compile(r"^(?:[-*+]\s+|\d+[.)]\s+)")
@@ -29,6 +30,9 @@ THREAD = re.compile(r"^(?:[-*+]\s+|\d+[.)]\s+)")
 # So the table row is a branch of the SAME predicate, never a second model: one `table_row`, and
 # every writer keeps asking `kinds()` what a line is.
 TABLE_ROW = re.compile(r"^\s*\|(.+)\|\s*$")
+# Markdown escapes a literal pipe as `\|`. Splitting on it shredded `a\|b` into two cells and
+# shifted every later cell left, so the `Added` stamp was overwritten by the Context text.
+CELL_SPLIT = re.compile(r"(?<!\\)\|")
 # At least one dash, or the donor's empty placeholder row `| | | |` reads as a rule and
 # demotes the real row above it to structure.
 TABLE_RULE = re.compile(r"^\s*\|[\s:|-]*-[\s:|-]*\|\s*$")
@@ -49,7 +53,7 @@ def read(path) -> tuple[list[str], str, str]:
     return raw.replace("\r\n", "\n").split("\n"), newline, bom
 
 
-def write(path, lines: list[str], newline: str, bom: str) -> str:
+def write(lines: list[str], newline: str, bom: str) -> str:
     """The body as it must land on disk: same terminator, same BOM, no extra blank tail."""
     body = "\n".join(lines).rstrip("\n") + "\n"
     return bom + body.replace("\n", newline)
@@ -66,7 +70,7 @@ def table_row(line: str) -> list[str] | None:
     m = TABLE_ROW.match(line)
     if not m or TABLE_RULE.match(line):
         return None
-    return [c.strip() for c in m.group(1).split("|")]
+    return [c.strip() for c in CELL_SPLIT.split(m.group(1))]
 
 
 def _kind(line: str) -> str:
@@ -93,11 +97,15 @@ def kinds(lines: list[str]) -> list[str]:
             out.append("other")                    # anything else inside is content
             continue
         out.append("fence" if run else _kind(line))
-    # A row immediately above a `|---|` rule is that table's HEADER — structure, not state.
-    for i, tag in enumerate(out):
+    return _demote_headers(out, lines)
+
+
+def _demote_headers(tags: list[str], lines: list[str]) -> list[str]:
+    """A row immediately above a `|---|` rule is that table's HEADER — structure, not state."""
+    for i, tag in enumerate(tags):
         if tag == "thread" and i + 1 < len(lines) and TABLE_RULE.match(lines[i + 1]):
-            out[i] = "other"
-    return out
+            tags[i] = "other"
+    return tags
 
 
 def lane_id(text: str) -> str:
@@ -122,32 +130,40 @@ def section(lines: list[str], name: re.Pattern) -> tuple[int, int] | None:
     """(first, last+1) of the body under the first REAL heading matching `name`.
 
     Ends at the next real heading — any level, so an H1 section is not swallowed by an H2
-    inside it — or at the file's own contract footer, which nothing may land under.
+    inside it — at the file's own contract footer, or at a horizontal RULE. The donor separates
+    its sections with `---` and closes with an italic contract instead of the sentinel, so a
+    finder that only knew the sentinel ran the section to EOF: `/end` wrote a `Completed` row
+    below the rule, outside the table, and `/update` appended a thread under the contract line.
+    One rule, one place — every writer asks here.
     """
     tags = kinds(lines)
     start = next((i for i, t in enumerate(tags) if t == "heading" and name.match(lines[i])), None)
     if start is None:
         return None
     stop = [i for i in range(start + 1, len(lines))
-            if tags[i] == "heading" or lines[i].startswith("<!-- pol:state-contract -->")]
+            if tags[i] == "heading" or RULE.match(lines[i])
+            or lines[i].startswith("<!-- pol:state-contract -->")]
     return start + 1, stop[0] if stop else len(lines)
 
 
 def _selfcheck() -> int:
+    """Fences, the donor's tables, an escaped pipe, and a section that ends at the rule."""
     body = ["Updated: x", "", "## Note", "~~~", "```", "## Open", "```", "~~~", "",
             "# Open — veri", "", "* `vero` — z", "```", "1. `esempio` — w", "```"]
-    tags = kinds(body)
-    ok = [tags[4] == "other", tags[5] == "other", tags[6] == "other",  # ``` cannot close ~~~
-          tags[9] == "heading", tags[11] == "thread",      # the real H1 section and a `*` lane
-          tags[13] == "other",                             # inside the second fence
-          section(body, re.compile(r"^#{1,6}\s+open\b", re.I)) == (10, 15)]
-    # The donor's table form: header and rule are structure, the row under them is state.
     table = ["| Task | Added | Context |", "|------|-------|---------|",
              "| #11 — primo | W32 | x |", "| | | |"]
-    tags = kinds(table)
-    ok += [tags[0] == "other", tags[1] == "other", tags[2] == "thread",
-           lane_id(table[2]) == "#11", table_row(table[1]) is None,
-           lane_id("| `feat/a` | W32 | |") == "feat/a"]
+    donor = ["## Completed", "", "| T | C |", "|---|---|", "| x | |", "", "---", "", "## Next"]
+    t, u = kinds(body), kinds(table)
+    ok = [t[4] == "other", t[5] == "other", t[6] == "other",   # ``` cannot close ~~~
+          t[9] == "heading", t[11] == "thread", t[13] == "other",
+          section(body, re.compile(r"^#{1,6}\s+open\b", re.I)) == (10, 15),
+          u[0] == "other", u[1] == "other", u[2] == "thread",  # header and rule are structure
+          lane_id(table[2]) == "#11", table_row(table[1]) is None,
+          lane_id("| `feat/a` | W32 | |") == "feat/a",
+          # An escaped pipe is content: splitting on it shifted every later cell left.
+          table_row(r"| `a\|b` — nome | W32 | ctx |") == [r"`a\|b` — nome", "W32", "ctx"],
+          # A section ends at the donor's rule, not at EOF: below it lives the next table.
+          section(donor, re.compile(r"^#{1,6}\s+completed\s*$", re.I)) == (1, 6)]
     print(f"state_lines selfcheck: {sum(ok)}/{len(ok)} branches OK")
     return 0 if all(ok) else 1
 

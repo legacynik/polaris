@@ -177,10 +177,12 @@ python3 "${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/update/scripts/todos_roll.p
   "$TODOS" --now "$(date +%F)"
 ```
 
-`## Follow-ups` è l'unica sezione che **attraversa** le settimane e il roll non la tocca: è la
-ragione per cui questo file sta accanto a GitHub invece di duplicarlo — una issue può essere aperta,
-non può essere *dormiente fino a una data*. Ogni riga porta `· Review: YYYY-MM-DD`, e `/start`
-la mostra il giorno in cui scade.
+Lo stesso comando fa la **promozione** che dà senso a `## Follow-ups`, l'unica sezione che attraversa
+le settimane: quando la sua `Review Date` è arrivata, la riga **torna in `Active`** — timbrata con la
+settimana in cui è scaduta, non con quella corrente, perché `Added` porta l'età dell'item e non la
+data dell'ultimo tocco. È la ragione per cui questo file sta accanto a GitHub invece di duplicarlo:
+una issue può essere aperta, non può essere *dormiente fino a una data*. `/start` mostra le righe
+scadute il giorno stesso (`FOLLOWUP_DUE=`), e il roll le sposta al prossimo `plan-week`.
 
 ## Step 7 — Ownership boundary (the plan does not wait for permission)
 
