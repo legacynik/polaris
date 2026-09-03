@@ -32,9 +32,8 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from state_lines import kinds, read, section, write  # noqa: E402
+from state_lines import kinds, lane_id, read, section, write  # noqa: E402
 from state_lock import LockError, locked, still_mine, write_atomic  # noqa: E402
-from state_staleness import _lane_id  # noqa: E402  (sibling script, no package on disk)
 
 HEADING = re.compile(r"^#{1,6}\s")
 ADDED = re.compile(r"·?\s*Added:\s*(W\d+)", re.I)
@@ -69,8 +68,8 @@ def _carry_stamp(old: str, new: str, week: str) -> str:
 
 def _replace(lines: list[str], span: tuple[int, int], line: str) -> tuple[str, int]:
     """Overwrite the line with the same key, else append. Two matches refuse: see the module."""
-    key, tags = _lane_id(line), kinds(lines)
-    hits = [i for i in range(*span) if tags[i] == "thread" and _lane_id(lines[i]) == key]
+    key, tags = lane_id(line), kinds(lines)
+    hits = [i for i in range(*span) if tags[i] == "thread" and lane_id(lines[i]) == key]
     if len(hits) > 1:
         raise UpsertError("AMBIGUOUS_KEY",
                           f"{len(hits)} lines share the key {key!r} (lines "
@@ -104,16 +103,16 @@ def upsert(path: Path, line: str, opts: argparse.Namespace) -> dict:
     lines, newline, bom = read(path)
     span = _section(lines, opts.door)
     if opts.door == "week":
-        key = _lane_id(line)
+        key = lane_id(line)
         old = next((lines[i] for i in range(*span) if lines[i].strip()
-                    and _lane_id(lines[i]) == key), "")
+                    and lane_id(lines[i]) == key), "")
         line = _carry_stamp(old, line, opts.week)
     action, at = _replace(lines, span, line)
     if opts.door == "thread":
         _stamp_updated(lines, opts.owner, opts.now)
     still_mine(path)                  # and again immediately before the write
     write_atomic(path, write(path, lines, newline, bom))
-    return {"action": action, "key": _lane_id(line), "line": at + 1, "path": str(path)}
+    return {"action": action, "key": lane_id(line), "line": at + 1, "path": str(path)}
 
 
 def _selfcheck_thread(f: Path) -> list[bool]:

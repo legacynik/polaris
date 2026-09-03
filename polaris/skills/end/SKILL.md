@@ -2,7 +2,7 @@
 name: end
 description: Polaris skill — close a repository-first team session with a handoff, decisions/lessons written to the ledgers, a plan tick and a pathspec-only commit. Trigger when stopping work, before a multi-day pause, or on "wrap up / end session / /end".
 user-invocable: true
-version: 1.9.0
+version: 1.10.0
 invokes: [git-power]
 ---
 
@@ -217,21 +217,11 @@ by branch, nothing open lost, other panels' threads and `Next` lines untouched) 
 difference. **`/end` is the only Team OS command with closing authority**, and it spends it against
 ground truth rather than impression.
 
-Prima di potare, **misura e togli il superato** — è parte del ciclo, non un comando che qualcuno
-deve ricordarsi:
-
-```bash
-PS="$ROOT/scripts"; [ -f "$PS/state_reconcile.py" ] || PS="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/update/scripts"
-[ -f "$PS/state_reconcile.py" ] || { echo "STOP: nessuno script di stato risolto"; exit 1; }
-python3 "$PS/state_staleness.py" "$CURRENT"                 # verdetto per lane
-python3 "$PS/state_reconcile.py" "$CURRENT" --repo-dir "$MAIN_WT" --apply
-```
-
-`--apply` rimuove **solo** i thread la cui PR risulta mergiata (`gh pr list --state merged`, con
-l'`headRefOid` che combacia): questo repo fa squash-merge, quindi l'ancestry non vede nulla. Senza
-`gh`, senza auth o su un thread che nomina **un altro repo**, il verdetto è `unverified` e la riga
-**resta**. Se lo script non si risolve, `/end` si ferma: non toglie thread a mano. Il thread esce dal cockpit e **resta nel
-session log**: il log è la storia, il cockpit è adesso.
+Prima di potare, **elenca i candidati e chiudi a mano**. La rimozione automatica dei thread
+superati è parcheggiata su `task/T6-prune-parked` (`polaris-os#202`): dipende da una verità di
+merge che sopravviva a un branch cancellato dopo il merge, e quella non è ancora provata. Finché
+quel ramo non regge, `/end` **non cancella nulla da solo**: leggi i thread di `$CURRENT`, verifica
+su GitHub quali PR sono mergiate, e togli quelle righe con la stessa mano che scrive l'handoff.
 
 **Closing means REMOVING, not annotating.** A thread proven landed comes **out** of the file; a
 `~~struck~~` line that stays is still tokens the next session reads and reconciles. Donor: marvin
@@ -246,8 +236,17 @@ fails on a second `Updated:` line and warns above the size.
 ```bash
 CT="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/git-power/scripts/cantiere.py"
 [ -f "$CT" ] || CT="$HOME/.agents/skills/git-power/scripts/cantiere.py"
-[ -f "$CT" ] || { echo "NOTA: git-power non installato — handoff senza censimento del cantiere"; CT=""; }
-[ -z "$CT" ] || python3 "$CT" census --tsv --repo "$MAIN_WT" || python3 "$CT" census --repo "$MAIN_WT"
+if [ ! -f "$CT" ]; then
+  echo "NOTA: git-power non installato — handoff senza censimento del cantiere"
+else
+  OUT="$(python3 "$CT" census --tsv --repo "$MAIN_WT" 2>&1)"; RC=$?
+  if [ "$RC" = "2" ]; then          # solo "unknown flag": exit 1 significa "c'è da agire"
+    echo "NOTA: git-power precede il contratto TSV — censimento in prosa"
+    python3 "$CT" census --repo "$MAIN_WT"
+  else
+    printf '%s\n' "$OUT"
+  fi
+fi
 ```
 
 Righe TSV `VERDETTO\tbranch\tpath\tnote`, exit 0 pulito / 1 c'è da agire / 2 errore (contratto
@@ -257,8 +256,9 @@ committato o file ignorati non vuoti. Sono le due cose che chi riprende deve sap
 il grafo. `/end` **non chiude nulla** — elenca, e la chiusura resta un atto esplicito.
 
 `git-power` non viaggia in questo pacchetto: se non si risolve, l'handoff lo **dichiara** e prosegue
-senza la sezione cantiere, invece di fallire in silenzio con exit 2. Una copia più vecchia del
-contratto rifiuta `--tsv` e il fallback stampa la stessa
+senza la sezione cantiere. Il fallback scatta **solo su exit 2**, che è «flag sconosciuto»: exit 1
+vuol dire «c'è da agire» ed è un risultato valido, non un errore da ripetere in prosa. Una copia
+più vecchia del contratto rifiuta `--tsv` e il fallback stampa la stessa
 cosa in prosa italiana, un elemento per riga col verdetto fra parentesi quadre. In entrambi i casi
 vale la stessa regola: **leggi i verdetti che il comando stampa**, non quelli che questa riga
 ricorda. Il vocabolario è del tool, e questa prosa invecchia prima di lui.

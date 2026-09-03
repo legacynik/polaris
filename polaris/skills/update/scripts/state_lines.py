@@ -18,10 +18,15 @@ from __future__ import annotations
 import re
 
 BOM = "﻿"
-FENCE = re.compile(r"^\s{0,3}(?:```|~~~)")
+FENCE = re.compile(r"^[ \t]{0,3}(`{3,}|~{3,})")
 HEADING = re.compile(r"^#{1,6}\s")
+# The ONE predicate for "this line is a thread". Every writer asks here: two
+# notions of a bullet is how `*` and `1.` threads became invisible to one side.
 THREAD = re.compile(r"^(?:[-*+]\s+|\d+[.)]\s+)")
 UPDATED = re.compile(r"^Updated:", re.I)
+LIST_ITEM = re.compile(r"^(?:[-*+]\s+|\d+[.)]\s+)")
+LANE_BRANCH = re.compile(r"^(?:[-*+]\s+|\d+[.)]\s+)`([^`]+)`")
+LANE_BOLD = re.compile(r"^\*\*([^*]+)\*\*")
 
 
 def read(path) -> tuple[list[str], str, str]:
@@ -53,14 +58,31 @@ def kinds(lines: list[str]) -> list[str]:
     """One fence-aware pass. Inside a fence NOTHING is structure — a sample in a code block
     is documentation, and treating it as structure is how a fenced example got overwritten
     and a fenced `## Open` stole the section."""
-    out, inside = [], False
+    out, open_marker = [], ""
     for line in lines:
-        if FENCE.match(line):
-            inside = not inside
-            out.append("fence")
-        else:
-            out.append("other" if inside else _kind(line))
+        m = FENCE.match(line)
+        run = m.group(1) if m else ""
+        if not open_marker and run:
+            open_marker = run                      # opened
+        elif open_marker and run[:1] == open_marker[:1] and len(run) >= len(open_marker):
+            open_marker = ""                       # closed: same char, at least as long
+        elif open_marker:
+            out.append("other")                    # anything else inside is content
+            continue
+        out.append("fence" if run else _kind(line))
     return out
+
+
+def lane_id(text: str) -> str:
+    """The branch in backticks if the line follows the documented format, else its bold lead, else
+    the lead before the ` — ` separator. This id is what a consumer acts on, so it must never be a
+    mid-token truncation of prose (real case in a product repo: current.md:48, branch not in backticks)."""
+    for pat in (LANE_BRANCH, LANE_BOLD):
+        m = pat.match(text)
+        if m:
+            return m.group(1).strip()
+    lead = LIST_ITEM.sub("", text.strip(), count=1)
+    return re.split(r"\s+[—–-]\s+", lead, maxsplit=1)[0].strip()[:60]
 
 
 def section(lines: list[str], name: re.Pattern) -> tuple[int, int] | None:
@@ -79,13 +101,13 @@ def section(lines: list[str], name: re.Pattern) -> tuple[int, int] | None:
 
 
 def _selfcheck() -> int:
-    body = ["Updated: x", "", "## Note", "~~~", "## Open", "- `finto` — y", "~~~", "",
-            "# Open — veri", "", "- `vero` — z", "```", "- `esempio` — w", "```"]
+    body = ["Updated: x", "", "## Note", "~~~", "```", "## Open", "```", "~~~", "",
+            "# Open — veri", "", "* `vero` — z", "```", "1. `esempio` — w", "```"]
     tags = kinds(body)
-    ok = [tags[4] == "other", tags[5] == "other",          # inside the first fence
-          tags[8] == "heading", tags[10] == "thread",      # the real H1 section and its lane
-          tags[12] == "other",                             # inside the second fence
-          section(body, re.compile(r"^#{1,6}\s+open\b", re.I)) == (9, 14)]
+    ok = [tags[4] == "other", tags[5] == "other", tags[6] == "other",  # ``` cannot close ~~~
+          tags[9] == "heading", tags[11] == "thread",      # the real H1 section and a `*` lane
+          tags[13] == "other",                             # inside the second fence
+          section(body, re.compile(r"^#{1,6}\s+open\b", re.I)) == (10, 15)]
     print(f"state_lines selfcheck: {sum(ok)}/{len(ok)} branches OK")
     return 0 if all(ok) else 1
 

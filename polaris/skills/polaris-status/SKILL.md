@@ -148,9 +148,11 @@ one-confirm approval — you never mark or delete by hand.
    branch, which is free:
 
    ```bash
-   RC="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/update/scripts/state_reconcile.py"
-   [ -f "$RC" ] || { echo "STOP: state_reconcile non risolto — non potare a mano"; exit 1; }
-   python3 "$RC" _polaris/state/current.md --repo-dir .
+   # La riconciliazione automatica dei thread superati è parcheggiata su
+   # `task/T6-prune-parked` (polaris-os#202): dipende da una verità di merge che
+   # sopravviva a un branch cancellato al merge, non ancora provata. Fino ad allora
+   # si legge il cockpit e si chiude a mano, con la PR mergiata come prova.
+   echo "NOTA: riconciliazione dei thread parcheggiata — chiusura manuale"
    ```
 
    It flags threads whose branch is **merged into origin/main** (superseded, proven) vs active vs
@@ -207,7 +209,7 @@ one-confirm approval — you never mark or delete by hand.
 
 4. **Propose the cleanup as ONE confirm loop, with the proof.** List the superseded threads + the
    mergeable branches + the `[archive?]` wiki docs, each with its evidence (merge SHA / PR / both-stale
-   ages), and ask a single yes/no. Only on yes: `state_reconcile.py --apply` to remove the confirmed
+   ages), and ask a single yes/no. Only on yes: chiusura manuale dei thread confermati (riconciliazione automatica parcheggiata) to remove the confirmed
    threads, delete the named merged branches, and set `lifecycle: archived` on the confirmed candidates.
    Never auto-delete, never archive a `[metadata-lag]` or front-door item, never touch
    active/unverified/other-panel threads.
