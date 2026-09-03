@@ -2,7 +2,7 @@
 name: end
 description: Polaris skill — close a repository-first team session with a handoff, decisions/lessons written to the ledgers, a plan tick and a pathspec-only commit. Trigger when stopping work, before a multi-day pause, or on "wrap up / end session / /end".
 user-invocable: true
-version: 1.5.0
+version: 1.6.0
 invokes: [git-power]
 ---
 
@@ -217,6 +217,18 @@ by branch, nothing open lost, other panels' threads and `Next` lines untouched) 
 difference. **`/end` is the only Team OS command with closing authority**, and it spends it against
 ground truth rather than impression.
 
+Prima di potare, **misura e togli il superato** — è parte del ciclo, non un comando che qualcuno
+deve ricordarsi:
+
+```bash
+python3 "$ROOT/scripts/state_staleness.py" "$CURRENT"                 # verdetto per lane
+python3 "$ROOT/scripts/state_reconcile.py" "$CURRENT" --repo-dir "$MAIN_WT" --apply
+```
+
+`--apply` rimuove **solo** i thread il cui branch è provatamente mergiato in `origin/main`; un
+branch non verificabile resta `unverified` e non si tocca. Il thread esce dal cockpit e **resta nel
+session log**: il log è la storia, il cockpit è adesso.
+
 **Closing means REMOVING, not annotating.** A thread proven landed comes **out** of the file; a
 `~~struck~~` line that stays is still tokens the next session reads and reconciles. Donor: marvin
 `end.md` step 5, `Update State (MANDATORY)` — *«Mark completed items as done or remove them»*,
@@ -224,6 +236,17 @@ ground truth rather than impression.
 collapse the state line to **one** `Updated:` — date, login, one clause on what changed — and let the
 history live in the session log. Target after pruning: under 2,000 tokens; `checkpoint.sh verify`
 fails on a second `Updated:` line and warns above the size.
+
+### Il censimento del cantiere entra nell'handoff
+
+```bash
+python3 "$HOME/.agents/skills/git-power/scripts/cantiere.py" census --repo "$MAIN_WT"
+```
+
+Righe TSV `VERDETTO\tbranch\tpath\tnote`, exit 0 pulito / 1 c'è da agire / 2 errore (contratto
+T13). Ogni worktree **CLOSABLE** va elencato nell'handoff con il suo verdetto e la sua nota: chi
+riprende deve sapere cosa si può chiudere senza rileggere il grafo. `/end` **non chiude nulla** da
+sé — elenca, e la chiusura resta un atto esplicito.
 
 **`state/goals.md` is NOT touched here.** Goals change by explicit decision, never by session
 inertia. If it is empty or untouched for more than 30 days, say so in the closing summary and ask

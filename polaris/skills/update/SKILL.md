@@ -3,7 +3,7 @@ name: update
 description: Polaris skill — record a short repository-first checkpoint during an active session. Trigger after meaningful progress, a blocker, a context switch, or on "checkpoint / save progress / /update".
 user-invocable: true
 model: sonnet
-version: 2.6.0
+version: 2.7.0
 invokes: [git-power]
 ---
 
@@ -102,24 +102,33 @@ argument to `commit` so plan and log land together. No weekly file = no step, no
 fails when the file exists but predates today's session log. Plans are the roadmap (founder,
 polaris-os#85): a plan nobody ticks is a wish, not a plan.
 
-## `$CURRENT` — la riga di stato si sovrascrive, i thread si aggiungono
+## `$CURRENT` — lo stato si sovrascrive, thread compresi
 
 **Se nulla di materiale è cambiato, non scrivere affatto.** Materiale = un thread aperto, un item
-completato, una priorità cambiata, un blocker nuovo. Un checkpoint che riscrive lo stato senza
-motivo è rumore. Il donor upstream (marvin `update.md`, step 4) è più preciso e vale come regola:
-*«Only update what's relevant to the current work. Don't rewrite the whole file.»* — un checkpoint
-tocca la riga del lavoro che ha in mano, non riscrive il file intero.
+completato, una priorità cambiata, un blocker nuovo. Il donor upstream (marvin `update.md`, step 4)
+vale come regola: *«Only update what's relevant to the current work. Don't rewrite the whole file.»*
 
-Se è cambiato: `$CURRENT` (nel MAIN worktree, regola One home) ha **due metà con regole opposte**,
-e confonderle è il difetto. La riga `Updated:` è **stato**: una sola, sovrascritta con data e titolo
-del checkpoint — mai una seconda. Gli `## Open` sono un **ledger**: aggiungi o barra **con data e
-prova**, mai chiudere o riscrivere la riga di un altro owner — si flagga. `/end` è l'unico che chiude.
+Se è cambiato: **la riga del thread si AGGIORNA, non se ne aggiunge una seconda.** Founder,
+2026-09-03: *«Non è che dentro current fa un'altra riga, ma va semplicemente ad aggiornare l'update
+precedente. Invece all'interno della session mette sempre un'altra riga.»* Il session log è il
+ledger e cresce; il cockpit è **stato** e si sovrascrive — anche se la riga precedente l'ha scritta
+un altro pannello o un altro giorno. Il costo in token non è il cancello: dieci lane vive vanno
+bene, una riga vecchia no.
 
-Il vecchio titolo di questa sezione diceva «add and flag» sopra *tutto* il file, e la prosa sotto
-diceva «sovrascrivi» solo sulla riga di stato: il testo si contraddiceva. Misurato il 2026-08-31,
-con la regola già scritta qui: **13 righe `Updated:` impilate in un repo, 5 in un altro**, 1 sola
-dove un umano aveva potato a mano. Perciò `verify` ora gatea il **conteggio**, non solo l'mtime —
-una regola senza cancello è un desiderio.
+Non farlo a mano — la riga si posa per chiave:
+
+```bash
+printf '%s\n' "- \`<branch>\` — <stato in una riga> · since <YYYY-MM-DD>" \
+  | python3 "$ROOT/scripts/state_upsert.py" thread "$CURRENT" --owner "$LOGIN" --now "$(date +%F)"
+```
+
+Sostituisce la riga con la stessa chiave di lane, altrimenti la accoda, e riscrive l'unica riga
+`Updated:` con data e owner. Ogni altro byte torna identico: le lane parcheggiate degli altri
+pannelli non si toccano. Senza lo script nel repo, applica la stessa regola a mano e **cerca la
+riga esistente prima di scriverne una**.
+
+Le prime righe del file sono le **priorità attive**: l'ordine del lavoro, non un archivio.
+`/end` resta l'unico che chiude un thread.
 
 ## Landing
 
