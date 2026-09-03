@@ -28,8 +28,19 @@ resolve() {
   BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
   WT="$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")"
   SESSION_LOG="$ROOT/team/$LOGIN/sessions/$(date +%F)-@$LOGIN.md"
+  cockpit
   WEEKLY="$ROOT/team/$LOGIN/weeks/$(date +%G-W%V).md"
   SCRATCH="$(ls -t "$ROOT/team/$LOGIN/sessions/scratch/"*.md "$ROOT/sessions/scratch/$LOGIN/"*.md 2>/dev/null | head -1)"
+}
+
+# THE cockpit of this repo — one per repo, never one per worktree. The #212 resolver owns
+# the rule where the repo carries it; the same rule inline where it does not, because the
+# package ships to repos that have no vault scripts. A cwd-relative state/current.md written
+# from a worktree is gitignored there and never comes back: 4 were found stranded in one repo.
+cockpit() {
+  CURRENT="$(python3 "$ROOT/scripts/state_home.py" path 2>/dev/null)"
+  [ -n "${CURRENT:-}" ] || CURRENT="$ROOT/team/$LOGIN/current.md"
+  [ -f "$CURRENT" ] || CURRENT="$ROOT/state/current.md"
 }
 
 # Watermark = byte offset of the last harvest. Reading the delta keeps the checkpoint
@@ -49,6 +60,7 @@ LOGIN=$LOGIN
 BRANCH=$BRANCH
 WT=$WT
 SESSION_LOG=$SESSION_LOG
+CURRENT=$CURRENT
 WEEKLY=$([ -f "$WEEKLY" ] && echo "$WEEKLY" || echo none)
 SCRATCH=${SCRATCH:-none}
 HARVEST_FROM_LINE=$(harvest_from)
@@ -144,9 +156,9 @@ cmd_verify() {
   # current.md is the open-items ledger (v0.8.1: nothing open is ever lost). A checkpoint
   # that leaves it older than the session log strands every open lane on panel memory.
   # Restored 2026-08-17 — dropped without a changelog line in the v2.0.0 rewrite (498ed70).
-  local CUR="$ROOT/state/current.md"
+  local CUR="$CURRENT"
   if [ -f "$CUR" ] && [ -f "$SESSION_LOG" ] && [ "$CUR" -ot "$SESSION_LOG" ]; then
-    echo "FAIL: state/current.md predates today's session log — reconcile it (Updated: line + Open add-and-flag, never close another owner's line)"; fail=1
+    echo "FAIL: $CUR predates today's session log — reconcile it (Updated: line + Open add-and-flag, never close another owner's line)"; fail=1
   fi
 
   # State is OVERWRITTEN, never stacked: one Updated: line, the newest. The prose has
@@ -157,13 +169,13 @@ cmd_verify() {
     local n_upd words
     n_upd=$(grep -c '^Updated:' "$CUR" 2>/dev/null) || true
     if [ "${n_upd:-0}" -gt 1 ]; then
-      echo "FAIL: state/current.md has $n_upd 'Updated:' lines — keep the newest and overwrite it; the history belongs to the session log"; fail=1
+      echo "FAIL: $CUR has $n_upd 'Updated:' lines — keep the newest and overwrite it; the history belongs to the session log"; fail=1
     fi
     # Size WARNs, never blocks. The file is frequently another panel's mid-session state,
     # and stranding that session costs more than one oversized file. /end owns the pruning.
     words=$(wc -w < "$CUR" | tr -d ' ')
     if [ "${words:-0}" -gt 1500 ]; then
-      echo "WARN: state/current.md is ~$(( words * 4 / 3 )) tokens (target <2000) — prune the closed threads at /end"
+      echo "WARN: $CUR is ~$(( words * 4 / 3 )) tokens (target <2000) — prune the closed threads at /end"
     fi
   fi
 
@@ -224,7 +236,7 @@ cmd_selfcheck() {
   case_ "absent current.md is skipped, not invented" "" "checkpoint: verified" 0
   case_ "oversized file warns with its own number" \
         "Updated: a\n$(python3 -c 'print("word "*1600)')\n" \
-        "WARN: state/current.md is ~[0-9]+ tokens" 0
+        "WARN: .*current\.md is ~[0-9]+ tokens" 0   # the gate names the RESOLVED cockpit
 
   echo "selfcheck: $pass passed, $fail failed"
   [ "$fail" = "0" ]

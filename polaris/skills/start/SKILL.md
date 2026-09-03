@@ -2,7 +2,7 @@
 name: start
 description: Polaris skill — resume the current objective from the latest local handoff. First use also provisions your own team path.
 user-invocable: true
-version: 1.1.0
+version: 1.2.0
 ---
 
 # /start — resume, do not survey
@@ -24,6 +24,26 @@ git rev-parse --abbrev-ref HEAD
 Hold the result. If this is not a git checkout, stop. Later compare it with the current weekly
 plan's branch. Do not fetch to answer this question.
 
+## Step 1b — One home (EVERY path below is built from these, never from the cwd)
+
+A panel sitting in `.worktrees/x` that reads and writes cwd-relative paths grows its own
+gitignored cockpit there, and `state/current.md` is gitignored: no merge ever brings it back. Four
+were found stranded in one repo, the oldest untouched since 07/08. So resolve once, here, against
+the MAIN worktree — git lists it first — and use `$ROOT` and `$CURRENT` for every read below:
+
+```bash
+MAIN_WT="$(git worktree list --porcelain | head -1 | sed 's|^worktree ||')"
+ROOT="$MAIN_WT/_polaris"; [ -f "$ROOT/config.yml" ] || ROOT="$MAIN_WT"
+LOGIN="$(git config --local --get polaris.login || gh api user --jq .login)"
+CURRENT="$(python3 "$ROOT/scripts/state_home.py" path 2>/dev/null)"   # the one resolver (#212)
+[ -n "$CURRENT" ] || CURRENT="$ROOT/team/$LOGIN/current.md"           # same rule, no script needed
+[ -f "$CURRENT" ] || CURRENT="$ROOT/state/current.md"
+```
+
+`$CURRENT` is THE cockpit of this repo: the migrated `team/<login>/current.md` when it exists, the
+legacy `state/current.md` otherwise. One per repo, never one per worktree. `/start` still never
+writes it.
+
 ## Step 2 — Resolve the repository contract and local identity
 
 The Polaris root is **`_polaris/`** — one root, committed with the code:
@@ -33,13 +53,10 @@ The Polaris root is **`_polaris/`** — one root, committed with the code:
    repository root;
 3. otherwise stop and point to `docs/TEAM-ONBOARDING.md`. Do not create a contract implicitly.
 
-Use the cached repo-local login on recurring sessions:
+`$LOGIN` and `$ROOT` are already resolved in Step 1b from the cached repo-local login, which is all
+a recurring session needs.
 
-```bash
-LOGIN="$(git config --local --get polaris.login || true)"
-```
-
-If it is absent, this is machine setup: require authenticated `gh`, resolve the exact login once,
+If the cached login is absent, this is machine setup: require authenticated `gh`, resolve the exact login once,
 and cache it locally:
 
 ```bash
@@ -48,26 +65,26 @@ LOGIN="$(gh api user --jq .login)"
 git config --local polaris.login "$LOGIN"
 ```
 
-If `_polaris/team/$LOGIN/profile.yml` is absent, provision **only that contributor's** path from the
+If `$ROOT/team/$LOGIN/profile.yml` is absent, provision **only that contributor's** path from the
 plugin template:
 
 ```bash
-mkdir -p "_polaris/team/$LOGIN/weeks" "_polaris/team/$LOGIN/reports" "_polaris/team/$LOGIN/sessions"
-cp "$CLAUDE_PLUGIN_ROOT/templates/repo-contract/profile.yml" "_polaris/team/$LOGIN/profile.yml"
-perl -pi -e "s/^github: .*/github: $LOGIN/" "_polaris/team/$LOGIN/profile.yml"
+mkdir -p "$ROOT/team/$LOGIN/weeks" "$ROOT/team/$LOGIN/reports" "$ROOT/team/$LOGIN/sessions"
+cp "$CLAUDE_PLUGIN_ROOT/templates/repo-contract/profile.yml" "$ROOT/team/$LOGIN/profile.yml"
+perl -pi -e "s/^github: .*/github: $LOGIN/" "$ROOT/team/$LOGIN/profile.yml"
 ```
 
 Never create `team/<login>/` folders for other people. The identity gate runs in BOTH branches,
 whether the profile was just created or already existed:
 
 ```bash
-grep -q "^github: $LOGIN$" "_polaris/team/$LOGIN/profile.yml" \
+grep -q "^github: $LOGIN$" "$ROOT/team/$LOGIN/profile.yml" \
   || { echo "STOP: profile github: does not match cached login ($LOGIN) — fix it first"; exit 1; }
 ```
 
 ## Step 2b — Read the contributor profile (voice and language)
 
-`_polaris/team/$LOGIN/profile.yml` already carries `language:` and `voice:`. Older copies predate
+`$ROOT/team/$LOGIN/profile.yml` already carries `language:` and `voice:`. Older copies predate
 those fields: when either is missing, fall back to `en` / `plain` and say nothing — never invent the
 value, never write the file from `/start`.
 
@@ -95,35 +112,45 @@ means execute without pressure-testing; a contributor can also suspend it for on
 
 Read these local files, in order:
 
-1. `team/<login>/profile.yml` — already read in Step 2b for voice and language; here take only the
+1. `$ROOT/team/$LOGIN/profile.yml` — already read in Step 2b for voice and language; here take only the
    assignment fields needed for the brief.
-2. `team/<login>/weeks/$(date +%G-W%V).md` — current outcome, branch, blocker and next proof. This is
+2. `$ROOT/team/$LOGIN/weeks/$(date +%G-W%V).md` — current outcome, branch, blocker and next proof. This is
    the contributor's own focus: brief it as active work, never as something
    awaiting permission. If `lead_review:` records a reorder, surface it as priority information.
    Only a **red** item waiting on its **named** approver is blocked. If the file is absent, say there
    is no current weekly plan; its absence never blocks urgent or clearly-owned work.
-3. `state/current.md` if present — only the current checkpoint and `## Open` item for this branch or
+3. `$CURRENT` if present — only the current checkpoint and `## Open` item for this branch or
    contributor. It is a pointer, not session history; never rewrite it from `/start`.
-4. The newest file in `team/<login>/sessions/` — read its handoff/checkpoint and concrete next
+4. The newest file in `$ROOT/team/$LOGIN/sessions/` — read its handoff/checkpoint and concrete next
    action. Do not scan `team/*/sessions/`.
-4b. `state/goals.md` if present — the goals the briefing anchors to. If empty or stale (>30 days
+4b. `$ROOT/state/goals.md` if present — the goals the briefing anchors to. If empty or stale (>30 days
    untouched), ask once: "Goals aggiornati?". (Origin property; also mandated by the founder's
    global CLAUDE.md.)
-4c. `<root>/decisions.md` — the LAST 5 entries only, for continuity (what was just decided shapes
+4c. `$ROOT/decisions.md` — the LAST 5 entries only, for continuity (what was just decided shapes
    today's work). Never the whole file.
-5. **Handoff radar (multi-panel machines)** — if `<polaris-root>/scripts/handoff_radar.py` exists,
-   run it (`python3 <polaris-root>/scripts/handoff_radar.py`, read-only, <2s). It surfaces
+5. **Handoff radar (multi-panel machines)** — resolve it in this order and run the first hit
+   (read-only, <2s, scoped to THIS repo):
+
+   ```bash
+   RADAR="$ROOT/scripts/handoff_radar.py"
+   [ -f "$RADAR" ] || RADAR="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/start/scripts/handoff_radar.py"
+   [ -f "$RADAR" ] && python3 "$RADAR"
+   ```
+
+   The package ships the second copy because a product repo has no vault to climb to: on a clone
+   with no vault above it the vault copy is unreachable, so without the shipped one every product
+   repo answered "radar assente" and kept its strays invisible. It surfaces
    end-of-session handoffs that main cannot see: stray per-worktree `state/current.md`, session
    logs committed on unmerged branches, uncommitted logs in worktrees. Include any ⚠ rows in the
    brief under a `**Handoff sparsi**` line so the operator can decide where to resume — this is
-   exactly the context that silently goes missing with parallel panels. If the script is absent (team machines — npx ships
-   skills only), run the inline fallback, same purpose, two read-only commands scoped to THIS repo:
+   exactly the context that silently goes missing with parallel panels. If NEITHER copy resolves,
+   run the inline fallback, same purpose, two read-only commands scoped to THIS repo:
    `git worktree list` → for each extra worktree, flag any `<polaris-root>/state/current-state.md`
    or `current.md` living there (stray cockpit), and
    `git log --all --not main --since='14 days ago' --oneline -- '*sessions/*.md' | head -5` →
    handoffs committed on unmerged branches.
-6. **Cockpit tail (ALWAYS, radar or not)** — read the last 2 blocks of `state/current-state.md`
-   (main worktree) if present: it is the dense record with next-steps and resume instructions;
+6. **Cockpit tail (ALWAYS, radar or not)** — read the last 2 blocks of
+   `$(dirname "$CURRENT")/current-state.md` if present: it is the dense record with next-steps and resume instructions;
    the brief's `Checkpoint`/`Next action` should prefer it when fresher than the session log.
 
 Do not read lessons, `.wiki/hot.md`, or unrelated files speculatively (decisions: last 5 only, per 4c). Memory is not

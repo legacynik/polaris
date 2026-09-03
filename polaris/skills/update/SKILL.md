@@ -3,7 +3,7 @@ name: update
 description: Polaris skill — record a short repository-first checkpoint during an active session. Trigger after meaningful progress, a blocker, a context switch, or on "checkpoint / save progress / /update".
 user-invocable: true
 model: sonnet
-version: 2.5.0
+version: 2.6.0
 invokes: [git-power]
 ---
 
@@ -13,8 +13,12 @@ invokes: [git-power]
 "${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/update/scripts/checkpoint.sh" prepare
 ```
 
-Root, login, branch, worktree, session-log path, harvest offset and the hygiene sweep all come from
-that command. If it fails, read its message and stop — never guess a path.
+Root, login, branch, worktree, session-log path, **`CURRENT` (the cockpit)**, harvest offset and the
+hygiene sweep all come from that command. If it fails, read its message and stop — never guess a
+path. `prepare` resolves `CURRENT` through `$ROOT/scripts/state_home.py path` when the repo carries
+it and applies the identical rule inline when it does not; either way it is the MAIN worktree's
+cockpit, never this panel's. Use `$CURRENT` verbatim — a cwd-relative `state/current.md` written
+from a worktree is gitignored there and never comes back.
 
 ## The entry
 
@@ -98,7 +102,7 @@ argument to `commit` so plan and log land together. No weekly file = no step, no
 fails when the file exists but predates today's session log. Plans are the roadmap (founder,
 polaris-os#85): a plan nobody ticks is a wish, not a plan.
 
-## `state/current.md` — la riga di stato si sovrascrive, i thread si aggiungono
+## `$CURRENT` — la riga di stato si sovrascrive, i thread si aggiungono
 
 **Se nulla di materiale è cambiato, non scrivere affatto.** Materiale = un thread aperto, un item
 completato, una priorità cambiata, un blocker nuovo. Un checkpoint che riscrive lo stato senza
@@ -106,7 +110,7 @@ motivo è rumore. Il donor upstream (marvin `update.md`, step 4) è più preciso
 *«Only update what's relevant to the current work. Don't rewrite the whole file.»* — un checkpoint
 tocca la riga del lavoro che ha in mano, non riscrive il file intero.
 
-Se è cambiato: `current.md` (nel MAIN worktree, regola One home) ha **due metà con regole opposte**,
+Se è cambiato: `$CURRENT` (nel MAIN worktree, regola One home) ha **due metà con regole opposte**,
 e confonderle è il difetto. La riga `Updated:` è **stato**: una sola, sovrascritta con data e titolo
 del checkpoint — mai una seconda. Gli `## Open` sono un **ledger**: aggiungi o barra **con data e
 prova**, mai chiudere o riscrivere la riga di un altro owner — si flagga. `/end` è l'unico che chiude.
@@ -165,4 +169,4 @@ il migliaio end-to-end.
 ## Mai
 
 Creare issue, branch, PR o deployment · dichiarare completo senza prova linkata · toccare
-`state/current.md` di un altro panel · `git add -A`.
+il `$CURRENT` di un altro panel · scrivere un `state/current.md` dentro un worktree · `git add -A`.

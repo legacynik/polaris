@@ -2,7 +2,7 @@
 name: end
 description: Polaris skill — close a repository-first team session with a handoff, decisions/lessons written to the ledgers, a plan tick and a pathspec-only commit. Trigger when stopping work, before a multi-day pause, or on "wrap up / end session / /end".
 user-invocable: true
-version: 1.4.0
+version: 1.5.0
 invokes: [git-power]
 ---
 
@@ -27,7 +27,16 @@ diverge on N branches and lose data at merge. Provenance lives in the block head
 ```bash
 MAIN_WT="$(git worktree list --porcelain | head -1 | sed 's|^worktree ||')"
 ROOT="$MAIN_WT/_polaris"; [ -f "$ROOT/config.yml" ] || ROOT="$MAIN_WT"
+LOGIN="$(git config --local --get polaris.login || gh api user --jq .login)"
+CURRENT="$(python3 "$ROOT/scripts/state_home.py" path 2>/dev/null)"   # the one resolver (#212)
+[ -n "$CURRENT" ] || CURRENT="$ROOT/team/$LOGIN/current.md"           # same rule, no script needed
+[ -f "$CURRENT" ] || CURRENT="$ROOT/state/current.md"
 ```
+
+`$CURRENT` is THE cockpit of this repo — the migrated `team/<login>/current.md` when it exists, the
+legacy `state/current.md` otherwise — resolved by `$ROOT/scripts/state_home.py path` where the repo
+carries it, by the identical inline rule where it does not. Write `$CURRENT`, never a
+cwd-relative `state/current.md`: inside a worktree that path is gitignored and never comes back.
 
 ## State hygiene (every run — the skills are the writers AND the janitors)
 
@@ -37,10 +46,15 @@ older sessions write with pre-patch instructions):
 1. Session files in the LEGACY top-level `<root>/sessions/` (not `team/<login>/sessions/`):
    `git mv` (or mv, if untracked) each into `team/<login>/sessions/`, adding a `-legacy` suffix
    on filename collision. Note the move in one line of this run's checkpoint — never silently.
-2. Non-canonical `current` variants in `<root>/state/` (anything beyond `current.md`,
+2. Cockpits stranded in OTHER worktrees (`<worktree>/_polaris/state/current.md`): report them and
+   name the one command that brings them home without merging or overwriting —
+   `python3 "$ROOT/scripts/state_home.py" migrate`, which refuses loudly on an occupied
+   destination and collects into `team/<login>/handoff/strays/<worktree>-<date>.md`. Never move
+   them silently.
+3. Non-canonical `current` variants in `<root>/state/` (anything beyond `current.md`,
    `current-state.md`, `goals.md`, `backlog*.md`): FLAG them in your output with their mtime and
    first heading; fold their still-live content into the cockpit only on explicit confirmation.
-3. **Branch state** — classify only the current lane before writing the handoff:
+4. **Branch state** — classify only the current lane before writing the handoff:
 
    ```bash
    GP="$HOME/.agents/skills/git-power/scripts/cantiere.py"
@@ -49,7 +63,7 @@ older sessions write with pre-patch instructions):
 
    `KEEP` means the worktree stays in the handoff. `READY_FINALIZE` means it may close only after
    the handoff commit. Unknown or unverifiable PR state is never cleanup permission.
-Skip silently when the repo is already clean. Never delete anything in steps 1–2.
+Skip silently when the repo is already clean. Never delete anything in steps 1–3.
 
 ## Step 1 — Write the handoff
 
@@ -120,9 +134,10 @@ personal view; THIS is the structured one a teammate (or you in 3 days) resumes 
 
 ### Step 1c — Cockpit append (dense session state, every contributor)
 
-ALWAYS append the same dense block to the CURRENT repo's `<polaris-root>/state/current-state.md`
-(gitignored per contract — `state/` is ephemeral; append-only, never pruned here). This is each
-contributor's per-repo cockpit — every contributor runs parallel panels, not just the founder.
+ALWAYS append the same dense block to `$ROOT/state/current-state.md` — the resolved MAIN worktree,
+never a cwd-relative `<polaris-root>/`, which is how a panel in a worktree grows a second cockpit
+there (gitignored per contract — `state/` is ephemeral; append-only, never pruned here). This is
+each contributor's per-repo cockpit — every contributor runs parallel panels, not just the founder.
 
 Additionally, if `$HOME/Desktop/All Vibe Proj/_polaris` exists (the founder vault) and is not the
 current root, ALSO append the FULL handoff
@@ -187,7 +202,7 @@ If nothing durable happened, say so. Do not log routine progress as either.
 
 ## Step 4 — Prune the live pointer (the only step allowed to close a thread)
 
-Path per the **One home** rule: `$ROOT/state/current.md` — the handoff lands where the next
+Path per the **One home** rule: `$CURRENT` — the handoff lands where the next
 session opens. **Reconcile** it: read it first, never blind-overwrite, same rules as `/update` Step 3 (threads keyed
 by branch, nothing open lost, other panels' threads and `Next` lines untouched) — with one
 difference. **`/end` is the only Team OS command with closing authority**, and it spends it against
