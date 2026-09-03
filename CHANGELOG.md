@@ -5,6 +5,8 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
+## 0.21.0 — 2026-09-04
+
 ### Added
 - `start` 1.3.0: **the three signals the system already computed and never showed**
   (`polaris-os#243`), plus the two surfaces the donor's four-file form landed with no reader
