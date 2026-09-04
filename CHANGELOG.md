@@ -5,6 +5,8 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
+## 0.23.0 — 2026-09-04
+
 ### Fixed
 - `start` 1.4.0: **`resume_paths.sh` quotes what it prints** (`polaris#14`). Step 1b `eval`s that
   output, and the values went out bare, so a checkout under a directory with a space in its name
