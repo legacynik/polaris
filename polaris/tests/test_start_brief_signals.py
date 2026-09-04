@@ -103,14 +103,37 @@ class TheThreeSignals(unittest.TestCase):
 class TheBackboneIsFeatureDetected(unittest.TestCase):
     """D3 — with a typed backbone the brief carries the pack id; without one, nothing changes."""
 
-    def test_pack_id_is_shown_when_the_host_repo_carries_the_backbone(self):
-        repo = host_repo()
+    @staticmethod
+    def _backbone(repo, *, emits=None, blocks=None):
+        """A host repo carrying the REAL shapes: a manifest with no `pack_id` key (the live one
+        has none) and a resolver that answers the declared CLI contract, not a stub file."""
         root = repo / "_polaris"
         (root / "decisions").mkdir()
-        (root / "decisions" / "manifest.json").write_text(json.dumps({"pack_id": "ctx-2026-09-03"}))
+        (root / "decisions" / "manifest.json").write_text(json.dumps(
+            {"schema_version": 1, "repo": "host", "workspace": "w",
+             "manifest_hash": "abc", "decisions": [], "live_documents": []}))
         (root / "scripts").mkdir()
-        (root / "scripts" / "contextpack.py").write_text("# host backbone\n")
-        self.assertIn("PACK=ctx-2026-09-03", signals(repo))
+        body = ("import json,sys\n"
+                f"print(json.dumps({{'context_pack_id': {emits!r}}}))\n" if emits else
+                f"import sys\nsys.stderr.write({blocks!r})\nsys.exit(1)\n")
+        (root / "scripts" / "contextpack.py").write_text(body)
+        return root
+
+    def test_the_pack_id_comes_from_running_the_resolver_not_from_a_manifest_key(self):
+        """The live manifest has NO `pack_id`: reading one means the signal is dead in every
+        real repo while its fixture invents the field that makes it pass."""
+        repo = host_repo()
+        self._backbone(repo, emits="CTX-polaris-ee16119dd0cf")
+        self.assertIn("PACK=CTX-polaris-ee16119dd0cf", signals(repo))
+
+    def test_a_blocked_pack_is_loud_not_silent(self):
+        """DB-FR-05: a blocked emission blocks. A silent empty line is indistinguishable from
+        a repo that has no backbone at all."""
+        repo = host_repo()
+        self._backbone(repo, blocks="DECISION_SCOPE_STALE: docs/x.md\n")
+        out = signals(repo)
+        self.assertIn("PACK=BLOCKED", out)
+        self.assertIn("DECISION_SCOPE_STALE", out)
 
     def test_a_repo_without_the_backbone_prints_no_pack_line_and_no_error(self):
         repo = host_repo()

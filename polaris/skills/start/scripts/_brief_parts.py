@@ -127,14 +127,37 @@ def emit_sections(root: Path, current: Path) -> list[str]:
     return out
 
 
-def emit_pack(root: Path) -> list[str]:
-    """D3 — feature-detect: with the typed backbone the brief carries the pack id, else nothing."""
-    manifest, compiler = root / "decisions" / "manifest.json", root / "scripts" / "contextpack.py"
-    if not (manifest.is_file() and compiler.is_file()):
-        return []
+PACK_TIMEOUT = 25
+
+
+def _pack_verdict(compiler: Path, root: Path) -> str:
+    """Run the host resolver and answer ONE line: the pack id, or why it did not emit."""
     try:
-        data = json.loads(manifest.read_text(encoding="utf-8"))
-    except (ValueError, OSError):
+        done = subprocess.run([sys.executable, "-I", str(compiler), "resolve", "--root", str(root)],
+                              capture_output=True, text=True, timeout=PACK_TIMEOUT)
+    except (OSError, subprocess.TimeoutExpired):
+        return "BLOCKED:the resolver did not answer"
+    if done.returncode:
+        cause = (done.stderr or done.stdout).strip().splitlines()
+        return f"BLOCKED:{cause[0][:120] if cause else 'no cause given'}"
+    try:
+        return json.loads(done.stdout).get("context_pack_id") or ""
+    except ValueError:
+        return "BLOCKED:the resolver did not answer JSON"
+
+
+def emit_pack(root: Path) -> list[str]:
+    """D3 — feature-detect: RUN the host resolver, or say nothing when there is no backbone.
+
+    This used to read a `pack_id` key out of `decisions/manifest.json`. The live manifest has no
+    such key — its keys are `decisions`, `manifest_hash`, `repo`, `workspace`, `live_documents`,
+    `domain_source`, `legacy_sources`, `schema_version` — so the signal was dead in every real
+    repository while its fixture wrote the field that made it pass. A blocked emission is now
+    LOUD (DB-FR-05: a blocked emission blocks), because a silent empty line is indistinguishable
+    from a repository that carries no backbone at all.
+    """
+    compiler = root / "scripts" / "contextpack.py"
+    if not (compiler.is_file() and (root / "decisions" / "manifest.json").is_file()):
         return []
-    pack = data.get("pack_id") or data.get("id")
-    return [f"PACK={pack}"] if pack else []
+    verdict = _pack_verdict(compiler, root)
+    return [f"PACK={verdict}"] if verdict else []
