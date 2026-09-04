@@ -18,7 +18,7 @@ import textwrap
 from pathlib import Path
 
 PKG = Path(__file__).resolve().parents[1]
-TEMPLATES = PKG / "templates" / "repo-contract"
+TEMPLATES = PKG / "skills" / "start" / "templates" / "repo-contract"
 LOGIN = "acme-dev"
 
 

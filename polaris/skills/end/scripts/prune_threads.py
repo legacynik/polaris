@@ -109,7 +109,7 @@ def run(opts: argparse.Namespace) -> int:
 def _fixture(root: Path) -> Path:
     """The SHIPPED template, with the lanes placed by the SHIPPED writer — never a hand-typed copy."""
     import shutil
-    src = HERE.parent.parent.parent / "templates" / "repo-contract" / "state" / "current.md"
+    src = HERE.parents[1] / "start" / "templates" / "repo-contract" / "state" / "current.md"
     path = root / "current.md"
     shutil.copyfile(src, path)
     for row in ("- `feat/b` (acme-api) — chiude #77 · since 2026-09-02",

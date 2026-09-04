@@ -120,7 +120,7 @@ run `polmem init` yourself.
 
 Write `team/<login>/weeks/$WEEK.md` (exact convention: ISO week — `weeks/YYYY-Www.md`, e.g.
 `team/octocat/weeks/2026-W29.md`) from the plugin template
-`$CLAUDE_PLUGIN_ROOT/templates/repo-contract/weekly-plan.md` (copy it into the repo if you
+`$CLAUDE_PLUGIN_ROOT/skills/start/templates/repo-contract/weekly-plan.md` (copy it into the repo if you
 keep local templates). Do not overwrite an existing plan for the week without saying so. It must
 contain:
 - one outcome that matters to the product or customer;
@@ -141,7 +141,7 @@ Il piano committato (`team/<login>/weeks/YYYY-Www.md`) è **storia**: possiede l
 riscrive mai. `state/todos.md` è **stato**: la fetta di quel piano che è viva adesso, riconciliata
 ogni lunedì. Stesso taglio append/overwrite che il repo ha già fra session log e `current.md`, un
 piano sopra. Se la repo ospite non ha `state/todos.md`, copialo da
-`$CLAUDE_PLUGIN_ROOT/templates/repo-contract/state/todos.md` e riempilo dal piano — vuoto, se il
+`$CLAUDE_PLUGIN_ROOT/skills/start/templates/repo-contract/state/todos.md` e riempilo dal piano — vuoto, se il
 piano non esiste: una vista onesta di un piano che non c'è è vuota, non inventata.
 
 Il file è nella forma donor a **tabelle** (`| Task | Added | Context |`) e la seconda cella di

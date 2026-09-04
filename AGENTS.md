@@ -21,7 +21,7 @@ of this repository: read the relevant SKILL.md below and follow it exactly.
 ## Notes for non-Claude agents
 
 - Where a skill references `$CLAUDE_PLUGIN_ROOT`, substitute the path of this repository checkout.
-- Repo-contract templates live in [polaris/templates/repo-contract/](polaris/templates/repo-contract/).
+- Repo-contract templates live in [polaris/skills/start/templates/repo-contract/](polaris/skills/start/templates/repo-contract/).
 - The `polmem` memory CLI: with Claude Code, install once per machine with
   `bash polaris/scripts/install-polmem-cli.sh` (adds `~/.local/bin/polmem`, resolved from the
   plugin cache). **Without Claude Code**, run the shim straight from this checkout — it finds the

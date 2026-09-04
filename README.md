@@ -83,7 +83,7 @@ contributor's `team/<login>/` path is created **by their own first `/start`**, f
 `gh api user` returns on their machine — never pre-created for someone else, never a nickname.
 
 Templates for every one of these files ship in
-[`polaris/templates/repo-contract/`](polaris/templates/repo-contract). Filenames are the ISO week
+[`polaris/skills/start/templates/repo-contract/`](polaris/skills/start/templates/repo-contract). Filenames are the ISO week
 (`date +%G-W%V`, e.g. `2026-W29`), so plan and report line up by construction.
 
 ## polmem — the repository's memory (CLI-first)

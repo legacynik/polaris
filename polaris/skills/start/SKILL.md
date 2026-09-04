@@ -44,7 +44,7 @@ plugin template. Never create `team/<login>/` folders for other people.
 
 ```bash
 mkdir -p "$ROOT/team/$LOGIN/weeks" "$ROOT/team/$LOGIN/reports" "$ROOT/team/$LOGIN/sessions"
-cp "$CLAUDE_PLUGIN_ROOT/templates/repo-contract/profile.yml" "$ROOT/team/$LOGIN/profile.yml"
+cp "$CLAUDE_PLUGIN_ROOT/skills/start/templates/repo-contract/profile.yml" "$ROOT/team/$LOGIN/profile.yml"
 perl -pi -e "s/^github: .*/github: $LOGIN/" "$ROOT/team/$LOGIN/profile.yml"
 ```
 
