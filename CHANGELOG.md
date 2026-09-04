@@ -5,6 +5,19 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
+## 0.25.0
+
+- `fix(start)`: il segnale del pack **esegue** il resolver invece di leggere una chiave che nessuno
+  scrive. `emit_pack` apriva `decisions/manifest.json` cercando `pack_id`, chiave che il manifest
+  vivo non ha: la riga era morta in ogni repo reale, e il test si scriveva da solo il file che poi
+  leggeva. Ora esegue `contextpack.py resolve` e riporta il `context_pack_id` vero; una emissione
+  bloccata e' rumorosa (`PACK=BLOCKED:<causa>`). (#20)
+- `fix(package)`: **cio' che una skill nomina viaggia dentro la skill.** `npx skills` installa solo
+  `skills/`, quindi `templates/`, `mcp/` e `wiki_quality_check.py` non arrivavano mai: il
+  provisioning del primo `/start` falliva con exit 1, `plan-week` e `report` restavano senza
+  template, e quattro selfcheck spediti crashavano. Ogni file vive ora dentro la skill che lo usa, e
+  un test gira su un albero a forma di **installazione** invece che di repository. (#21)
+
 ## 0.24.0 — 2026-09-04
 
 ### Changed
