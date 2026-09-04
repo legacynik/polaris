@@ -299,7 +299,7 @@ fi
 
 Righe TSV `VERDETTO\tbranch\tpath\tnote`, exit 0 pulito / 1 c'è da agire / 2 errore (contratto
 T13, `polaris-os#254`). Copia nell'handoff, verbatim, sotto una riga `**Cantiere**`, ogni riga il
-cui verdetto non è `MAIN`: `CLOSABLE` è ciò che si può chiudere, `DIRTY` ciò che ha lavoro non
+cui verdetto non è MAIN: CLOSABLE è ciò che si può chiudere, DIRTY ciò che ha lavoro non
 committato o file ignorati non vuoti. Sono le due cose che chi riprende deve sapere senza rileggere
 il grafo. `/end` **non chiude nulla** — elenca, e la chiusura resta un atto esplicito.
 
