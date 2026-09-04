@@ -17,10 +17,12 @@
 #   • `git commit -- <paths>`, never a commit of the index: what another panel pre-staged stays
 #     staged, exactly as it was, and never rides along.
 #   • branch reported, never changed; never a push; nothing ever left staged.
-# TWO declared refusals, exit 2, one line each, never silent and never a copy elsewhere: a detached
-# HEAD, and `polaris.commit-policy no-direct-default` while sitting on the default branch. In both
-# the files stay exactly where the session wrote them. A repo with NO commit at all is not one of
-# them: `git commit -- <path>` takes an unborn branch, so the first checkpoint of a new repo lands.
+# THREE declared exits with code 2, one line each, never silent and never a copy elsewhere: a
+# detached HEAD, `polaris.commit-policy no-direct-default` while sitting on the default branch, and
+# a path git itself refuses (gitignored, or inside a nested repo) — that last one still commits
+# every OTHER path of the set. In all three the files stay exactly where the session wrote them.
+# A repo with NO commit at all is not one of them: `git commit -- <path>` takes an unborn branch,
+# so the first checkpoint of a new repo lands.
 #   session_commit.sh <log> [<plan>] | --end <path>... | --selfcheck
 set -uo pipefail
 
@@ -43,9 +45,27 @@ _default_branch() {
     echo "${d:-main}"
 }
 
-# `git add -- a b missing` stages NOTHING and exits 128, so one absent optional file landed the whole
-# handoff nowhere. `/end` names five paths and usually wrote two: the normal case, not the edge.
-_present() { local p; for p in "$@"; do [ -e "$p" ] && printf '%s\n' "$p"; done; return 0; }
+# Which of these paths git will actually take, staged one by one. `git add -- a b missing` stages
+# NOTHING and exits 128, so one absent optional file landed the whole handoff nowhere — absent
+# paths are simply skipped. A path that EXISTS but git refuses — gitignored, or inside a nested
+# repo — is named with its reason and the others still land: a handoff must not die because the
+# journal happens to sit in an ignored directory. The caller turns a non-empty REFUSED into exit 2.
+ADDABLE=(); REFUSED=()
+_addable() {
+    ADDABLE=(); REFUSED=(); local p why
+    for p in "$@"; do
+        [ -e "$p" ] || continue
+        # `git add` alone is not the test: an ignored path makes it FAIL, but a path inside an
+        # untracked nested repo makes it succeed and stage nothing — and the pathspec then blew
+        # the whole commit up with "did not match any file(s) known to git". Ask the index.
+        if git add -- "$p" 2>/dev/null && git ls-files --error-unmatch -- "$p" >/dev/null 2>&1
+        then ADDABLE+=("$p"); continue; fi
+        git check-ignore -q -- "$p" && why=ignored || why="nested repo"
+        echo "session_commit: git refuses ${p} (${why}) — not committed" >&2
+        REFUSED+=("$p")
+    done
+    return 0
+}
 
 # `/end` names its files with ABSOLUTE paths and git refuses a pathspec it cannot resolve against
 # the worktree. Everything downstream assumes a repo-relative path, so it is normalised once, here,
@@ -82,7 +102,6 @@ _refused() {
 # explicit pathspec so a foreign staged file cannot ride along, and never leave anything staged.
 _stage_and_commit() {
     local mode="$1" branch="$2"; shift 2
-    git add -- "$@" 2>/dev/null || true
     local staged; staged="$(git diff --cached --name-only -- "$@")"
     [ -n "$staged" ] || { echo "session_commit: no session-state change on ${branch}, skip"; return 0; }
     local f; while IFS= read -r f; do
@@ -115,9 +134,12 @@ _commit() {
     git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "session_commit: not a git repo, skip"; return 0; }
     local branch; branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo '?')"
     _refused "$branch" || return 2
-    local here=(); while IFS= read -r p; do [ -n "$p" ] && here+=("$p"); done < <(_present "$@")
-    [ ${#here[@]} -gt 0 ] || { echo "session_commit: none of the named files exist yet, skip"; return 0; }
-    _stage_and_commit "$mode" "$branch" "${here[@]}"
+    _addable "$@"      # stages what git will take, names what it refuses
+    [ ${#ADDABLE[@]} -gt 0 ] || { [ ${#REFUSED[@]} -gt 0 ] && return 2
+        echo "session_commit: none of the named files exist yet, skip"; return 0; }
+    _stage_and_commit "$mode" "$branch" "${ADDABLE[@]}" || return $?
+    [ ${#REFUSED[@]} -gt 0 ] && return 2
+    return 0
 }
 
 commit_checkpoint() { _commit checkpoint "$@"; }

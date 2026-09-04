@@ -7,8 +7,9 @@
 set -uo pipefail
 SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"   # the polaris/ package dir
 W="$(mktemp -d)"; FAKE_HOME="$W/home"
-mkdir -p "$FAKE_HOME/.agents/skills/update"
+mkdir -p "$FAKE_HOME/.agents/skills/update" "$FAKE_HOME/.agents/skills/start"
 cp -R "$SRC/skills/update/scripts" "$FAKE_HOME/.agents/skills/update/scripts"   # simulate `npx skills` install
+cp -R "$SRC/skills/start/scripts" "$FAKE_HOME/.agents/skills/start/scripts"
 
 # --- a real repo with the contract layout, a feature branch, and a linked worktree
 R="$W/repo"; mkdir -p "$R"; cd "$R" || exit 1
@@ -123,6 +124,34 @@ echo old > "$(git rev-parse --git-common-dir)/polaris-deferred/_polaris/old.md"
 OUT="$(bash "$CK" prepare 2>&1)"
 echo "$OUT" | grep -q "SPOOL_LEGACY=1" && ck ok "R7 a legacy spool is counted by name" || ck no "R7 $OUT"
 [ -n "$(spool)" ] && ck ok "R7 prepare left the legacy spool alone" || ck no "R7 prepare ate it"
+
+# R9 G1 — the panel's own worktree keeps its log. A linked worktree on `feat/mine`, the MAIN
+# checkout parked on `feat/z`: the log is written under the LINKED worktree's contract and lands
+# on `feat/mine`. Before this the resolver sent both the write and the commit to the main checkout.
+git worktree add -q "$W/wt-mine" -b feat/mine
+MAIN_HEAD="$(git rev-parse HEAD)"
+( cd "$W/wt-mine" || exit 1
+  eval "$(bash "$HOME/.agents/skills/start/scripts/resume_paths.sh")"
+  case "$ROOT" in */wt-mine/_polaris) ;; *) echo "  FAIL R9 ROOT is not this worktree: $ROOT"; exit 1 ;; esac
+  case "$CURRENT" in */repo/_polaris/*) ;; *) echo "  FAIL R9 the cockpit left the main worktree: $CURRENT"; exit 1 ;; esac
+  mkdir -p "$ROOT/team/acme-dev/sessions"
+  echo "## 22:00 — from my own worktree" > "$ROOT/team/acme-dev/sessions/$(date +%F)-@acme-dev.md"
+  cd "$(git rev-parse --show-toplevel)"
+  "$SC" "$ROOT/team/acme-dev/sessions/$(date +%F)-@acme-dev.md" >/dev/null 2>&1
+  git show HEAD:"_polaris/team/acme-dev/sessions/$(date +%F)-@acme-dev.md" | grep -q "22:00" ) \
+  && ck ok "R9 a linked worktree writes and commits its own log" || ck no "R9 the log did not land here"
+[ "$(git -C "$W/wt-mine" rev-parse --abbrev-ref HEAD)" = feat/mine ] && ck ok "R9 it stayed on its own branch" || ck no "R9 changed branch"
+[ "$(git rev-parse HEAD)" = "$MAIN_HEAD" ] && ck ok "R9 the main checkout took nothing" || ck no "R9 wrote onto the main checkout's branch"
+git worktree remove --force "$W/wt-mine"
+
+# R10 G2 — a path git refuses is named with its reason, exits 2, and the rest of the set lands.
+mkdir -p "$R/nested/journal" && git -C "$R/nested" init -q -b main
+echo "session line" > "$R/nested/journal/j.md"
+echo "## $(date +%F) — another lesson (@acme-dev)" >> "$ROOT/lessons.md"
+OUT="$("$SC" --end "$R/nested/journal/j.md" "$ROOT/lessons.md" 2>&1)"; RC=$?
+[ "$RC" -eq 2 ] && ck ok "R10 a path git refuses exits 2" || ck no "R10 rc=$RC $OUT"
+echo "$OUT" | grep -q "git refuses .*(nested repo)" && ck ok "R10 the refusal names path and reason" || ck no "R10 $OUT"
+git show --name-only --format= HEAD | grep -qx _polaris/lessons.md && ck ok "R10 the other paths still landed" || ck no "R10 the whole handoff died with one path"
 
 # R8 neither install path present → resolver empty, so the skill must fall back to the manual rule
 SC2="${CLAUDE_PLUGIN_ROOT:-}/skills/update/scripts/session_commit.sh"

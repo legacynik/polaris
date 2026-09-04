@@ -144,8 +144,27 @@ _selfcheck() {
         || { echo "FAIL S16 unborn branch never landed the first checkpoint"; exit 1; }
     rm -rf "$u"
 
+    # S17 a path git REFUSES because it is gitignored: named with its reason, exit 2, and the
+    # OTHER paths of the same run still land. Before this, the run said "no change, skip".
+    git checkout -q master 2>/dev/null || true
+    printf 'ignored/\n' >> .gitignore; git add .gitignore; git commit -qm ignore-dir
+    mkdir -p ignored; echo "## ignored log" > ignored/log.md
+    echo "## kept" > lessons.md
+    commit_end ignored/log.md lessons.md > out.txt 2>&1; [ $? -eq 2 ] || { echo "FAIL S17 an ignored path must exit 2"; exit 1; }
+    grep -q "git refuses ignored/log.md (ignored)" out.txt || { echo "FAIL S17 the refusal is unnamed"; exit 1; }
+    git show --name-only --format= HEAD | grep -qx lessons.md || { echo "FAIL S17 the other paths did not land"; exit 1; }
+
+    # S18 a path inside an untracked NESTED repo: `git add` returns 0 and stages nothing there, so
+    # the index is the test — otherwise the pathspec took the whole commit down with it.
+    mkdir -p nested/journal && git -C nested init -q -b main
+    echo "session line" > nested/journal/j.md
+    echo "## kept2" >> lessons.md
+    commit_end nested/journal/j.md lessons.md > out.txt 2>&1; [ $? -eq 2 ] || { echo "FAIL S18 a nested-repo path must exit 2"; exit 1; }
+    grep -q "git refuses nested/journal/j.md (nested repo)" out.txt || { echo "FAIL S18 the refusal is unnamed"; exit 1; }
+    git show HEAD:lessons.md | grep -q kept2 || { echo "FAIL S18 the other paths did not land"; exit 1; }
+
     cd / && rm -rf "$d"
-    echo "SELF-CHECK OK: first-of-day · foreign-drag-stays-staged · gitignored-state+secret · forbidden-input · empty-skip · commits-on-the-branch-you-are-on · a-sibling-worktree-changes-nothing · policy-refuses-only-on-the-default · end-promotes-ledgers · end-refuses-state+secret · end-lands-on-the-current-branch · origin/HEAD-default · master-default-repo · hook-refusal-exits-1-and-unstages · absent-path-does-not-block · detached-HEAD-refuses · unborn-branch-lands"
+    echo "SELF-CHECK OK: first-of-day · foreign-drag-stays-staged · gitignored-state+secret · forbidden-input · empty-skip · commits-on-the-branch-you-are-on · a-sibling-worktree-changes-nothing · policy-refuses-only-on-the-default · end-promotes-ledgers · end-refuses-state+secret · end-lands-on-the-current-branch · origin/HEAD-default · master-default-repo · hook-refusal-exits-1-and-unstages · absent-path-does-not-block · detached-HEAD-refuses · unborn-branch-lands · ignored-path-named-others-land · nested-repo-path-named-others-land"
 }
 
 _selfcheck

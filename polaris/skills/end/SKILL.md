@@ -19,16 +19,18 @@ git status --short                 # what actually changed this session
 
 ## One home (write-target for ALL session-state)
 
-Every write in this skill — session log, handoff file, plan tick, `current.md`,
-decisions/lessons appends — lands in the **MAIN worktree**, whichever worktree/branch this panel
-sits in. One home = appends from every panel land in one file, in time order; per-worktree copies
-diverge on N branches and lose data at merge. Provenance lives in the block header (`wt:`/`branch:`).
+Il log vive e si committa dove gira il pannello; il cockpit vive nel worktree principale. Session
+log, handoff file, plan tick e append a decisions/lessons stanno sotto `$ROOT`, che è il contratto
+di QUESTO worktree, e atterrano sul branch su cui la sessione è davvero avvenuta. Solo `$CURRENT`
+— il cockpit, gitignored — resta a casa unica nel worktree principale, perché una copia per
+worktree è una copia che nessun merge riporta indietro. La provenienza sta nell'header del blocco
+(`wt:`/`branch:`).
 
 ```bash
 eval "$("${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/start/scripts/resume_paths.sh")"
 ```
 
-One resolver, shared with `/start`: `MAIN_WT`, `ROOT`, `LOGIN`, `CURRENT` and `RADAR`. It exits
+One resolver, shared with `/start`: `MAIN_WT`, `ROOT` (this worktree), `LOGIN`, `CURRENT` (the main worktree's cockpit) and `RADAR`. It exits
 non-zero rather than guessing — not a git checkout, no contract, no resolvable login all stop here
 instead of writing to an invented path. Three copies of this rule used to live in the package.
 
@@ -368,13 +370,16 @@ dichiarate (HEAD staccato, policy `no-direct-default` sul default branch). Un re
 commit non è un'eccezione: il primo handoff atterra come tutti gli altri.
 
 Un `/end` che rinvia invece di committare è un `/end` che non ha lavorato (decisione founder,
-2026-09-04). Nelle due eccezioni lo script esce 2 con una riga che dice quale: i file restano dove
+2026-09-04). Terzo esito dichiarato, sempre exit 2: un path che git rifiuta (ignorato, o dentro un
+repo annidato) viene nominato con la sua ragione e gli altri path atterrano comunque — un handoff
+non muore perché il journal sta in una directory ignorata.
+Nelle eccezioni lo script esce 2 con una riga che dice quale: i file restano dove
 li hai scritti, non vengono copiati altrove, e tu lo dici in chiaro invece di riportare successo.
 The Step 1 `polmem remember` line lands in `.wiki/journal/`: it is committed shared history, so it
 belongs here or it never reaches the team.
 
 ```bash
-cd "$MAIN_WT"
+cd "$(git rev-parse --show-toplevel)"   # the panel's own worktree, never another one
 SC="${CLAUDE_PLUGIN_ROOT:-}/skills/update/scripts/session_commit.sh"          # plugin install
 [ -x "$SC" ] || SC="$HOME/.agents/skills/update/scripts/session_commit.sh"    # skills-CLI install (npx)
 "$SC" --end "$ROOT/team/$LOGIN/sessions/$(date +%F)-@$LOGIN.md" \

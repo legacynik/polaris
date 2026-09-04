@@ -13,7 +13,7 @@ from pathlib import Path
 
 from commit_fixture import (checkpoint_commit, dirt, end_files, landed_names,
                             session_log, spool_files, STRAY)
-from host_repo import LOGIN, git, host_repo, run_block, skill_block
+from host_repo import LOGIN, git, host_repo, run_block, run_script, skill_block
 
 
 def stray_log(repo: Path) -> Path:
@@ -24,37 +24,61 @@ def stray_log(repo: Path) -> Path:
 
 
 class ItCommitsOnTheBranchYouAreOn(unittest.TestCase):
-    """(a) (b) (c) — three repo shapes, one behaviour."""
+    """(a) (b) (c) — three repo shapes, one behaviour: the panel's own worktree and branch."""
 
-    def assert_landed_here(self, repo: Path, run_cwd: Path, branch: str):
-        log = session_log(repo)
-        stray = stray_log(repo)
-        out = checkpoint_commit(run_cwd)
+    def assert_landed_here(self, tree: Path, branch: str):
+        log = session_log(tree)
+        stray = stray_log(tree)
+        out = checkpoint_commit(tree)
         body = out.stdout + out.stderr
         self.assertEqual(out.returncode, 0, body)
-        self.assertEqual(git(repo, "rev-parse", "--abbrev-ref", "HEAD").stdout.strip(), branch)
-        self.assertEqual(landed_names(repo), [str(log.relative_to(repo))], body)
-        self.assertEqual(dirt(repo), [f"?? {stray.relative_to(repo)}"], "only the stray is left")
-        self.assertEqual(spool_files(repo), [], "the spool is gone from the normal path")
+        self.assertEqual(git(tree, "rev-parse", "--abbrev-ref", "HEAD").stdout.strip(), branch)
+        self.assertEqual(landed_names(tree), [str(log.relative_to(tree))], body)
+        self.assertEqual(dirt(tree), [f"?? {stray.relative_to(tree)}"], "only the stray is left")
+        self.assertEqual(spool_files(tree), [], "the spool is gone from the normal path")
 
-    def test_a_main_checkout_off_the_default_with_three_worktrees_commits_here(self):
+    def test_a_a_linked_worktree_commits_its_own_log_on_its_own_branch(self):
+        """G1 — the main checkout is parked on another panel's branch and stays untouched."""
         repo = host_repo()
         git(repo, "switch", "-qc", "feat/main-panel")
-        linked = []
         for n in ("one", "two", "three"):
-            path = repo.parent / f"wt-{n}"
-            git(repo, "worktree", "add", "-q", "-b", f"feat/{n}", str(path))
-            linked.append(path)
-        self.assert_landed_here(repo, linked[0], "feat/main-panel")
+            git(repo, "worktree", "add", "-q", "-b", f"feat/{n}", str(repo.parent / f"wt-{n}"))
+        head = git(repo, "rev-parse", "HEAD").stdout.strip()
+        self.assert_landed_here(repo.parent / "wt-one", "feat/one")
+        self.assertEqual(git(repo, "rev-parse", "HEAD").stdout.strip(), head,
+                         "the main checkout's branch took somebody else's session log")
 
     def test_b_a_single_checkout_on_a_feature_branch_commits_here(self):
         repo = host_repo()
         git(repo, "switch", "-qc", "feat/x")
-        self.assert_landed_here(repo, repo, "feat/x")
+        self.assert_landed_here(repo, "feat/x")
 
     def test_c_a_checkout_sitting_on_the_default_commits_there_too(self):
         repo = host_repo()
-        self.assert_landed_here(repo, repo, "main")
+        self.assert_landed_here(repo, "main")
+
+    def test_the_shared_resolver_puts_the_root_here_and_the_cockpit_at_home(self):
+        """G1 — `/end` builds its paths from `resume_paths.sh`, so the split lives there too."""
+        repo = host_repo()
+        wt = repo.parent / "wt-mine"
+        git(repo, "worktree", "add", "-q", "-b", "feat/mine", str(wt))
+        out = run_script("start", "resume_paths.sh", cwd=str(wt))
+        self.assertEqual(out.returncode, 0, out.stderr)
+        fields = dict(ln.split("=", 1) for ln in out.stdout.splitlines() if "=" in ln)
+        self.assertIn(str(wt), fields["ROOT"], fields["ROOT"])
+        self.assertIn(str(repo), fields["CURRENT"], fields["CURRENT"])
+        self.assertIn(str(repo), fields["MAIN_WT"], fields["MAIN_WT"])
+
+    def test_prepare_resolves_the_log_here_and_the_cockpit_at_home(self):
+        """G1 — SESSION_LOG follows the panel; CURRENT (gitignored) stays in the main worktree."""
+        repo = host_repo()
+        wt = repo.parent / "wt-mine"
+        git(repo, "worktree", "add", "-q", "-b", "feat/mine", str(wt))
+        out = run_script("update", "checkpoint.sh", "prepare", cwd=str(wt))
+        self.assertEqual(out.returncode, 0, out.stderr)
+        fields = dict(ln.split("=", 1) for ln in out.stdout.splitlines() if "=" in ln)
+        self.assertTrue(fields["SESSION_LOG"].startswith(f"{wt}/"), fields["SESSION_LOG"])
+        self.assertTrue(fields["CURRENT"].startswith(f"{repo}/"), fields["CURRENT"])
 
     def test_the_shipped_landing_block_still_names_this_command(self):
         self.assertIn("commit", skill_block("update", '"$CHECKPOINT" commit'))
@@ -118,6 +142,22 @@ class EndLandsTheWholeHandoff(unittest.TestCase):
         self.assertEqual(landed_names(repo), paths, out.stdout + out.stderr)
         self.assertEqual(dirt(repo), [], "C5: /end leaves the Polaris paths clean")
         self.assertEqual(spool_files(repo), [])
+
+    def test_g1_the_end_block_lands_in_the_worktree_the_panel_runs_in(self):
+        repo = host_repo()
+        git(repo, "switch", "-qc", "feat/main-panel")
+        wt = repo.parent / "wt-mine"
+        git(repo, "worktree", "add", "-q", "-b", "feat/mine", str(wt))
+        head = git(repo, "rev-parse", "HEAD").stdout.strip()
+        paths = end_files(wt)
+        # exactly what the resolver hands a linked panel today: MAIN_WT is the other checkout.
+        out = run_block("end", '"$SC" --end', wt, MAIN_WT=str(repo))
+        self.assertEqual(out.returncode, 0, out.stdout + out.stderr)
+        self.assertEqual(landed_names(wt), paths, out.stdout + out.stderr)
+        self.assertEqual(git(wt, "rev-parse", "--abbrev-ref", "HEAD").stdout.strip(), "feat/mine")
+        self.assertEqual(git(repo, "rev-parse", "HEAD").stdout.strip(), head,
+                         "the handoff was written onto the main checkout's branch")
+        self.assertEqual(dirt(wt), [])
 
 
 if __name__ == "__main__":

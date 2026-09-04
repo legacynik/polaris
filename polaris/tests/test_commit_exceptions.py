@@ -13,7 +13,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from commit_fixture import TODAY, dirt, session_log, spool_files
+from commit_fixture import TODAY, dirt, landed_names, session_log, spool_files
 from host_repo import LOGIN, PKG, git, host_repo, run_script
 
 SKILLS = PKG / "skills"
@@ -70,6 +70,39 @@ class TheThreeDeclaredRefusals(unittest.TestCase):
         self.assertEqual(code, 0, body)
         self.assertEqual(git(repo, "show", "--name-only", "--format=", "HEAD").stdout.split(),
                          [str(log.relative_to(repo))], body)
+
+
+class GitRefusesAPath(unittest.TestCase):
+    """G2 — a path on disk that git will not take: declared, exit 2, the rest still lands."""
+
+    def test_a_gitignored_session_log_is_named_and_the_others_land(self):
+        repo = host_repo()
+        (repo / ".gitignore").write_text("_polaris/team/*/sessions/\n")
+        git(repo, "add", ".gitignore")
+        git(repo, "commit", "-qm", "ignore sessions")
+        log = session_log(repo)
+        (repo / "_polaris" / "decisions.md").write_text("## decision\n")
+        out = run_script("update", "session_commit.sh", "--end",
+                         str(log), str(repo / "_polaris" / "decisions.md"), cwd=str(repo))
+        body = out.stdout + out.stderr
+        self.assertEqual(out.returncode, 2, body)
+        self.assertIn("git refuses", body)
+        self.assertIn("ignored", body)
+        self.assertEqual(landed_names(repo), ["_polaris/decisions.md"], body)
+
+    def test_a_journal_inside_a_nested_repo_is_named_and_the_others_land(self):
+        repo = host_repo()
+        journal = repo / ".wiki" / "journal"
+        journal.mkdir(parents=True)
+        git(repo / ".wiki", "init", "-q", "-b", "main")
+        (journal / "2026-09-04.md").write_text("session line\n")
+        log = session_log(repo)
+        out = run_script("update", "session_commit.sh", "--end",
+                         str(log), str(journal / "2026-09-04.md"), cwd=str(repo))
+        body = out.stdout + out.stderr
+        self.assertEqual(out.returncode, 2, body)
+        self.assertIn("git refuses", body)
+        self.assertEqual(landed_names(repo), [str(log.relative_to(repo))], body)
 
 
 class TheSpoolIsOnlyALegacyCounter(unittest.TestCase):
