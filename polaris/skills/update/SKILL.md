@@ -3,7 +3,7 @@ name: update
 description: Polaris skill — record a short repository-first checkpoint during an active session. Trigger after meaningful progress, a blocker, a context switch, or on "checkpoint / save progress / /update".
 user-invocable: true
 model: sonnet
-version: 2.11.0
+version: 2.12.0
 invokes: [git-power]
 ---
 
@@ -211,10 +211,13 @@ non committati sulle 4 repo al 2026-08-08).
 
 `commit` decide **dove** atterra e non chiede: un worktree fratello già sul default branch se lo
 prende (e questo albero non tiene copie); un repo con **un solo checkout** committa sul branch
-corrente, perché non esiste «la prossima sessione su main» ad aspettare; un repo che dichiara
-`git config polaris.commit-policy no-direct-default` **rinvia** — 0 commit, la entry nello spool che
-`/start` conta, mai un commit forzato (`polaris-os#141`). Solo l'ultimo caso è un rinvio: se lo
-stampa, `/update` è fallito e non emette la riga di completamento. Su repo con `main` protetto da
+corrente, perché non esiste «la prossima sessione su main» ad aspettare; con **due o più checkout e
+nessuno sul default** non atterra niente — `deferred`, 0 commit, il messaggio nomina il branch su
+cui è fermo il checkout principale (`polaris#12`: committare lì scrive la tua sessione sul branch di
+un altro pannello, ed è successo nel vault il 04/09); un repo che dichiara
+`git config polaris.commit-policy no-direct-default` **rinvia** allo stesso modo, mai un commit
+forzato (`polaris-os#141`). Gli ultimi due casi sono rinvii: se lo stampa, `/update` è fallito e non
+emette la riga di completamento. Su repo con `main` protetto da
 status check il diario non deve superare i cancelli del codice, ed è esattamente quel rinvio.
 
 Dopo il landing, prova che anche il worktree principale è clean. `/update` non censisce e non

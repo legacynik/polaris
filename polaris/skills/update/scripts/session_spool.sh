@@ -39,6 +39,37 @@ _wt_on_default() {
     return 1
 }
 
+# How many checkouts this repo has, and what the MAIN one is parked on. `_wt_on_default` coming
+# back empty means "no sibling can take this commit" — it does NOT mean "there is only me". With a
+# second checkout present the two readings differ, and reading it as "one checkout" is how a
+# checkpoint landed on another panel's branch (polaris#12).
+_wt_count() { git worktree list --porcelain 2>/dev/null | grep -c '^worktree '; }
+
+_main_wt_branch() {
+    local line seen=0
+    while IFS= read -r line; do
+        case "$line" in
+            worktree\ *) seen=$((seen + 1)); [ "$seen" -gt 1 ] && break ;;
+            branch\ refs/heads/*) echo "${line#branch refs/heads/}"; return 0 ;;
+            detached) echo "a detached HEAD"; return 0 ;;
+        esac
+    done < <(git worktree list --porcelain 2>/dev/null)
+    echo "an unknown branch"
+}
+
+# Two checkouts and NEITHER on the default is not "one checkout": it is a repo where nothing may
+# land today. Committing there writes the session onto whatever branch another panel parked the
+# main checkout on, and drains the spool onto it too — both happened live on 2026-09-04
+# (polaris#12). The entry waits in the spool `/start` counts, and the reason names that branch.
+_defer_no_default() {
+    local def="$1"; shift
+    _spool_put "$@" && { _drop_landed "$@"
+        echo "session_commit: deferred — no checkout is on ${def} (the main one is on $(_main_wt_branch)) and this repo has $(_wt_count) checkouts; spooled to $(_spool_dir), 0 commits"
+        return 0; }
+    echo "session_commit: no checkout is on ${def} and the spool is unwritable — commit by hand" >&2
+    return 1
+}
+
 # A repository may declare that its default branch is never committed to directly (branch
 # protection, or a rule the contract states). Declared, never guessed: asking the remote would make
 # every offline run either hang or fail open, and #141 asks for a deterministic `deferred`.

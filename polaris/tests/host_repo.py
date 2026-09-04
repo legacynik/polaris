@@ -26,9 +26,13 @@ def git(cwd: Path, *args: str) -> subprocess.CompletedProcess:
     return subprocess.run(["git", "-C", str(cwd), *args], capture_output=True, text=True)
 
 
-def host_repo(login: str = LOGIN) -> Path:
-    """A committed repo with `_polaris/` seeded from the package templates."""
-    repo = Path(tempfile.mkdtemp(prefix="pm-a-")).resolve() / "acme-api"
+def host_repo(login: str = LOGIN, name: str = "acme-api") -> Path:
+    """A committed repo with `_polaris/` seeded from the package templates.
+
+    `name` is the checkout's own directory: the founder's vault lives under a directory with
+    spaces in it, and every path this package prints has to survive that (polaris#14).
+    """
+    repo = Path(tempfile.mkdtemp(prefix="pm-a-")).resolve() / name
     (repo / "_polaris" / "state").mkdir(parents=True)
     (repo / "_polaris" / "team" / login / "sessions").mkdir(parents=True)
     (repo / "_polaris" / "team" / login / "weeks").mkdir(parents=True)

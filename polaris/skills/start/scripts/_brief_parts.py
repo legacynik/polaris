@@ -17,14 +17,14 @@ from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "update" / "scripts"))
 from state_lines import kinds, section as body_of, table_row  # noqa: E402
+from state_sections import SECTIONS as REGISTRY, heading  # noqa: E402
 
-# The sections a state file owes. `state_contract.py` in a repo that has one is asked first;
-# this is the answer for the host repos that ship only the package.
-REGISTRY = {"current.md": ("## Active Priorities", "## Open", "## Recent Context"),
-            "todos.md": ("## Active", "## Completed", "## Follow-ups")}
+# The sections a state file owes come from the ONE registry in `state_lines` (polaris#11):
+# a reader with its own copy is a reader that disagrees with the writer the day one of them moves.
 PLACEHOLDER = re.compile(r"^[\s|*]*(none|nessuno)?[\s|*]*$", re.I)
 DATE = re.compile(r"(\d{4}-\d{2}-\d{2})")
 ENTRY = re.compile(r"^###\s+(.*)$")
+OUTER = re.compile(r"^#{1,2}\s")
 MAX_ROWS = 5
 
 
@@ -35,7 +35,7 @@ def section(text: str, name: str) -> list[str]:
     own `startswith("## ")` disagrees with the writer the moment a fence or a rule shows up.
     """
     lines = text.splitlines()
-    span = body_of(lines, re.compile(rf"^#{{1,6}}\s+{re.escape(name.lstrip('# '))}\s*$", re.I))
+    span = body_of(lines, heading(name))
     tags = kinds(lines)
     return [lines[i].strip() for i in range(*(span or (0, 0)))
             if tags[i] == "thread" and not PLACEHOLDER.match(lines[i])]
@@ -71,8 +71,8 @@ def emit_recent(current: Path) -> list[str]:
         return []
     inside, out = False, []
     for line in current.read_text(encoding="utf-8").splitlines():
-        if line.startswith("## "):
-            inside = line.strip() == "## Recent Context"
+        if OUTER.match(line):        # `### ` is an ENTRY of this section, never its end
+            inside = bool(heading("## Recent Context").match(line))
         elif inside and ENTRY.match(line):
             out.append(f"RECENT={ENTRY.match(line).group(1).strip()}")
     return out[:3]
@@ -118,7 +118,9 @@ def emit_sections(root: Path, current: Path) -> list[str]:
         if not path.is_file():
             continue
         text = path.read_text(encoding="utf-8")
-        missing = [s for s in REGISTRY.get(path.name, ()) if s not in text]
+        heads = text.splitlines()
+        missing = [s for s in REGISTRY.get(path.name, ())
+                   if not any(heading(s).match(ln) for ln in heads)]
         if missing:
             out.append(f"SECTIONS_MISSING={path.name}: {', '.join(missing)}")
     return out

@@ -11,10 +11,10 @@
 # WHERE it lands (polaris-os#202 AC4, live proof 2026-09-03):
 #   • a sibling worktree already on the default branch → spool, and IT commits; this tree keeps no
 #     untracked copy — a duplicate left here is exactly the dirt AC4 forbids.
-#   • ONE checkout, on any branch → commit HERE: there is no "next default-branch session" to wait
-#     for. Before this rule, `/end` left two dirty lines and the next session swallowed the log.
-#   • `polaris.commit-policy no-direct-default`, a detached HEAD, or a hook that refuses → `deferred`
-#     to the spool `/start` counts (polaris-os#141, #243), never a forced commit.
+#   • ONE checkout, on any branch → commit HERE: there is no "next default-branch session" to wait for. Before this rule, `/end` left two dirty lines and the next session swallowed the log.
+#   • TWO or more checkouts and none on the default, `polaris.commit-policy no-direct-default`, a
+#     detached HEAD, or a hook that refuses → `deferred` to the spool `/start` counts, never a
+#     forced commit (polaris#12, polaris-os#141, #243).
 #   session_commit.sh <log> [<plan>] | --end <path>... | --selfcheck
 set -uo pipefail
 
@@ -117,8 +117,7 @@ _commit() {
     done
     git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "session_commit: not a git repo, skip"; return 0; }
     local branch def; branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo '?')"; def="$(_default_branch)"
-    # Detached HEAD: a commit here is reachable only through the reflog until gc takes it. An UNBORN
-    # branch also reports `HEAD` and is NOT this case — there the commit is the repo's first.
+    # Detached HEAD: a commit here is reachable only through the reflog until gc takes it. An UNBORN branch also reports `HEAD` and is NOT this case — there the commit is the repo's first.
     if ! git symbolic-ref -q HEAD >/dev/null 2>&1 && git rev-parse -q --verify HEAD >/dev/null 2>&1; then
         _spool_put "$@" && { _drop_landed "$@"
             echo "session_commit: deferred — HEAD is detached, a commit here would be reachable only through the reflog; spooled to $(_spool_dir)"
@@ -139,6 +138,7 @@ _commit() {
             echo "session_commit: the ${def} worktree refused it — entry is in the spool, not lost" >&2
             return 1
         fi
+        [ "$(_wt_count)" -gt 1 ] && { _defer_no_default "$def" "$@"; return $?; }   # polaris#12
         echo "session_commit: on '${branch}' and this repo has one checkout — committing here"
     elif _policy_defers; then
         _spool_put "$@" && {

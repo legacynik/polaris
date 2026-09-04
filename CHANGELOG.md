@@ -5,6 +5,34 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
+### Fixed
+- `start` 1.4.0: **`resume_paths.sh` quotes what it prints** (`polaris#14`). Step 1b `eval`s that
+  output, and the values went out bare, so a checkout under a directory with a space in its name
+  split into words and `/start` died with «command not found» on the founder's own vault. `printf
+  '%s=%q\n'` round-trips a space, an apostrophe and a `$` byte-identically; the Step 1b line in the
+  SKILL body is unchanged. Fixtures: a repo under `Dir With Spaces` and one under `it's $HOME repo`.
+- `update` 2.12.0: **two checkouts and neither on the default branch is not «one checkout»**
+  (`polaris#12`). `_wt_on_default` comes back empty when no SIBLING can take the commit, and
+  `session_commit.sh` read that as "there is only me": from a linked worktree it committed the
+  session onto whatever branch another panel had parked the MAIN checkout on, and drained the spool
+  onto it as well — measured live on 2026-09-04, a commit on a foreign branch carrying a session log
+  from another day. With a second checkout present it now defers: 0 commits, the entry in the spool
+  `/start` counts, and the reason names the branch the main checkout is on. A repo with ONE checkout
+  still commits on its current branch, with exactly the file the run wrote.
+- `update` 2.12.0 / `start` 1.4.0: **one registry of section names** (`polaris#11`). `state_lines`
+  now declares the names the package expects and the rule for matching them, and `state_upsert`,
+  `brief_signals`/`_brief_parts` and `recent_context` read that instead of compiling a heading each.
+  A heading QUALIFIES a declared name after a dash, a colon or a parenthesis, so the vault's
+  `## Open — thread vivi` is `## Open`; `## Active Priorities` is still not `## Active`, and a
+  translated heading is still reported `SECTIONS_MISSING`. A new row now lands among the rows, not
+  at the end of the span: the live cockpit closes its threads with an `Owner:` line and the new lane
+  was written under it. With no recognised section the writer refuses with exit 2, names the heading
+  it expected, and leaves the file byte-identical. The registry is a new module,
+  `skills/update/scripts/state_sections.py`, so `state_lines.py` stays byte-identical with the
+  vault copy the wiring gate compares; `state_upsert.py`'s fixtures moved next door into
+  `state_upsert_selfcheck.py`, the same split `session_commit_selfcheck.sh` already uses, which
+  keeps every touched file inside the 200-line limit.
+
 ## 0.22.0 — 2026-09-04
 
 ### Fixed

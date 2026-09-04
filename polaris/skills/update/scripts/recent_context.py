@@ -23,10 +23,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from state_lines import kinds, read, write  # noqa: E402
+from state_sections import heading  # noqa: E402
 from state_lock import LockError, locked, write_atomic  # noqa: E402
 
 CAP = 5
-HEADING = re.compile(r"^##\s+Recent Context\s*$", re.I)
+HEADING = heading("## Recent Context")   # the ONE registry (polaris#11)
 ENTRY = re.compile(r"^###\s+")
 OUTER = re.compile(r"^#{1,2}\s")
 

@@ -29,10 +29,8 @@ RADAR="$ROOT/scripts/handoff_radar.py"
 [ -f "$RADAR" ] || RADAR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/handoff_radar.py"
 [ -f "$RADAR" ] || RADAR=none
 
-cat <<EOF
-MAIN_WT=$MAIN_WT
-ROOT=$ROOT
-LOGIN=$LOGIN
-CURRENT=$CURRENT
-RADAR=$RADAR
-EOF
+# Every value is shell-quoted, because the caller `eval`s this. Unquoted, a checkout under a
+# directory with a space in its name split into words and /start died at Step 1b with
+# «command not found: Vibe» — on the founder's own vault (polaris#14). `%q` round-trips an
+# apostrophe and a `$` too, so the path comes back byte-identical whatever is in it.
+printf '%s=%q\n' MAIN_WT "$MAIN_WT" ROOT "$ROOT" LOGIN "$LOGIN" CURRENT "$CURRENT" RADAR "$RADAR"

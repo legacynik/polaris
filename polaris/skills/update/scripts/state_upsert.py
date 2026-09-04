@@ -26,14 +26,15 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from state_lines import drop_placeholder, kinds, lane_id, read, section, table_row, write  # noqa
+from state_sections import heading  # noqa: E402
 from state_lock import LockError, locked, still_mine, write_atomic  # noqa: E402
 
 ADDED = re.compile(r"·?\s*Added:\s*(W\d+)", re.I)
 FOOTER = "<!-- pol:state-contract -->"  # the file's own contract closes it; nothing goes below
-SECTIONS = {"thread": re.compile(r"^#{1,6}\s+open\b", re.I),
-            "week": re.compile(r"^#{1,6}\s+active\s*$", re.I)}
-# `## Active Priorities` in a cockpit also starts with "active": the week door means the todos file's
-# own `## Active`. NO_ADD: the writer may refresh a row, never create one (--no-add).
+# One registry (`state_sections`): no door here compiles a heading of its own. The week door means
+# the todos file's own `## Active`, which the qualifier rule keeps apart from `## Active Priorities`
+# in a cockpit. NO_ADD: the writer may refresh a row, never create one (--no-add).
+SECTIONS = {"thread": heading("## Open"), "week": heading("## Active")}
 NO_ADD = False
 
 
@@ -46,8 +47,10 @@ class UpsertError(Exception):
 def _section(lines: list[str], door: str) -> tuple[int, int]:
     """The section body, via the shared fence-aware model. Refuses rather than guessing."""
     if (span := section(lines, SECTIONS[door])) is None:
-        raise UpsertError("NO_OPEN_SECTION", f"no `{door}` section here — refusing to invent a "
-                          "place. Add the heading the contract expects, then re-run.")
+        want = "## Open" if door == "thread" else "## Active"
+        raise UpsertError("NO_OPEN_SECTION", f"no `{want}` section here — refusing to invent a "
+                          f"place. Add `{want}` (a heading may qualify it after a dash, a colon or "
+                          "a parenthesis), then re-run.")
     return span
 
 
@@ -69,6 +72,20 @@ def _carry_stamp(old: str, new: str, week: str) -> str:
     return f"{stamped} · Added: {was.group(1) if was else week}"
 
 
+def _place(lines: list[str], span: tuple[int, int], tags: list[str]) -> int:
+    """Where a NEW row goes: among the rows, never merely inside the section. The live cockpit
+    closes its threads with an `Owner:` line and the new lane landed under it (polaris#11). An
+    empty section takes the row under its intro — never above a table's header."""
+    anchors = [i for i in range(*span)
+               if tags[i] == "thread" or lines[i].lstrip().startswith(("|", "<!--"))]
+    if anchors:
+        return anchors[-1] + 1
+    at = span[0]
+    while at < span[1] and not lines[at].strip():
+        at += 1
+    return at
+
+
 def _replace(lines: list[str], span: tuple[int, int], line: str) -> tuple[str, int]:
     """Overwrite the line with the same key, else append. Two matches refuse: see the module."""
     key, tags = lane_id(line), kinds(lines)
@@ -83,9 +100,7 @@ def _replace(lines: list[str], span: tuple[int, int], line: str) -> tuple[str, i
     if NO_ADD:
         raise UpsertError("NO_SUCH_ROW", f"no row keyed {key!r}, and --no-add may not create one: "
                           "plan-week reconciles the section, /update refreshes (polaris-os#240)")
-    at = span[1]
-    while at > span[0] and not lines[at - 1].strip():  # keep the blank line before what follows
-        at -= 1
+    at = _place(lines, span, tags)
     lines.insert(at, line)
     return "appended", at
 
@@ -122,46 +137,11 @@ def upsert(path: Path, line: str, opts: argparse.Namespace) -> dict:
     return {"action": action, "key": lane_id(line), "line": at + 1, "path": str(path)}
 
 
-def _selfcheck_thread(f: Path) -> list[bool]:
-    """Replace, append above the footer, one `Updated:` line, a loud refusal."""
-    opts = argparse.Namespace(door="thread", owner="ada", now="2026-09-03", week="")
-    f.write_text(f"Updated: 2026-09-01 — @ada\n\n## Open\n\n- `a` — uno · since 2026-09-01\n\n{FOOTER}\n")
-    ok = []
-    with locked(f):
-        ok.append(upsert(f, "- `a` — due · since 2026-09-01", opts)["action"] == "replaced")
-        ok.append(f.read_text().count("`a`") == 1 and "due" in f.read_text())
-        ok.append(upsert(f, "- `b` — nuova · since 2026-09-03", opts)["action"] == "appended")
-    body = f.read_text()
-    ok += [body.index("- `b`") < body.index(FOOTER),        # never under the file's contract
-           body.count("Updated:") == 1 and "@ada" in body]
-    f.write_text("# nothing\n")
-    try:
-        with locked(f):
-            upsert(f, "- `z` — x", opts)
-        ok.append(False)                                    # must have refused
-    except UpsertError as exc:
-        ok.append(exc.code == "NO_OPEN_SECTION")
-    return ok
-
-
 def cmd_selfcheck() -> int:
-    """One fixture per branch that would silently corrupt a cockpit or a plan."""
-    import tempfile
-    with tempfile.TemporaryDirectory() as d:   # every write below is thrown away with it
-        f = Path(d) / "current.md"; ok = _selfcheck_thread(f)
-        f.write_text("## Active\n\n- #1 — x · Added: W32\n")
-        week = argparse.Namespace(door="week", owner="", now="", week="W34")
-        with locked(f):
-            upsert(f, "- #1 — y", week)
-        ok.append("Added: W32" in f.read_text())            # the stamp is carried, not reset
-        f.write_text("## Active\n\n| Task | Added | Context |\n|---|---|---|\n"
-                     "| #1 — x | W32 | ctx |\n")   # the donor's TABLE form, what the vault uses
-        with locked(f):
-            ok.append(upsert(f, "| #1 — y | | |", week)["action"] == "replaced")
-        body = f.read_text()
-        ok += [body.count("#1") == 1, "| W32 |" in body, "W34" not in body]
-    print(f"state_upsert selfcheck: {sum(ok)}/{len(ok)} branches OK")
-    return 0 if all(ok) else 1
+    """One fixture per branch that would silently corrupt a cockpit or a plan. The fixtures live
+    next door, like `session_commit_selfcheck.sh`: this file carries the guard, not its proof."""
+    from state_upsert_selfcheck import run
+    return run()
 
 
 def _parser() -> argparse.ArgumentParser:
