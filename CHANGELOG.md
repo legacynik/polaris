@@ -5,6 +5,8 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
+## 0.22.0 — 2026-09-04
+
 ### Fixed
 - `update` 2.11.0 / `end` 1.12.0: **the shipped `/end` blocks are executed by the suite, not
   grepped.** `polaris/tests/test_end_runs.py` reads Step 4, Step 5, `Recent Context` and the lane
