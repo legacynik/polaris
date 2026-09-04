@@ -2,7 +2,7 @@
 name: start
 description: Polaris skill — resume the current objective from the latest local handoff. First use also provisions your own team path.
 user-invocable: true
-version: 1.4.0
+version: 1.5.0
 ---
 
 # /start — resume, do not survey
@@ -99,7 +99,7 @@ Read these local files, in order:
    ```
 
    Each line is self-describing and appears only when it has something to say, so read what comes
-   back: todos, follow-ups due and `RECENT` go with the work, `DEFERRED`/`DRIFT`/`SECTIONS_MISSING`
+   back: todos, follow-ups due and `RECENT` go with the work, `SPOOL_LEGACY`/`DRIFT`/`SECTIONS_MISSING`
    under `**Segnali**`. A missing line is nothing to report, never an error.
 
 Do not read lessons, `.wiki/hot.md`, or unrelated files speculatively. Memory is not

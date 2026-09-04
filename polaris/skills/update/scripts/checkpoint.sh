@@ -17,12 +17,15 @@ set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # --- resolution ---------------------------------------------------------------
-# One home: every write lands in the MAIN worktree, whatever tree this panel sits in.
-# Per-worktree copies diverge on N branches and lose data at merge.
+# The session log lives and commits WHERE THE PANEL RUNS: `$ROOT` is this worktree's contract, so
+# the log, the handoff and the plan tick land on the branch the session actually happened on.
+# Only the cockpit keeps the one-home rule — see `cockpit`, and MAIN_ROOT below.
 resolve() {
   MAIN_WT="$(git worktree list --porcelain 2>/dev/null | head -1 | sed 's|^worktree ||')"
   [ -n "${MAIN_WT:-}" ] || { echo "checkpoint: not a git repo" >&2; exit 2; }
-  ROOT="$MAIN_WT/_polaris"; [ -f "$ROOT/config.yml" ] || ROOT="$MAIN_WT"
+  HERE_WT="$(git rev-parse --show-toplevel 2>/dev/null)"
+  MAIN_ROOT="$MAIN_WT/_polaris"; [ -f "$MAIN_ROOT/config.yml" ] || MAIN_ROOT="$MAIN_WT"
+  ROOT="$HERE_WT/_polaris"; [ -f "$ROOT/config.yml" ] || ROOT="$HERE_WT"
   LOGIN="$(git config --local --get polaris.login 2>/dev/null || gh api user --jq .login 2>/dev/null)"
   [ -n "${LOGIN:-}" ] || { echo "checkpoint: cannot resolve login (gh auth?)" >&2; exit 2; }
   BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
@@ -30,7 +33,7 @@ resolve() {
   SESSION_LOG="$ROOT/team/$LOGIN/sessions/$(date +%F)-@$LOGIN.md"
   cockpit
   WEEKLY="$ROOT/team/$LOGIN/weeks/$(date +%G-W%V).md"
-  SCRATCH="$(ls -t "$ROOT/team/$LOGIN/sessions/scratch/"*.md "$ROOT/sessions/scratch/$LOGIN/"*.md 2>/dev/null | head -1)"
+  SCRATCH="$(ls -t "$MAIN_ROOT/team/$LOGIN/sessions/scratch/"*.md "$MAIN_ROOT/sessions/scratch/$LOGIN/"*.md 2>/dev/null | head -1)"
 }
 
 # THE cockpit of this repo — one per repo, never one per worktree. The #212 resolver owns
@@ -38,9 +41,9 @@ resolve() {
 # package ships to repos that have no vault scripts. A cwd-relative state/current.md written
 # from a worktree is gitignored there and never comes back: 4 were found stranded in one repo.
 cockpit() {
-  CURRENT="$(python3 "$ROOT/scripts/state_home.py" path 2>/dev/null)"
-  [ -n "${CURRENT:-}" ] || CURRENT="$ROOT/team/$LOGIN/current.md"
-  [ -f "$CURRENT" ] || CURRENT="$ROOT/state/current.md"
+  CURRENT="$(python3 "$MAIN_ROOT/scripts/state_home.py" path 2>/dev/null)"
+  [ -n "${CURRENT:-}" ] || CURRENT="$MAIN_ROOT/team/$LOGIN/current.md"
+  [ -f "$CURRENT" ] || CURRENT="$MAIN_ROOT/state/current.md"
 }
 
 # Watermark = byte offset of the last harvest. Reading the delta keeps the checkpoint
@@ -56,6 +59,7 @@ cmd_prepare() {
   resolve
   cat <<EOF
 ROOT=$ROOT
+MAIN_WT=$MAIN_WT
 LOGIN=$LOGIN
 BRANCH=$BRANCH
 WT=$WT
@@ -71,7 +75,21 @@ EOF
   strays=$(ls "$ROOT"/sessions/*.md 2>/dev/null | wc -l | tr -d ' ')
   [ "$strays" != "0" ] && echo "HYGIENE=legacy session logs at \$ROOT/sessions/: $strays (migrate deliberately, check readers first)"
   [ -n "${SCRATCH:-}" ] || echo "HYGIENE=no scratch found for this session — harvest step is a no-op"
+  spool_legacy
   due_report
+  return 0
+}
+
+# Until v0.24.0 a run that could not commit copied the files into `.git/polaris-deferred` and told
+# the next session to drain it. The rule now is «commit on the branch you are on», so nothing is
+# ever written there again — but a repo upgraded mid-flight can still hold one. Reported by name,
+# never touched: those are somebody's session entries, and moving them is not this script's call.
+spool_legacy() {
+  local dir n
+  dir="$(git rev-parse --git-common-dir 2>/dev/null)" || return 0
+  case "$dir" in /*) ;; *) dir="$(git rev-parse --show-toplevel)/$dir" ;; esac
+  n=$(find "$dir/polaris-deferred" -type f 2>/dev/null | wc -l | tr -d ' ')
+  [ "${n:-0}" != "0" ] && echo "SPOOL_LEGACY=$n file in $dir/polaris-deferred: portali a mano con git add, poi cancella la cartella"
   return 0
 }
 
@@ -81,7 +99,7 @@ EOF
 # rides the ritual nobody skips is a reminder that fires. Marked done via `due-done`,
 # which rewrites the date to today+N — the schedule advances itself, so a job can
 # never silently stop being due.
-DUE_FILE() { echo "$ROOT/state/due.md"; }
+DUE_FILE() { echo "$MAIN_ROOT/state/due.md"; }
 
 due_report() {
   local f; f="$(DUE_FILE)"; [ -f "$f" ] || return 0
@@ -138,8 +156,8 @@ cmd_commit() {
   local sc="$HERE/session_commit.sh"
   [ -x "$sc" ] || { echo "checkpoint: session_commit.sh missing at $sc — commit by hand, pathspec-only" >&2; return 1; }
   local rel=(); local p
-  for p in "$@"; do rel+=("${p#$MAIN_WT/}"); done
-  ( cd "$MAIN_WT" && "$sc" "${rel[@]}" )   # session_commit takes N paths; ticked weekly plan rides along
+  for p in "$@"; do rel+=("${p#$HERE_WT/}"); done
+  ( cd "$HERE_WT" && "$sc" "${rel[@]}" )   # session_commit takes N paths; ticked weekly plan rides along
 }
 
 # verify exists because a step that lives only in prose eventually gets skipped —

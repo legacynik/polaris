@@ -83,17 +83,20 @@ def git(root: Path, *args: str) -> str:
 
 
 def emit_spool(main_wt: Path) -> list[str]:
-    """#243 signal 1 — counted under the git COMMON dir, where `session_commit.sh` really puts it.
+    """Signal 1 — what an upgrade left behind, counted under the git COMMON dir.
 
-    `rglob`, because the spool is NESTED (it mirrors the repo path under the branch it deferred
-    from). A flat `iterdir()` counted zero forever and this signal never fired once.
+    Until v0.24.0 a run that could not commit copied the files here and asked the next session to
+    drain them. Nothing writes here any more (the log commits on the branch you are on), so a
+    non-empty spool is legacy: it is counted, named, and left alone for a human to `git add`.
+    `rglob`, because it is NESTED — a flat `iterdir()` counted zero forever and never fired once.
     """
     common = git(main_wt, "rev-parse", "--git-common-dir")
     if not common:
         return []
     spool = Path(common if Path(common).is_absolute() else main_wt / common) / "polaris-deferred"
     n = len([p for p in spool.rglob("*") if p.is_file()]) if spool.is_dir() else 0
-    return [f"DEFERRED={n} — session-log entries spooled, not committed"] if n else []
+    return [f"SPOOL_LEGACY={n} — vecchie entry mai committate in {spool}: "
+            "portale a mano con git add, poi cancella la cartella"] if n else []
 
 
 def emit_drift(main_wt: Path, login: str) -> list[str]:

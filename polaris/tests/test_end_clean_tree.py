@@ -1,13 +1,12 @@
 """PM-C — `/end` lands the session and leaves the working tree clean.
 
 `polaris-os#202` AC4: *«`/end` rimuove i thread chiusi e lascia il working tree pulito:
-`git status --short` esce `0` righe»*. The live proof of 2026-09-03 showed the opposite on the
-commonest shape there is — ONE checkout parked on a feature branch: the handoff was spooled, the
-log stayed on disk untracked, `git status --short` came back with two lines while both skills
-reported success, and the next session swallowed the log into its own commit.
+`git status --short` esce `0` righe»*. Since the founder decision of 2026-09-04 the handoff commits
+on the CURRENT branch of the checkout that wrote it, in every repo shape — one checkout or five,
+on the default branch or off it.
 
-`#141`: where the repository's own policy forbids a direct commit, the result is `deferred` — never
-a forced commit. `#243`: what is deferred is spooled, and `/start` counts the spool.
+`#141`: where the repository's own policy forbids a direct commit on the default branch, the run
+REFUSES with exit 2 and one line; the files stay in the working tree and are copied nowhere.
 
 Every fixture is the shipped template or the shipped writer; every command is the shipped script.
 """
@@ -40,12 +39,15 @@ def end(repo: Path, *paths: str) -> subprocess.CompletedProcess:
 
 def dirt(repo: Path) -> list[str]:
     """Only the Polaris paths: another panel's unrelated work is not ours to judge."""
-    return [ln for ln in git(repo, "status", "--short").stdout.splitlines() if "_polaris/" in ln]
+    return [ln for ln in git(repo, "status", "--short", "-uall").stdout.splitlines()
+            if "_polaris/" in ln]
 
 
 def spooled(repo: Path) -> list[str]:
+    """Nothing writes here since v0.24.0; the assertions below prove it stays empty."""
     root = repo / ".git" / "polaris-deferred"
-    return sorted(str(p.relative_to(root)) for p in root.rglob("*") if p.is_file())
+    return sorted(str(p.relative_to(root)) for p in root.rglob("*") if p.is_file()) \
+        if root.is_dir() else []
 
 
 class ASingleCheckoutCommitsOnItsOwnBranch(unittest.TestCase):
@@ -64,7 +66,7 @@ class ASingleCheckoutCommitsOnItsOwnBranch(unittest.TestCase):
         for path in paths:
             self.assertEqual(git(repo, "show", f"HEAD:{path}").returncode, 0, f"{path} not landed")
 
-    def test_nothing_is_deferred_once_the_commit_landed(self):
+    def test_nothing_is_copied_anywhere_once_the_commit_landed(self):
         repo, paths = self.parked()
         end(repo, *paths)
         self.assertEqual(spooled(repo), [], "a landed handoff has nothing left to drain")
@@ -81,8 +83,8 @@ class ASingleCheckoutCommitsOnItsOwnBranch(unittest.TestCase):
                       "what the user had staged before must come back exactly as it was")
 
 
-class ASiblingWorktreeOnTheDefaultTakesIt(unittest.TestCase):
-    """D1a — the default worktree still commits it, and this tree keeps nothing."""
+class ASiblingWorktreeOnTheDefaultChangesNothing(unittest.TestCase):
+    """D1a — the log belongs to the branch the session happened on, not to whoever holds main."""
 
     def split(self):
         repo = host_repo()
@@ -90,54 +92,55 @@ class ASiblingWorktreeOnTheDefaultTakesIt(unittest.TestCase):
         git(repo, "worktree", "add", "-q", "-b", "feat/y", str(linked))
         return repo, linked
 
-    def test_the_linked_tree_is_left_clean_and_the_default_holds_the_commit(self):
+    def test_the_linked_tree_commits_its_own_branch_and_leaves_the_default_alone(self):
         repo, linked = self.split()
         paths = landed(linked)
         out = end(linked, *paths)
         self.assertEqual(out.returncode, 0, out.stdout + out.stderr)
-        self.assertEqual(dirt(linked), [], "the tree that deferred must not keep an orphan copy")
+        self.assertEqual(dirt(linked), [], "the tree that wrote them must not stay dirty")
         for path in paths:
-            self.assertEqual(git(repo, "show", f"HEAD:{path}").returncode, 0, f"{path} not landed")
+            self.assertEqual(git(linked, "show", f"HEAD:{path}").returncode, 0, f"{path} not landed")
+            self.assertNotEqual(git(repo, "show", f"HEAD:{path}").returncode, 0,
+                                f"{path} was written onto the default branch")
 
-    def test_the_absolute_paths_the_skill_passes_survive_the_handoff(self):
-        """`/end` Step 5 names its files absolutely; a sibling worktree cannot `git add` those."""
+    def test_the_absolute_paths_the_skill_passes_still_resolve(self):
+        """`/end` Step 5 names its files absolutely; the pathspec must survive the normalisation."""
         repo, linked = self.split()
         paths = landed(linked)
         out = end(linked, *[str(linked / p) for p in paths])
         self.assertEqual(out.returncode, 0, out.stdout + out.stderr)
         for path in paths:
-            self.assertEqual(git(repo, "show", f"HEAD:{path}").returncode, 0,
-                             f"{path} never landed — a pathspec outside the worktree is refused")
+            self.assertEqual(git(linked, "show", f"HEAD:{path}").returncode, 0, f"{path} never landed")
 
-    def test_the_default_worktree_commit_drags_nothing_that_was_staged_there(self):
+    def test_the_commit_drags_nothing_that_was_staged_beside_it(self):
         repo, linked = self.split()
-        (repo / "notes.md").write_text("another panel\n")
-        git(repo, "add", "notes.md")
+        (linked / "notes.md").write_text("another panel\n")
+        git(linked, "add", "notes.md")
         end(linked, *landed(linked))
-        self.assertNotIn("notes.md", git(repo, "show", "--name-only", "--format=", "HEAD").stdout,
-                         "the delegated commit is pathspec-only, like every other one")
+        self.assertNotIn("notes.md", git(linked, "show", "--name-only", "--format=", "HEAD").stdout,
+                         "every commit here is pathspec-only")
 
 
-class ADeclaredPolicyDefersInsteadOfForcing(unittest.TestCase):
-    """D1c / `#141` — a policy that forbids the direct commit produces `deferred`, never a commit."""
+class ADeclaredPolicyRefusesInsteadOfForcing(unittest.TestCase):
+    """D1c / `#141` — a policy that forbids the direct commit produces exit 2, never a commit."""
 
     def forbidden(self):
         repo = host_repo()
         git(repo, "config", "polaris.commit-policy", "no-direct-default")
         return repo, landed(repo), git(repo, "rev-parse", "HEAD").stdout.strip()
 
-    def test_no_commit_is_made_and_the_result_says_deferred(self):
+    def test_no_commit_is_made_and_the_result_names_the_policy(self):
         repo, paths, head = self.forbidden()
         out = end(repo, *paths)
-        self.assertEqual(out.returncode, 0, out.stderr)
-        self.assertIn("deferred", out.stdout)
+        self.assertEqual(out.returncode, 2, out.stdout + out.stderr)
+        self.assertIn("polaris.commit-policy", out.stderr)
         self.assertEqual(git(repo, "rev-parse", "HEAD").stdout.strip(), head, "0 commits")
 
-    def test_what_could_not_be_committed_is_in_the_spool_and_not_in_the_tree(self):
+    def test_the_files_stay_in_the_tree_and_are_copied_nowhere(self):
         repo, paths, _ = self.forbidden()
         end(repo, *paths)
-        self.assertEqual(spooled(repo), sorted(paths), "#243: the spool is what /start counts")
-        self.assertEqual(dirt(repo), [], "an untracked copy left behind is the dirt AC4 forbids")
+        self.assertEqual(sorted(ln.split()[-1] for ln in dirt(repo)), sorted(paths))
+        self.assertEqual(spooled(repo), [], "nothing is copied out of the working tree any more")
 
 
 class OneSessionDoesNotRewriteAnother(unittest.TestCase):

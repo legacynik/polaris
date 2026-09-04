@@ -3,7 +3,7 @@ name: update
 description: Polaris skill — record a short repository-first checkpoint during an active session. Trigger after meaningful progress, a blocker, a context switch, or on "checkpoint / save progress / /update".
 user-invocable: true
 model: sonnet
-version: 2.12.0
+version: 2.13.0
 invokes: [git-power]
 ---
 
@@ -209,16 +209,14 @@ checkpoint non passa. Il titolo non entra in `Updated:` — sta nel log e in `Re
 ref è una entry che non esiste (misurato: 46% delle entry recenti di un repo, e 74 file di journal
 non committati sulle 4 repo al 2026-08-08).
 
-`commit` decide **dove** atterra e non chiede: un worktree fratello già sul default branch se lo
-prende (e questo albero non tiene copie); un repo con **un solo checkout** committa sul branch
-corrente, perché non esiste «la prossima sessione su main» ad aspettare; con **due o più checkout e
-nessuno sul default** non atterra niente — `deferred`, 0 commit, il messaggio nomina il branch su
-cui è fermo il checkout principale (`polaris#12`: committare lì scrive la tua sessione sul branch di
-un altro pannello, ed è successo nel vault il 04/09); un repo che dichiara
-`git config polaris.commit-policy no-direct-default` **rinvia** allo stesso modo, mai un commit
-forzato (`polaris-os#141`). Gli ultimi due casi sono rinvii: se lo stampa, `/update` è fallito e non
-emette la riga di completamento. Su repo con `main` protetto da
-status check il diario non deve superare i cancelli del codice, ed è esattamente quel rinvio.
+Il log di sessione si committa sul branch corrente, sempre; due eccezioni dichiarate (HEAD
+staccato, policy `no-direct-default` sul default branch). In quelle due `commit` esce 2 con una riga
+che dice quale, i file restano dove li hai scritti e non vengono copiati altrove: `/update` è
+fallito e non emette la riga di completamento. Terzo esito dichiarato, sempre exit 2: un path che
+git rifiuta (ignorato, o dentro un repo annidato) viene nominato con la sua ragione e **gli altri
+path atterrano comunque**. Un repo senza alcun commit non è un'eccezione: il primo checkpoint
+atterra come tutti gli altri. Il log vive e si committa dove gira il pannello; il cockpit vive nel
+worktree principale.
 
 Dopo il landing, prova che anche il worktree principale è clean. `/update` non censisce e non
 rimuove worktree, ma non può terminare dirty:

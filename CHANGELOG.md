@@ -5,6 +5,51 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
+### Changed
+- `update` 2.13.0 / `end` 1.14.0 / `start` 1.5.0: **il log di sessione si committa sul branch
+  corrente, sempre** (decisione founder, 2026-09-04). Un `/end` che rinvia invece di committare è un
+  `/end` che non ha lavorato. `session_commit.sh` non guarda più quale worktree sta su quale branch:
+  committa nel checkout in cui gira, sul branch che quel checkout ha, con il pathspec esatto dei soli
+  file di sessione passati e `git commit -- <paths>` invece del commit dell'indice, così ciò che un
+  altro pannello aveva staged resta staged e fuori dal commit. Restano **due eccezioni dichiarate**,
+  exit 2 e una riga che dice quale, con i file lasciati dove la sessione li ha scritti e nessuna copia
+  altrove: HEAD staccato, e `polaris.commit-policy no-direct-default` mentre si è sul default branch
+  (la stessa policy su un branch qualsiasi non si applica). Un repo senza alcun commit **non** è
+  un'eccezione: `git commit -- <path>` accetta un branch unborn, quindi il primo checkpoint di un
+  repo nuovo atterra. Un hook che rifiuta resta exit 1 con la sua riga, indice ripulito dei soli path
+  Polaris e mai `--no-verify`.
+
+- `update` 2.13.0 / `end` 1.14.0 / `start` 1.5.0: **il log vive e si committa dove gira il pannello;
+  il cockpit vive nel worktree principale** (gate polaris#17, G1). `checkpoint.sh` ed
+  `resume_paths.sh` risolvevano `ROOT` sul worktree PRINCIPALE e `/end` apriva con `cd "$MAIN_WT"`:
+  da un worktree secondario il session log finiva sul branch del checkout principale — l'incidente
+  che questa PR chiude, con un'altra forma. Ora `ROOT` è il contratto di QUESTO worktree, quindi
+  log, handoff e tick del piano nascono e atterrano sul branch su cui la sessione è avvenuta, e solo
+  `CURRENT` (il cockpit, gitignored) resta a casa unica nel principale, insieme a scratch, `due.md`
+  e radar. Riprodotto: sessione su `feat/mine`, principale parcheggiato su `feat/main-panel`, HEAD
+  del principale invariato dopo il commit.
+- `update` 2.13.0: **un path che git rifiuta è dichiarato e non uccide l'handoff** (gate polaris#17,
+  G2). Un log gitignorato o un journal dentro un `.wiki/` che è un repo annidato dava exit 0 «no
+  session-state change, skip» oppure exit 1 sull'intero set. Ora esce 2 con
+  `session_commit: git refuses <path> (ignored|nested repo) — not committed` e **gli altri path del
+  set atterrano comunque**. `git add` da solo non era il test: dentro un repo annidato ritorna 0 e
+  non stage niente, e il pathspec faceva poi saltare tutto il commit — decide l'indice.
+
+### Removed
+- **Lo spool di rinvio** (`session_spool.sh`, `.git/polaris-deferred`, il drain, `_wt_on_default`,
+  `_wt_count`, `_main_wt_branch`, `_defer_no_default`, `_drop_landed`, la consegna a un worktree
+  fratello sul default). Tre settimane di macchinario di rinvio il cui output affidabile era un
+  working tree lasciato sporco e un messaggio rassicurante. `session_commit.sh` scende da 199 a 141
+  righe e la deriva «due checkout e nessuno sul default» sparisce con il codice che la produceva.
+- I test che asserivano il rinvio (`test_worktree_defer.py`, `test_worktree_count.py`): il loro
+  soggetto non esiste più. Le stesse forme di repo — un checkout, tre worktree, un fratello sul
+  default — sono coperte da `test_commit_here.py` con l'aspettativa nuova.
+
+### Fixed
+- `start` 1.5.0: il segnale `DEFERRED=` diventa **`SPOOL_LEGACY=`** e cambia significato — non più
+  «entry in attesa di drenaggio», ma «entry lasciate da una versione precedente, portale a mano con
+  `git add`». `checkpoint.sh prepare` stampa la stessa riga e non tocca la cartella.
+
 ## 0.23.0 — 2026-09-04
 
 ### Fixed
