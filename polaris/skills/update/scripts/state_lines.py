@@ -15,9 +15,10 @@ from __future__ import annotations
 
 import re
 
+from state_sections import HEADING, heading   # this directory owns every heading pattern
+
 BOM = "﻿"
 FENCE = re.compile(r"^[ \t]{0,3}(`{3,}|~{3,})")
-HEADING = re.compile(r"^#{1,6}\s")
 RULE = re.compile(r"^\s{0,3}(?:-{3,}|\*{3,}|_{3,})\s*$")
 # The ONE predicate for "this line is a thread". Every writer asks here: two
 # notions of a bullet is how `*` and `1.` threads became invisible to one side.
@@ -181,14 +182,14 @@ def _selfcheck() -> int:
     t, u = kinds(body), kinds(table)
     ok = [t[4] == "other", t[5] == "other", t[6] == "other",   # ``` cannot close ~~~
           t[9] == "heading", t[11] == "thread", t[13] == "other",
-          section(body, re.compile(r"^#{1,6}\s+open\b", re.I)) == (10, 15),
+          section(body, heading("## Open")) == (10, 15),
           u[0] == "other", u[1] == "other", u[2] == "thread",  # header and rule are structure
           lane_id(table[2]) == "#11", table_row(table[1]) is None,
           lane_id("| `feat/a` | W32 | |") == "feat/a",
           # An escaped pipe is content: splitting on it shifted every later cell left.
           table_row(r"| `a\|b` — nome | W32 | ctx |") == [r"`a\|b` — nome", "W32", "ctx"],
           # A section ends at the donor's rule, not at EOF: below it lives the next table.
-          section(donor, re.compile(r"^#{1,6}\s+completed\s*$", re.I)) == (1, 6)] \
+          section(donor, heading("## Completed")) == (1, 6)] \
         + _check_placeholder()
     print(f"state_lines selfcheck: {sum(ok)}/{len(ok)} branches OK")
     return 0 if all(ok) else 1

@@ -32,17 +32,38 @@ SC="${CLAUDE_PLUGIN_ROOT:-}/skills/update/scripts/session_commit.sh"
 [ "$(cd "$MAIN_WT" && pwd -P)" = "$(cd "$R" && pwd -P)" ] && ck ok "One home resolves the main worktree from a linked one" || ck no "MAIN_WT=$MAIN_WT"
 [ -x "$SC" ] && ck ok "resolver finds the script on a skills-CLI (npx) machine, PLUGIN_ROOT unset" || ck no "resolver empty"
 
-# R1 NO worktree sits on the default branch → the checkpoint lands HERE, on the branch we are on,
-# and the tree comes back clean. This is the shape the live proof of 2026-09-03 left dirty.
+# R1 TWO checkouts and NEITHER on the default branch → nothing may land today. Before polaris#12
+# this printed «this repo has one checkout» with a second checkout right there, committed the
+# session onto whatever branch another panel had parked the main checkout on, and drained the spool
+# onto it too. The entry now waits in the spool that `/start` counts, and the reason names the branch.
 LOG="$ROOT/team/acme-dev/sessions/$(date +%F)-@acme-dev.md"
 echo "## 10:00 — checkpoint from the linked worktree" > "$LOG"
 cd "$MAIN_WT" || exit 1
 echo "SECRET=1" > .env; echo junk > junk.txt; git add -f .env junk.txt   # another panel's staging
-OUT="$("$SC" "$LOG" 2>&1)"; echo "$OUT" | grep -q "committing here" && ck ok "R1 single-checkout repo commits on its own branch" || ck no "R1 $OUT"
-git show HEAD:"_polaris/team/acme-dev/sessions/$(date +%F)-@acme-dev.md" | grep -q "10:00" && ck ok "R1 the checkpoint reached a ref" || ck no "R1 never landed"
+BEFORE="$(git rev-parse HEAD)"
+OUT="$("$SC" "$LOG" 2>&1)"
+echo "$OUT" | grep -q deferred && ck ok "R1 two checkouts and none on the default defer" || ck no "R1 $OUT"
+echo "$OUT" | grep -q "one checkout" && ck no "R1 read two checkouts as one" || ck ok "R1 never claims one checkout"
+echo "$OUT" | grep -q "feat/y" && ck ok "R1 the reason names the parked main checkout" || ck no "R1 silent about the branch: $OUT"
+[ "$(git rev-parse HEAD)" = "$BEFORE" ] && ck ok "R1 nothing landed on another panel's branch" || ck no "R1 committed anyway"
+[ -n "$(find "$(git rev-parse --git-common-dir)/polaris-deferred" -type f 2>/dev/null)" ] \
+  && ck ok "R1 the entry is in the spool, not lost" || ck no "R1 the deferral vanished"
 [ -z "$(git status --short -- "$LOG")" ] && ck ok "R1 AC4: git status clean on the session log" || ck no "R1 left the tree dirty"
-git show --name-only --format= HEAD | grep -qE '\.env|junk.txt' && ck no "R1 dragged a foreign staged file" || ck ok "R1 no foreign drag (.env/junk excluded)"
 git diff --cached --name-only | grep -q junk.txt && ck ok "R1 the foreign staging is exactly as it was" || ck no "R1 unstaged another panel's work"
+
+# R1b ONE checkout, off the default → there is no next default-branch session to wait for, so it
+# commits HERE — with exactly the file this run wrote. A log from another day sitting untracked in
+# the same directory is not this run's, and a pathspec that swept it up is the other half of #12.
+git worktree remove --force "$W/wt-x"
+echo "## 10:00 — checkpoint from the linked worktree" > "$LOG"
+STRAY="$ROOT/team/acme-dev/sessions/2026-09-02-@acme-dev.md"
+printf '## 09:00 — another day, never committed\n' > "$STRAY"
+OUT="$("$SC" "$LOG" 2>&1)"
+echo "$OUT" | grep -q "committing here" && ck ok "R1b a single checkout commits on its own branch" || ck no "R1b $OUT"
+git show HEAD:"_polaris/team/acme-dev/sessions/$(date +%F)-@acme-dev.md" | grep -q "10:00" && ck ok "R1b the checkpoint reached a ref" || ck no "R1b never landed"
+[ "$(git show --name-only --format= HEAD | grep -c 'sessions/')" = 1 ] && ck ok "R1b exactly this run's file landed" || ck no "R1b swept another session's log"
+git status --short -- "$STRAY" | grep -q '^??' && ck ok "R1b the stray log is still untracked" || ck no "R1b touched a file this run never wrote"
+git show --name-only --format= HEAD | grep -qE '\.env|junk.txt' && ck no "R1b dragged a foreign staged file" || ck ok "R1b no foreign drag (.env/junk excluded)"
 
 # R2 a sibling worktree IS on the default branch → it takes the checkpoint, this tree keeps no
 # orphan copy, and the ABSOLUTE path `/end` actually passes survives the hand-off. It did not:

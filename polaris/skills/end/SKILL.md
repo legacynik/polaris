@@ -2,7 +2,7 @@
 name: end
 description: Polaris skill — close a repository-first team session with a handoff, decisions/lessons written to the ledgers, a plan tick and a pathspec-only commit. Trigger when stopping work, before a multi-day pause, or on "wrap up / end session / /end".
 user-invocable: true
-version: 1.12.0
+version: 1.13.0
 invokes: [git-power]
 ---
 
@@ -308,7 +308,7 @@ fi
 
 Righe TSV `VERDETTO\tbranch\tpath\tnote`, exit 0 pulito / 1 c'è da agire / 2 errore (contratto
 T13, `polaris-os#254`). Copia nell'handoff, verbatim, sotto una riga `**Cantiere**`, ogni riga il
-cui verdetto non è MAIN: CLOSABLE è ciò che si può chiudere, DIRTY ciò che ha lavoro non
+cui verdetto non è MAIN — CLOSABLE è ciò che si può chiudere, DIRTY ciò che ha lavoro non
 committato o file ignorati non vuoti. Sono le due cose che chi riprende deve sapere senza rileggere
 il grafo. `/end` **non chiude nulla** — elenca, e la chiusura resta un atto esplicito.
 
@@ -369,9 +369,15 @@ and never a push. The script decides WHERE, and there is nothing to hand-commit 
 |---|---|
 | un worktree fratello è già sul default branch | committa **quello**, e questo albero non tiene copie |
 | **un solo checkout**, su un branch qualsiasi | committa **qui**, sul branch corrente |
+| **due o più checkout e nessuno sul default** | `deferred`: va nello spool, 0 commit |
 | il repo dichiara `polaris.commit-policy no-direct-default` | `deferred`: va nello spool, 0 commit |
 
-La seconda riga è la novità e chiude AC4 di `polaris-os#202`: quando il checkout è uno solo non
+La terza riga è `polaris#12`: un checkout principale parcheggiato sul branch di un altro pannello
+non è «un solo checkout». Committare lì scrive la tua sessione sul lavoro di qualcun altro e ci
+drena sopra anche lo spool — successo il 04/09 nel vault. Il messaggio nomina il branch su cui il
+checkout principale è fermo, e `/start` conta la entry (`DEFERRED=`).
+
+La seconda riga chiude AC4 di `polaris-os#202`: quando il checkout è uno solo non
 esiste «la prossima sessione su main» ad aspettare, e lo spool restava lì mentre il session log
 restava sull'albero non tracciato. Misurato: `git status --short` a due righe dopo `/end`, con le
 skill che riportavano successo, e la sessione dopo che si inglobava il log nel proprio commit. La
