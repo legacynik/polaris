@@ -197,7 +197,7 @@ one-confirm approval — you never mark or delete by hand.
 3. **Wiki retrieval quality.** Two independent ways a wiki degrades retrieval — surface both:
 
    ```bash
-   python3 "$CLAUDE_PLUGIN_ROOT/scripts/wiki_quality_check.py" .wiki --max-age 45 --front-door-lag 3
+   python3 "$CLAUDE_PLUGIN_ROOT/skills/polaris-status/scripts/wiki_quality_check.py" .wiki --max-age 45 --front-door-lag 3
    ```
 
    - `[archive?]` — active docs stale on BOTH the `updated:` frontmatter AND git-last-commit → real

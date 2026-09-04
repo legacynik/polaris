@@ -193,7 +193,7 @@ Create or update `team/<login>/reports/$WEEK.md` (exact convention: the week's *
 `reports/YYYY-MM-DD.md`, e.g. `team/octocat/reports/2026-07-19.md` for Sun 19 → Sat 25. Dated, not
 `YYYY-Www`, precisely so a Sunday-start report is never confused with the Monday-start ISO plan week
 it measures against) from the plugin template
-`$CLAUDE_PLUGIN_ROOT/templates/repo-contract/weekly-report.md`. Sections, in order:
+`$CLAUDE_PLUGIN_ROOT/skills/start/templates/repo-contract/weekly-report.md`. Sections, in order:
 
 1. `## TL;DR` — three sentences max: the week's outcome, the biggest thing shipped (with its
    evidence), the top outstanding item.

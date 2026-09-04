@@ -153,7 +153,7 @@ python3 "$RC" "$CURRENT" --entry "### $(date +%F) — <cosa lascia questa sessio
 
 Three surfaces, three jobs: `Updated:` carries date and owner, THIS section carries the summary,
 the session log carries the full handoff. Exit 2 means the cockpit has no `## Recent Context`
-section — add the heading the contract declares (`templates/repo-contract/state/current.md`), never
+section — add the heading the contract declares (`skills/start/templates/repo-contract/state/current.md`), never
 let the entry land at EOF.
 
 Additionally, if this repo DECLARES a vault and it is not the current root, put the SAME one-line

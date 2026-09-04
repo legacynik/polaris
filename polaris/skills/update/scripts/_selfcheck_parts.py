@@ -18,7 +18,10 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-TEMPLATES = HERE.parents[2] / "templates" / "repo-contract" / "state"
+# `npx skills` installs skill directories and nothing beside them, so the templates live
+# INSIDE the skill that hands them out. parents[1] is the skills root in BOTH layouts:
+# the repository (polaris/skills/…) and the install (~/.agents/skills/…).
+TEMPLATES = HERE.parents[1] / "start" / "templates" / "repo-contract" / "state"
 FOOTER = "<!-- pol:state-contract -->"
 
 

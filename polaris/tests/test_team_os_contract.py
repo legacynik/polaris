@@ -7,7 +7,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SKILLS = ROOT / "skills"
-TEMPLATES = ROOT / "templates" / "repo-contract"
+TEMPLATES = ROOT / "skills" / "start" / "templates" / "repo-contract"
 
 
 def test_marketplace_exposes_the_same_skills_to_agent_skills_cli() -> None:

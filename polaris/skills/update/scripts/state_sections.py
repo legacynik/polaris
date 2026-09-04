@@ -10,7 +10,7 @@ vivi` IS `## Open`, while `## Active Priorities` (a word, not a separator) is NO
 `## Open-source backlog` (glued, so a different word) is NOT `## Open`. A renamed or translated
 heading (`# Priorità attive`) is a different contract: reported missing, never silently aliased.
 
-The template `templates/repo-contract/state/current.md` writes exactly these names and states the
+The template `skills/start/templates/repo-contract/state/current.md` writes exactly these names and states the
 same rule in its own contract footer, so the file a host copies and the code that reads it cannot
 drift apart.
 """
