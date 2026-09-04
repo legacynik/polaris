@@ -152,8 +152,19 @@ def check_brief(tmp: Path, report, options) -> list[bool]:
     ok = ["TODOS_ACTIVE=1" in out,
           any(o.startswith("FOLLOWUP_DUE=") and "scaduto" in o for o in out)]
     ok += [not any(o.startswith(q) or q in o for o in out) for q in silent]
-    for name, text in (("decisions/manifest.json", '{"pack_id": "p-1"}'),
-                       ("scripts/contextpack.py", "#\n")):
-        (root / name).parent.mkdir(exist_ok=True)
-        (root / name).write_text(text)
-    return ok + ["PACK=p-1" in report(opts)]
+    return ok + _check_pack(root, report, opts)
+
+
+def _check_pack(root: Path, report, opts) -> list[bool]:
+    """The pack line comes from RUNNING the resolver: a stub that only exists is not a backbone,
+    and a resolver that refuses must be loud. The manifest carries no `pack_id` — the live one
+    has none, and a fixture that invents it keeps a dead signal green."""
+    (root / "decisions").mkdir(exist_ok=True)
+    (root / "decisions" / "manifest.json").write_text('{"schema_version": 1, "decisions": []}')
+    (root / "scripts").mkdir(exist_ok=True)
+    resolver = root / "scripts" / "contextpack.py"
+    resolver.write_text("print('{\"context_pack_id\": \"p-1\"}')\n")
+    ok = ["PACK=p-1" in report(opts)]
+    resolver.write_text("import sys\nsys.stderr.write('SCOPE_STALE: x\\n')\nsys.exit(1)\n")
+    out = report(opts)
+    return ok + [any(o.startswith("PACK=BLOCKED") and "SCOPE_STALE" in o for o in out)]
