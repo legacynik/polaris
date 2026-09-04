@@ -17,9 +17,10 @@
 #   • `git commit -- <paths>`, never a commit of the index: what another panel pre-staged stays
 #     staged, exactly as it was, and never rides along.
 #   • branch reported, never changed; never a push; nothing ever left staged.
-# THREE declared refusals, exit 2, one line each, never silent and never a copy elsewhere: a
-# detached HEAD, a repo with no commit at all, and `polaris.commit-policy no-direct-default` while
-# sitting on the default branch. In all three the files stay exactly where the session wrote them.
+# TWO declared refusals, exit 2, one line each, never silent and never a copy elsewhere: a detached
+# HEAD, and `polaris.commit-policy no-direct-default` while sitting on the default branch. In both
+# the files stay exactly where the session wrote them. A repo with NO commit at all is not one of
+# them: `git commit -- <path>` takes an unborn branch, so the first checkpoint of a new repo lands.
 #   session_commit.sh <log> [<plan>] | --end <path>... | --selfcheck
 set -uo pipefail
 
@@ -56,17 +57,15 @@ _relativise() {
     done
 }
 
-# The three refusals. Prints the reason and returns 2; returns 0 when this tree may commit.
+# The two refusals. Prints the reason and returns 2; returns 0 when this tree may commit.
 # A repository may DECLARE that its default branch is never committed to directly (branch
 # protection, or a rule the contract states). Declared, never guessed: asking the remote would make
 # every offline run either hang or fail open.
 _refused() {
     local branch="$1"
-    if ! git rev-parse -q --verify HEAD >/dev/null 2>&1; then
-        echo "session_commit: NOT committed — this repo has no commit yet; make its first commit by hand, then re-run. The files stay where you wrote them." >&2
-        return 2
-    fi
-    if ! git symbolic-ref -q HEAD >/dev/null 2>&1; then
+    # An UNBORN branch also reports no symbolic ref target being resolvable to a commit, but it is
+    # not a detached HEAD: `git symbolic-ref HEAD` still answers, and the commit is the repo's first.
+    if git rev-parse -q --verify HEAD >/dev/null 2>&1 && ! git symbolic-ref -q HEAD >/dev/null 2>&1; then
         echo "session_commit: NOT committed — HEAD is detached, a commit here would be reachable only through the reflog; switch to a branch and re-run. The files stay where you wrote them." >&2
         return 2
     fi

@@ -363,11 +363,12 @@ not here.
 ## Step 5 — Land the handoff in git (same guard as `/update`, in code)
 
 Land what you wrote through **the same script `/update` uses** — pathspec-only, never `git add -A`,
-and never a push. Il log di sessione si committa sul branch corrente, sempre; tre eccezioni
-dichiarate (HEAD staccato, repo senza commit, policy `no-direct-default`).
+and never a push. Il log di sessione si committa sul branch corrente, sempre; due eccezioni
+dichiarate (HEAD staccato, policy `no-direct-default` sul default branch). Un repo senza alcun
+commit non è un'eccezione: il primo handoff atterra come tutti gli altri.
 
 Un `/end` che rinvia invece di committare è un `/end` che non ha lavorato (decisione founder,
-2026-09-04). Nelle tre eccezioni lo script esce 2 con una riga che dice quale: i file restano dove
+2026-09-04). Nelle due eccezioni lo script esce 2 con una riga che dice quale: i file restano dove
 li hai scritti, non vengono copiati altrove, e tu lo dici in chiaro invece di riportare successo.
 The Step 1 `polmem remember` line lands in `.wiki/journal/`: it is committed shared history, so it
 belongs here or it never reaches the team.

@@ -1,9 +1,10 @@
 """PM-E — the three declared refusals, and what is left of the spool.
 
-C2: the only runs that do NOT commit are a detached HEAD, a repo with no commit at all, and a
-repo that declares `polaris.commit-policy no-direct-default` while sitting on its default branch.
-Each exits 2 with one line naming itself; the files stay where the session wrote them and are
-copied nowhere. C3: the word "spool" survives only as the legacy counter.
+C2: the only runs that do NOT commit are a detached HEAD and a repo that declares
+`polaris.commit-policy no-direct-default` while sitting on its default branch. Each exits 2 with
+one line naming itself; the files stay where the session wrote them and are copied nowhere. A repo
+with no commit at all is NOT one of them — its first checkpoint lands like any other.
+C3: the word "spool" survives only as the legacy counter.
 """
 from __future__ import annotations
 
@@ -25,7 +26,7 @@ def refusal(repo: Path, cwd: Path | None = None) -> tuple[int, str]:
 
 
 class TheThreeDeclaredRefusals(unittest.TestCase):
-    """(d) (e) (f) — exit 2, one line, the file untouched in the working tree."""
+    """(d) (e) — exit 2, one line, the file untouched in the working tree. (f) commits."""
 
     def test_d_a_declared_policy_on_the_default_branch_refuses(self):
         repo = host_repo()
@@ -57,14 +58,18 @@ class TheThreeDeclaredRefusals(unittest.TestCase):
         self.assertIn("detached", body)
         self.assertIn(f"?? {log.relative_to(repo)}", "\n".join(dirt(repo)))
 
-    def test_f_a_repo_with_no_commit_refuses_and_says_so(self):
+    def test_f_a_repo_with_no_commit_lands_its_first_checkpoint(self):
+        """NOT an exception: an unborn branch takes `git commit -- <path>` like any other."""
         repo = Path(tempfile.mkdtemp()) / "acme-api"
         (repo / "_polaris" / "team" / LOGIN / "sessions").mkdir(parents=True)
         git(repo, "init", "-q", "-b", "main")
-        session_log(repo)
+        for key, value in (("user.email", "t@t"), ("user.name", "T")):
+            git(repo, "config", key, value)
+        log = session_log(repo)
         code, body = refusal(repo)
-        self.assertEqual(code, 2, body)
-        self.assertIn("no commit", body)
+        self.assertEqual(code, 0, body)
+        self.assertEqual(git(repo, "show", "--name-only", "--format=", "HEAD").stdout.split(),
+                         [str(log.relative_to(repo))], body)
 
 
 class TheSpoolIsOnlyALegacyCounter(unittest.TestCase):
@@ -112,11 +117,13 @@ class TheSkillsNoLongerPromiseADeferral(unittest.TestCase):
                         and "SPOOL_LEGACY" not in ln]
             self.assertEqual(leftover, [], f"/{skill} still promises a deferral")
 
-    def test_each_body_states_the_rule_and_its_three_exceptions(self):
+    def test_each_body_states_the_rule_and_its_two_exceptions(self):
         for skill in ("update", "end"):
             body = (SKILLS / skill / "SKILL.md").read_text(encoding="utf-8")
             self.assertIn("sul branch corrente, sempre", body, skill)
+            self.assertIn("due eccezioni", body, skill)
             self.assertIn("no-direct-default", body, skill)
+            self.assertNotIn("tre eccezioni", body, "an unborn repo is no longer an exception")
 
     def test_the_spool_script_is_gone(self):
         self.assertFalse((SKILLS / "update" / "scripts" / "session_spool.sh").exists())

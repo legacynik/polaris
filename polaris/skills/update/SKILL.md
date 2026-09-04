@@ -209,10 +209,11 @@ checkpoint non passa. Il titolo non entra in `Updated:` — sta nel log e in `Re
 ref è una entry che non esiste (misurato: 46% delle entry recenti di un repo, e 74 file di journal
 non committati sulle 4 repo al 2026-08-08).
 
-Il log di sessione si committa sul branch corrente, sempre; tre eccezioni dichiarate (HEAD
-staccato, repo senza commit, policy `no-direct-default`). In quelle tre `commit` esce 2 con una riga
+Il log di sessione si committa sul branch corrente, sempre; due eccezioni dichiarate (HEAD
+staccato, policy `no-direct-default` sul default branch). In quelle due `commit` esce 2 con una riga
 che dice quale, i file restano dove li hai scritti e non vengono copiati altrove: `/update` è
-fallito e non emette la riga di completamento.
+fallito e non emette la riga di completamento. Un repo senza alcun commit non è un'eccezione: il
+primo checkpoint atterra come tutti gli altri.
 
 Dopo il landing, prova che anche il worktree principale è clean. `/update` non censisce e non
 rimuove worktree, ma non può terminare dirty:

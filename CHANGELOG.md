@@ -11,11 +11,13 @@ All notable changes to Polaris Team OS. The installed version is pinned in
   `/end` che non ha lavorato. `session_commit.sh` non guarda più quale worktree sta su quale branch:
   committa nel checkout in cui gira, sul branch che quel checkout ha, con il pathspec esatto dei soli
   file di sessione passati e `git commit -- <paths>` invece del commit dell'indice, così ciò che un
-  altro pannello aveva staged resta staged e fuori dal commit. Restano **tre eccezioni dichiarate**,
+  altro pannello aveva staged resta staged e fuori dal commit. Restano **due eccezioni dichiarate**,
   exit 2 e una riga che dice quale, con i file lasciati dove la sessione li ha scritti e nessuna copia
-  altrove: HEAD staccato, repo senza alcun commit, e `polaris.commit-policy no-direct-default` mentre
-  si è sul default branch (la stessa policy su un branch qualsiasi non si applica). Un hook che
-  rifiuta resta exit 1 con la sua riga, indice ripulito dei soli path Polaris e mai `--no-verify`.
+  altrove: HEAD staccato, e `polaris.commit-policy no-direct-default` mentre si è sul default branch
+  (la stessa policy su un branch qualsiasi non si applica). Un repo senza alcun commit **non** è
+  un'eccezione: `git commit -- <path>` accetta un branch unborn, quindi il primo checkpoint di un
+  repo nuovo atterra. Un hook che rifiuta resta exit 1 con la sua riga, indice ripulito dei soli path
+  Polaris e mai `--no-verify`.
 
 ### Removed
 - **Lo spool di rinvio** (`session_spool.sh`, `.git/polaris-deferred`, il drain, `_wt_on_default`,

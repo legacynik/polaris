@@ -102,7 +102,7 @@ git config --unset polaris.commit-policy
 echo x > "$ROOT/state/current.md"
 "$SC" --end "$ROOT/state/current.md" >/dev/null 2>&1; [ $? -eq 2 ] && ck ok "R5 --end refuses state/current.md" || ck no "R5 accepted the cockpit pointer"
 
-# R6 the other two refusals, on the same repo: a detached HEAD and a repo with no commit at all.
+# R6 the other refusal: a detached HEAD. A repo with NO commit is not one — it lands.
 echo "## 21:00 — detached" >> "$LOG"
 git checkout -q --detach HEAD
 OUT="$("$SC" "$LOG" 2>&1)"; RC=$?
@@ -111,9 +111,9 @@ OUT="$("$SC" "$LOG" 2>&1)"; RC=$?
 U="$W/unborn"; mkdir -p "$U/_polaris/team/acme-dev/sessions"
 ( cd "$U" && git init -q -b main . && git config user.email t@t && git config user.name t
   echo "## first" > _polaris/team/acme-dev/sessions/s.md
-  OUT="$("$SC" _polaris/team/acme-dev/sessions/s.md 2>&1)"; RC=$?
-  [ "$RC" -eq 2 ] && echo "$OUT" | grep -q "no commit" ) \
-  && ck ok "R6 a repo with no commit refuses with its own reason" || ck no "R6 the unborn repo did not refuse"
+  "$SC" _polaris/team/acme-dev/sessions/s.md >/dev/null 2>&1
+  git show HEAD:_polaris/team/acme-dev/sessions/s.md 2>/dev/null | grep -q first ) \
+  && ck ok "R6 a repo with no commit lands its first checkpoint" || ck no "R6 the unborn repo never landed"
 git checkout -q feat/z
 
 # R7 a spool left by an older version is counted by `checkpoint.sh prepare` and never touched.

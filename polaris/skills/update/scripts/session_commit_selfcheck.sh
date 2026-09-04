@@ -134,17 +134,18 @@ _selfcheck() {
     [ -n "$(git status --short -- "$LOG")" ] || { echo "FAIL S15 the file left the working tree"; exit 1; }
     git checkout -q master
 
-    # S16 a repo with no commit at all: exit 2 with its own reason, and no recursion.
+    # S16 a repo with no commit at all is NOT a refusal: the unborn branch takes the first
+    # checkpoint. It is also not a detached HEAD, which is what the guard used to read it as.
     local u; u="$(mktemp -d)"
     ( cd "$u" && git init -q -b main . && git config user.email t@t && git config user.name t \
         && mkdir -p team/acme-dev/sessions && echo "## first" > team/acme-dev/sessions/s.md \
-        && commit_checkpoint team/acme-dev/sessions/s.md > out.txt 2>&1
-      [ $? -eq 2 ] && grep -q "no commit" out.txt ) \
-        || { echo "FAIL S16 an unborn branch must refuse with its own reason"; exit 1; }
+        && commit_checkpoint team/acme-dev/sessions/s.md >/dev/null 2>&1
+      git show HEAD:team/acme-dev/sessions/s.md 2>/dev/null | grep -q first ) \
+        || { echo "FAIL S16 unborn branch never landed the first checkpoint"; exit 1; }
     rm -rf "$u"
 
     cd / && rm -rf "$d"
-    echo "SELF-CHECK OK: first-of-day · foreign-drag-stays-staged · gitignored-state+secret · forbidden-input · empty-skip · commits-on-the-branch-you-are-on · a-sibling-worktree-changes-nothing · policy-refuses-only-on-the-default · end-promotes-ledgers · end-refuses-state+secret · end-lands-on-the-current-branch · origin/HEAD-default · master-default-repo · hook-refusal-exits-1-and-unstages · absent-path-does-not-block · detached-HEAD-refuses · unborn-repo-refuses"
+    echo "SELF-CHECK OK: first-of-day · foreign-drag-stays-staged · gitignored-state+secret · forbidden-input · empty-skip · commits-on-the-branch-you-are-on · a-sibling-worktree-changes-nothing · policy-refuses-only-on-the-default · end-promotes-ledgers · end-refuses-state+secret · end-lands-on-the-current-branch · origin/HEAD-default · master-default-repo · hook-refusal-exits-1-and-unstages · absent-path-does-not-block · detached-HEAD-refuses · unborn-branch-lands"
 }
 
 _selfcheck
