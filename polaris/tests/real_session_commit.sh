@@ -32,20 +32,40 @@ SC="${CLAUDE_PLUGIN_ROOT:-}/skills/update/scripts/session_commit.sh"
 [ "$(cd "$MAIN_WT" && pwd -P)" = "$(cd "$R" && pwd -P)" ] && ck ok "One home resolves the main worktree from a linked one" || ck no "MAIN_WT=$MAIN_WT"
 [ -x "$SC" ] && ck ok "resolver finds the script on a skills-CLI (npx) machine, PLUGIN_ROOT unset" || ck no "resolver empty"
 
-# R1 main worktree parked on feat/y → checkpoint must DEFER, file must survive on disk
+# R1 NO worktree sits on the default branch → the checkpoint lands HERE, on the branch we are on,
+# and the tree comes back clean. This is the shape the live proof of 2026-09-03 left dirty.
 LOG="$ROOT/team/acme-dev/sessions/$(date +%F)-@acme-dev.md"
 echo "## 10:00 — checkpoint from the linked worktree" > "$LOG"
 cd "$MAIN_WT" || exit 1
-OUT="$("$SC" "$LOG" 2>&1)"; echo "$OUT" | grep -q deferred && ck ok "R1 defer on a parked feature branch" || ck no "R1 $OUT"
-[ -s "$LOG" ] && ck ok "R1 checkpoint still on disk (single copy)" || ck no "R1 checkpoint lost"
-git log --oneline --all | grep -q checkpoint && ck no "R1 committed anyway" || ck ok "R1 no commit anywhere"
+echo "SECRET=1" > .env; echo junk > junk.txt; git add -f .env junk.txt   # another panel's staging
+OUT="$("$SC" "$LOG" 2>&1)"; echo "$OUT" | grep -q "committing here" && ck ok "R1 single-checkout repo commits on its own branch" || ck no "R1 $OUT"
+git show HEAD:"_polaris/team/acme-dev/sessions/$(date +%F)-@acme-dev.md" | grep -q "10:00" && ck ok "R1 the checkpoint reached a ref" || ck no "R1 never landed"
+[ -z "$(git status --short -- "$LOG")" ] && ck ok "R1 AC4: git status clean on the session log" || ck no "R1 left the tree dirty"
+git show --name-only --format= HEAD | grep -qE '\.env|junk.txt' && ck no "R1 dragged a foreign staged file" || ck ok "R1 no foreign drag (.env/junk excluded)"
+git diff --cached --name-only | grep -q junk.txt && ck ok "R1 the foreign staging is exactly as it was" || ck no "R1 unstaged another panel's work"
 
-# R2 another panel leaves junk staged; back on main the deferred checkpoint lands, junk stays out
-echo "SECRET=1" > .env; echo junk > junk.txt; git add -f .env junk.txt
+# R2 a sibling worktree IS on the default branch → it takes the checkpoint, this tree keeps no
+# orphan copy, and the ABSOLUTE path `/end` actually passes survives the hand-off. It did not:
+# git refuses a pathspec outside the worktree, and the run said "no session-state change, skip"
+# while the handoff sat uncommitted.
+git reset -q HEAD .env junk.txt
+git worktree add -q "$W/wt-main" main
+echo "## 12:00 — from the parked tree" >> "$LOG"
+OUT="$("$SC" "$LOG" 2>&1)"          # $LOG is absolute, exactly as end/SKILL.md writes it
+echo "$OUT" | grep -q "worktree at" && ck ok "R2 the default worktree is handed the commit" || ck no "R2 $OUT"
+git -C "$W/wt-main" show HEAD:"_polaris/team/acme-dev/sessions/$(date +%F)-@acme-dev.md" | grep -q "12:00" && ck ok "R2 an absolute path still lands on the default branch" || ck no "R2 content never landed"
+# What may stay is only what this branch already TRACKS — never an untracked orphan, and never
+# silently: an orphan is dirt AC4 forbids, a tracked file is this branch's own content and is named.
+if [ -z "$(git status --short -- "$LOG")" ]; then
+  ck ok "R2 the deferring tree keeps nothing"
+else
+  git status --short -- "$LOG" | grep -q '^??' && ck no "R2 left an untracked orphan" \
+    || { echo "$OUT" | grep -q "tracked and still modified here" \
+         && ck ok "R2 what stays is tracked here, and is named" || ck no "R2 silent about what stayed"; }
+fi
+git worktree remove --force "$W/wt-main"
+"$SC" "$LOG" >/dev/null 2>&1        # land this branch's own copy, then move on
 git checkout -q main
-OUT="$("$SC" "$LOG" 2>&1)"; echo "$OUT" | grep -q "committed on main" && ck ok "R2 deferred checkpoint lands on main" || ck no "R2 $OUT"
-git show --name-only --format= HEAD | grep -qE '\.env|junk.txt' && ck no "R2 dragged a foreign staged file" || ck ok "R2 no foreign drag (.env/junk excluded)"
-git show HEAD:"_polaris/team/acme-dev/sessions/$(date +%F)-@acme-dev.md" | grep -q "10:00" && ck ok "R2 content intact after defer→land" || ck no "R2 content lost"
 
 # R3 /end mode: ledgers + journal line, on main → committed together with the handoff subject
 echo "## $(date +%F) — decision (@acme-dev)" > "$ROOT/decisions.md"
@@ -58,32 +78,34 @@ for f in _polaris/decisions.md _polaris/lessons.md .wiki/journal/2026-07-26.md; 
   git show --name-only --format= HEAD | grep -qx "$f" && ck ok "R3 --end committed $f" || ck no "R3 missing $f"
 done
 
-# R4 --end on a feature branch → defers (the exact loss observed: handoff stranded on ef7e7af)
-git checkout -q feat/y
-mkdir -p "$(dirname "$LOG")"          # the branch predates the log path: /end must mkdir -p before appending
+# R4 a DECLARED policy against direct commits on the default branch → deferred, never forced (#141)
+git config polaris.commit-policy no-direct-default
 echo "## 20:00 — session end" >> "$LOG"
 BEFORE="$(git rev-parse HEAD)"
 OUT="$("$SC" --end "$LOG" "$ROOT/decisions.md" 2>&1)"
-echo "$OUT" | grep -q deferred && ck ok "R4 --end defers on a feature branch" || ck no "R4 $OUT"
-[ "$(git rev-parse HEAD)" = "$BEFORE" ] && ck ok "R4 nothing committed on feat/y" || ck no "R4 committed on feat/y"
+echo "$OUT" | grep -q deferred && ck ok "R4 --end defers under a no-direct-commit policy" || ck no "R4 $OUT"
+[ "$(git rev-parse HEAD)" = "$BEFORE" ] && ck ok "R4 nothing was committed against the policy" || ck no "R4 forced a forbidden commit"
+# The honest ceiling of a defer: an UNTRACKED copy goes to the spool and leaves the tree; a file
+# already tracked here cannot, because removing it would be a deletion — so it is NAMED, not hidden.
+echo "$OUT" | grep -q "tracked and still modified here" && ck ok "R4 the file it could not clear is named, not hidden" || ck no "R4 silent about what stayed: $OUT"
 
 # R5 gitignored cockpit can never be laundered in through --end
 echo x > "$ROOT/state/current.md"
 "$SC" --end "$ROOT/state/current.md" >/dev/null 2>&1; [ $? -eq 2 ] && ck ok "R5 --end refuses state/current.md" || ck no "R5 accepted the cockpit pointer"
 
-# R7 the deferred file collides with the tracked version on main: git must REFUSE, never clobber
-OUT="$(git checkout main 2>&1)"; RC=$?
-if [ $RC -ne 0 ]; then
-  grep -q "20:00" "$LOG" && ck ok "R7 checkout refused, deferred append intact (no silent loss)" || ck no "R7 append lost"
-  # KNOWN CEILING: the append cannot ride the branch switch. Copy aside → switch → re-append.
-  cp "$LOG" "$W/pending.md"; git checkout -q -f main
-  cat "$W/pending.md" >> "$LOG"
-  grep -q "20:00" "$LOG" && ck ok "R7 deferred append recoverable by copy-aside (manual, documented)" || ck no "R7 append not recoverable"
-else
-  grep -q "20:00" "$LOG" && ck ok "R7 checkout carried the deferred append to main" || ck no "R7 append silently dropped by checkout"
-fi
-"$SC" "$LOG" >/dev/null 2>&1
-git show HEAD:"_polaris/team/acme-dev/sessions/$(date +%F)-@acme-dev.md" | grep -q "20:00" && ck ok "R7 the deferred append finally lands on main" || ck no "R7 never landed"
+# R7 what the policy deferred is NOT lost: it drains on the next run that is allowed to commit.
+# The spool lives under the common git dir, so it is branch-independent — this is what `/start`
+# counts, and a deferral that never drains would be data loss with a reassuring message.
+[ -n "$(find "$(git rev-parse --git-common-dir)/polaris-deferred" -type f 2>/dev/null)" ] \
+  && ck ok "R7 the deferred entry is in the spool" || ck no "R7 the deferral vanished"
+git config --unset polaris.commit-policy
+# Drained in the SAME mode that deferred it: a checkpoint may not commit `decisions.md`, so a
+# checkpoint-mode drain would correctly leave the ledger in the spool and the assertion below
+# would be reading its own wrong question.
+"$SC" --end "$LOG" "$ROOT/decisions.md" >/dev/null 2>&1
+git show HEAD:"_polaris/team/acme-dev/sessions/$(date +%F)-@acme-dev.md" | grep -q "20:00" && ck ok "R7 the deferred append drains and lands" || ck no "R7 never landed"
+[ -z "$(find "$(git rev-parse --git-common-dir)/polaris-deferred" -type f 2>/dev/null)" ] \
+  && ck ok "R7 the spool is empty once it drained" || ck no "R7 the spool still holds a drained entry"
 
 # R6 neither install path present → resolver empty, so the skill must fall back to the manual rule
 SC2="${CLAUDE_PLUGIN_ROOT:-}/skills/update/scripts/session_commit.sh"

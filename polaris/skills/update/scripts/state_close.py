@@ -6,10 +6,11 @@ A `~~struck~~` line that stays is still tokens the next session reads and reconc
 `## Completed`, and `Updated:` collapses to date and owner — the session summary belongs to
 `## Recent Context` and the full handoff to the session log (#240).
 
-What this deliberately does NOT do is decide WHICH thread is closed. Automatic removal is parked on
-polaris-os#268: `merge_truth` returns `None` once the branch ref is gone, the normal case after
-`--delete-branch`, so a remover would report success and remove nothing. `candidates` lists them and
-a human closes. A declared manual step beats a remover that silently no-ops.
+What this deliberately does NOT do is decide WHICH thread is closed — that verdict lives in
+`end/scripts/merge_truth.py`, which asks the tracker AND this checkout and refuses when either is
+silent. Here the job is the WRITE: `close` performs one decided removal, `candidates` lists the
+threads a verdict could apply to. Keeping the two apart is why a wrong verdict can never be a
+half-written pair of files.
 
 A close touches two files, so `precheck` refuses BEFORE the first byte: the earlier version wrote
 the cockpit and only then found the todos file had no `## Completed`. Both files go through the same
@@ -35,8 +36,8 @@ ACTIVE = re.compile(r"^#{1,6}\s+active\s*$", re.I)
 COMPLETED = re.compile(r"^#{1,6}\s+completed\s*$", re.I)
 CITES = re.compile(r"#\d+|\bPR\s*\d+", re.I)
 STAMP = re.compile(r"·?\s*Added:\s*W\d+", re.I)
-PARKED = ("removal stays MANUAL until polaris-os#268 lands a merge truth that survives a branch "
-          "deleted at merge — verify each candidate on GitHub, then close by hand")
+LISTED = ("these are the threads a verdict can apply to — `end/scripts/prune_threads.py` resolves "
+          "each one against the tracker and this checkout, and closes only what it can prove")
 
 
 def find(lines: list[str], span: tuple[int, int], key: str) -> int:
@@ -47,10 +48,26 @@ def find(lines: list[str], span: tuple[int, int], key: str) -> int:
 
 
 def take(lines: list[str], name: re.Pattern, key: str) -> str:
-    """Remove that line from the named section and hand it back. "" when it is not there."""
+    """Remove that LANE from the named section and hand its head line back. "" when absent.
+
+    A lane is the thread line plus what hangs under it — an indented child, a fenced command to
+    resume with. Removing only the head left both orphaned under `## Open`, which the next session
+    then had to reconcile: "closing means REMOVING" is not "removing the first line".
+    ponytail: the run ends at the first blank line, so a fenced block with a blank line inside it
+    keeps its tail; a fence-state walk is the upgrade if that ever shows up in a real cockpit.
+    """
     span = section(lines, name)
     at = find(lines, span, key) if span else -1
-    return lines.pop(at) if at >= 0 else ""
+    if at < 0:
+        return ""
+    head = lines[at]
+    tags = kinds(lines)
+    end = at + 1
+    while end < (span[1] if span else len(lines)) and tags[end] not in ("thread", "heading") \
+            and lines[end].strip():
+        end += 1
+    del lines[at:end]
+    return head
 
 
 def put(lines: list[str], name: re.Pattern, line: str) -> None:
@@ -118,7 +135,7 @@ def cmd_close(opts: argparse.Namespace) -> int:
 
 
 def cmd_candidates(opts: argparse.Namespace) -> int:
-    """List the open threads citing an issue or a PR. Read-only, by design (#268)."""
+    """List the open threads citing an issue or a PR. Read-only, by design: the verdict is not ours."""
     lines, _, _ = read(Path(opts.path))
     span = section(lines, OPEN)
     tags = kinds(lines)
@@ -126,7 +143,7 @@ def cmd_candidates(opts: argparse.Namespace) -> int:
             if tags[i] == "thread" and CITES.search(lines[i])]
     for row in rows:
         print(f"CANDIDATE={row.strip()}")
-    print(f"NOTE={PARKED}" if rows else "NOTE=no open thread cites an issue or a PR")
+    print(f"NOTE={LISTED}" if rows else "NOTE=no open thread cites an issue or a PR")
     return 0
 
 

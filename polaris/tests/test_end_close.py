@@ -76,8 +76,8 @@ class ClosingRemoves(unittest.TestCase):
         self.assertIn("feat/a", (repo / "_polaris" / "state" / "current.md").read_text())
 
 
-class TheParkedRemovalIsDeclared(unittest.TestCase):
-    """polaris-os#268 — until merge truth survives a deleted branch, `/end` only lists."""
+class CandidatesStillOnlyLists(unittest.TestCase):
+    """`candidates` stays read-only: the verdict is `prune_threads.py`'s job, not this one's."""
 
     def test_candidates_names_threads_citing_an_issue_and_removes_nothing(self):
         repo = host_repo()
@@ -87,14 +87,14 @@ class TheParkedRemovalIsDeclared(unittest.TestCase):
         self.assertEqual(out.returncode, 0, out.stderr)
         self.assertIn("feat/b", out.stdout)
         self.assertNotIn("feat/a", out.stdout, "a thread citing nothing is not a candidate")
-        self.assertIn("268", out.stdout, "the brief must say why removal is manual")
         self.assertEqual(path.read_text(), before, "candidates is read-only")
 
-    def test_end_declares_the_manual_removal_in_its_body(self):
+    def test_the_manual_step_is_gone_from_the_body_and_the_pruner_named_instead(self):
         from host_repo import PKG
         body = (PKG / "skills" / "end" / "SKILL.md").read_text()
-        self.assertIn("268", body)
-        self.assertIn("state_close.py", body)
+        self.assertIn("prune_threads.py", body)
+        self.assertNotIn("268", body, "the parked-removal note outlived the parking")
+        self.assertNotIn("AUTOMATICA è parcheggiata", body)
 
 
 class RecentContextIsARing(unittest.TestCase):

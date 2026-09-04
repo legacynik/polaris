@@ -3,7 +3,7 @@ name: update
 description: Polaris skill — record a short repository-first checkpoint during an active session. Trigger after meaningful progress, a blocker, a context switch, or on "checkpoint / save progress / /update".
 user-invocable: true
 model: sonnet
-version: 2.10.0
+version: 2.11.0
 invokes: [git-power]
 ---
 
@@ -205,13 +205,17 @@ python3 "$GP" phase checkpoint --repo "$PWD"
 `verify` esiste perché un passo che vive solo nella prosa prima o poi viene saltato — anche da chi
 l'ha scritto. **Passagli il titolo** della entry: senza, il gate sa solo che il cockpit porta oggi e
 il tuo nome; con, sa che l'ultima voce del log è la tua, e un cockpit ri-datato a mano senza
-checkpoint non passa. Il titolo non entra in `Updated:` — sta nel log e in `Recent Context`. Se `commit` rinvia, `/update` è fallito e non emette la riga di completamento: la entry è su disco, non in git.
-Una entry che non raggiunge un ref è una entry che non esiste (misurato: 46% delle entry recenti di
-un repo, e 74 file di journal non committati sulle 4 repo al 2026-08-08).
+checkpoint non passa. Il titolo non entra in `Updated:` — sta nel log e in `Recent Context`. Una entry che non raggiunge un
+ref è una entry che non esiste (misurato: 46% delle entry recenti di un repo, e 74 file di journal
+non committati sulle 4 repo al 2026-08-08).
 
-Su repo con `main` protetto da status check, il commit di journal **non passa dal branch di lavoro**:
-scrive nel worktree agganciato a main che `prepare` risolve. Il diario non deve superare i cancelli
-del codice.
+`commit` decide **dove** atterra e non chiede: un worktree fratello già sul default branch se lo
+prende (e questo albero non tiene copie); un repo con **un solo checkout** committa sul branch
+corrente, perché non esiste «la prossima sessione su main» ad aspettare; un repo che dichiara
+`git config polaris.commit-policy no-direct-default` **rinvia** — 0 commit, la entry nello spool che
+`/start` conta, mai un commit forzato (`polaris-os#141`). Solo l'ultimo caso è un rinvio: se lo
+stampa, `/update` è fallito e non emette la riga di completamento. Su repo con `main` protetto da
+status check il diario non deve superare i cancelli del codice, ed è esattamente quel rinvio.
 
 Dopo il landing, prova che anche il worktree principale è clean. `/update` non censisce e non
 rimuove worktree, ma non può terminare dirty:
