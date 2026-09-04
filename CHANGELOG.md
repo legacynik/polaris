@@ -5,6 +5,8 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
+## 0.24.0 — 2026-09-04
+
 ### Changed
 - `update` 2.13.0 / `end` 1.14.0 / `start` 1.5.0: **il log di sessione si committa sul branch
   corrente, sempre** (decisione founder, 2026-09-04). Un `/end` che rinvia invece di committare è un
