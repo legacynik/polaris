@@ -1,6 +1,6 @@
 """D1-D3 — `/start` shows what the system already knows (polaris-os#243, #240, polaris#3).
 
-Three signals exist today and nobody reads them: the deferred session-log spool, the drift of
+Three signals exist today and nobody reads them: the legacy session-log spool, the drift of
 the main worktree, and the sections a state file has lost. Two more surfaces landed with the
 four-file donor form and no reader: `state/todos.md` and `## Recent Context`. And the typed
 backbone must be used where a repo has one and be invisible where it does not.
@@ -63,14 +63,14 @@ class TodosReachTheBrief(unittest.TestCase):
 class TheThreeSignals(unittest.TestCase):
     """D2 — polaris-os#243: a line that always says zero teaches you to ignore it."""
 
-    def test_deferred_spool_is_counted_only_when_it_holds_something(self):
+    def test_a_legacy_spool_is_counted_only_when_it_holds_something(self):
         repo = host_repo()
-        self.assertNotIn("DEFERRED=", signals(repo))
+        self.assertNotIn("SPOOL_LEGACY=", signals(repo))
         spool = repo / ".git" / "polaris-deferred"
         spool.mkdir()
         (spool / "a.md").write_text("x")
         (spool / "b.md").write_text("y")
-        self.assertIn("DEFERRED=2", signals(repo))
+        self.assertIn("SPOOL_LEGACY=2", signals(repo))
 
     def test_main_worktree_drift_is_named_off_default_and_silent_on_it(self):
         repo = host_repo()

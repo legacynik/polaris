@@ -71,7 +71,21 @@ EOF
   strays=$(ls "$ROOT"/sessions/*.md 2>/dev/null | wc -l | tr -d ' ')
   [ "$strays" != "0" ] && echo "HYGIENE=legacy session logs at \$ROOT/sessions/: $strays (migrate deliberately, check readers first)"
   [ -n "${SCRATCH:-}" ] || echo "HYGIENE=no scratch found for this session — harvest step is a no-op"
+  spool_legacy
   due_report
+  return 0
+}
+
+# Until v0.24.0 a run that could not commit copied the files into `.git/polaris-deferred` and told
+# the next session to drain it. The rule now is «commit on the branch you are on», so nothing is
+# ever written there again — but a repo upgraded mid-flight can still hold one. Reported by name,
+# never touched: those are somebody's session entries, and moving them is not this script's call.
+spool_legacy() {
+  local dir n
+  dir="$(git rev-parse --git-common-dir 2>/dev/null)" || return 0
+  case "$dir" in /*) ;; *) dir="$(git rev-parse --show-toplevel)/$dir" ;; esac
+  n=$(find "$dir/polaris-deferred" -type f 2>/dev/null | wc -l | tr -d ' ')
+  [ "${n:-0}" != "0" ] && echo "SPOOL_LEGACY=$n file in $dir/polaris-deferred: portali a mano con git add, poi cancella la cartella"
   return 0
 }
 

@@ -111,8 +111,8 @@ class Step5RunsAndLeavesNothingBehind(unittest.TestCase):
             self.assertEqual(git(repo, "show", f"HEAD:{rel}").returncode, 0, f"{rel} not landed")
         self.assertEqual(dirt(repo), [])
 
-    def test_a_hook_that_refuses_the_commit_leaves_a_clean_index_and_a_full_spool(self):
-        """F1 — undeclared branch protection: honest failure, but nothing left staged."""
+    def test_a_hook_that_refuses_the_commit_leaves_a_clean_index_and_the_files_in_the_tree(self):
+        """F1 — undeclared branch protection: honest failure, nothing staged, nothing copied."""
         repo = host_repo()
         paths = session_files(repo)
         hook = repo / ".git" / "hooks" / "pre-commit"
@@ -121,9 +121,10 @@ class Step5RunsAndLeavesNothingBehind(unittest.TestCase):
         run_block("end", '"$SC" --end', repo)
         staged = git(repo, "diff", "--cached", "--name-only").stdout
         self.assertNotIn("_polaris/", staged, "a staged handoff is swallowed by the next commit")
-        spool = repo / ".git" / "polaris-deferred"
+        status = git(repo, "status", "--short", "-uall").stdout
         for path in paths:
-            self.assertTrue((spool / path.relative_to(repo)).is_file(), f"{path.name} not spooled")
+            self.assertIn(str(path.relative_to(repo)), status, f"{path.name} left the tree")
+        self.assertFalse((repo / ".git" / "polaris-deferred").exists(), "nothing is copied anywhere")
 
 
 class TheOtherBlocksRun(unittest.TestCase):

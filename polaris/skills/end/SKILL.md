@@ -2,7 +2,7 @@
 name: end
 description: Polaris skill — close a repository-first team session with a handoff, decisions/lessons written to the ledgers, a plan tick and a pathspec-only commit. Trigger when stopping work, before a multi-day pause, or on "wrap up / end session / /end".
 user-invocable: true
-version: 1.13.0
+version: 1.14.0
 invokes: [git-power]
 ---
 
@@ -363,27 +363,14 @@ not here.
 ## Step 5 — Land the handoff in git (same guard as `/update`, in code)
 
 Land what you wrote through **the same script `/update` uses** — pathspec-only, never `git add -A`,
-and never a push. The script decides WHERE, and there is nothing to hand-commit around it:
+and never a push. Il log di sessione si committa sul branch corrente, sempre; tre eccezioni
+dichiarate (HEAD staccato, repo senza commit, policy `no-direct-default`).
 
-| La forma del repo | Dove atterra |
-|---|---|
-| un worktree fratello è già sul default branch | committa **quello**, e questo albero non tiene copie |
-| **un solo checkout**, su un branch qualsiasi | committa **qui**, sul branch corrente |
-| **due o più checkout e nessuno sul default** | `deferred`: va nello spool, 0 commit |
-| il repo dichiara `polaris.commit-policy no-direct-default` | `deferred`: va nello spool, 0 commit |
-
-La terza riga è `polaris#12`: un checkout principale parcheggiato sul branch di un altro pannello
-non è «un solo checkout». Committare lì scrive la tua sessione sul lavoro di qualcun altro e ci
-drena sopra anche lo spool — successo il 04/09 nel vault. Il messaggio nomina il branch su cui il
-checkout principale è fermo, e `/start` conta la entry (`DEFERRED=`).
-
-La seconda riga chiude AC4 di `polaris-os#202`: quando il checkout è uno solo non
-esiste «la prossima sessione su main» ad aspettare, e lo spool restava lì mentre il session log
-restava sull'albero non tracciato. Misurato: `git status --short` a due righe dopo `/end`, con le
-skill che riportavano successo, e la sessione dopo che si inglobava il log nel proprio commit. La
-terza riga è `polaris-os#141`: una policy che vieta il commit diretto produce `deferred`, **mai** un
-commit forzato; lo spool è ciò che `/start` conta. The Step 1 `polmem remember` line lands in
-`.wiki/journal/`: it is committed shared history, so it belongs here or it never reaches the team.
+Un `/end` che rinvia invece di committare è un `/end` che non ha lavorato (decisione founder,
+2026-09-04). Nelle tre eccezioni lo script esce 2 con una riga che dice quale: i file restano dove
+li hai scritti, non vengono copiati altrove, e tu lo dici in chiaro invece di riportare successo.
+The Step 1 `polmem remember` line lands in `.wiki/journal/`: it is committed shared history, so it
+belongs here or it never reaches the team.
 
 ```bash
 cd "$MAIN_WT"
@@ -396,17 +383,17 @@ SC="${CLAUDE_PLUGIN_ROOT:-}/skills/update/scripts/session_commit.sh"          # 
 ```
 
 `--end` is the mode that may commit `decisions.md` / `lessons.md` (they are this command's vetted
-promotion); it still refuses `state/current.md` and `.env*`, and never pushes. On a **deferred** run
-say plainly that the handoff is in the spool and not yet committed — the cockpit is what the next
-panel resumes from meanwhile, and `/start` counts the spool. **Both resolver candidates missing**
+promotion); it still refuses `state/current.md` and `.env*`, and never pushes. On one of the three
+declared exceptions (exit 2) say plainly which one it was and that the handoff is still in the
+working tree, uncommitted — never report a clean close. **Both resolver candidates missing**
 (say which you tried): `git add --` those exact paths and
 `git commit -m "chore(polaris): session handoff $(date +%F) @$LOGIN"` — never `git add -A`.
 
 I path si nominano tutti: quelli che non esistono vengono **scartati prima** dell'`add`, perché
 `git add -- esistente assente` non stage NIENTE ed esce 128 — un piano settimanale mai aperto
-faceva atterrare l'intero handoff da nessuna parte. E se un hook rifiuta il commit, l'indice torna
-com'era e i file vanno nello spool: lasciarli staged significa che il commit dopo, senza pathspec,
-si porta via l'handoff.
+faceva atterrare l'intero handoff da nessuna parte. E se un hook rifiuta il commit lo script esce 1,
+riporta la riga dell'hook e ripulisce l'indice dei soli path Polaris: lasciarli staged significa che
+il commit dopo, senza pathspec, si porta via l'handoff. Mai `--no-verify`.
 
 Then read the ground truth back, because a skill that reports success on a dirty tree is the failure
 this step exists to close:
