@@ -2,7 +2,7 @@
 name: end
 description: Polaris skill — close a repository-first team session with a handoff, decisions/lessons written to the ledgers, a plan tick and a pathspec-only commit. Trigger when stopping work, before a multi-day pause, or on "wrap up / end session / /end".
 user-invocable: true
-version: 1.11.0
+version: 1.12.0
 invokes: [git-power]
 ---
 
@@ -57,14 +57,16 @@ older sessions write with pre-patch instructions):
 4. **Branch state** — classify only the current lane before writing the handoff:
 
    ```bash
-   GP="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/git-power/scripts/cantiere.py"
-   [ -f "$GP" ] || GP="$HOME/.agents/skills/git-power/scripts/cantiere.py"
-   [ -f "$GP" ] && python3 "$GP" phase post-push --repo "$PWD" \
-     || echo "NOTA: git-power non installato — nessuna classificazione della lane, si prosegue"
+   LP="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/end/scripts/lane_phase.sh"
+   [ -f "$LP" ] || LP="$HOME/.agents/skills/end/scripts/lane_phase.sh"
+   bash "$LP" "$PWD"
    ```
 
    `KEEP` means the worktree stays in the handoff. `READY_FINALIZE` means it may close only after
-   the handoff commit. Unknown or unverifiable PR state is never cleanup permission.
+   the handoff commit. Unknown or unverifiable PR state is never cleanup permission. The script
+   holds the two guards this question needs: a repo with **no remote** was never pushed, so it says
+   so and stops (asking anyway answered «push presente ma nessuna PR verificabile», a refusal that
+   reads like a broken branch), and a machine without `git-power` degrades in one line.
 Skip silently when the repo is already clean. Never delete anything in steps 1–3.
 
 ## Step 1 — Write the handoff
@@ -156,7 +158,7 @@ entry in the vault's own ring, so work done here is visible from there without g
 everything-file anywhere:
 
 ```bash
-VAULT="$(git config --get polaris.vault_root || true)"   # declared per repo, never guessed
+VAULT="$(git config --get polaris.vault-root || true)"   # declared per repo, never guessed
 [ -n "$VAULT" ] && [ -d "$VAULT" ] && [ "$VAULT" != "$ROOT" ] || VAULT=""
 ```
 
@@ -169,7 +171,9 @@ RC="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/update/scripts/recent_context.py
 No declaration, or a declared path that is not there → no copy, and this repo's cockpit is the only
 record. A literal path used to live here, which meant every install looked for a directory that
 exists on one machine and the public package carried a home directory. Set it once per repo:
-`git config polaris.vault_root <path>`, the same mechanism `polaris.login` already uses.
+`git config polaris.vault-root <path>`, the same mechanism `polaris.login` already uses.
+The separator is a **dash**: `git config` refuses a key with an underscore outright, so the
+underscored spelling this line used to carry made the vault copy a branch that never ran.
 
 Three surfaces carry a session and no fourth exists: the thread line in `current.md` (thin index),
 the `## Recent Context` entry (summary, capped), the committed session log (full handoff). The
@@ -226,30 +230,46 @@ by branch, nothing open lost, other panels' threads and `Next` lines untouched) 
 difference. **`/end` is the only Team OS command with closing authority**, and it spends it against
 ground truth rather than impression.
 
-Prima di potare, **elenca i candidati e decidi a mano quali sono chiusi davvero**. La rimozione
-AUTOMATICA è parcheggiata su `polaris-os#268`, ramo `task/T6-prune-parked`: `merge_truth` risponde `None` quando il ref locale
-del branch non esiste più, che è il caso NORMALE dopo un merge con `--delete-branch` — un rimotore
-così riporterebbe successo senza togliere nulla. Quindi il comando elenca, e la verifica resta tua:
+La potatura è **automatica e provata**, non più a mano. Il rimotore chiede due fonti e pretende che
+concordino: il **tracker** (`gh pr view N` dice `MERGED`, oppure `gh issue view N` dice `CLOSED` per
+`COMPLETED`) e il **repo** (la head di quella PR, o il suo merge commit, è antenata del default
+branch QUI). Prima si guarda, in sola lettura:
+
+```bash
+PT="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/end/scripts/prune_threads.py"
+python3 "$PT" "$CURRENT" --owner "$LOGIN" --now "$(date +%F)"
+```
+
+Quattro verdetti, mai due. `PROVEN` è atterrato davvero. `AMBIGUOUS` è mergiato dove questo checkout
+non lo vede, **oppure** un branch che porta commit oltre la head mergiata: quella lane è viva di
+nuovo, non chiusa. `OPEN` è una PR ancora aperta — e una PR aperta non è un thread chiuso. `BLOCKED`
+è il tracker che non risponde (niente `gh`, errore, rate limit, risposta vuota): **un solo `BLOCKED`
+ferma tutto il giro** ed esce `2`, perché una potatura che toglie quattro lane e ne salta una in
+silenzio è lo stesso no-op silenzioso di prima, rovesciato. Poi si applica:
+
+```bash
+python3 "$PT" "$CURRENT" --owner "$LOGIN" --now "$(date +%F)" \
+  --log "$ROOT/team/$LOGIN/sessions/$(date +%F)-@$LOGIN.md" \
+  --todos "$ROOT/state/todos.md" --apply
+```
+
+Ogni `PROVEN` esce da `## Open`, la sua riga di `state/todos.md` passa da `## Active` a `##
+Completed` con la data di oggi, `Updated:` si riduce a **data e owner**, e il thread **con il suo
+verdetto** viene appeso al session log: il thread non sparisce, si sposta, e il log resta
+append-only. `Active` non si azzera mai e `Added:` non si ri-timbra: le altre righe tornano
+byte-identiche. Senza `state/todos.md` il passo funziona lo stesso e lo dice (`"todo": "skipped"`).
+
+Resta una chiusura manuale, per il thread che non cita né issue né PR — lì la prova è nel log e
+la chiave la nomini tu, una per riga, mai un giro in blocco:
 
 ```bash
 CL="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/update/scripts/state_close.py"
-python3 "$CL" candidates "$CURRENT"
-```
-
-Ogni `CANDIDATE=` è un thread che cita una issue o una PR: controllane lo stato su GitHub con i tre
-comandi più sotto. Per ognuno **provato mergiato**, e solo per quelli, chiudilo — la chiusura è un
-atto esplicito, uno per riga, mai un giro in blocco:
-
-```bash
 python3 "$CL" close "$CURRENT" --key "<branch>" --todos "$ROOT/state/todos.md" \
   --owner "$LOGIN" --now "$(date +%F)"
 ```
 
-Toglie la riga da `## Open`, sposta la sua riga di `state/todos.md` da `## Active` a `## Completed`
-con la data di oggi, e riduce `Updated:` a **data e owner**. `Active` non si azzera mai e `Added:`
-non si ri-timbra: le altre righe tornano byte-identiche. Una chiave che non nomina un thread solo
-esce `2` e non tocca niente — meglio un rerun che la lane sbagliata cancellata. Senza
-`state/todos.md` il passo funziona lo stesso e lo dice (`"todo": "skipped"`).
+Una chiave che non nomina un thread solo esce `2` e non tocca niente — meglio un rerun che la lane
+sbagliata cancellata.
 
 **Closing means REMOVING, not annotating.** A thread proven landed comes **out** of the file; a
 `~~struck~~` line that stays is still tokens the next session reads and reconciles. Donor: marvin
@@ -333,13 +353,22 @@ not here.
 
 ## Step 5 — Land the handoff in git (same guard as `/update`, in code)
 
-If `git status --short` shows changes, land what you wrote through **the same script `/update` uses**
-— pathspec-only, and it commits ONLY from the default branch of the MAIN worktree. A handoff
-committed on a feature branch is stranded: invisible to `/start` until that branch merges, which for
-a paused worktree is days or never (observed loss). Off the default branch the script defers: the
-files stay on disk as the single copy and the next main-tree session lands them — say so, do not
-hand-commit around the guard. The Step 1 `polmem remember` line lands in `.wiki/journal/`: it is
-committed shared history, so it belongs here or it never reaches the team.
+Land what you wrote through **the same script `/update` uses** — pathspec-only, never `git add -A`,
+and never a push. The script decides WHERE, and there is nothing to hand-commit around it:
+
+| La forma del repo | Dove atterra |
+|---|---|
+| un worktree fratello è già sul default branch | committa **quello**, e questo albero non tiene copie |
+| **un solo checkout**, su un branch qualsiasi | committa **qui**, sul branch corrente |
+| il repo dichiara `polaris.commit-policy no-direct-default` | `deferred`: va nello spool, 0 commit |
+
+La seconda riga è la novità e chiude AC4 di `polaris-os#202`: quando il checkout è uno solo non
+esiste «la prossima sessione su main» ad aspettare, e lo spool restava lì mentre il session log
+restava sull'albero non tracciato. Misurato: `git status --short` a due righe dopo `/end`, con le
+skill che riportavano successo, e la sessione dopo che si inglobava il log nel proprio commit. La
+terza riga è `polaris-os#141`: una policy che vieta il commit diretto produce `deferred`, **mai** un
+commit forzato; lo spool è ciò che `/start` conta. The Step 1 `polmem remember` line lands in
+`.wiki/journal/`: it is committed shared history, so it belongs here or it never reaches the team.
 
 ```bash
 cd "$MAIN_WT"
@@ -352,12 +381,17 @@ SC="${CLAUDE_PLUGIN_ROOT:-}/skills/update/scripts/session_commit.sh"          # 
 
 `--end` is the mode that may commit `decisions.md` / `lessons.md` (they are this command's vetted
 promotion); it still refuses `state/current.md` and `.env*`, and never pushes. On a **deferred** run
-say plainly that the handoff is on disk and not yet committed — the dense copy in the cockpit is what
-the next panel resumes from meanwhile. If a later `git checkout <default>` in that tree is refused
-because of the deferred file, git is protecting the append: copy aside, switch, re-append, re-run. **Both resolver
-candidates missing** (say which you tried): on the default branch only, `git add --` those exact
-paths and `git commit -m "chore(polaris): session handoff $(date +%F) @$LOGIN"` — never `git add -A`;
-on any other branch commit nothing and report the handoff as deferred on disk.
+say plainly that the handoff is in the spool and not yet committed — the cockpit is what the next
+panel resumes from meanwhile, and `/start` counts the spool. **Both resolver candidates missing**
+(say which you tried): `git add --` those exact paths and
+`git commit -m "chore(polaris): session handoff $(date +%F) @$LOGIN"` — never `git add -A`.
+
+Then read the ground truth back, because a skill that reports success on a dirty tree is the failure
+this step exists to close:
+
+```bash
+git status --short   # 0 righe sui path Polaris, o dì esattamente quale è rimasta e perché
+```
 
 Never commit or push without an explicit request. After committing, if the branch is ahead of its
 remote, remind the contributor there is unpushed work:
@@ -371,12 +405,13 @@ git status -sb | head -1   # e.g. "## main...origin/main [ahead 1]"
 After the handoff commit, close only the current lane when it is already remote-merged:
 
 ```bash
+LP="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/end/scripts/lane_phase.sh"
+[ -f "$LP" ] || LP="$HOME/.agents/skills/end/scripts/lane_phase.sh"
+bash "$LP" "$PWD"
+# only after READY_FINALIZE — and only where the lane phase could actually be read:
 GP="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/git-power/scripts/cantiere.py"
 [ -f "$GP" ] || GP="$HOME/.agents/skills/git-power/scripts/cantiere.py"
-[ -f "$GP" ] || { echo "NOTA: git-power non installato — nessuna chiusura di lane, si prosegue"; GP=""; }
-[ -n "$GP" ] && python3 "$GP" phase post-push --repo "$PWD"
-# only after READY_FINALIZE:
-[ -n "$GP" ] && python3 "$GP" phase finalize --repo "$PWD" --confirm "$PWD"
+[ -f "$GP" ] && python3 "$GP" phase finalize --repo "$PWD" --confirm "$PWD"
 ```
 
 `finalize` preserves dirty/divergent main and removes only the current clean merged feature

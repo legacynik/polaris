@@ -8,13 +8,13 @@ the same operation in another section: merging `Active` must keep the week an it
 in, bullet form or the donor's table form alike, or every carried item reads as this week's news.
 
 One upsert, two doors: replace the line whose key matches, carry its first-seen stamp forward,
-append only what is genuinely new — and with `--no-add`, refuse even that: `/update` refreshes a
-row the thread cites, only `plan-week` reconciles the section (polaris-os#240). The key is `state_staleness._lane_id`, the identity the vault already uses, so a line reads the
-same to both tools. Two lines sharing a key refuse rather than guess: overwriting the wrong lane is
-worse than a re-run. Writes are serialised and atomic — six panels on six lanes lost 7 of 60
-updates, each reporting success, because every one read the file before the previous write landed.
-ponytail: a lock FILE with a stale-age escape, not fcntl — the cockpit is also written by shell
-and by hand; move to flock if this ever guards more than markdown.
+append only what is genuinely new — and with `--no-add`, refuse even that: `/update` refreshes a row
+the thread cites, only `plan-week` reconciles the section (polaris-os#240). The key is
+`state_staleness._lane_id`, the identity the vault already uses, so a line reads the same to both
+tools; two sharing one refuse rather than guess. Writes are serialised and atomic — six panels on
+six lanes lost 7 of 60 updates, each reporting success, having read before the previous write.
+ponytail: a lock FILE with a stale-age escape, not fcntl — the cockpit is also written by shell and
+by hand; move to flock if this ever guards more than markdown.
 """
 from __future__ import annotations
 
@@ -25,15 +25,15 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from state_lines import kinds, lane_id, read, section, table_row, write  # noqa: E402
+from state_lines import drop_placeholder, kinds, lane_id, read, section, table_row, write  # noqa
 from state_lock import LockError, locked, still_mine, write_atomic  # noqa: E402
 
 ADDED = re.compile(r"·?\s*Added:\s*(W\d+)", re.I)
 FOOTER = "<!-- pol:state-contract -->"  # the file's own contract closes it; nothing goes below
 SECTIONS = {"thread": re.compile(r"^#{1,6}\s+open\b", re.I),
             "week": re.compile(r"^#{1,6}\s+active\s*$", re.I)}
-# `## Active Priorities` in a cockpit also starts with "active": the week door means the todos
-# file's own `## Active`. NO_ADD: the writer may refresh a row, never create one (--no-add).
+# `## Active Priorities` in a cockpit also starts with "active": the week door means the todos file's
+# own `## Active`. NO_ADD: the writer may refresh a row, never create one (--no-add).
 NO_ADD = False
 
 
@@ -52,7 +52,7 @@ def _section(lines: list[str], door: str) -> tuple[int, int]:
 
 
 def _carry_cell(cells: list[str], old: str, week: str) -> str:
-    """The donor's table form: `Added` is the SECOND cell, and it is carried, never re-stamped."""
+    """The donor's table form: `Added` is the SECOND cell, carried, never re-stamped."""
     was = table_row(old) or []
     cells = cells + [""] * (3 - len(cells))
     cells[1] = was[1] if len(was) > 1 and was[1] else week
@@ -60,7 +60,7 @@ def _carry_cell(cells: list[str], old: str, week: str) -> str:
 
 
 def _carry_stamp(old: str, new: str, week: str) -> str:
-    """The stamp says when work FIRST appeared. Carrying it is the whole point of the merge."""
+    """The stamp says when work FIRST appeared; carrying it is the whole point of the merge."""
     cells = table_row(new)
     if cells is not None:
         return _carry_cell(cells, old, week)
@@ -107,6 +107,8 @@ def upsert(path: Path, line: str, opts: argparse.Namespace) -> dict:
     still_mine(path)                  # the lock may have been stolen while we stalled
     lines, newline, bom = read(path)
     span = _section(lines, opts.door)
+    if opts.door == "thread":
+        span = drop_placeholder(lines, span)   # the contract's example is not a lane (PM-C, D3)
     if opts.door == "week":
         key = lane_id(line)
         old = next((lines[i] for i in range(*span) if lines[i].strip()
@@ -145,16 +147,15 @@ def _selfcheck_thread(f: Path) -> list[bool]:
 def cmd_selfcheck() -> int:
     """One fixture per branch that would silently corrupt a cockpit or a plan."""
     import tempfile
-    with tempfile.TemporaryDirectory() as d:
+    with tempfile.TemporaryDirectory() as d:   # every write below is thrown away with it
         f = Path(d) / "current.md"; ok = _selfcheck_thread(f)
         f.write_text("## Active\n\n- #1 — x · Added: W32\n")
         week = argparse.Namespace(door="week", owner="", now="", week="W34")
         with locked(f):
             upsert(f, "- #1 — y", week)
         ok.append("Added: W32" in f.read_text())            # the stamp is carried, not reset
-        # The donor's TABLE form, which is what the vault and the shipped template really use.
         f.write_text("## Active\n\n| Task | Added | Context |\n|---|---|---|\n"
-                     "| #1 — x | W32 | ctx |\n")
+                     "| #1 — x | W32 | ctx |\n")   # the donor's TABLE form, what the vault uses
         with locked(f):
             ok.append(upsert(f, "| #1 — y | | |", week)["action"] == "replaced")
         body = f.read_text()
@@ -166,13 +167,12 @@ def cmd_selfcheck() -> int:
 def _parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(description="upsert one line into a state or plan section")
     ap.add_argument("door", nargs="?", choices=["thread", "week"],
-                    help="thread: a lane in current.md's `Open`. week: an item in `Active`.")
+                    help="thread: a lane in current.md `Open`; week: an item in `Active`")
     ap.add_argument("path", nargs="?", type=Path)
-    ap.add_argument("--owner", default="", help="thread: login for the `Updated:` line")
-    ap.add_argument("--now", default="", help="thread: ISO date for `Updated:`")
-    ap.add_argument("--week", default="", help="week: the stamp for a genuinely new item")
-    ap.add_argument("--no-add", action="store_true",
-                    help="refuse to append: only replace a row that already exists")
+    ap.add_argument("--owner", default="", help="thread: login on the `Updated:` line")
+    ap.add_argument("--now", default="", help="thread: ISO date for `Updated:`; --week: the stamp")
+    ap.add_argument("--week", default="")
+    ap.add_argument("--no-add", action="store_true", help="only replace a row that exists")
     ap.add_argument("--selfcheck", action="store_true")
     return ap
 

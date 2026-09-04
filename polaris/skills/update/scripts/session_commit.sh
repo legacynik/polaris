@@ -17,12 +17,17 @@
 #     mode only — they are `/end`'s vetted promotion, so `--end` may commit them.
 #   • branch is reported, never changed; never a push.
 #
-# ponytail: known ceiling of DEFER — the pending append sits in a TRACKED path, so if the tree later
-# switches back to the default branch git may REFUSE the checkout (it never clobbers: the append is
-# safe on disk, proven by tests/real_session_commit.sh R7). Recovery is manual: copy the file aside,
-# switch, re-append, run this script. Upgrade path if that friction shows up in practice: spool the
-# pending content under `$(git rev-parse --git-common-dir)/polaris-deferred/` (branch-independent,
-# shared by every worktree) and drain it on the next default-branch run.
+# Where the session lands, in one table (polaris-os#202 AC4, live proof 2026-09-03):
+#   • a sibling worktree already holds the default branch → spool, and IT commits; this tree keeps
+#     nothing (an untracked duplicate left here is exactly the dirt AC4 forbids).
+#   • ONE checkout, parked on a feature branch → commit HERE, pathspec-only. There is no "next
+#     default-branch session" to wait for: the branch this checkout is on IS where the repo's
+#     history is being written. Measured before this rule: `git status --short` came back with two
+#     lines after /end while both skills reported success, and the next session swallowed the
+#     session log into its own unrelated commit.
+#   • the repo DECLARES that direct commits on the default branch are forbidden
+#     (`git config polaris.commit-policy no-direct-default`) → `deferred`, never a forced commit
+#     (polaris-os#141); the entry goes to the spool, which `/start` counts (polaris-os#243).
 #
 #   session_commit.sh <session_log> [<weekly_plan>]      # /update checkpoint
 #   session_commit.sh --end <path>...                    # /end handoff (may include the ledgers)
@@ -71,6 +76,32 @@ _wt_on_default() {
     return 1
 }
 
+# A repository may declare that its default branch is never committed to directly (branch
+# protection, or a rule the contract states). Declared, never guessed: asking the remote would make
+# every offline run either hang or fail open, and #141 asks for a deterministic `deferred`.
+_policy_defers() {
+    case "$(git config --get polaris.commit-policy 2>/dev/null)" in
+        no-direct-default|no-direct|deferred) return 0 ;;
+    esac
+    return 1
+}
+
+# Once the content has landed elsewhere — a sibling worktree, or the spool — the copy this tree
+# still holds is a duplicate, and an untracked duplicate is a dirty line. It goes. A TRACKED one
+# stays and is named: removing it would be a deletion, i.e. another dirty line, and this tree's
+# history is not ours to rewrite.
+_drop_landed() {
+    local left=() p
+    for p in "$@"; do
+        [ -f "$p" ] || continue
+        if git ls-files --error-unmatch -- "$p" >/dev/null 2>&1
+        then left+=("$p")
+        else rm -f "$p"; fi
+    done
+    [ ${#left[@]} -gt 0 ] && echo "session_commit: tracked and still modified here: ${left[*]}"
+    return 0
+}
+
 _spool_put() {
     local spool; spool="$(_spool_dir)"; [ -n "$spool" ] || return 1
     local p; for p in "$@"; do
@@ -110,9 +141,24 @@ _spool_drain() {
     printf '%s\n' "${drained[@]}"
 }
 
+# `/end` names its files with ABSOLUTE paths, and the sibling-worktree hand-off then asked that
+# worktree to `git add` a path outside itself: git refuses, the spool wrote back to the original
+# absolute location, and the run reported "no session-state change, skip" while the handoff sat
+# uncommitted. Everything downstream — the spool layout, the pathspec, the recursion — assumes a
+# repo-relative path, so it is normalised once, here, at the only door in.
+_relativise() {
+    local top; top="$(git rev-parse --show-toplevel 2>/dev/null)"
+    local p; for p in "$@"; do
+        case "$p" in "$top"/*) printf '%s\n' "${p#"$top"/}" ;; *) printf '%s\n' "$p" ;; esac
+    done
+}
+
 _commit() {
     local mode="$1"; shift
-    local p; for p in "$@"; do
+    local rel=() p
+    while IFS= read -r p; do [ -n "$p" ] && rel+=("$p"); done < <(_relativise "$@")
+    [ ${#rel[@]} -gt 0 ] && set -- "${rel[@]}"
+    for p in "$@"; do
         _forbidden "$mode" "$p" && { echo "session_commit: refuse forbidden path ${p}" >&2; return 2; }
     done
     git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "session_commit: not a git repo, skip"; return 0; }
@@ -122,17 +168,22 @@ _commit() {
         if [ -n "$wt" ] && [ -d "$wt" ]; then
             # Hand the work to the worktree that is already on the default branch. The file itself
             # travels through the spool, because that worktree holds the default branch's copy.
+            # The paths ride along: a recursion with no pathspec commits whatever ANOTHER panel
+            # happened to leave staged there the moment the spool drains nothing.
             _spool_put "$@" || { echo "session_commit: spool write failed — file stays on disk" >&2; return 1; }
             echo "session_commit: on '${branch}' — committing from the ${def} worktree at ${wt}"
-            ( cd "$wt" && _commit "$mode" ) && return 0
+            ( cd "$wt" && _commit "$mode" "$@" ) && { _drop_landed "$@"; return 0; }
             echo "session_commit: the ${def} worktree refused it — entry is in the spool, not lost" >&2
             return 1
         fi
+        echo "session_commit: on '${branch}' and this repo has one checkout — committing here"
+    elif _policy_defers; then
         _spool_put "$@" && {
-            echo "session_commit: on '${branch}' (not ${def}) and no ${def} worktree — spooled to $(_spool_dir), drains on the next ${def} run"
+            _drop_landed "$@"
+            echo "session_commit: deferred — this repo forbids a direct commit on ${def} (polaris.commit-policy); spooled to $(_spool_dir), 0 commits"
             return 0
         }
-        echo "session_commit: on '${branch}' and the spool is unwritable — file stays on disk, commit it by hand" >&2
+        echo "session_commit: deferred on ${def} and the spool is unwritable — commit it by hand" >&2
         return 1
     fi
     local extra; extra="$(_spool_drain "$mode")" && [ -n "$extra" ] && {
@@ -193,19 +244,26 @@ _selfcheck() {
     local before; before="$(git rev-parse HEAD)"; commit_checkpoint "$LOG" >/dev/null
     [ "$(git rev-parse HEAD)" = "$before" ] || { echo "FAIL S5 empty produced a commit"; exit 1; }
 
-    # S6 off-default branch: DEFER — no commit here, the checkpoint stays on disk as the single copy
+    # S6 ONE checkout on a feature branch: it commits HERE, and the foreign staged file stays out.
+    # There is no other tree to hand it to, and a spool nobody drains is the dirt AC4 forbids.
     git checkout -q -b feat/other
     echo foreign2 > lessons.md; git add lessons.md
-    echo branchwork >> "$LOG"; before="$(git rev-parse HEAD)"
-    commit_checkpoint "$LOG" > out.txt 2>&1; [ $? -eq 0 ] || { echo "FAIL S6 defer must exit 0"; exit 1; }
-    [ "$(git rev-parse HEAD)" = "$before" ] || { echo "FAIL S6 committed on a feature branch"; exit 1; }
-    grep -q deferred out.txt || { echo "FAIL S6 defer not reported"; exit 1; }
-    git diff --quiet -- "$LOG" && { echo "FAIL S6 checkpoint lost from disk"; exit 1; }
+    echo branchwork >> "$LOG"
+    commit_checkpoint "$LOG" > out.txt 2>&1 || { echo "FAIL S6 single-checkout commit failed"; exit 1; }
+    git show HEAD:"$LOG" | grep -q branchwork || { echo "FAIL S6 did not commit on the only checkout"; exit 1; }
+    git show --name-only --format= HEAD | grep -q lessons.md && { echo "FAIL S6 dragged lessons.md"; exit 1; }
+    [ -z "$(git status --short -- "$LOG")" ] || { echo "FAIL S6 left the session log dirty"; exit 1; }
 
-    # S7 the deferred checkpoint lands on the next default-branch session, content intact
-    git checkout -q "$DEF"
+    # S7 a DECLARED policy against direct commits on the default branch defers instead (#141),
+    # and what it deferred drains on the next run that is allowed to commit.
+    git checkout -q "$DEF"; git config polaris.commit-policy no-direct-default
+    echo policywork >> "$LOG"; before="$(git rev-parse HEAD)"
+    commit_checkpoint "$LOG" > out.txt 2>&1; [ $? -eq 0 ] || { echo "FAIL S7 defer must exit 0"; exit 1; }
+    [ "$(git rev-parse HEAD)" = "$before" ] || { echo "FAIL S7 committed against the policy"; exit 1; }
+    grep -q deferred out.txt || { echo "FAIL S7 policy defer not reported"; exit 1; }
+    git config --unset polaris.commit-policy
     commit_checkpoint "$LOG" >/dev/null
-    git show HEAD:"$LOG" | grep -q branchwork || { echo "FAIL S7 deferred content never landed"; exit 1; }
+    git show HEAD:"$LOG" | grep -q policywork || { echo "FAIL S7 deferred content never drained"; exit 1; }
 
     # S8 --end mode: decisions.md / lessons.md ARE its vetted promotion → allowed, committed together
     echo "## decision" > decisions.md; echo "## lesson" > lessons.md
@@ -219,20 +277,24 @@ _selfcheck() {
     commit_end state/current.md >/dev/null 2>&1; [ $? -eq 2 ] || { echo "FAIL S9 --end accepted state/current.md"; exit 1; }
     commit_end .env >/dev/null 2>&1; [ $? -eq 2 ] || { echo "FAIL S9 --end accepted .env"; exit 1; }
 
-    # S10 --end obeys the same default-branch guard (a handoff must never ride a feature branch)
-    git checkout -q feat/other; echo "## d2" >> decisions.md; before="$(git rev-parse HEAD)"
-    commit_end "$LOG" decisions.md >/dev/null 2>&1
-    [ "$(git rev-parse HEAD)" = "$before" ] || { echo "FAIL S10 --end committed on a feature branch"; exit 1; }
-    git checkout -q -- decisions.md; git checkout -q "$DEF"   # harness cleanup: the deferred edit stays uncommitted by design
+    # S10 --end lands on the only checkout too, and leaves nothing behind for the next session
+    git checkout -q feat/other; echo "## d2" >> decisions.md
+    commit_end "$LOG" decisions.md >/dev/null 2>&1 || { echo "FAIL S10 --end refused"; exit 1; }
+    git show --name-only --format= HEAD | grep -qx decisions.md || { echo "FAIL S10 --end did not land decisions.md"; exit 1; }
+    [ -z "$(git status --short -- decisions.md "$LOG")" ] || { echo "FAIL S10 --end left the tree dirty"; exit 1; }
+    git checkout -q "$DEF"
 
     # S11 default branch comes from origin/HEAD, not the literal name "main"
     git checkout -q -b trunk; git update-ref refs/remotes/origin/trunk HEAD
     git symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/trunk
     echo trunkwork >> "$LOG"; commit_checkpoint "$LOG" >/dev/null
     git show HEAD:"$LOG" | grep -q trunkwork || { echo "FAIL S11 did not commit on origin/HEAD default (trunk)"; exit 1; }
-    git checkout -q "$DEF"; echo mainwork >> "$LOG"; before="$(git rev-parse HEAD)"
+    # With one checkout there is nowhere else to put it, so `main` commits on `main` — the point of
+    # resolving origin/HEAD is WHICH tree may take the handoff, not renaming the branch we are on.
+    git checkout -q "$DEF"; echo mainwork >> "$LOG"
     commit_checkpoint "$LOG" >/dev/null
-    [ "$(git rev-parse HEAD)" = "$before" ] || { echo "FAIL S11 committed on $DEF while origin/HEAD says trunk"; exit 1; }
+    [ "$(git rev-parse --abbrev-ref HEAD)" = "$DEF" ] || { echo "FAIL S11 changed branch"; exit 1; }
+    git show HEAD:"$LOG" | grep -q mainwork || { echo "FAIL S11 stranded the checkpoint on $DEF"; exit 1; }
 
     # S12 no origin/HEAD and the default is `master` → still commits (client repos are not all `main`)
     git symbolic-ref -d refs/remotes/origin/HEAD; git update-ref -d refs/remotes/origin/trunk
@@ -241,7 +303,7 @@ _selfcheck() {
     git show HEAD:"$LOG" | grep -q masterwork || { echo "FAIL S12 deferred forever on a master-default repo"; exit 1; }
 
     cd / && rm -rf "$d"
-    echo "SELF-CHECK OK: first-of-day · foreign-drag(decisions+lessons) · gitignored-state+secret · forbidden-input · empty-skip · off-default-defer · deferred-lands-later · end-promotes-ledgers · end-refuses-state+secret · end-defers-off-default · origin/HEAD-default · master-default-repo"
+    echo "SELF-CHECK OK: first-of-day · foreign-drag(decisions+lessons) · gitignored-state+secret · forbidden-input · empty-skip · single-checkout-commits-here · policy-defers-and-drains · end-promotes-ledgers · end-refuses-state+secret · end-lands-on-the-only-checkout · origin/HEAD-default · master-default-repo"
 }
 
 main() {

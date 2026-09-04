@@ -5,6 +5,51 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
+### Fixed
+- `update` 2.11.0 / `end` 1.12.0: **`/end` leaves the working tree clean** (`polaris-os#202` AC4).
+  `session_commit.sh` used to defer on any branch that was not the default, on the assumption that
+  another session on the default branch would land it. On a repo with ONE checkout parked on a
+  feature branch that session never comes: measured on 2026-09-03 with the shipped skills, after
+  `/end` the log sat staged and the handoff untracked, `git status --short` returned two lines
+  while both skills reported success, and the next session swallowed the log into its own unrelated
+  commit. Three cases now, decided in code: a sibling worktree already on the default branch takes
+  the commit and this tree keeps no untracked copy of what it handed over; **one checkout commits on
+  its own branch**, pathspec-only; a repo that declares `git config polaris.commit-policy
+  no-direct-default` gets `deferred` with 0 commits and the entry in the spool `/start` counts —
+  never a forced commit (`polaris-os#141`). What was already staged by another panel comes back
+  exactly as it was, in every case.
+- `update` 2.11.0: **an absolute pathspec survived the hand-off to a sibling worktree.** `/end`
+  names its files absolutely; the delegated worktree was then asked to `git add` a path outside
+  itself, git refused, and the run reported `no session-state change on main, skip` while the
+  handoff sat uncommitted. Paths are normalised to repo-relative at the one door in. Caught by
+  `tests/real_session_commit.sh` R2, not by a unit test — the harness passes what the skill passes.
+- `end` 1.12.0: **`git config polaris.vault_root` never existed.** git refuses a config key
+  containing an underscore, so the declared cross-repo `## Recent Context` copy was a branch that
+  could not run on any machine. The key is `polaris.vault-root`.
+- `end` 1.12.0: **`post-push` on a repo with no remote.** `git-power phase post-push` answered
+  «push presente ma nessuna PR verificabile» where nothing had been pushed because there is nowhere
+  to push — a refusal that reads like a broken branch. `end/scripts/lane_phase.sh` now holds both
+  guards (no remote, no `git-power`) for the two sites that ask the question.
+- `update` 2.11.0: **the contract's example thread is no longer a permanent lane.** The template
+  ships `- \`<branch>\` (<repo>) — <state in one line> · since YYYY-MM-DD` so `## Open` is never an
+  empty heading; it survived every session, and `/end` could never close it (there is no branch to
+  prove merged). The first real `state_upsert thread` removes exactly that line, and only it.
+
+### Added
+- `end` 1.12.0: **automatic removal of a thread whose PR provably merged**, replacing the declared
+  manual step. The defect that parked it was real — a truth built on `bool(merged)` reports success
+  and removes nothing, because the local branch ref is gone after a merge with `--delete-branch` —
+  so `end/scripts/merge_truth.py` requires TWO sources to agree: the tracker (`gh pr view N` says
+  `MERGED`, or `gh issue view N` says `CLOSED` for `COMPLETED`) and this checkout (that PR's head,
+  or its merge commit, is an ancestor of the default branch HERE). Four verdicts, never two:
+  `PROVEN` leaves `## Open` and lands in `## Completed` with its verdict appended to the session
+  log; `AMBIGUOUS` is a merge this checkout cannot see, or a branch carrying commits past its merged
+  head — a reused lane is alive, not closed; `OPEN` is a PR that is not merged; `BLOCKED` is a
+  tracker that cannot be read at all, and **one `BLOCKED` stops the whole run** with exit 2 naming
+  the line, because a prune that removes four lanes and quietly skips the fifth is the same silent
+  no-op inverted. `end/scripts/prune_threads.py` applies it; `state_close.py candidates` stays the
+  read-only list and no longer claims removal is parked.
+
 ## 0.21.0 — 2026-09-04
 
 ### Added
