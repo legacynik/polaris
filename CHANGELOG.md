@@ -6,6 +6,37 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 ## Unreleased
 
 ### Fixed
+- `update` 2.11.0 / `end` 1.12.0: **the shipped `/end` blocks are executed by the suite, not
+  grepped.** `polaris/tests/test_end_runs.py` reads Step 4, Step 5, `Recent Context` and the lane
+  phase out of the SKILL body with `skill_block` and runs them on a host repo built from the
+  templates, the way `test_update_gates` has always done for `/update`. It found two contract
+  breaks on the first run. Step 4 passed `--todos "$ROOT/state/todos.md"` unconditionally, and the
+  contract does not require that file: on a repo without one — the shape the templates build — every
+  close came back `UNWRITABLE` and the prune removed nothing, while the same SKILL promised a
+  `"todo": "skipped"` path that only fired when the flag was empty. And Step 5's `git add` refuses
+  the WHOLE pathspec when one named file is absent (exit 128, nothing staged), so a weekly plan
+  never opened silently landed the entire handoff nowhere.
+- `update` 2.11.0: **a refused commit no longer leaves the handoff staged.** With branch protection
+  the repo has not declared — a `pre-commit` hook that exits 1 on the default branch — the error was
+  honest but the files this script had just `git add`ed stayed in the index, so the next commit
+  without a pathspec swallowed the handoff: the AC4 regression, moved one step later. The index is
+  restored and the files go to the spool.
+- `update` 2.11.0: **a worktree can no longer hand work to itself.** On a detached or unborn HEAD
+  `git rev-parse --abbrev-ref HEAD` says `HEAD` while `git worktree list` still reports
+  `branch refs/heads/main`, so the dispatch delegated to the tree it was already in and recursed
+  until killed (pre-existing on `origin/main`: 205 identical lines in 15s). A detached HEAD now
+  defers with its reason, because a commit reachable only through the reflog is not a landed handoff.
+- `end` 1.12.0: **a thread citing two PRs closed on the first one.** `cite()` used `search`, so
+  «chiude #77, poi #79» closed the moment #77 merged. Every citation is resolved now, and the worst
+  answer wins: one open citation keeps the whole lane.
+- `end` 1.12.0: **a failed close no longer silences the rows after it.** `bad = bad or (...)`
+  short-circuited the loop, so a lane could be left unclosed and unmentioned. Every PROVEN row is
+  attempted and reported; the run still exits 2 if any failed.
+- `update` 2.11.0: **closing takes the whole lane.** A closed thread left its indented children and
+  its fenced resume command orphaned under `## Open` — residue the next session had to reconcile.
+- `update` 2.11.0: **`drop_placeholder` respected the fence.** It deleted a placeholder-shaped line
+  sitting inside a code block, against `state_lines`' own invariant that nothing inside a fence is
+  structure. It asks `kinds()` now, like every other writer.
 - `update` 2.11.0 / `end` 1.12.0: **`/end` leaves the working tree clean** (`polaris-os#202` AC4).
   `session_commit.sh` used to defer on any branch that was not the default, on the assumption that
   another session on the default branch would land it. On a repo with ONE checkout parked on a

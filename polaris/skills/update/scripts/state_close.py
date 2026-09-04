@@ -48,10 +48,26 @@ def find(lines: list[str], span: tuple[int, int], key: str) -> int:
 
 
 def take(lines: list[str], name: re.Pattern, key: str) -> str:
-    """Remove that line from the named section and hand it back. "" when it is not there."""
+    """Remove that LANE from the named section and hand its head line back. "" when absent.
+
+    A lane is the thread line plus what hangs under it — an indented child, a fenced command to
+    resume with. Removing only the head left both orphaned under `## Open`, which the next session
+    then had to reconcile: "closing means REMOVING" is not "removing the first line".
+    ponytail: the run ends at the first blank line, so a fenced block with a blank line inside it
+    keeps its tail; a fence-state walk is the upgrade if that ever shows up in a real cockpit.
+    """
     span = section(lines, name)
     at = find(lines, span, key) if span else -1
-    return lines.pop(at) if at >= 0 else ""
+    if at < 0:
+        return ""
+    head = lines[at]
+    tags = kinds(lines)
+    end = at + 1
+    while end < (span[1] if span else len(lines)) and tags[end] not in ("thread", "heading") \
+            and lines[end].strip():
+        end += 1
+    del lines[at:end]
+    return head
 
 
 def put(lines: list[str], name: re.Pattern, line: str) -> None:

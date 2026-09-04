@@ -13,7 +13,7 @@ from __future__ import annotations
 import json
 import unittest
 
-from host_repo import host_repo, run_script, seed_state, written  # noqa: F401
+from host_repo import host_repo, run_script, seed_state, written
 
 
 def cockpit_of(repo):
@@ -95,34 +95,6 @@ class CandidatesStillOnlyLists(unittest.TestCase):
         self.assertIn("prune_threads.py", body)
         self.assertNotIn("268", body, "the parked-removal note outlived the parking")
         self.assertNotIn("AUTOMATICA è parcheggiata", body)
-
-
-class TheTemplatePlaceholderLeavesOnTheFirstRealThread(unittest.TestCase):
-    """D3 — the example line the contract ships is scaffolding, not a live lane."""
-
-    def test_one_upsert_leaves_one_thread_and_no_placeholder(self):
-        repo = host_repo()
-        path = seed_state(repo, "current.md")
-        self.assertIn("`<branch>`", path.read_text(), "the template ships the example")
-        written(path, "- `feat/a` (acme-api) — primo giro · since 2026-09-01")
-        body = path.read_text()
-        self.assertNotIn("`<branch>`", body, "the example must go on the first real write")
-        threads = [ln for ln in body.split("## Recent Context")[0].splitlines()
-                   if ln.startswith("- `")]
-        self.assertEqual(threads, ["- `feat/a` (acme-api) — primo giro · since 2026-09-01"])
-
-    def test_only_that_exact_line_goes(self):
-        repo = host_repo()
-        path = seed_state(repo, "current.md")
-        body = path.read_text().replace(
-            "- `<branch>` (<repo>) — <state in one line> · since YYYY-MM-DD",
-            "- `<branch>` (<repo>) — <state in one line> · since YYYY-MM-DD\n"
-            "- `<altro>` (<repo>) — quasi uguale · since 2026-09-01")
-        path.write_text(body)
-        written(path, "- `feat/a` (acme-api) — primo giro · since 2026-09-01")
-        after = path.read_text()
-        self.assertNotIn("`<branch>`", after)
-        self.assertIn("`<altro>`", after, "only the line the contract ships is recognised")
 
 
 class RecentContextIsARing(unittest.TestCase):

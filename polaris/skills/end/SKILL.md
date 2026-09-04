@@ -57,6 +57,7 @@ older sessions write with pre-patch instructions):
 4. **Branch state** — classify only the current lane before writing the handoff:
 
    ```bash
+   # classificazione prima dell'handoff
    LP="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/end/scripts/lane_phase.sh"
    [ -f "$LP" ] || LP="$HOME/.agents/skills/end/scripts/lane_phase.sh"
    bash "$LP" "$PWD"
@@ -236,11 +237,14 @@ concordino: il **tracker** (`gh pr view N` dice `MERGED`, oppure `gh issue view 
 branch QUI). Prima si guarda, in sola lettura:
 
 ```bash
+# read-only: nessuna riga esce da `## Open`, si guardano i verdetti
 PT="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/end/scripts/prune_threads.py"
+[ -f "$PT" ] || PT="$HOME/.agents/skills/end/scripts/prune_threads.py"
 python3 "$PT" "$CURRENT" --owner "$LOGIN" --now "$(date +%F)"
 ```
 
-Quattro verdetti, mai due. `PROVEN` è atterrato davvero. `AMBIGUOUS` è mergiato dove questo checkout
+Un thread si chiude solo se **ogni** citazione che porta è provata: una lane che dice «chiude #77,
+poi #79» con #79 ancora aperta resta. Quattro verdetti, mai due. `PROVEN` è atterrato davvero. `AMBIGUOUS` è mergiato dove questo checkout
 non lo vede, **oppure** un branch che porta commit oltre la head mergiata: quella lane è viva di
 nuovo, non chiusa. `OPEN` è una PR ancora aperta — e una PR aperta non è un thread chiuso. `BLOCKED`
 è il tracker che non risponde (niente `gh`, errore, rate limit, risposta vuota): **un solo `BLOCKED`
@@ -248,16 +252,21 @@ ferma tutto il giro** ed esce `2`, perché una potatura che toglie quattro lane 
 silenzio è lo stesso no-op silenzioso di prima, rovesciato. Poi si applica:
 
 ```bash
-python3 "$PT" "$CURRENT" --owner "$LOGIN" --now "$(date +%F)" \
+PT="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/end/scripts/prune_threads.py"
+[ -f "$PT" ] || PT="$HOME/.agents/skills/end/scripts/prune_threads.py"
+python3 "$PT" "$CURRENT" --apply --owner "$LOGIN" --now "$(date +%F)" \
   --log "$ROOT/team/$LOGIN/sessions/$(date +%F)-@$LOGIN.md" \
-  --todos "$ROOT/state/todos.md" --apply
+  --todos "$ROOT/state/todos.md"
 ```
 
 Ogni `PROVEN` esce da `## Open`, la sua riga di `state/todos.md` passa da `## Active` a `##
 Completed` con la data di oggi, `Updated:` si riduce a **data e owner**, e il thread **con il suo
 verdetto** viene appeso al session log: il thread non sparisce, si sposta, e il log resta
 append-only. `Active` non si azzera mai e `Added:` non si ri-timbra: le altre righe tornano
-byte-identiche. Senza `state/todos.md` il passo funziona lo stesso e lo dice (`"todo": "skipped"`).
+byte-identiche. `state/todos.md` **non è obbligatorio** nel contratto: se non c'è, il passo funziona
+lo stesso e lo dice (`"todo": "skipped"`). Chiudere significa togliere la **lane intera** — la riga e
+ciò che le sta sotto, figli indentati e blocco fence compresi: una riga orfana sotto `## Open` è
+lavoro che la sessione dopo deve riconciliare.
 
 Resta una chiusura manuale, per il thread che non cita né issue né PR — lì la prova è nel log e
 la chiave la nomini tu, una per riga, mai un giro in blocco:
@@ -374,9 +383,10 @@ commit forzato; lo spool è ciò che `/start` conta. The Step 1 `polmem remember
 cd "$MAIN_WT"
 SC="${CLAUDE_PLUGIN_ROOT:-}/skills/update/scripts/session_commit.sh"          # plugin install
 [ -x "$SC" ] || SC="$HOME/.agents/skills/update/scripts/session_commit.sh"    # skills-CLI install (npx)
-"$SC" --end "$ROOT/team/$LOGIN/sessions/<file>" "$ROOT/team/$LOGIN/handoff/$(date +%F).md" \
-            "$ROOT/team/$LOGIN/weeks/<file>" "$ROOT/decisions.md" "$ROOT/lessons.md" \
-            ".wiki/journal/<file-from-step-1>"   # ONLY the files you wrote this session
+"$SC" --end "$ROOT/team/$LOGIN/sessions/$(date +%F)-@$LOGIN.md" \
+            "$ROOT/team/$LOGIN/handoff/$(date +%F).md" \
+            "$ROOT/team/$LOGIN/weeks/$(date +%G-W%V).md" \
+            "$ROOT/decisions.md" "$ROOT/lessons.md"   # add the journal file if Step 1 wrote one
 ```
 
 `--end` is the mode that may commit `decisions.md` / `lessons.md` (they are this command's vetted
@@ -385,6 +395,12 @@ say plainly that the handoff is in the spool and not yet committed — the cockp
 panel resumes from meanwhile, and `/start` counts the spool. **Both resolver candidates missing**
 (say which you tried): `git add --` those exact paths and
 `git commit -m "chore(polaris): session handoff $(date +%F) @$LOGIN"` — never `git add -A`.
+
+I path si nominano tutti: quelli che non esistono vengono **scartati prima** dell'`add`, perché
+`git add -- esistente assente` non stage NIENTE ed esce 128 — un piano settimanale mai aperto
+faceva atterrare l'intero handoff da nessuna parte. E se un hook rifiuta il commit, l'indice torna
+com'era e i file vanno nello spool: lasciarli staged significa che il commit dopo, senza pathspec,
+si porta via l'handoff.
 
 Then read the ground truth back, because a skill that reports success on a dirty tree is the failure
 this step exists to close:

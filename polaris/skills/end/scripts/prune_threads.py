@@ -30,7 +30,7 @@ HERE = Path(__file__).resolve().parent
 UPDATE = HERE.parent.parent / "update" / "scripts"
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(UPDATE))
-from merge_truth import CITES, default_branch, verdict  # noqa: E402
+from merge_truth import CITES, default_branch, verdict  # noqa: E402  (F3: every citation)
 from state_lines import kinds, lane_id, read, section  # noqa: E402
 
 OPEN = re.compile(r"^#{1,6}\s+open\b", re.I)
@@ -53,24 +53,37 @@ def note(log: Path, line: str, why: str) -> int:
 
 
 def close(path: Path, line: str, opts: argparse.Namespace) -> int:
-    """Delegate to the shipped closer: one notion of what removing a thread does to two files."""
+    """Delegate to the shipped closer: one notion of what removing a thread does to two files.
+
+    A `--todos` naming a file that is not there is NOT an instruction to fail: the contract does not
+    require `state/todos.md`, and the SKILL passes the path unconditionally. Before this, every
+    close on a repo without one came back `UNWRITABLE` and the prune removed nothing.
+    """
     args = [sys.executable, str(CLOSER), "close", str(path), "--key", lane_id(line),
             "--owner", opts.owner, "--now", opts.now]
-    if opts.todos:
+    if opts.todos and Path(opts.todos).is_file():
         args += ["--todos", opts.todos]
     done = subprocess.run(args, capture_output=True, text=True)
     if done.returncode:
         print(f"BLOCKED={line.strip()} :: the closer refused it — {done.stderr.strip()}")
+    elif done.stdout.strip():
+        print(done.stdout.strip())      # the closer says what it did to the todos file; relay it
     return done.returncode
 
 
 def apply(rows: list[tuple], opts: argparse.Namespace) -> int:
+    """Every PROVEN row is attempted and reported. One failure never silences the rows after it —
+    `bad = bad or (...)` short-circuited the loop, so a lane could be left unclosed and unmentioned.
+    """
     path, log, bad = Path(opts.path), Path(opts.log), 0
     for line, kind, why in rows:
         if kind != "PROVEN":
             continue
-        bad = bad or (2 if close(path, line, opts) else note(log, line, why))
-    return bad or 0
+        if close(path, line, opts):
+            bad = 2
+            continue
+        note(log, line, why)
+    return bad
 
 
 def run(opts: argparse.Namespace) -> int:

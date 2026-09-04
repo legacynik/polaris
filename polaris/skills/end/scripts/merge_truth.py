@@ -51,22 +51,22 @@ def _reaches(sha: str, default: str) -> bool:
     return bool(sha) and _run(["git", "merge-base", "--is-ancestor", sha, default])[0] == 0
 
 
-def _tip(branch: str) -> str:
-    rc, out = _run(["git", "rev-parse", "--verify", "--quiet", f"refs/heads/{branch}"])
-    return out if rc == 0 else ""      # gone at merge is the normal case, and not an answer
-
-
 def _gh(kind: str, num: str, fields: str) -> dict | None:
-    """The tracker's answer, or None for every kind of silence: absent, error, rate limit, empty."""
+    """The tracker's answer, or None for every kind of silence: absent, error, rate limit, empty.
+
+    An object whose requested keys are ALL null is silence wearing a JSON hat — it says nothing
+    about the PR, so it must reach the caller as BLOCKED, not as a state of `None` reading `OPEN`.
+    """
     if not shutil.which("gh"):
         return None
     rc, out = _run(["gh", kind, "view", num, "--json", fields])
     if rc or not out:
         return None
     try:
-        return json.loads(out) or None
+        facts = json.loads(out)
     except ValueError:
         return None
+    return facts if facts and any(v is not None for v in facts.values()) else None
 
 
 def _pr(num: str, facts: dict, default: str) -> tuple[str, str]:
@@ -77,7 +77,8 @@ def _pr(num: str, facts: dict, default: str) -> tuple[str, str]:
     name = facts.get("headRefName") or ""
     if not (_reaches(head, default) or _reaches(merge, default)):
         return "AMBIGUOUS", f"PR #{num} says MERGED, but neither {head[:7]} nor its merge commit is in {default} here"
-    tip = _tip(name)
+    # The local ref is usually GONE (merged with --delete-branch): that is not an answer either way.
+    tip = _run(["git", "rev-parse", "--verify", "--quiet", f"refs/heads/{name}"])[1] if name else ""
     if tip and tip != head and not _reaches(tip, default):
         return "AMBIGUOUS", f"PR #{num} merged {head[:7]}, but {name} carries commits past it — reused, not closed"
     return "PROVEN", f"PR #{num} MERGED, head {head[:7]} reachable in {default}"
@@ -91,19 +92,23 @@ def _issue(num: str, facts: dict) -> tuple[str, str]:
     return "PROVEN", f"issue #{num} CLOSED as completed"
 
 
-def cite(text: str) -> tuple[str, str]:
-    """(number, kind). `PR 12` is a PR citation and never falls back to the issue of that number."""
-    m = CITES.search(text)
-    if not m:
-        return "", ""
-    return (m.group(1), "any") if m.group(1) else (m.group(2), "pr")
+def cites(text: str) -> list[tuple[str, str]]:
+    """EVERY (number, kind) the line names, in order, de-duplicated.
+
+    `search` used to stop at the first one, so a lane reading «chiude #77, poi #79» closed the
+    moment #77 merged, with #79 still open. A lane is done when everything it points at is done.
+    `PR 12` is a PR citation and never falls back to the issue of that number.
+    """
+    out = []
+    for m in CITES.finditer(text):
+        hit = (m.group(1), "any") if m.group(1) else (m.group(2), "pr")
+        if hit not in out:
+            out.append(hit)
+    return out
 
 
-def verdict(line: str, default: str) -> tuple[str, str]:
-    """PROVEN | AMBIGUOUS | OPEN | BLOCKED, and the reason, for one thread line."""
-    num, kind = cite(line)
-    if not num:
-        return "OPEN", "no issue or PR cited"
+def _one(num: str, kind: str, default: str) -> tuple[str, str]:
+    """The verdict for a single citation."""
     if facts := _gh("pr", num, PR_FIELDS):
         return _pr(num, facts, default)
     if kind == "pr":
@@ -111,6 +116,18 @@ def verdict(line: str, default: str) -> tuple[str, str]:
     if facts := _gh("issue", num, "state,stateReason"):
         return _issue(num, facts)
     return "BLOCKED", f"neither PR nor issue #{num} could be read — absent gh, error or empty answer"
+
+
+def verdict(line: str, default: str) -> tuple[str, str]:
+    """PROVEN only when EVERY citation is proven; otherwise the worst answer, and why."""
+    found = cites(line)
+    if not found:
+        return "OPEN", "no issue or PR cited"
+    seen = [_one(num, kind, default) for num, kind in found]
+    for want in ("BLOCKED", "AMBIGUOUS", "OPEN"):        # worst answer wins, in this order
+        if bad := [why for kind, why in seen if kind == want]:
+            return want, "; ".join(bad)
+    return "PROVEN", "; ".join(why for _, why in seen)
 
 
 def _selfcheck() -> int:
@@ -123,12 +140,14 @@ def _selfcheck() -> int:
           _issue("2", {"state": "OPEN"})[0] == "OPEN",
           _issue("2", {"state": "CLOSED", "stateReason": "NOT_PLANNED"})[0] == "OPEN",
           _issue("2", {"state": "CLOSED", "stateReason": "COMPLETED"})[0] == "PROVEN",
-          cite("- `a` — chiude #77") == ("77", "any"),
-          cite("- `a` — attende PR 77") == ("77", "pr"),
-          cite("- `a` — PR #77") == ("77", "any"),
-          cite("- `a` — niente") == ("", ""),
+          cites("- `a` — chiude #77") == [("77", "any")],
+          cites("- `a` — attende PR 77") == [("77", "pr")],
+          cites("- `a` — PR #77") == [("77", "any")],
+          cites("- `a` — niente") == [],
+          cites("- `a` — chiude #77, poi #79") == [("77", "any"), ("79", "any")],
+          cites("- `a` — #77 e ancora #77") == [("77", "any")],
           verdict("- `a` — niente", "main")[0] == "OPEN",
-          not _reaches("", "main"), not _reaches("c" * 40, "main"), _tip("nope/nope") == "",
+          not _reaches("", "main"), not _reaches("c" * 40, "main"),
           _run(["definitely-not-a-binary-here"]) == (127, "")]   # absent tool ≠ crash
     print(f"merge_truth selfcheck: {sum(ok)}/{len(ok)} branches OK")
     return 0 if all(ok) else 1

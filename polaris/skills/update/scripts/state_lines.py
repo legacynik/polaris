@@ -1,17 +1,15 @@
 #!/usr/bin/env python3
 """T6 — ONE notion of what a line is, shared by every writer of a state file.
 
-Seven separate failures had one root: the section finder, the thread matcher, the state-line
-stamper and the remover each carried their own regex, so they disagreed. A ```bash block
-under a condemned thread reopened the section and promoted a line inside the fence to a live
-thread. A `## Open` inside an earlier fence won the section lookup. The vault's real
-`# Open — thread vivi` is an H1: one writer saw the section, the other saw no threads in it,
-and `/end` reported `APPLIED` while removing nothing — a permanent no-op on the real cockpit.
+Seven separate failures had one root: the section finder, the thread matcher, the state-line stamper
+and the remover each carried their own regex, so they disagreed. A ```bash block under a condemned
+thread promoted a line inside the fence to a live thread; a `## Open` inside an earlier fence won the
+section lookup; the vault's real H1 `# Open — thread vivi` made `/end` report `APPLIED` while
+removing nothing. So the classification happens once, here, in one fence-aware pass, and every writer
+consumes it — including `drop_placeholder`, which did not, and deleted a sample out of a code block.
 
-So the classification happens once, here, in one pass that knows about fences, and every
-writer consumes it. Reading and writing live here too, because "every other byte comes back
-identical" is a property of the round trip: a CRLF file must stay CRLF, and a BOM must stay
-one BOM rather than hiding the `Updated:` line behind it and growing a second.
+Reading and writing live here too, because "every other byte comes back identical" is a property of
+the round trip: a CRLF file stays CRLF, and a BOM stays one BOM.
 """
 from __future__ import annotations
 
@@ -38,9 +36,8 @@ CELL_SPLIT = re.compile(r"(?<!\\)\|")
 TABLE_RULE = re.compile(r"^\s*\|[\s:|-]*-[\s:|-]*\|\s*$")
 UPDATED = re.compile(r"^Updated:", re.I)
 # The contract ships ONE example thread so the section is never an empty heading. It is scaffolding,
-# not a lane: left in place it survives every session, and `/end` can never close it (there is no
-# branch called `<branch>` to prove merged). Matched EXACTLY as the template writes it — a line that
-# merely looks like an example belongs to whoever wrote it.
+# not a lane: left in place it survives every session, and `/end` can never close it (no branch
+# called `<branch>` can be proved merged). Matched EXACTLY as the template writes it.
 PLACEHOLDER = re.compile(
     r"^[-*+]\s+`<branch>`\s+\(<repo>\)\s+—\s+<state in one line>\s+·\s+since YYYY-MM-DD\s*$")
 LIST_ITEM = re.compile(r"^(?:[-*+]\s+|\d+[.)]\s+)")
@@ -103,15 +100,10 @@ def kinds(lines: list[str]) -> list[str]:
             out.append("other")                    # anything else inside is content
             continue
         out.append("fence" if run else _kind(line))
-    return _demote_headers(out, lines)
-
-
-def _demote_headers(tags: list[str], lines: list[str]) -> list[str]:
-    """A row immediately above a `|---|` rule is that table's HEADER — structure, not state."""
-    for i, tag in enumerate(tags):
+    for i, tag in enumerate(out):   # a row right above a `|---|` rule is that table's HEADER
         if tag == "thread" and i + 1 < len(lines) and TABLE_RULE.match(lines[i + 1]):
-            tags[i] = "other"
-    return tags
+            out[i] = "other"
+    return out
 
 
 def drop_placeholder(lines: list[str], span: tuple[int, int]) -> tuple[int, int]:
@@ -120,7 +112,8 @@ def drop_placeholder(lines: list[str], span: tuple[int, int]) -> tuple[int, int]
     Called by the writer of a REAL thread, so the section never carries both. Returns the span
     unchanged when there is nothing to drop, which is every run after the first.
     """
-    at = next((i for i in range(*span) if PLACEHOLDER.match(lines[i])), -1)
+    tags = kinds(lines)      # inside a fence NOTHING is structure — a sample is documentation
+    at = next((i for i in range(*span) if tags[i] == "thread" and PLACEHOLDER.match(lines[i])), -1)
     if at < 0:
         return span
     del lines[at]
@@ -165,6 +158,19 @@ def section(lines: list[str], name: re.Pattern) -> tuple[int, int] | None:
     return start + 1, stop[0] if stop else len(lines)
 
 
+EXAMPLE = "- `<branch>` (<repo>) — <state in one line> · since YYYY-MM-DD"
+
+
+def _check_placeholder() -> list[bool]:
+    """The contract's example goes; a look-alike is someone's lane; a fenced one is documentation."""
+    live = ["## Open", "", EXAMPLE, "- `<altro>` (<repo>) — quasi uguale · since 2026-09-01"]
+    fenced = ["## Open", "", "- `vivo` — lane", "```md", EXAMPLE, "```"]
+    return [drop_placeholder(live, (1, 4)) == (1, 3),
+            live == ["## Open", "", "- `<altro>` (<repo>) — quasi uguale · since 2026-09-01"],
+            drop_placeholder(live, (1, 3)) == (1, 3),
+            drop_placeholder(fenced, (1, 6)) == (1, 6), EXAMPLE in fenced]
+
+
 def _selfcheck() -> int:
     """Fences, the donor's tables, an escaped pipe, and a section that ends at the rule."""
     body = ["Updated: x", "", "## Note", "~~~", "```", "## Open", "```", "~~~", "",
@@ -173,8 +179,6 @@ def _selfcheck() -> int:
              "| #11 — primo | W32 | x |", "| | | |"]
     donor = ["## Completed", "", "| T | C |", "|---|---|", "| x | |", "", "---", "", "## Next"]
     t, u = kinds(body), kinds(table)
-    example = ["## Open", "", "- `<branch>` (<repo>) — <state in one line> · since YYYY-MM-DD",
-               "- `<altro>` (<repo>) — quasi uguale · since 2026-09-01"]
     ok = [t[4] == "other", t[5] == "other", t[6] == "other",   # ``` cannot close ~~~
           t[9] == "heading", t[11] == "thread", t[13] == "other",
           section(body, re.compile(r"^#{1,6}\s+open\b", re.I)) == (10, 15),
@@ -184,11 +188,8 @@ def _selfcheck() -> int:
           # An escaped pipe is content: splitting on it shifted every later cell left.
           table_row(r"| `a\|b` — nome | W32 | ctx |") == [r"`a\|b` — nome", "W32", "ctx"],
           # A section ends at the donor's rule, not at EOF: below it lives the next table.
-          section(donor, re.compile(r"^#{1,6}\s+completed\s*$", re.I)) == (1, 6),
-          # The contract's example goes; a line that merely resembles it is someone's lane.
-          drop_placeholder(example, (1, 4)) == (1, 3),
-          example == ["## Open", "", "- `<altro>` (<repo>) — quasi uguale · since 2026-09-01"],
-          drop_placeholder(example, (1, 3)) == (1, 3)]
+          section(donor, re.compile(r"^#{1,6}\s+completed\s*$", re.I)) == (1, 6)] \
+        + _check_placeholder()
     print(f"state_lines selfcheck: {sum(ok)}/{len(ok)} branches OK")
     return 0 if all(ok) else 1
 
