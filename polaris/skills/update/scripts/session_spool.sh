@@ -43,7 +43,15 @@ _wt_on_default() {
 # back empty means "no sibling can take this commit" — it does NOT mean "there is only me". With a
 # second checkout present the two readings differ, and reading it as "one checkout" is how a
 # checkpoint landed on another panel's branch (polaris#12).
-_wt_count() { git worktree list --porcelain 2>/dev/null | grep -c '^worktree '; }
+# A worktree whose directory somebody deleted stays in the list, flagged `prunable`, and a `bare`
+# entry can commit nothing: counting either made one real checkout look like two and deferred every
+# run forever — the deferral becoming the data loss it exists to prevent (gate round 2, F3).
+_wt_count() {
+    git worktree list --porcelain 2>/dev/null | awk '
+        /^worktree /{n++; skipped=0}
+        /^(prunable|bare)/{if (!skipped) {n--; skipped=1}}
+        END{print n+0}'
+}
 
 _main_wt_branch() {
     local line seen=0

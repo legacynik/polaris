@@ -28,12 +28,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from state_lines import kinds, lane_id, read, section, table_row, write  # noqa: E402
+from state_sections import heading  # noqa: E402
 from state_lock import LockError, locked, write_atomic  # noqa: E402
 from state_upsert import UpsertError, _stamp_updated  # noqa: E402
 
-OPEN = re.compile(r"^#{1,6}\s+open\b", re.I)
-ACTIVE = re.compile(r"^#{1,6}\s+active\s*$", re.I)
-COMPLETED = re.compile(r"^#{1,6}\s+completed\s*$", re.I)
+# The ONE registry — a heading this script recognised and `state_upsert` did not is how
+# `/end` removed a thread `/update` had just refused to write (gate round 2, F1).
+OPEN, ACTIVE = heading("## Open"), heading("## Active")
+COMPLETED = heading("## Completed")
 CITES = re.compile(r"#\d+|\bPR\s*\d+", re.I)
 STAMP = re.compile(r"·?\s*Added:\s*W\d+", re.I)
 LISTED = ("these are the threads a verdict can apply to — `end/scripts/prune_threads.py` resolves "

@@ -76,12 +76,18 @@ def _place(lines: list[str], span: tuple[int, int], tags: list[str]) -> int:
     """Where a NEW row goes: among the rows, never merely inside the section. The live cockpit
     closes its threads with an `Owner:` line and the new lane landed under it (polaris#11). An
     empty section takes the row under its intro — never above a table's header."""
-    anchors = [i for i in range(*span)
-               if tags[i] == "thread" or lines[i].lstrip().startswith(("|", "<!--"))]
-    if anchors:
-        return anchors[-1] + 1
+    anchors = [i for i in range(*span) if tags[i] == "thread" or lines[i].lstrip().startswith("|")]
+    return anchors[-1] + 1 if anchors else _after_intro(lines, span)
+
+
+def _after_intro(lines: list[str], span: tuple[int, int]) -> int:
+    """Past the blank lines and the WHOLE comment block a section opens with. Recognising only
+    the `<!--` line put the new row inside a multi-line comment (gate round 2, F2)."""
     at = span[0]
-    while at < span[1] and not lines[at].strip():
+    while at < span[1] and (not lines[at].strip() or lines[at].lstrip().startswith("<!--")):
+        if lines[at].lstrip().startswith("<!--"):
+            while at < span[1] and "-->" not in lines[at]:
+                at += 1
         at += 1
     return at
 

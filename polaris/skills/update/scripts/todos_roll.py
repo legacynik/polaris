@@ -28,11 +28,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from state_lines import kinds, read, section, table_row, write  # noqa: E402
+from state_sections import heading  # noqa: E402
 from state_lock import LockError, locked, write_atomic  # noqa: E402
 
-COMPLETED = re.compile(r"^#{1,6}\s+completed\s*$", re.I)
-ACTIVE = re.compile(r"^#{1,6}\s+active\s*$", re.I)
-FOLLOWUPS = re.compile(r"^#{1,6}\s+follow-ups\s*$", re.I)
+# The ONE registry: a host that heads `## Active — settimana 36` promoted no follow-up
+# here while `/update` wrote to it happily, rc 0 and no message (gate round 2, F1).
+COMPLETED, ACTIVE = heading("## Completed"), heading("## Active")
+FOLLOWUPS = heading("## Follow-ups")
 ON = re.compile(r"(\d{4}-\d{2}-\d{2})")
 PLACEHOLDER = re.compile(r"^[\s|*]*(none|nessuno)?[\s|*]*$", re.I)
 

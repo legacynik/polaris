@@ -32,8 +32,9 @@ sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(UPDATE))
 from merge_truth import CITES, default_branch, verdict  # noqa: E402  (F3: every citation)
 from state_lines import kinds, lane_id, read, section  # noqa: E402
+from state_sections import heading  # noqa: E402
 
-OPEN = re.compile(r"^#{1,6}\s+open\b", re.I)
+OPEN = heading("## Open")   # the ONE registry (gate round 2, F1)
 CLOSER = UPDATE / "state_close.py"
 
 

@@ -31,7 +31,20 @@ All notable changes to Polaris Team OS. The installed version is pinned in
   `skills/update/scripts/state_sections.py`, so `state_lines.py` stays byte-identical with the
   vault copy the wiring gate compares; `state_upsert.py`'s fixtures moved next door into
   `state_upsert_selfcheck.py`, the same split `session_commit_selfcheck.sh` already uses, which
-  keeps every touched file inside the 200-line limit.
+  keeps every touched file inside the 200-line limit. Gate round 2 finished the job: `state_close`,
+  `todos_roll` and `prune_threads` read the registry too, so a `todos.md` headed
+  `## Active — settimana 36` is no longer written by `/update`, counted by `/start`, ignored by
+  `plan-week` and refused by `/end` all at once — and a cockpit headed `## Open threads` is refused
+  by every one of them instead of being written by none and pruned by one. `grep 're.compile(r"^#'`
+  over the shipped scripts now finds exactly one file. A qualifier must start with whitespace, so
+  `## Open-source backlog` is its own section, and a section whose only content is a multi-line HTML
+  comment takes the new row after the closing `-->` instead of inside the comment.
+- `update` 2.12.0: **a worktree whose directory was deleted is not a checkout.** `git worktree list`
+  keeps reporting it until someone prunes it; counting it made a repo with ONE real checkout defer
+  every single run, so the session log never landed and the deferral became the data loss it exists
+  to prevent. `prunable` and `bare` entries are skipped.
+- `end` 1.13.0: the census vocabulary line names `MAIN` as a bare word again, so the vault's
+  `test_end_speaks_the_census_contract_that_actually_runs` can see it.
 
 ## 0.22.0 — 2026-09-04
 

@@ -17,14 +17,12 @@ from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "update" / "scripts"))
 from state_lines import kinds, section as body_of, table_row  # noqa: E402
-from state_sections import SECTIONS as REGISTRY, heading  # noqa: E402
+from state_sections import ENTRY, OUTER, SECTIONS as REGISTRY, heading  # noqa: E402
 
 # The sections a state file owes come from the ONE registry in `state_lines` (polaris#11):
 # a reader with its own copy is a reader that disagrees with the writer the day one of them moves.
 PLACEHOLDER = re.compile(r"^[\s|*]*(none|nessuno)?[\s|*]*$", re.I)
 DATE = re.compile(r"(\d{4}-\d{2}-\d{2})")
-ENTRY = re.compile(r"^###\s+(.*)$")
-OUTER = re.compile(r"^#{1,2}\s")
 MAX_ROWS = 5
 
 
