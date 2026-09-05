@@ -32,6 +32,13 @@ All notable changes to Polaris Team OS. The installed version is pinned in
   2026-09-06): esce `0` in ogni ramo — PR senza ragione, nessuna PR, `gh` assente, tracker
   che rifiuta. Un gate che blocca la chiusura e' un gate che si aggira, e una sessione
   chiusa male perde l'handoff, non solo la lista delle PR.
+- `end` 1.16.0 → **1.17.0** — l'audit ADR di Step 3 cercava ogni record in `docs/adr/NNNN-<slug>.md`.
+  **Quella casa non esiste** nel vault che spedisce questa skill, e in una repo ospite qualunque è
+  un'ipotesi: l'audit girava contro una directory vuota e non trovava mai una decisione mancante —
+  un backstop che non può fallire. Ora legge la riga `decision:` della mappa `outputs:` del contratto
+  ospite (`write-contract`, `polaris-os#284`), e senza mappa guarda dove quella repo tiene già le sue
+  scelte durevoli **dicendo dove ha guardato**. Trovato dal cancello nuovo
+  `check_named_houses.py` (polaris-os), non a occhio.
 
 ## 0.25.2 — 2026-09-05
 
