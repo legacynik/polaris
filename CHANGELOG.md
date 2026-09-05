@@ -5,7 +5,24 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
-## 0.25.0
+## 0.25.1 — 2026-09-05
+
+Igiene, nessun cambiamento di comportamento. `#20` e `#21` hanno cambiato sette skill senza alzare
+nessuna versione: il pacchetto dichiarava `start 1.5.0` mentre spediva uno `start` diverso. **Una
+versione che mente è peggio di una assente**, perché chi confronta due installazioni conclude che
+sono uguali.
+
+- `start` 1.5.0 → **1.6.0** — `emit_pack` esegue il resolver; i template vivono dentro la skill.
+- `update` 2.13.0 → **2.14.0** — `_selfcheck_parts` risolve i template sulla radice delle skill.
+- `end` 1.14.0 → **1.15.0** — `prune_threads` segue i template spostati.
+- `plan-week` 1.3.0 → **1.4.0** · `report` 1.2.0 → **1.3.0** — riferimenti ai template aggiornati.
+- `polaris-status` 1.2.0 → **1.3.0** — `wiki_quality_check.py` vive dentro la skill.
+- `pol-apex-curate` 1.0.0 → **1.1.0** — `mcp/` vive dentro la skill.
+
+**Regola (founder, 2026-09-05):** ogni cambiamento a una skill alza la sua versione e lascia una
+riga qui, **nella stessa PR che lo introduce** — mai nel rilascio successivo.
+
+## 0.25.0 — 2026-09-05
 
 - `fix(start)`: il segnale del pack **esegue** il resolver invece di leggere una chiave che nessuno
   scrive. `emit_pack` apriva `decisions/manifest.json` cercando `pack_id`, chiave che il manifest
