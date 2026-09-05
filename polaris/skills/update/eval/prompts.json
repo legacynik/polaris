@@ -1,0 +1,153 @@
+{
+  "skill": "update",
+  "dimensions": {
+    "intent": ["write", "read", "meta"],
+    "arrival": ["explicit", "implicit", "contextual"],
+    "session_state": ["work-landed", "no-work-yet"]
+  },
+  "dimension_note": "The corpus exists because of one measured failure, not a guessed one: on 2026-08-19 the v2.3.0 description listed the bare noun \"checkpoint\" among its triggers, and the skill fired on \"continua prendendo checkpoint skill architetturali\" — a request to RECOVER the checkpoint, at a session where nothing had been done yet. The load-bearing axis is therefore `intent`: the same noun carries a write intent (fai/salva/scrivi, /update) and a read intent (prendi/recupera/dove eravamo), and only the first is this skill. The third value, `meta`, covers talking ABOUT checkpoints — the second false positive of the same day. `session_state` is kept as a reporting axis, never as a gate: an explicit request wins even with nothing landed (the founder asked for the entry, he gets the entry), so no positive is downgraded by it. Negative controls are drawn from the read-side doors that legitimately own those phrasings — /start (resume), /end (handoff), /report (weekly) — plus the meta case.",
+  "coverage": "12 positives across the three arrivals and both session states, 8 negatives of which 4 are read-intent on the same noun, 2 are adjacent session doors, 1 is meta-discussion and 1 is a status question.",
+  "fixtures_consumed": "n01 and n05 are verbatim-shaped from the 2026-08-19 session transcript; p01/p03 from the phrasings the founder actually uses to ask for one.",
+  "cases": [
+    {
+      "id": "p01",
+      "should_trigger": true,
+      "kind": "explicit",
+      "tuple": "write · explicit · work-landed",
+      "prompt": "fai un checkpoint"
+    },
+    {
+      "id": "p02",
+      "should_trigger": true,
+      "kind": "explicit",
+      "tuple": "write · explicit · work-landed",
+      "prompt": "/update"
+    },
+    {
+      "id": "p03",
+      "should_trigger": true,
+      "kind": "explicit",
+      "tuple": "write · explicit · work-landed",
+      "prompt": "salva i progressi prima che perdiamo il contesto"
+    },
+    {
+      "id": "p04",
+      "should_trigger": true,
+      "kind": "explicit",
+      "tuple": "write · explicit · no-work-yet",
+      "prompt": "scrivi comunque il checkpoint, voglio la riga a log anche se non ho chiuso niente"
+    },
+    {
+      "id": "p05",
+      "should_trigger": true,
+      "kind": "explicit",
+      "tuple": "write · explicit · work-landed",
+      "prompt": "write a checkpoint for what we just landed"
+    },
+    {
+      "id": "p06",
+      "should_trigger": true,
+      "kind": "implicit",
+      "tuple": "write · implicit · work-landed",
+      "prompt": "la PR è merged e i test sono verdi, segna dove siamo arrivati prima che stacchi"
+    },
+    {
+      "id": "p07",
+      "should_trigger": true,
+      "kind": "implicit",
+      "tuple": "write · implicit · work-landed",
+      "prompt": "ok questo pezzo è chiuso e provato, mettilo a log così chi riprende sa cosa manca"
+    },
+    {
+      "id": "p08",
+      "should_trigger": true,
+      "kind": "implicit",
+      "tuple": "write · implicit · work-landed",
+      "prompt": "abbiamo appena scoperto perché il gate passava a vuoto — voglio che questa resti scritta da qualche parte prima di andare avanti"
+    },
+    {
+      "id": "p09",
+      "should_trigger": true,
+      "kind": "contextual",
+      "tuple": "write · contextual · work-landed",
+      "prompt": "sono bloccato: il deploy aspetta una firma che non arriva. Registra il blocker."
+    },
+    {
+      "id": "p10",
+      "should_trigger": true,
+      "kind": "contextual",
+      "tuple": "write · contextual · work-landed",
+      "prompt": "cambio repo, passo su acme-api — lascia il punto qui prima che switchi"
+    },
+    {
+      "id": "p11",
+      "should_trigger": true,
+      "kind": "contextual",
+      "tuple": "write · contextual · work-landed",
+      "prompt": "mi hai appena corretto su come uso Serena: voglio la correzione a verbale, non solo in chat"
+    },
+    {
+      "id": "p12",
+      "should_trigger": true,
+      "kind": "implicit",
+      "tuple": "write · implicit · work-landed",
+      "prompt": "tre ore di lavoro e nulla è a log, sistemiamo"
+    },
+    {
+      "id": "n01",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "read · same noun · /start",
+      "prompt": "continua prendendo checkpoint skill architetturali e dimmi che ne pensi"
+    },
+    {
+      "id": "n02",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "read · same noun · /start",
+      "prompt": "recupera l'ultimo checkpoint, dove eravamo rimasti?"
+    },
+    {
+      "id": "n03",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "read · same noun · session log",
+      "prompt": "prendi il checkpoint di ieri sera e leggimi cosa diceva su #94"
+    },
+    {
+      "id": "n04",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "read · status question · polaris-status",
+      "prompt": "a che punto sta il lavoro sulle skill architetturali?"
+    },
+    {
+      "id": "n05",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "meta · discussing the skill itself",
+      "prompt": "perché ogni volta che dico checkpoint mi parte /update? non deve partire così"
+    },
+    {
+      "id": "n06",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "near-miss · /end",
+      "prompt": "chiudiamo qui, fammi l'handoff e committa"
+    },
+    {
+      "id": "n07",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "near-miss · /start",
+      "prompt": "riprendiamo da dove eravamo ieri"
+    },
+    {
+      "id": "n08",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "near-miss · /report",
+      "prompt": "fammi il report della settimana con planned vs actual"
+    }
+  ]
+}

@@ -3,8 +3,13 @@
 # `github` must be the exact GitHub login (case-sensitive), verbatim — the folder name matches it.
 github: octocat
 language: en              # brief/conversation language for this contributor (it, en, ...)
-voice: cynical            # brief tone: cynical (dry co-pilot, default) | plain (neutral, facts only)
-                          # | any free-text line describing the tone you want
+voice: cynical            # brief tone: cynical (default) | plain | any free-text line you write.
+                          # What each value MEANS is defined in start/SKILL.md Step 2b — the field
+                          # named a tone for months without anything defining it, so it did nothing.
+explain_as: dev           # dev (default) | vibe-coder → plain language and analogies in chat, with
+                          # paths, numbers and citations kept for the written documents
+push_back: true           # true (default) = pressure-test decisions before executing.
+                          # false = execute without pushback. Suspendable per session by saying so.
 assignment_mode: hybrid   # owner_assigned | self_claim | hybrid
 weekly_capacity: 3
 preferred_areas: []       # e.g. [backend, infra] — bias triage; leave [] to derive scope from repo evidence

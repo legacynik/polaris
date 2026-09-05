@@ -3,7 +3,7 @@ name: update
 description: Polaris skill — record a short repository-first checkpoint during an active session. Trigger after meaningful progress, a blocker, a context switch, or on "checkpoint / save progress / /update".
 user-invocable: true
 model: sonnet
-version: 2.4.0
+version: 2.5.0
 invokes: [git-power]
 ---
 
@@ -98,13 +98,24 @@ argument to `commit` so plan and log land together. No weekly file = no step, no
 fails when the file exists but predates today's session log. Plans are the roadmap (founder,
 polaris-os#85): a plan nobody ticks is a wish, not a plan.
 
-## Reconcile `state/current.md` — add and flag, never close
+## `state/current.md` — la riga di stato si sovrascrive, i thread si aggiungono
 
-`current.md` (nel MAIN worktree, regola One home) è il ledger degli open item: le lane aperte
-vivono lì, non nella memoria dei panel. Dopo la entry: sovrascrivi la riga `Updated:` con data e
-titolo del checkpoint; se la sessione ha aperto o chiuso una lane, aggiungila o barrala **con data
-e prova** negli `## Open`. Mai chiudere o riscrivere la riga di un altro owner — si flagga.
-`verify` fallisce se il file resta più vecchio del session log di oggi.
+**Se nulla di materiale è cambiato, non scrivere affatto.** Materiale = un thread aperto, un item
+completato, una priorità cambiata, un blocker nuovo. Un checkpoint che riscrive lo stato senza
+motivo è rumore. Il donor upstream (marvin `update.md`, step 4) è più preciso e vale come regola:
+*«Only update what's relevant to the current work. Don't rewrite the whole file.»* — un checkpoint
+tocca la riga del lavoro che ha in mano, non riscrive il file intero.
+
+Se è cambiato: `current.md` (nel MAIN worktree, regola One home) ha **due metà con regole opposte**,
+e confonderle è il difetto. La riga `Updated:` è **stato**: una sola, sovrascritta con data e titolo
+del checkpoint — mai una seconda. Gli `## Open` sono un **ledger**: aggiungi o barra **con data e
+prova**, mai chiudere o riscrivere la riga di un altro owner — si flagga. `/end` è l'unico che chiude.
+
+Il vecchio titolo di questa sezione diceva «add and flag» sopra *tutto* il file, e la prosa sotto
+diceva «sovrascrivi» solo sulla riga di stato: il testo si contraddiceva. Misurato il 2026-08-31,
+con la regola già scritta qui: **13 righe `Updated:` impilate in un repo, 5 in un altro**, 1 sola
+dove un umano aveva potato a mano. Perciò `verify` ora gatea il **conteggio**, non solo l'mtime —
+una regola senza cancello è un desiderio.
 
 ## Landing
 
@@ -143,6 +154,13 @@ python3 "$GP" phase checkpoint --repo "$MAIN_WT"
 
 `BLOCKED_DIRTY` è un fallimento, mai un warning. `/update` è completo solo quando entrambi i
 checkpoint riportano `CLEAN` e `git status --short` è vuoto.
+
+## Output
+
+Una riga: `Checkpointed: <cosa>`. Niente riassunto, niente elenco di next action — sono già nella
+entry (donor marvin `update.md`: *«No summary. No next actions list. Just confirm the save»*). Il
+checkpoint costa quanto lo stato che rilegge: tenuto `current.md` sotto i 2.000 token, resta sotto
+il migliaio end-to-end.
 
 ## Mai
 

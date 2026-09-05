@@ -1,0 +1,86 @@
+[
+  {
+    "id": "p07",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "write \u00b7 implicit \u00b7 work-landed",
+    "prompt": "ok questo pezzo \u00e8 chiuso e provato, mettilo a log cos\u00ec chi riprende sa cosa manca"
+  },
+  {
+    "id": "p12",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "write \u00b7 implicit \u00b7 work-landed",
+    "prompt": "tre ore di lavoro e nulla \u00e8 a log, sistemiamo"
+  },
+  {
+    "id": "p04",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "write \u00b7 explicit \u00b7 no-work-yet",
+    "prompt": "scrivi comunque il checkpoint, voglio la riga a log anche se non ho chiuso niente"
+  },
+  {
+    "id": "p05",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "write \u00b7 explicit \u00b7 work-landed",
+    "prompt": "write a checkpoint for what we just landed"
+  },
+  {
+    "id": "p01",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "write \u00b7 explicit \u00b7 work-landed",
+    "prompt": "fai un checkpoint"
+  },
+  {
+    "id": "p02",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "write \u00b7 explicit \u00b7 work-landed",
+    "prompt": "/update"
+  },
+  {
+    "id": "p11",
+    "should_trigger": true,
+    "kind": "contextual",
+    "tuple": "write \u00b7 contextual \u00b7 work-landed",
+    "prompt": "mi hai appena corretto su come uso Serena: voglio la correzione a verbale, non solo in chat"
+  },
+  {
+    "id": "n05",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "meta \u00b7 discussing the skill itself",
+    "prompt": "perch\u00e9 ogni volta che dico checkpoint mi parte /update? non deve partire cos\u00ec"
+  },
+  {
+    "id": "n02",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "read \u00b7 same noun \u00b7 /start",
+    "prompt": "recupera l'ultimo checkpoint, dove eravamo rimasti?"
+  },
+  {
+    "id": "n07",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "near-miss \u00b7 /start",
+    "prompt": "riprendiamo da dove eravamo ieri"
+  },
+  {
+    "id": "n08",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "near-miss \u00b7 /report",
+    "prompt": "fammi il report della settimana con planned vs actual"
+  },
+  {
+    "id": "n01",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "read \u00b7 same noun \u00b7 /start",
+    "prompt": "continua prendendo checkpoint skill architetturali e dimmi che ne pensi"
+  }
+]

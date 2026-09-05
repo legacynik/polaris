@@ -2,7 +2,7 @@
 name: end
 description: Polaris skill — close a repository-first team session with a handoff, decisions/lessons written to the ledgers, a plan tick and a pathspec-only commit. Trigger when stopping work, before a multi-day pause, or on "wrap up / end session / /end".
 user-invocable: true
-version: 1.3.0
+version: 1.4.0
 invokes: [git-power]
 ---
 
@@ -192,6 +192,18 @@ session opens. **Reconcile** it: read it first, never blind-overwrite, same rule
 by branch, nothing open lost, other panels' threads and `Next` lines untouched) — with one
 difference. **`/end` is the only Team OS command with closing authority**, and it spends it against
 ground truth rather than impression.
+
+**Closing means REMOVING, not annotating.** A thread proven landed comes **out** of the file; a
+`~~struck~~` line that stays is still tokens the next session reads and reconciles. Donor: marvin
+`end.md` step 5, `Update State (MANDATORY)` — *«Mark completed items as done or remove them»*,
+*«Ensure open threads reflect reality (remove resolved, add new)»*. Same pass:
+collapse the state line to **one** `Updated:` — date, login, one clause on what changed — and let the
+history live in the session log. Target after pruning: under 2,000 tokens; `checkpoint.sh verify`
+fails on a second `Updated:` line and warns above the size.
+
+**`state/goals.md` is NOT touched here.** Goals change by explicit decision, never by session
+inertia. If it is empty or untouched for more than 30 days, say so in the closing summary and ask
+once — do not write it.
 
 **The thread line is the handoff that survives.** A session log committed on a branch is
 INVISIBLE to `/start` until that branch merges — for a paused worktree that can be days. So the
