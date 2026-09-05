@@ -22,6 +22,10 @@ sono uguali.
 **Regola (founder, 2026-09-05):** ogni cambiamento a una skill alza la sua versione e lascia una
 riga qui, **nella stessa PR che lo introduce** — mai nel rilascio successivo.
 
+E la regola ha un cancello, perché una regola che nessuno verifica torna a rompersi:
+`polaris/scripts/check_skill_versions.py <base-ref>` rifiuta una skill toccata e ferma. Provato
+contro la storia vera: su `59ecfef` avrebbe elencato **tutte e sette**.
+
 ## 0.25.0 — 2026-09-05
 
 - `fix(start)`: il segnale del pack **esegue** il resolver invece di leggere una chiave che nessuno
