@@ -2,7 +2,7 @@
 name: plan-week
 description: Polaris skill — build your own weekly focus from live GitHub/Linear issues and current team ownership. You author it and you execute it; the lead may reorder priorities, but only red work waits for a named approver. Trigger at the start of a week, when the lead asks what you are picking up, or on "plan my week / propose work / weekly plan".
 user-invocable: true
-version: 1.3.0
+version: 1.4.0
 ---
 
 # /plan-week — propose one week of useful work

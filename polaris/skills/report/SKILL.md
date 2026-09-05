@@ -2,7 +2,7 @@
 name: report
 description: Polaris skill — produce a real weekly repository report for a FINISHED Sunday-to-Saturday week (asks confirmation first, refuses the current week) — TL;DR, day-by-day from session logs, merged-PR ground truth from gh, decisions, metrics, PM actions — anchored on the approved plan (planned versus actual). Trigger at week end, before a team review, or on "weekly report / what shipped this week / planned vs actual".
 user-invocable: true
-version: 1.2.0
+version: 1.3.0
 ---
 
 # /report — the week, with evidence
