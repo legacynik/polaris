@@ -5,6 +5,16 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
+## 0.25.2 — 2026-09-05
+
+- `update` 2.14.0 → **2.15.0** — `checkpoint.sh commit` porta anche **l'handoff di oggi**, se esiste.
+  Prima prendeva solo il session log, quindi l'handoff restava untracked e dipendeva da `/end`:
+  esattamente ciò che DB-FR-07 vieta — *«no durable information may depend on `/end`, because the
+  founder does not reliably end sessions»*. Misurato su una sessione reale il 2026-09-05: l'handoff
+  prioritario è rimasto fuori dal commit, e senza un intervento a mano sarebbe morto lì.
+  Un handoff **assente** non è un errore, e uno di **ieri** non viene trascinato dentro: appartiene
+  alla sessione che lo ha scritto.
+
 ## 0.25.1 — 2026-09-05
 
 Igiene, nessun cambiamento di comportamento. `#20` e `#21` hanno cambiato sette skill senza alzare

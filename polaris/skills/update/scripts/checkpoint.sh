@@ -31,6 +31,8 @@ resolve() {
   BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
   WT="$(basename "$(git rev-parse --show-toplevel 2>/dev/null)")"
   SESSION_LOG="$ROOT/team/$LOGIN/sessions/$(date +%F)-@$LOGIN.md"
+  # DB-FR-07: nothing durable may depend on `/end`. Today's handoff rides with the log.
+  HANDOFF="$ROOT/team/$LOGIN/handoff/$(date +%F).md"
   cockpit
   WEEKLY="$ROOT/team/$LOGIN/weeks/$(date +%G-W%V).md"
   SCRATCH="$(ls -t "$MAIN_ROOT/team/$LOGIN/sessions/scratch/"*.md "$MAIN_ROOT/sessions/scratch/$LOGIN/"*.md 2>/dev/null | head -1)"
@@ -64,6 +66,7 @@ LOGIN=$LOGIN
 BRANCH=$BRANCH
 WT=$WT
 SESSION_LOG=$SESSION_LOG
+HANDOFF=$HANDOFF
 CURRENT=$CURRENT
 WEEKLY=$([ -f "$WEEKLY" ] && echo "$WEEKLY" || echo none)
 SCRATCH=${SCRATCH:-none}
@@ -152,7 +155,12 @@ cmd_harvest_done() {
 
 cmd_commit() {
   resolve
-  [ $# -gt 0 ] || set -- "$SESSION_LOG"
+  # Il default porta il log E l'handoff di OGGI, se esiste: un handoff che aspetta `/end`
+  # e' un handoff che muore col contesto. Uno di ieri appartiene alla sessione che lo scrisse.
+  if [ $# -eq 0 ]; then
+    set -- "$SESSION_LOG"
+    [ -f "$HANDOFF" ] && set -- "$@" "$HANDOFF"
+  fi
   local sc="$HERE/session_commit.sh"
   [ -x "$sc" ] || { echo "checkpoint: session_commit.sh missing at $sc — commit by hand, pathspec-only" >&2; return 1; }
   local rel=(); local p
