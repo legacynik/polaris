@@ -2,7 +2,7 @@
 name: end
 description: Polaris skill — close a repository-first team session with a handoff, decisions/lessons written to the ledgers, a plan tick and a pathspec-only commit. Trigger when stopping work, before a multi-day pause, or on "wrap up / end session / /end".
 user-invocable: true
-version: 1.15.0
+version: 1.16.0
 invokes: [git-power]
 ---
 
@@ -206,7 +206,10 @@ Chose <X> over <Y> because <evidence>. Supersedes: <past decision, or —>. Impa
 prevents its recurrence. → `<root>/lessons.md`.
 
 **ADR — backstop audit (the ADR is born AT DECISION TIME, per the apex rule — not here).**
-Sweep this session for qualifying decisions: each must ALREADY have its `docs/adr/NNNN-<slug>.md`.
+Sweep this session for qualifying decisions: each must ALREADY have its record in the house the
+repository declares — the `decision:` row of the `outputs:` map in its contract (`_polaris/config.yml`,
+else `./config.yml` when the repository root is itself the contract root). Without a map, look where
+that repository already keeps its durable choices, and name that location in the closing summary.
 One missing = a miss to repair NOW, and say so in the closing summary (the rule slipped once —
 name it so it doesn't become a habit). Scaffold the missing ADR exactly as the apex rule
 prescribes:
@@ -219,7 +222,7 @@ prescribes:
    git-versioned, scanner-validated, CI-gated — no service, no separate index. Serena resolves
    symbols live for drift checks (`find_symbol` still exists? signature changed?
    `find_referencing_symbols` for impact).
-3. The decisions.md entry gets `→ ADR: docs/adr/NNNN-<slug>.md` appended; the ADR body states
+3. The decisions.md entry gets `→ ADR: <the declared house>/<record>` appended; the record states
    decision, alternatives weighed, and consequences — content per domain-modeling.
 4. Include the ADR file in the Step 5 commit pathspec.
 
