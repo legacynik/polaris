@@ -9,7 +9,7 @@
     {
       "name": "polaris-team-os",
       "source": "./polaris",
-      "description": "Polaris Team OS — the session commands /start, /polaris-status, /polaris-grill, /update, /end, /plan-week, /report, /polaris-memory and /pol-apex-curate, plus the Polaris doors (architecture, domain, issue-contract, tdd-dev, bugfix, critic, real-testing, git-power, reference-capture, skill-meta, polaris-sweep). Product repositories carry the shared team plans, reports, decisions and rules.",
+      "description": "Polaris Team OS — the session commands /start, /polaris-status, /polaris-grill, /update, /end, /plan-week, /report, /polaris-memory and /pol-apex-curate, plus the Polaris doors (critic, domain, git-power, issue-contract, skill-meta, tdd-dev). Product repositories carry the shared team plans, reports, decisions and rules.",
       "skills": [
         "./skills/start",
         "./skills/polaris-status",
@@ -20,15 +20,10 @@
         "./skills/report",
         "./skills/pol-apex-curate",
         "./skills/polaris-memory",
-        "./skills/architecture",
-        "./skills/bugfix",
         "./skills/critic",
         "./skills/domain",
         "./skills/git-power",
         "./skills/issue-contract",
-        "./skills/polaris-sweep",
-        "./skills/real-testing",
-        "./skills/reference-capture",
         "./skills/skill-meta",
         "./skills/tdd-dev"
       ]
