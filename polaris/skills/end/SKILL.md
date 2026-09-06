@@ -2,7 +2,7 @@
 name: end
 description: Polaris skill — close a repository-first team session with a handoff, decisions/lessons written to the ledgers, a plan tick and a pathspec-only commit. Trigger when stopping work, before a multi-day pause, or on "wrap up / end session / /end".
 user-invocable: true
-version: 1.15.0
+version: 1.16.0
 invokes: [git-power]
 ---
 
@@ -323,6 +323,30 @@ più vecchia del contratto rifiuta `--tsv` e il fallback stampa la stessa
 cosa in prosa italiana, un elemento per riga col verdetto fra parentesi quadre. In entrambi i casi
 vale la stessa regola: **leggi i verdetti che il comando stampa**, non quelli che questa riga
 ricorda. Il vocabolario è del tool, e questa prosa invecchia prima di lui.
+
+### Le PR aperte del pannello — una riga di ragione ciascuna
+
+Chi apre una PR la porta al merge. Una PR lasciata aperta a fine sessione non è neutra: va in
+conflitto con la lane dopo, e diverse PR aperte insieme sullo stesso manifest fanno pagare il conto
+tutto in una volta. Quindi `/end` le **elenca** e dice quali portano già la loro ragione nel
+cockpit:
+
+```bash
+CK="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/update/scripts/checkpoint.sh"
+[ -f "$CK" ] || CK="$HOME/.agents/skills/update/scripts/checkpoint.sh"
+bash "$CK" open-prs
+```
+
+`OPEN_PR=#N <branch> — ragione: MANCA` è la riga che ti riguarda: scrivi **una riga** in `$CURRENT`
+che dica perché quella PR resta aperta — un atto del founder, una credenziale che non hai, una CI
+ancora da leggere — e citala col suo `#N`, che è la chiave con cui il giro dopo la ritrova.
+`PRESENTE` significa che il cockpit la nomina già e non c'è niente da scrivere. `OPEN_PRS=unknown`
+è `gh` che non ha risposto: elencale a mano e vai avanti lo stesso.
+
+**Questo passo non rifiuta mai** (decisione founder, 2026-09-06): è un promemoria, non un muro. Un
+gate che blocca la chiusura di sessione è un gate che si aggira, e una sessione chiusa male perde
+l'handoff, non solo la lista delle PR. Il comando esce `0` in ogni ramo, PR aperte senza ragione
+comprese.
 
 **`state/goals.md` is NOT touched here.** Goals change by explicit decision, never by session
 inertia. If it is empty or untouched for more than 30 days, say so in the closing summary and ask

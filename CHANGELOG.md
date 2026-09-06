@@ -5,6 +5,14 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
+- `end` 1.15.0 → **1.16.0** · `update` 2.15.0 → **2.16.0** — `/end` elenca le PR aperte
+  dell'autore e dice quali portano gia' la loro ragione nel cockpit
+  (`checkpoint.sh open-prs`). Chi apre una PR la porta al merge: una PR lasciata aperta a
+  fine sessione va in conflitto con la lane dopo. **Non rifiuta mai** (decisione founder,
+  2026-09-06): esce `0` in ogni ramo — PR senza ragione, nessuna PR, `gh` assente, tracker
+  che rifiuta. Un gate che blocca la chiusura e' un gate che si aggira, e una sessione
+  chiusa male perde l'handoff, non solo la lista delle PR.
+
 ## 0.25.2 — 2026-09-05
 
 - `update` 2.14.0 → **2.15.0** — `checkpoint.sh commit` porta anche **l'handoff di oggi**, se esiste.
