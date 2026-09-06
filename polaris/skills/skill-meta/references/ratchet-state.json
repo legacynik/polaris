@@ -1,0 +1,50 @@
+{
+  "skill-meta": {
+    "floor": 0.95,
+    "last_rate": 1.0,
+    "desc_sha256": "32570e6dcf808a55"
+  },
+  "architecture": {
+    "floor": 0.95,
+    "last_rate": 1.0,
+    "desc_sha256": "20016e3cd1a59e6f"
+  },
+  "domain": {
+    "floor": 0.95,
+    "last_rate": 1.0,
+    "desc_sha256": "a51ffc87b4d5401c"
+  },
+  "ship": {
+    "floor": 0.86,
+    "last_rate": 0.86,
+    "model": "deterministic-ranker-no-llm",
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "wall_ms": 2600,
+    "valid_runs": 1,
+    "excluded_runs": 0,
+    "desc_sha256": "942a1fb89aa1687f"
+  },
+  "real-testing": {
+    "floor": 0.88,
+    "last_rate": 0.88,
+    "model": "deterministic-ranker-no-llm",
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "wall_ms": 2600,
+    "valid_runs": 1,
+    "excluded_runs": 0,
+    "desc_sha256": "8a28acc8d6781eb1"
+  },
+  "review": {
+    "floor": 0.71,
+    "last_rate": 0.71,
+    "model": "deterministic-ranker-no-llm",
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "wall_ms": 2600,
+    "valid_runs": 1,
+    "excluded_runs": 0,
+    "desc_sha256": "59087e45ece7004d"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "git-power": {
+    "floor": 0.95,
+    "last_rate": 1.0,
+    "model": "claude-sonnet-5",
+    "input_tokens": 1221058,
+    "output_tokens": 17221,
+    "wall_ms": 311607,
+    "valid_runs": 18,
+    "excluded_runs": 0,
+    "desc_sha256": "8f1d13a67ff8f903"
+  }
+}
