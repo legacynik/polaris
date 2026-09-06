@@ -1,0 +1,13 @@
+{
+  "critic": {
+    "floor": 0.95,
+    "last_rate": 1.0,
+    "model": "claude-sonnet-5",
+    "input_tokens": 847975,
+    "output_tokens": 72,
+    "wall_ms": 189962,
+    "valid_runs": 15,
+    "excluded_runs": 8,
+    "desc_sha256": "4229012397fa171d"
+  }
+}

@@ -21,18 +21,41 @@ def test_marketplace_exposes_the_same_skills_to_agent_skills_cli() -> None:
         assert (ROOT / relative.removeprefix("./") / "SKILL.md").is_file()
 
 
-def test_only_the_team_commands_are_shipped() -> None:
-    assert {path.name for path in SKILLS.iterdir() if path.is_dir()} == {
-        "start",
-        "polaris-grill",
-        "polaris-status",
-        "update",
-        "end",
-        "plan-week",
-        "report",
-        "pol-apex-curate",  # founder-only OS curation, shipped with a portable ($CLAUDE_PLUGIN_ROOT) apex tool
-        "polaris-memory",
-    }
+SESSION_COMMANDS = {
+    "start",
+    "polaris-grill",
+    "polaris-status",
+    "update",
+    "end",
+    "plan-week",
+    "report",
+    "pol-apex-curate",  # founder-only OS curation, shipped with a portable ($CLAUDE_PLUGIN_ROOT) apex tool
+    "polaris-memory",
+}
+# A Polaris door marks itself in its own description, and the door set is READ from the
+# tree rather than repeated here. A door promoted upstream and forgotten in a hand list
+# is the drift this package exists to prevent, and a hand list would stay green over a
+# package that is missing one.
+DOOR_MARKER = "◇ "
+
+
+def description_of(skill: Path) -> str:
+    raw = (skill / "SKILL.md").read_text()
+    front = raw.split("\n---\n", 1)[0] if raw.startswith("---\n") else ""
+    found = re.search(r"(?m)^description:\s*(.*)$", front)
+    return found.group(1) if found else ""
+
+
+def shipped_doors() -> set[str]:
+    return {path.name for path in SKILLS.iterdir()
+            if path.is_dir() and description_of(path).startswith(DOOR_MARKER)}
+
+
+def test_only_the_team_commands_and_the_marked_doors_are_shipped() -> None:
+    shipped = {path.name for path in SKILLS.iterdir() if path.is_dir()}
+    doors = shipped_doors()
+    assert doors, "no Polaris door in the package: the sync never ran"
+    assert shipped == SESSION_COMMANDS | doors
 
 
 def test_start_and_status_have_non_overlapping_cost_contracts() -> None:
