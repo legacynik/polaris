@@ -16,12 +16,26 @@ def _fields(argv: list[str]) -> list[str]:
     return argv[at].split(",") if at else []
 
 
+def _listing(argv: list[str], data: dict) -> int:
+    """`gh pr list --json …` → the rows under `pr_list`, or a refusal for `"__error__"`."""
+    rows = data.get("pr_list", [])
+    if rows == "__error__":
+        print("API rate limit exceeded", file=sys.stderr)
+        return 1
+    fields = _fields(argv)
+    print(json.dumps([{k: row.get(k) for k in fields} if fields else row for row in rows]))
+    return 0
+
+
 def main() -> int:
     argv = sys.argv[1:]
+    data = json.loads(os.environ.get("POLARIS_FAKE_GH", "{}"))
+    if argv[:2] == ["pr", "list"]:
+        return _listing(argv, data)
     if len(argv) < 3 or argv[1] != "view":
         print(f"unknown command: {' '.join(argv)}", file=sys.stderr)
         return 1
-    known = json.loads(os.environ.get("POLARIS_FAKE_GH", "{}")).get(argv[0], {})
+    known = data.get(argv[0], {})
     facts = known.get(argv[2])
     if facts is None:
         print(f"no {argv[0]} found for {argv[2]}", file=sys.stderr)

@@ -6,6 +6,7 @@
 #
 #   prepare       resolve root/login/branch/paths, print them, run the hygiene sweep
 #   harvest-done  move the scratch watermark forward
+#   open-prs      list this author's open PRs and which ones carry their reason (never refuses)
 #   commit [path] land the session log (delegates to session_commit.sh)
 #   verify        fail loudly if a step was skipped
 #
@@ -128,6 +129,38 @@ cmd_due_done() {
   # rewrite only that line's date; every other job keeps its own schedule
   awk -v n="$name" -v d="$next" -F'·' 'BEGIN{OFS="·"} $2 ~ ("^ *"n" *$") {$1=d" "} {print}' "$f" > "$f.tmp" && mv "$f.tmp" "$f"
   echo "checkpoint: $name → prossima $next"
+}
+
+# --- open PRs (the reminder, never the wall) ----------------------------------
+# «Chi apre, mergia»: una PR lasciata aperta a fine sessione va in conflitto con la lane
+# dopo, e sei PR aperte insieme sullo stesso manifest sono la forma in cui il conto si
+# paga tutto insieme. Quindi /end le ELENCA e dice quali portano gia' la loro ragione nel
+# cockpit. Non rifiuta mai: un promemoria che blocca la chiusura e' un promemoria che
+# viene aggirato (decisione founder, 2026-09-06). Ogni ramo esce 0 — anche `gh` assente.
+open_prs_rows() {
+  gh pr list --author @me --state open --json number,title,headRefName 2>/dev/null \
+    | python3 -c 'import json,sys
+try: rows = json.load(sys.stdin)
+except Exception: sys.exit(1)
+for p in rows: print("%s\t%s\t%s" % (p["number"], p["headRefName"], p["title"]))'
+}
+
+cmd_open_prs() {
+  resolve
+  local rows n=0 miss=0 num branch title
+  rows="$(open_prs_rows)" || {
+    echo "OPEN_PRS=unknown — gh non ha risposto: elencale a mano, /end non si ferma qui"; return 0; }
+  [ -n "$rows" ] || { echo "OPEN_PRS=0 — nessuna PR aperta, niente da giustificare"; return 0; }
+  while IFS=$'\t' read -r num branch title; do
+    n=$((n + 1))
+    if grep -qE "#$num([^0-9]|\$)" "$CURRENT" 2>/dev/null; then
+      echo "OPEN_PR=#$num $branch — ragione: PRESENTE"
+    else
+      miss=$((miss + 1)); echo "OPEN_PR=#$num $branch — $title — ragione: MANCA"
+    fi
+  done <<< "$rows"
+  echo "OPEN_PRS=$n · senza ragione: $miss — una riga per ciascuna in $CURRENT, poi chiudi"
+  return 0
 }
 
 # The first harvest of the day used to read the scratch from offset 0. On a multi-panel machine
@@ -325,9 +358,10 @@ case "${1:-}" in
   prepare)      cmd_prepare ;;
   harvest-slice) shift; cmd_harvest_slice "${1:-}" ;;
   harvest-done) cmd_harvest_done ;;
+  open-prs)     cmd_open_prs ;;
   commit)       shift; cmd_commit "$@" ;;
   due-done)     shift; cmd_due_done "${1:-}" ;;
   verify)       shift; TITLE="${1:-}" cmd_verify ;;
   --selfcheck)  cmd_selfcheck ;;
-  *) echo "usage: checkpoint.sh {prepare|due-done <name>|harvest-slice [sid]|harvest-done|commit [path]|verify [title]|--selfcheck}" >&2; exit 64 ;;
+  *) echo "usage: checkpoint.sh {prepare|due-done <name>|harvest-slice [sid]|harvest-done|open-prs|commit [path]|verify [title]|--selfcheck}" >&2; exit 64 ;;
 esac
