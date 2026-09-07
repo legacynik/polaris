@@ -117,7 +117,7 @@ sees less of each and chooses worse), so length is a routing defect, not a style
 |---|---|---|---|---|
 | T1 | frontmatter contract, "when NOT to use", `bypass-test.md`, `--selfcheck` on every script, line ceiling, promotion mark | `scripts/new_skill.py --check <root>` (shells `_standard/validate_suite.py`, never duplicates it) | every save | yes, exit 1 |
 | T2a | description against the catalogue, TF-IDF | `scripts/collision_check.py` | trigger changed | yes on BLOCK ≥75%, warns at ≥50% |
-| T2b | rank-1 rate on TEST plus model, valid/excluded runs, input/output tokens and `wall_ms` | `scripts/split_traintest.py` → a rank-1 run per case (3×, majority) → `scripts/trigger_ratchet.py` pins rate + cost receipt | trigger changed | yes below floor or without receipt |
+| T2b | rank-1 rate on TEST plus model, valid/excluded runs, input/output tokens and `wall_ms` | `scripts/split_traintest.py` → a rank-1 run per case (3×, majority) or `scripts/rank1_cheap.py` for the calibrated one-call proxy → `scripts/trigger_ratchet.py` pins rate + cost receipt | trigger changed | yes below floor or without receipt |
 | T3 | baseline vs strongest donor vs candidate quality and cost, plus omitted attacks found by one fresh-context `critic` | `scripts/eval_verdict.py` validates three measured envelopes and the critic receipt | new skill or behaviour changed | blocks install on donor regression, no strict quality win, breached cost limit, critic BLOCK or missing receipt |
 
 Two descriptions that do not discriminate steal each other's trigger, and the theft is

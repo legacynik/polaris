@@ -166,6 +166,49 @@ top of it.
 
 The floor rises, never falls. A regression fails the gate; it does not lower the bar.
 
+**A floor measured by another model is not a bar this run can clear — it is a different
+bar.** `trigger_ratchet.py` re-baselines instead of failing when the receipt on record
+names a different model than the one measuring now (or names none at all), writes the old
+floor and model into `superseded_floor` / `superseded_model`, and says `RE-BASELINE` out
+loud. The next run on the same model is judged normally, so a genuine regression is red
+again immediately. Without this the arrival of the cheap proxy turned `architecture` and
+`review` permanently red at a rate their **unchanged** descriptions already produced —
+a stale bar reading as a regression is the fastest way to a gate somebody switches off.
+
+## Calibrating the cheap proxy
+
+Three full harness runs per case is what stopped anyone re-running T2b, so eleven
+descriptions sat over the budget with the debt declared rather than paid.
+`scripts/rank1_cheap.py` is the affordable stand-in: the whole catalogue goes into one
+prompt, a cheap model names the skill it would reach for first, one call per query. A
+proxy is worth exactly its calibration, so it carries one — measured 2026-09-06 on
+`architecture`, whose test split holds 8 positives:
+
+| Arm | Definition | rank-1 |
+|---|---|---|
+| proxy, `claude-haiku-4-5-20251001` | the model ranks the 82-skill catalogue in one call | 7/8 = 0.875 |
+| real harness, `claude-sonnet-5`, 3 runs per case | first `Skill` invoked in the run | 7/8 = 0.875 |
+| real harness, `claude-haiku-4-5-20251001`, 3 runs per case | first `Skill` invoked in the run | 0/8 = 0.000 |
+
+Per-case agreement between the proxy and the Sonnet arm is 8/8, including the same
+single miss (`p19` routes to `doc-truth` in both). The declared band was ±1 case; the
+delta is 0. **Two conditions make that number honest, and neither is optional.**
+
+**Count the first SKILL invoked, not the first tool of the run.** The literal reading of
+rank-1 — `first tool == Skill` — measures 0/8 here on every arm, because the founder's
+global `CLAUDE.md` mandates a polmem `Bash` call before anything else. Under that rule no
+run can ever have a skill as its first tool, so the literal metric reports zero for a
+description that routes perfectly and would rank a rewrite that made things worse exactly
+the same. Read the first `Skill` block in the run instead, with a cap on tool calls so a
+run that never routes still terminates.
+
+**Run the real arm on a model that invokes skills at all.** Haiku 4.5 ranks descriptions
+as well as Sonnet does when asked to rank them — that is the proxy — and reaches for the
+`Skill` tool once in 24 runs when left to decide for itself. Those are two different
+quantities, and using Haiku on both sides of the calibration would have produced a 0/8
+versus 7/8 disagreement that says nothing about any description. Re-run this calibration
+after any model change, on both sides.
+
 It also stops rising at `FLOOR_CAP = 0.95`. A floor at 100% turns one flaky sample into a
 permanent red, and a permanently red gate is a gate that gets switched off — and it claims a
 precision the corpus cannot back: with four positives in the test split the smallest

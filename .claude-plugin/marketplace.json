@@ -4,28 +4,30 @@
     "name": "legacynik",
     "url": "https://github.com/legacynik"
   },
-  "description": "Polaris Team OS marketplace — the repository-first session commands, the Polaris engineering doors, the memory CLI and a shared team operating model.",
+  "description": "Polaris Team OS marketplace \u2014 the repository-first session commands, the Polaris engineering doors, the memory CLI and a shared team operating model.",
   "plugins": [
     {
       "name": "polaris-team-os",
       "source": "./polaris",
-      "description": "Polaris Team OS — the session commands /start, /polaris-status, /polaris-grill, /update, /end, /plan-week, /report, /polaris-memory and /pol-apex-curate, plus the Polaris doors (critic, domain, git-power, issue-contract, skill-meta, tdd-dev). Product repositories carry the shared team plans, reports, decisions and rules.",
+      "description": "Polaris Team OS \u2014 the session commands /start, /polaris-status, /polaris-grill, /update, /end, /plan-week, /report, /polaris-memory and /pol-apex-curate, plus the Polaris doors (critic, domain, git-power, issue-contract, skill-meta, tdd-dev). Product repositories carry the shared team plans, reports, decisions and rules.",
       "skills": [
-        "./skills/start",
-        "./skills/polaris-status",
-        "./skills/polaris-grill",
-        "./skills/update",
-        "./skills/end",
-        "./skills/plan-week",
-        "./skills/report",
-        "./skills/pol-apex-curate",
-        "./skills/polaris-memory",
+        "./skills/architecture",
         "./skills/critic",
         "./skills/domain",
+        "./skills/end",
         "./skills/git-power",
         "./skills/issue-contract",
+        "./skills/plan-week",
+        "./skills/pol-apex-curate",
+        "./skills/polaris-grill",
+        "./skills/polaris-memory",
+        "./skills/polaris-status",
+        "./skills/real-testing",
+        "./skills/report",
         "./skills/skill-meta",
-        "./skills/tdd-dev"
+        "./skills/start",
+        "./skills/tdd-dev",
+        "./skills/update"
       ]
     }
   ]

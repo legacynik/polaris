@@ -5,6 +5,26 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
+- **Il resolver del ContextPack viaggia nel pacchetto** (`polaris-os#344`). Fino a ieri una repo
+  che installava il pacchetto riceveva le porte e nessun modo di emettere un pack: `contextpack.py`
+  e il validatore del backbone che importa vivevano solo nel vault. Ora `polaris/scripts/` porta
+  `contextpack.py`, `check_context_backbone.py`, `check_decision_execution.py`,
+  `decision_probe_shadow.py`, `area_map.py`, `skill_outputs_check.py` e i loro test, copiati dallo
+  stesso `sync_package` che porta le porte — una sola direzione, la stessa guardia di perimetro
+  sui byte spediti, e `--check` rosso appena le due copie smettono di essere identiche.
+  Il layout e' **specchiato**, non tradotto: un test sta in `scripts/test/` nel vault e in
+  `polaris/scripts/test/` qui, quindi `parents[2] / "scripts"` trova la CLI da entrambe le parti e
+  nessuna riga viene riscritta per strada.
+- **Otto porte invece di sette** — `architecture` e `real-testing` entrano nel pacchetto.
+  `architecture` era esclusa da un `lifecycle:` scalare che conteneva `": "`: per YAML e' una
+  mappa annidata, e l'installer scartava la skill intera in silenzio.
+- **`marketplace.json` lo scrive il sync**, da cio' che ha appena spedito. Era una lista a mano, e
+  otto porte in un colpo l'hanno resa falsa insieme al test di release che la controlla.
+- **Il contratto minimo per emettere un pack e' eseguibile**: `polaris/scripts/test/
+  test_contextpack_empty_repo.py` costruisce una repo da zero, scrive le tre autorita' vive piu'
+  una Decision `accepted`, sigilla con `--reseal` e `--init` e ottiene un `CTX-…`.
+  `_polaris/config.yml` non serve al resolver, e il test lo prova non scrivendolo.
+
 - `end` 1.15.0 → **1.16.0** · `update` 2.15.0 → **2.16.0** — `/end` elenca le PR aperte
   dell'autore e dice quali portano gia' la loro ragione nel cockpit
   (`checkpoint.sh open-prs`). Chi apre una PR la porta al merge: una PR lasciata aperta a

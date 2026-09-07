@@ -1,7 +1,7 @@
 ---
 name: git-power
-description: ◇ Use before any Git commit/PR boundary or destructive Git action. MUST invoke for every `reset --hard` request and every pre-PR request to compare a branch with origin/main and report file/line counts; never substitute raw Git. Also use to census or safely close worktrees, branches, stashes and PRs. Shared by issue, bugfix, ship, start and end; triggers on "commit hygiene", "PR too large", "stale branches" and "clean up worktrees". It reports objective size without pretending size proves semantic atomicity, and keeps destructive guards in the Git primitive.
-version: 0.5.0
+description: ◇ Use before any Git commit or PR boundary and before any destructive Git action. MUST invoke for every `reset --hard` and every pre-PR comparison of a branch against origin/main; never substitute raw Git. Also censuses and safely closes worktrees, branches, stashes and PRs. Triggers on commit hygiene, PR too large, stale branches.
+version: 0.5.1
 user-invocable: true
 auto: false
 status: active
