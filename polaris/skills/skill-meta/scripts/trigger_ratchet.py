@@ -54,11 +54,35 @@ def source_ok(measured_on: str | None) -> bool:
     return "train" not in name
 
 
+def rebaseline(previous: dict, model: str | None) -> str | None:
+    """Il modello che ha misurato il floor, se e' incomparabile con quello di adesso.
+
+    Il protocollo lo dice gia' a parole — «numbers taken with different models on
+    different days must not be compared in silence» — ma `apply` li confrontava lo
+    stesso: all'arrivo del proxy economico (#323) due porte sarebbero rimaste rosse per
+    sempre a un rate che la loro description INVARIATA produceva gia'. Un floor misurato
+    con un altro metodo non e' un'asticella piu' alta, e' un'asticella diversa: si
+    ri-baselina, in chiaro. Stesso modello e rate sotto il floor resta una regressione."""
+    if not previous or "floor" not in previous:
+        return None
+    was = previous.get("model")
+    return None if was == model else (was or "unrecorded")
+
+
 def apply(state: dict, slug: str, rate: float, floor_init: float,
           receipt: dict | None = None) -> tuple[bool, str, dict]:
-    floor = state.get(slug, {}).get("floor", floor_init)
+    previous = state.get(slug, {})
+    floor = previous.get("floor", floor_init)
     if not 0.0 <= rate <= 1.0:
         return False, f"rank-1 {rate!r} fuori intervallo: deve essere tra 0 e 1", state
+    superseded = rebaseline(previous, (receipt or {}).get("model"))
+    if superseded is not None:
+        entry = {"floor": min(rate, FLOOR_CAP), "last_rate": rate, **(receipt or {}),
+                 "superseded_floor": floor, "superseded_model": superseded}
+        return True, (f"RE-BASELINE: il floor {floor:.0%} era misurato da {superseded!r}, "
+                      f"questo rate {rate:.0%} da {(receipt or {}).get('model')!r} — metodi "
+                      "diversi non si confrontano, il floor riparte da questa misura"), \
+            {**state, slug: entry}
     if rate < floor:
         return False, (f"rank-1 {rate:.0%} sotto il floor {floor:.0%} — la skill discrimina "
                         "peggio di prima: riscrivi la description, non abbassare il floor per "
@@ -92,8 +116,14 @@ def selfcheck() -> int:
                "wall_ms": 30, "valid_runs": 3, "excluded_runs": 0}
     ok, _, measured = apply({}, "measured", 0.9, FLOOR_INIT_DEFAULT, receipt)
     assert ok and all(measured["measured"][k] == v for k, v in receipt.items())
-    print("SELFCHECK OK — 6 rami: alza il floor, alza ancora, fallisce sotto senza abbassarlo, "
-          "tripwire train/test, cap del floor, receipt costo persistita")
+    legacy = {"old": {"floor": 0.95, "last_rate": 1.0, "model": "ranker"}}
+    ok, msg, rebased = apply(legacy, "old", 0.87, FLOOR_INIT_DEFAULT, {**receipt, "model": "llm"})
+    assert ok and "RE-BASELINE" in msg and rebased["old"]["superseded_floor"] == 0.95, msg
+    ok, _, _ = apply(rebased, "old", 0.5, FLOOR_INIT_DEFAULT, {**receipt, "model": "llm"})
+    assert not ok, "stesso modello del re-baseline: un calo torna a essere una regressione"
+    print("SELFCHECK OK — 8 rami: alza il floor, alza ancora, fallisce sotto senza abbassarlo, "
+          "tripwire train/test, cap del floor, receipt costo persistita, re-baseline su "
+          "modello diverso, regressione di nuovo rossa dopo il re-baseline")
     return 0
 
 

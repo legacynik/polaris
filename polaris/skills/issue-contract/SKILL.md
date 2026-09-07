@@ -1,7 +1,7 @@
 ---
 name: issue-contract
-description: ◇ The ONE door to the GitHub tracker — create, update, modify, dedup or group issues/epics. Triggers on "crea/apri una issue o epic", "open/file an issue", "file a bug", "track this", "aggiorna/promuovi la issue #N", "triage this", "accorpa sotto epic", or a handoff from wayfinder. Routes INSIDE (new vs extend-existing vs group-under-epic) after a mandatory search, then enforces the founder contract (measurable DoD, adversarial tests upfront, plain-Italian executive, visible dedup, verified references, domain label, priority, AFK eligibility) on the repo's own template — never a freeform `gh issue create`, never a hand-applied state label. Not for decomposing nebulous efforts (wayfinder), question/discussion items (light form), or trackers other than GitHub.
-version: 2.0.1
+description: ◇ The ONE door to the GitHub tracker, for creating, updating, deduping or grouping issues and epics. Triggers on apri una issue, file an issue or a bug, track this, triage this, accorpa sotto epic, or a handoff from wayfinder. Searches first, then enforces the founder contract on the repo's own template — never a freeform gh issue create. Not for decomposing nebulous efforts.
+version: 2.0.2
 user-invocable: true
 auto: true
 job: route any tracker request (new / extend / group) and enforce the full issue contract on whichever arm wins

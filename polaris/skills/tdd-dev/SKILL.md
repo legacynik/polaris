@@ -1,7 +1,7 @@
 ---
 name: tdd-dev
-description: ◇ Use when implementing a feature or behaviour change test-first, when fixing a reproducible bug through a regression test, when an already-written fix needs proof that its test catches the old defect, or when a passing test is being accepted without an observed RED. Serves bugfix and approved feature workflows. Do NOT use for load/performance thresholds, production observability probes, test-only cleanup, throwaway prototypes, generated code, configuration-only edits, or third-party defects that cannot be reproduced.
-version: 2.1.0
+description: ◇ Use when implementing a feature or behaviour change test-first, when fixing a reproducible bug through a regression test, when a written fix needs proof its test catches the old defect, or when a passing test is accepted without an observed RED. Serves bugfix and approved feature workflows. Do NOT use for throwaway prototypes or configuration-only edits.
+version: 2.1.1
 user-invocable: true
 status: active
 job: drive one code change from an agreed public seam through proven RED, minimum implementation, GREEN receipt, and the repo-authoritative regression suite

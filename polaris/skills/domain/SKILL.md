@@ -1,7 +1,7 @@
 ---
 name: domain
-description: ◇ Name the domain and place its boundaries. Fires when a term is overloaded, when two words are being used for one thing, when it must be settled whether two concepts belong in the same model; when a subdomain must be typed core, supporting or generic and the build-best, build-simple or buy consequence taken from it; when two contexts with different models must integrate; or when the contexts of a system must be mapped. Stops the moment the language stops resolving a decision or a boundary. Not for deciding where a boundary line falls or how granular a service should be, not for interface, schema or framework commitments, not for implementing aggregates, repositories or event sourcing.
-version: 0.3.2
+description: ◇ Name the domain and place its boundaries. Fires when a term is overloaded, when two words are used for one thing, when a subdomain must be typed core, supporting or generic, or when two contexts with different models must integrate or be mapped. Not for where a service boundary falls, nor for interface, schema or framework commitments.
+version: 0.3.3
 user-invocable: true
 auto: true
 job: settle one question of domain language or domain boundary — the canonical term with the aliases it kills, the subdomain type with its sourcing consequence, the integration pattern with what it costs, or the context map with one labelled row per pattern — and halt the moment the modelling stops resolving a decision or a line
