@@ -202,6 +202,23 @@ python3 "$GP" phase checkpoint --repo "$PWD"
 "$CHECKPOINT" verify "<titolo della entry appena scritta>"   # lega il cockpit a QUESTA run
 ```
 
+**Un ref locale non basta: spingi.** Il principio qui sotto — *una entry che non raggiunge un ref è
+una entry che non esiste* — si ferma a metà se il ref è solo su questo disco. I worktree isolano i
+file ma **condividono i ref**: un branch locale è visibile a, e cancellabile da, ogni panel di quella
+repo. Misurato il 2026-09-10 su un vault reale: **122 commit mai spinti**, 94 di storia di sessione,
+il più vecchio di **14 giorni**; e due checkout riallineati da un altro panel nello stesso pomeriggio
+hanno reso irraggiungibili i commit locali, sopravvissuti solo dove un branch era già stato spinto.
+
+```bash
+git push -u origin "$(git rev-parse --abbrev-ref HEAD)"
+```
+
+Leggi l'esito e dillo: spinto, oppure **committato solo in locale** con la ragione — un hook che
+rifiuta (cita la sua riga), un non-fast-forward (proponi `git pull --ff-only` e **fermati**), o
+nessun remoto. Mai `--no-verify`, mai `reset`/`rebase`/`stash` per forzarlo, e mai spingere un branch
+diverso da quello su cui hai appena committato. Un checkpoint dichiarato completo che non è uscito
+dal portatile è esattamente il falso verde che `verify` esiste per impedire.
+
 `verify` esiste perché un passo che vive solo nella prosa prima o poi viene saltato — anche da chi
 l'ha scritto. **Passagli il titolo** della entry: senza, il gate sa solo che il cockpit porta oggi e
 il tuo nome; con, sa che l'ultima voce del log è la tua, e un cockpit ri-datato a mano senza
@@ -242,4 +259,6 @@ il migliaio end-to-end.
 ## Mai
 
 Creare issue, branch, PR o deployment · dichiarare completo senza prova linkata · toccare
-il `$CURRENT` di un altro panel · scrivere un `state/current.md` dentro un worktree · `git add -A`.
+il `$CURRENT` di un altro panel · scrivere un `state/current.md` dentro un worktree · `git add -A` ·
+**dichiarare un checkpoint completo quando il push è fallito** · forzare un push con `--no-verify`,
+`reset`, `rebase` o `stash`.

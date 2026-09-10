@@ -155,7 +155,7 @@ def check_brief(tmp: Path, report, options) -> list[bool]:
     ok = ["TODOS_ACTIVE=1" in out,
           any(o.startswith("FOLLOWUP_DUE=") and "scaduto" in o for o in out)]
     ok += [not any(o.startswith(q) or q in o for o in out) for q in silent]
-    return ok + _check_pack(root, report, opts)
+    return ok + _check_pack(root, report, opts)  + _check_divergence(tmp, root, report, options)
 
 
 def _check_pack(root: Path, report, opts) -> list[bool]:
@@ -171,3 +171,55 @@ def _check_pack(root: Path, report, opts) -> list[bool]:
     resolver.write_text("import sys\nsys.stderr.write('SCOPE_STALE: x\\n')\nsys.exit(1)\n")
     out = report(opts)
     return ok + [any(o.startswith("PACK=BLOCKED") and "SCOPE_STALE" in o for o in out)]
+
+
+def _check_divergence(tmp: Path, root: Path, report, options) -> list[bool]:
+    """A checkout that is behind LIES about what exists on main, and one that is ahead holds work
+    no other panel can see and any of them can delete. Both were silent until 2026-09-10, when a
+    vault-wide count found 122 unpushed commits — 94 of them session history, the oldest 14 days —
+    and three answers given that day from a checkout 159 commits behind were wrong.
+
+    The fixture drives a REAL remote (a bare repo on disk, no network): a stub that only returns
+    numbers is green under any breakage of the git call it stands in for.
+    """
+    import subprocess
+
+    def git(*a, cwd):
+        return subprocess.run(("git",) + a, cwd=str(cwd), capture_output=True, text=True)
+
+    bare, work = tmp / "origin.git", tmp / "clone"
+    git("init", "--bare", "-b", "main", str(bare), cwd=tmp)
+    git("clone", str(bare), str(work), cwd=tmp)
+    for k, v in (("user.email", "a@b.c"), ("user.name", "a"), ("commit.gpgsign", "false")):
+        git("config", k, v, cwd=work)
+    (work / "f").write_text("1")
+    git("add", "f", cwd=work); git("commit", "-m", "one", cwd=work)
+    git("push", "-u", "origin", "main", cwd=work)
+
+    def lines(wt):
+        return report(options(str(root), str(root / "state" / "current.md"), str(wt)))
+
+    ok = [not any(o.startswith(("AHEAD=", "BEHIND=", "NO_UPSTREAM")) for o in lines(work))]
+
+    (work / "f").write_text("2")
+    git("commit", "-am", "local only", cwd=work)
+    out = lines(work)
+    ok += [any(o == "AHEAD=1" for o in out), not any(o.startswith("BEHIND=") for o in out)]
+
+    other = tmp / "other"
+    git("clone", str(bare), str(other), cwd=tmp)
+    for k, v in (("user.email", "a@b.c"), ("user.name", "a")):
+        git("config", k, v, cwd=other)
+    (other / "g").write_text("x")
+    git("add", "g", cwd=other); git("commit", "-m", "remote moved", cwd=other)
+    git("push", "origin", "main", cwd=other)
+    out = lines(work)
+    ok += [any(o == "AHEAD=1" for o in out), any(o == "BEHIND=1" for o in out)]
+
+    git("checkout", "-b", "solo", cwd=work)
+    ok += [any(o == "NO_UPSTREAM" for o in lines(work))]
+
+    # not a checkout at all: silence from THIS emitter, while the rest of the brief still speaks
+    ok += [not any(o.startswith(("AHEAD=", "BEHIND=", "NO_UPSTREAM"))
+                   for o in lines(tmp / "nope"))]
+    return ok

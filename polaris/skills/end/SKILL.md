@@ -391,8 +391,9 @@ not here.
 
 ## Step 5 — Land the handoff in git (same guard as `/update`, in code)
 
-Land what you wrote through **the same script `/update` uses** — pathspec-only, never `git add -A`,
-and never a push. Il log di sessione si committa sul branch corrente, sempre; due eccezioni
+Land what you wrote through **the same script `/update` uses** — pathspec-only, never `git add -A`.
+**Then push it** (Step 5b): a handoff that never leaves the laptop is the failure this step exists
+to close, not a tidier version of it. Il log di sessione si committa sul branch corrente, sempre; due eccezioni
 dichiarate (HEAD staccato, policy `no-direct-default` sul default branch). Un repo senza alcun
 commit non è un'eccezione: il primo handoff atterra come tutti gli altri.
 
@@ -416,7 +417,7 @@ SC="${CLAUDE_PLUGIN_ROOT:-}/skills/update/scripts/session_commit.sh"          # 
 ```
 
 `--end` is the mode that may commit `decisions.md` / `lessons.md` (they are this command's vetted
-promotion); it still refuses `state/current.md` and `.env*`, and never pushes. On one of the three
+promotion); it still refuses `state/current.md` and `.env*`. On one of the three
 declared exceptions (exit 2) say plainly which one it was and that the handoff is still in the
 working tree, uncommitted — never report a clean close. **Both resolver candidates missing**
 (say which you tried): `git add --` those exact paths and
@@ -435,12 +436,40 @@ this step exists to close:
 git status --short   # 0 righe sui path Polaris, o dì esattamente quale è rimasta e perché
 ```
 
-Never commit or push without an explicit request. After committing, if the branch is ahead of its
-remote, remind the contributor there is unpushed work:
+### Step 5b — Ship it, and report what actually happened
+
+This step used to end at «remind the contributor there is unpushed work». It did not work, and the
+measurement says how badly: **122 commits unpushed across a real vault on 2026-09-10**, 94 of them
+session history, the oldest **14 days** old. A reminder that needs a human to act on it, every
+session, forever, fails at some rate — and that rate compounded into two weeks of invisible work.
+
+**Why a reminder is not enough, and this is the part that costs work.** Worktrees isolate files but
+**share refs**: a local branch is visible to — and deletable by — every panel on that repository.
+On 2026-09-10 two checkouts were realigned by another panel while this was being written, and in
+both cases local `main` moved and the local commits were left unreachable. They survived only
+because a branch had been pushed first. **A commit that is not on the remote is one `git gc` away
+from never having existed.**
+
+Committing without asking and then refusing to push protects nothing. It leaves the work in the one
+state where another panel can destroy it, and where `git status` shows nothing wrong.
 
 ```bash
-git status -sb | head -1   # e.g. "## main...origin/main [ahead 1]"
+BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+git push -u origin "$BRANCH"      # -u so a branch with no upstream gets one
 ```
+
+**Report the ground truth, never a clean close on a failed push.** Read the exit code and say which
+of these happened, in the contributor's language:
+
+| Outcome | What to say |
+|---|---|
+| pushed | the handoff is on the remote and names the branch |
+| a hook refused | quote the hook's own line; the handoff is committed **locally only** and at risk |
+| non-fast-forward | the branch diverged; the handoff is committed **locally only**. Name it, propose `git pull --ff-only`, and **stop** — never `reset`, `rebase` or `stash` to force it through |
+| no remote at all | say plainly that nothing here is backed up anywhere |
+
+Never `--no-verify`, and never push anything but the branch you just committed to: this step ships
+the handoff it wrote, not somebody else's work.
 
 ## Finish
 

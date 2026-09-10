@@ -8,8 +8,15 @@ version: 1.6.0
 # /start — resume, do not survey
 
 `/start` restores the smallest local context needed to continue the current objective. It does not
-build a situational view of the repository or portfolio. Do not fetch, scan pull requests or other
+build a situational view of the repository or portfolio. Do not scan pull requests or other
 contributors, run health checks, or recall memory here. Those belong to `/polaris-status`.
+
+**One exception, and it is not a survey: the divergence of THIS checkout.** One bounded fetch of
+one ref, because without it every local answer is unverifiable. Measured 2026-09-10 across a real
+vault: **122 commits unpushed**, 94 of them session history, the oldest 14 days old — and three
+answers given that day from a checkout 159 commits behind were wrong, because a checkout that is
+behind reports "not on main" for things that are on main. The deferral to `/polaris-status` does
+not work: 1 invocation in 1,146 over 90 days.
 
 The recurring path is read-only and local. It never creates issues, branches, pull requests or
 assignments, and never writes the cockpit.
@@ -21,7 +28,8 @@ git rev-parse --abbrev-ref HEAD
 ```
 
 Hold the result. If this is not a git checkout, stop. Later compare it with the current weekly
-plan's branch. Do not fetch to answer this question.
+plan's branch. No fetch is needed for the branch NAME; the one fetch this skill makes belongs to
+the divergence signal in Step 6, which answers a different question.
 
 ## Step 1b — One home (every path below comes from here, never from the cwd)
 
@@ -102,11 +110,23 @@ Read these local files, in order:
    back: todos, follow-ups due and `RECENT` go with the work, `SPOOL_LEGACY`/`DRIFT`/`SECTIONS_MISSING`
    under `**Segnali**`. A missing line is nothing to report, never an error.
 
+   **`AHEAD=` / `BEHIND=` / `NO_UPSTREAM` are not ordinary signals — they say whether this session
+   can be trusted, so they go FIRST, above the brief, never buried under `**Segnali**`:**
+
+   - `BEHIND=n` — **say it as a warning about answers, not about hygiene**: everything this checkout
+     reports as absent may exist on the remote, so *"not on main" is unreliable until you realign*.
+     **Then propose the realignment** and let the contributor decide: `git pull --ff-only`
+     when nothing is ahead, otherwise name that the branch has diverged and stop — never
+     realign on your own, and never `reset`, `rebase` or `stash` a tree you do not own.
+   - `AHEAD=n` — those commits exist on no one else's machine and any panel sharing this repo can
+     delete them, because worktrees isolate files but **share refs**. Name them as work at risk.
+   - `NO_UPSTREAM` — the branch has no remote at all, so nothing here is backed up anywhere.
+
 Do not read lessons, `.wiki/hot.md`, or unrelated files speculatively. Memory is not
 current state and recall is never mandatory at session start.
 
 Compare the local branch from Step 1 with the current plan's branch. If both are present and differ,
-stop with the exact mismatch. This is a local safety gate, not a reason to fetch.
+stop with the exact mismatch. This is a local safety gate, and it needs no fetch of its own.
 
 ## Step 4 — Render the resume brief
 

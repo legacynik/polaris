@@ -3,7 +3,8 @@
 
 Every emitter returns a list of lines and returns it EMPTY when it has nothing to say. A row that
 always reads zero is noise, and noise is what teaches a reader to skip the brief. Nothing here
-writes and nothing fetches: a brief that fails a session is worse than a thin one.
+writes, and the ONE emitter that reaches the network is bounded and degrades to silence: a brief
+that fails a session is worse than a thin one.
 """
 from __future__ import annotations
 
@@ -161,3 +162,46 @@ def emit_pack(root: Path) -> list[str]:
         return []
     verdict = _pack_verdict(compiler, root)
     return [f"PACK={verdict}"] if verdict else []
+
+
+FETCH_TIMEOUT = 8
+
+
+def _git(wt: Path, *args: str, timeout: int = 5) -> str:
+    """One git call, and every failure is the same answer: nothing to say."""
+    try:
+        done = subprocess.run(("git", "-C", str(wt)) + args,
+                              capture_output=True, text=True, timeout=timeout)
+    except (OSError, subprocess.SubprocessError):
+        return ""
+    return done.stdout.strip() if done.returncode == 0 else ""
+
+
+def emit_divergence(main_wt: Path) -> list[str]:
+    """How far this checkout is from what everyone else can see.
+
+    Two failures, one cause, both silent until 2026-09-10. A checkout that is BEHIND answers
+    "not on main" for things that are on main: three answers given that day from a checkout 159
+    commits behind were wrong, and a 24-agent census repeated the same mistake. A checkout that is
+    AHEAD holds work no other panel can see and any of them can delete -- worktrees share refs, so
+    isolation of files does not protect a local branch. The vault-wide count that day: 122 unpushed
+    commits, 94 of them session history, the oldest 14 days old.
+
+    This is the only emitter that touches the network, and it is bounded on both ends: one fetch of
+    one ref with a timeout, and every failure -- offline, no remote, not a checkout -- returns [].
+    """
+    if not _git(main_wt, "rev-parse", "--is-inside-work-tree"):
+        return []
+    upstream = _git(main_wt, "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}")
+    if not upstream:
+        return ["NO_UPSTREAM"] if _git(main_wt, "remote") else []
+    remote, _, ref = upstream.partition("/")
+    _git(main_wt, "fetch", "--quiet", remote, ref, timeout=FETCH_TIMEOUT)
+    counts = _git(main_wt, "rev-list", "--left-right", "--count", f"{upstream}...HEAD")
+    behind, _, ahead = counts.partition("\t")
+    out = []
+    if ahead.isdigit() and int(ahead):
+        out.append(f"AHEAD={ahead}")
+    if behind.isdigit() and int(behind):
+        out.append(f"BEHIND={behind}")
+    return out

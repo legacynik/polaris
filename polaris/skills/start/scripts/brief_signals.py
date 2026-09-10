@@ -8,8 +8,9 @@ and `## Recent Context`. And a repo that carries the typed backbone should have 
 in the brief, while a repo without one must not even learn that the feature exists (#155).
 
 Every line is emitted ONLY when it has something to say. A row that always reads zero is
-noise, and noise is what teaches a reader to skip the brief. Nothing here writes, nothing
-fetches, and a missing input is never an error: a brief that fails is worse than a thin one.
+noise, and noise is what teaches a reader to skip the brief. Nothing here writes; ONE signal
+(divergence) reaches the network, bounded and silent on failure, because a checkout that is
+behind answers "not on main" for things that are. A missing input is never an error.
 """
 from __future__ import annotations
 
@@ -19,8 +20,8 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _brief_parts import (emit_drift, emit_pack, emit_recent, emit_sections,  # noqa: E402
-                          emit_spool, emit_todos)
+from _brief_parts import (emit_divergence, emit_drift, emit_pack,  # noqa: E402
+                          emit_recent, emit_sections, emit_spool, emit_todos)
 
 
 def report(opts: argparse.Namespace) -> list[str]:
@@ -29,7 +30,8 @@ def report(opts: argparse.Namespace) -> list[str]:
     main_wt = Path(opts.main_wt) if opts.main_wt else root.parent
     return (emit_todos(root, opts.now) + emit_recent(current)
             + emit_spool(main_wt) + emit_drift(main_wt, opts.login)
-            + emit_sections(root, current) + emit_pack(root))
+            + emit_sections(root, current) + emit_pack(root)
+            + emit_divergence(main_wt))
 
 
 def cmd_selfcheck() -> int:
