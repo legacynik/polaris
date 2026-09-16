@@ -5,6 +5,21 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
+- **`/update` riscritta nella forma Osmani, e il cockpit lo aggiorna il modello, non uno script**
+  (`update` 3.0.0). Prova misurata su una repo cliente: **14** sezioni `## Open` impilate, **13**
+  righe `Updated:`, **6** righe per `main` — con la regola «una riga per lane» scritta in prosa da
+  settimane e `state_upsert.py` obbligatorio nel passo. Lo script guardava solo la PRIMA `## Open`
+  (3 righe su 228), sostituiva lì e dichiarava successo; la chiave era la stringa tra backtick, non
+  la lane, quindi un nome diverso appendeva in silenzio e un `main` di un altro repo sovrascriveva.
+  Founder: «/update deve vedere che lane ci sono e aggiornare quella sua; se non c'è nulla della sua
+  lane ne crea un'altra». Ora il passo 4 dice esattamente questo: leggi `## Open`, se una riga è il
+  tuo lavoro (anche con altro branch, anche di un altro pannello) la riscrivi, altrimenti ne aggiungi
+  una; una sola `Updated:`; tutto il resto byte-identico. La skill passa da 245 a 153 righe con la
+  forma `Overview → When to Use → Process → Rationalizations → Red Flags → Verification`.
+  `state_upsert.py` resta nel bundle per `state_close.py`, `prune_threads.py` e i selfcheck, ma
+  nessun passo di `/update` lo invoca più. Nasce `eval/checks.json` (prima skill del pacchetto ad
+  averlo: il `change_gate` chiedeva T3 e nessuna skill poteva rispondere).
+
 - **Il resolver del ContextPack viaggia nel pacchetto** (`polaris-os#344`). Fino a ieri una repo
   che installava il pacchetto riceveva le porte e nessun modo di emettere un pack: `contextpack.py`
   e il validatore del backbone che importa vivevano solo nel vault. Ora `polaris/scripts/` porta
