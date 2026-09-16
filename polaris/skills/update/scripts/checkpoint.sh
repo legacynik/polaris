@@ -257,7 +257,7 @@ cmd_verify() {
       if [ "${n_upd:-0}" = "0" ]; then
         echo "FAIL: $CUR has no 'Updated:' line but this session logged today — the checkpoint never reached the cockpit"; fail=1
       elif ! grep -qE "^Updated: *$today.*@?$LOGIN([^A-Za-z0-9_-]|\$)" "$CUR"; then
-        echo "FAIL: $CUR carries '$(grep -m1 '^Updated:' "$CUR")' — expected '$today' and '@$LOGIN'; a touch is not a checkpoint, re-run the state_upsert step"; fail=1
+        echo "FAIL: $CUR carries '$(grep -m1 '^Updated:' "$CUR")' — expected '$today' and '@$LOGIN'; a touch is not a checkpoint, rewrite the Updated: line (step 4)"; fail=1
       fi
       # The title is optional ONLY because an older caller does not pass it; when /update passes the
       # entry it just wrote, a re-dated cockpit with no new log entry is caught here and nowhere else.
