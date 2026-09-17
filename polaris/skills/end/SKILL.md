@@ -2,7 +2,7 @@
 name: end
 description: Polaris skill — close a repository-first team session with a handoff, decisions/lessons written to the ledgers, a plan tick and a pathspec-only commit. Trigger when stopping work, before a multi-day pause, or on "wrap up / end session / /end".
 user-invocable: true
-version: 1.17.0
+version: 1.18.0
 invokes: [git-power]
 ---
 
@@ -96,6 +96,43 @@ due grammatiche nello stesso log costringono a leggere due volte e rendono il lo
 adesso non esiste più. `Files` come `path · simbolo · perché` è ciò che permette a Serena e a questo
 log di incontrarsi sullo stesso simbolo mesi dopo. SHA e numeri si leggono da `git log`, non si
 ricordano.
+
+### I sei campi sono i cinque elementi del confine — nessuno è opzionale
+
+Le sei righe non sono un formato gradito: sono i **cinque elementi** che rendono la sessione
+ripartibile, e la sessione dopo apre da qui. Un campo senza contenuto si scrive `none`, esplicito;
+un campo **assente** è il confine rotto, e `/end` non chiude.
+
+| elemento | campo |
+|---|---|
+| scope e decisioni | `Key context` |
+| stato dei task e prossimo task | `In progress` + `Next session` |
+| file cambiati e stato del working tree | `Files` |
+| comandi di verifica lanciati ed esito | `Done` |
+| domande, rischi e approvazioni aperte | `Blocker` |
+
+**Fail-closed su una decisione presa e non scritta.** Una clausola di `Key context` taggata
+`#decisione` o `#superata` deve **nominare la casa che la porta**: il record della Decision,
+la voce di `decisions.md` (Step 3) o l'issue. Una ritrattazione è una decisione come le altre —
+un numero ritirato si scrive **accanto al numero**, non solo qui. Se la clausola non nomina nulla,
+si scrive prima (Step 3) e solo dopo si chiude: una decisione che vive solo in questo log è la
+decisione che la sessione dopo prende di nuovo, o rovescia senza sapere che esisteva.
+
+Dove il repo porta il gate del backbone, la stessa cosa è una verifica eseguibile e non un
+promemoria — altrimenti le sei righe sopra restano la checklist:
+
+```bash
+GATE="$ROOT/scripts/session_continuity.py"
+[ -f "$GATE" ] && python3 "$GATE" end --root "$ROOT" --sid "<sid>" \
+  --handoff "$ROOT/team/$LOGIN/sessions/$(date +%F)-@$LOGIN.md" \
+  || echo "NOTA: nessun gate del backbone in questo repo — le sei righe sono la checklist"
+```
+
+Quattro rifiuti, tutti prima della ricevuta: `HANDOFF_INCOMPLETE` nomina l'elemento mancante,
+`DECISION_UNWRITTEN` la clausola che non ha casa, `ID_COLLISION` un id di Decision già speso
+altrove, `TREE_NOT_OURS` un path sporco che nessuna riga `Files` dichiara (un committer per tree).
+Le lezioni escono come righe `LESSON_PROPOSAL`: sono **proposte**, e lo Step 3 decide quali
+qualificano e le scrive. Il gate non tocca `lessons.md` da solo.
 
 Then feed the repository memory with the same handoff, one machine-readable line — the offline
 distill decides later what is durable, so never skip this because the session felt routine.
