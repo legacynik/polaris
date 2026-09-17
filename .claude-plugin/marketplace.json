@@ -12,6 +12,8 @@
       "description": "Polaris Team OS \u2014 the session commands /start, /polaris-status, /polaris-grill, /update, /end, /plan-week, /report, /polaris-memory and /pol-apex-curate, plus the Polaris doors (critic, domain, git-power, issue-contract, skill-meta, tdd-dev). Product repositories carry the shared team plans, reports, decisions and rules.",
       "skills": [
         "./skills/architecture",
+        "./skills/bugfix",
+        "./skills/crasher",
         "./skills/critic",
         "./skills/domain",
         "./skills/end",
@@ -22,7 +24,9 @@
         "./skills/polaris-grill",
         "./skills/polaris-memory",
         "./skills/polaris-status",
+        "./skills/polaris-sweep",
         "./skills/real-testing",
+        "./skills/reference-capture",
         "./skills/report",
         "./skills/skill-meta",
         "./skills/start",

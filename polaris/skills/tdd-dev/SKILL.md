@@ -144,6 +144,16 @@ performance thresholds remain outside this skill.
 unchanged. With `--suite-cmd`, it also requires a later matching suite GREEN. It cannot judge the
 failure reason; reading step 3 remains mandatory.
 
+`record` has **three** outcomes, not two. Besides RED and GREEN it answers **exit 2 with the cause
+and no row written**, whenever the runner never spoke, or spoke and then died: a `cd` into a missing
+directory, a shell syntax error, zero tests collected, a collection error, an import that died
+first, a process killed by a signal (exit 128+n) with its output already half printed. Such an outcome
+belongs to the environment, and recording it as RED is how fourteen reds once had to be thrown away
+by hand (#373). What counts as the runner speaking is decided by `scripts/red_signatures.py`: one
+entry per runner, every pattern anchored to the start of a line, never a bare substring — `FAILED `
+alone also comes out of buildkit, make and git. **A new runner is added there, with a real captured
+fixture under `tests/fixtures/`; widening a pattern until an output matches is the defect.**
+
 ## When NOT to use it
 
 - Load or performance thresholds.
@@ -155,8 +165,14 @@ failure reason; reading step 3 remains mandatory.
 ## Selfcheck
 
 ```bash
-python3 scripts/red_check.py --selfcheck
+python3 tdd-dev/scripts/red_signatures.py --selfcheck
+python3 tdd-dev/scripts/red_check.py --selfcheck
+python3 -m pytest tdd-dev/tests/test_red_check.py -q
 ```
 
-The selfcheck covers missing/corrupt histories, invalid REDs, unchanged-hash RED→GREEN, stale or
-failing suite receipts, wrong nodes, missing files, invalid/composed commands, and both CLI paths.
+`red_signatures --selfcheck` puts every runner signature against real captured output and then
+replaces the constant per runner, so a generic pattern cannot stay green. `red_check --selfcheck`
+measures what the shell actually did (`cd`, `;`, a subshell, `pushd`, `cd -`) under every shell
+present, and compares the verdict to it. The pytest file carries the rest: missing/corrupt
+histories, invalid REDs, unchanged-hash RED→GREEN, stale or failing suite receipts, wrong nodes,
+missing files, composed commands, and both CLI paths.

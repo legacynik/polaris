@@ -19,6 +19,9 @@ Three deterministic jobs — no judgement, no model call:
     change_gate.py --selfcheck
 
 Exit: 0 PASS · 1 FAIL · 2 usage / not verifiable here · 3 CONCERNS (declare it).
+"Declare it" is payable: a prose-only edit clears once a line in
+`_standard/prose.allow` names the skill and the sha of THIS body. Without
+that line it stays 3, and the line never reaches a TRIGGER, a BEHAVIOUR or a CONCERNS.
 Stdlib only, no network, no pip — the bundle travels across four harnesses.
 """
 from __future__ import annotations
@@ -32,7 +35,8 @@ import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _lib import body, desc_sha, frontmatter, load_eval_cases  # noqa: E402 — one implementation each
+from _lib import PLACEHOLDER, body, desc_sha, frontmatter, load_eval_cases  # noqa: E402
+from prose_declaration import declared as prose_declared  # noqa: E402 — the channel lives in its own module
 
 # `version` is excluded on purpose: every change bumps it, so it carries no signal.
 TRIGGER_FIELDS = ("description", "name", "auto", "user-invocable")
@@ -42,7 +46,6 @@ CONTRACT_FIELDS = ("io", "lifecycle", "invokes", "invoked-by")
 MECHANISM = re.compile(
     r"(```|\bpython3\b|\bbash\b|scripts/|--[a-z]|exit \d|\|.*\||"
     r"\b(MUST|NEVER|ALWAYS|blocca|blocking|mandatory|refuse)\b)", re.I)
-PLACEHOLDER = re.compile(r"^\s*(todo|tbd|\.{1,3}|xxx|fixme)?\s*$", re.I)
 CATEGORIES = ("outcome", "process", "style", "efficiency")
 POSITIVE_KINDS = ("explicit", "implicit", "contextual")
 MIN_CASES, MAX_CASES, MIN_NEGATIVES, MAX_CHECKS = 10, 20, 3, 8
@@ -255,10 +258,17 @@ def report(skill: Path, old: str | None, new: str, state: Path,
     errs = prerequisites(skill, tiers, new, state)
     lines = [f"class: {kind}", f"owes:  {' '.join(sorted(tiers))}"]
     lines += [f"  - {w}" for w in why] + (errs or ["all owed prerequisites present"])
+    # Order is the whole safety property: the declaration is reached only by a change the
+    # classifier already called prose and the prerequisites already cleared. Ahead of these
+    # three lines it would excuse a missing corpus and an unpinned rank-1 alike.
     if any(e.startswith("FAIL") for e in errs):
         return 1, lines
-    return (3, lines) if any(e.startswith("CONCERNS") for e in errs) or kind == "PROSE" \
-        else (0, lines)
+    if any(e.startswith("CONCERNS") for e in errs):
+        return 3, lines
+    if kind != "PROSE":
+        return 0, lines
+    ok, note = prose_declared(skill, new)
+    return (0 if ok else 3), lines + [note]
 
 
 def read_baseline(skill: Path, base: str | None, baseline: Path | None) -> tuple[str | None, str]:
@@ -362,9 +372,10 @@ def selfcheck() -> int:
     stale = {"last_rate": 0.9, "desc_sha256": desc_sha(SKILL_BASE)}
     assert any("does not travel" in e for e in check_receipt(stale, "d", desc_sha(edited)))
     assert not check_receipt({"desc_sha256": desc_sha(edited)}, "d", desc_sha(edited))
-    print("SELFCHECK OK — 14 branches: cosmetic, trigger, mark-flip, mechanism, bundle, receipt, prose, no-baseline, "
+    print("SELFCHECK OK — 16 branches: cosmetic, trigger, mark-flip, mechanism, bundle, receipt, prose, no-baseline, "
           "absent/thin/all-positive/placeholder corpus, band scaled to the arms, "
-          "missing+stale+matching pin, missing+absent+present receipt row")
+          "missing+stale+matching pin, missing+absent+present receipt row, "
+          "prose declaration absent/malformed/stale/matching")
     return 0
 
 
