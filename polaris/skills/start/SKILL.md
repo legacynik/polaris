@@ -2,7 +2,7 @@
 name: start
 description: Polaris skill — resume the current objective from the latest local handoff. First use also provisions your own team path.
 user-invocable: true
-version: 1.6.0
+version: 1.7.0
 ---
 
 # /start — resume, do not survey
@@ -98,9 +98,9 @@ Read these local files, in order:
      --root "$ROOT" --current "$CURRENT" --login "$LOGIN" --main-wt "$MAIN_WT"
    ```
 
-   Each line is self-describing and appears only when it has something to say, so read what comes
-   back: todos, follow-ups due and `RECENT` go with the work, `SPOOL_LEGACY`/`DRIFT`/`SECTIONS_MISSING`
-   under `**Segnali**`. A missing line is nothing to report, never an error.
+   Each line is self-describing: read it. `AREA:` rows index the areas, `layer:` rows are the
+   chosen area's pack; on `QUESTION:` ask it and stop. Todos and `RECENT` go with the work,
+   `SPOOL_LEGACY`/`DRIFT`/`SECTIONS_MISSING` under `**Segnali**`. See `reference/two-stage-brief.md`.
 
 Do not read lessons, `.wiki/hot.md`, or unrelated files speculatively. Memory is not
 current state and recall is never mandatory at session start.

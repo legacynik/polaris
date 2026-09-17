@@ -29,7 +29,7 @@ def report(opts: argparse.Namespace) -> list[str]:
     main_wt = Path(opts.main_wt) if opts.main_wt else root.parent
     return (emit_todos(root, opts.now) + emit_recent(current)
             + emit_spool(main_wt) + emit_drift(main_wt, opts.login)
-            + emit_sections(root, current) + emit_pack(root))
+            + emit_sections(root, current) + emit_pack(root, opts.login))
 
 
 def cmd_selfcheck() -> int:

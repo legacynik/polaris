@@ -5,6 +5,21 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
+- **`/start` a due tempi: l'indice delle aree prima, il pacchetto dell'area dopo — e mai piu' una
+  riga opaca** (`start` 1.6.0 → **1.7.0**). Il brief portava `PACK=CTX-<id>`, e polaris-os#326 ha
+  misurato quanto vale un id opaco: l'agente lo ignorava, quindi il resolver era invisibile proprio
+  alla sessione per cui esiste, e l'indice del repo restava a voce. Ora `emit_pack` esegue il brief a
+  due tempi dell'host e stampa cio' che risponde: **tempo 0** una riga per area con tre conteggi —
+  issue aperte, PR aperte, ultima Decision (`AREA: <slug>  issues: N  prs: N  last_decision: …`), piu'
+  la priorita' 1 del cockpit; **tempo 1** il pacchetto dell'area scelta **per righe**
+  (`layer: … source_id: … path: … freshness: …`), su cui si agisce. La scelta dell'area segue tre
+  segnali (branch, issue aperte del contributor, priorita' 1) e quando nessuno risponde il brief porta
+  `QUESTION: which area? candidates: …`: **una** domanda con l'indice davanti, mai un'ipotesi. Un
+  conteggio che nessuno ha potuto leggere e' `UNKNOWN`, mai uno zero inventato. Il pacchetto non
+  trasporta l'harness: senza il resolver dell'host la riga non esiste (contratto #155 invariato), e un
+  resolver che rifiuta resta rumoroso (`PACK: blocked — <causa>`). Niente comincia piu' per `PACK=`.
+  `SKILL.md` ha un passo nuovo (3b) che dice come leggere i due tempi. (polaris-os#405)
+
 - **`/update` riscritta nella forma Osmani, e il cockpit lo aggiorna il modello, non uno script**
   (`update` 3.0.0). Prova misurata su una repo cliente: **14** sezioni `## Open` impilate, **13**
   righe `Updated:`, **6** righe per `main` — con la regola «una riga per lane» scritta in prosa da
