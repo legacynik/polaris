@@ -2,7 +2,7 @@
 name: end
 description: Polaris skill — close a repository-first team session with a handoff, decisions/lessons written to the ledgers, a plan tick and a pathspec-only commit. Trigger when stopping work, before a multi-day pause, or on "wrap up / end session / /end".
 user-invocable: true
-version: 1.18.0
+version: 1.19.0
 invokes: [git-power]
 ---
 
@@ -123,16 +123,26 @@ promemoria — altrimenti le sei righe sopra restano la checklist:
 
 ```bash
 GATE="$ROOT/scripts/session_continuity.py"
-[ -f "$GATE" ] && python3 "$GATE" end --root "$ROOT" --sid "<sid>" \
-  --handoff "$ROOT/team/$LOGIN/sessions/$(date +%F)-@$LOGIN.md" \
-  || echo "NOTA: nessun gate del backbone in questo repo — le sei righe sono la checklist"
+if [ -f "$GATE" ]; then
+  python3 "$GATE" end --root "$ROOT" --sid "<sid>" \
+    --handoff "$ROOT/team/$LOGIN/sessions/$(date +%F)-@$LOGIN.md" || exit 1
+else
+  echo "NOTA: nessun gate del backbone in questo repo — le sei righe sono la checklist"
+fi
 ```
 
-Quattro rifiuti, tutti prima della ricevuta: `HANDOFF_INCOMPLETE` nomina l'elemento mancante,
-`DECISION_UNWRITTEN` la clausola che non ha casa, `ID_COLLISION` un id di Decision già speso
-altrove, `TREE_NOT_OURS` un path sporco che nessuna riga `Files` dichiara (un committer per tree).
-Le lezioni escono come righe `LESSON_PROPOSAL`: sono **proposte**, e lo Step 3 decide quali
-qualificano e le scrive. Il gate non tocca `lessons.md` da solo.
+**`if`, non `&&` … `||`.** Con la catena, OGNI rifiuto del gate — anche `ID_COLLISION` — cadeva nel
+ramo `||` e stampava «nessun gate», con `$?` a `0`: la skill proseguiva al commit dello Step 5
+esattamente nei casi che il gate esiste per fermare, e il messaggio accusava l'installazione invece
+della sessione. Un rifiuto deve fermare `/end`; l'assenza del gate è l'unico caso che degrada.
+
+Sei rifiuti, tutti prima della ricevuta: `HANDOFF_MISSING` se non gli si passa il log e
+`HANDOFF_UNREADABLE` se il path non è leggibile (i cinque elementi si leggono, non si inventano),
+`HANDOFF_INCOMPLETE` nomina l'elemento mancante, `DECISION_UNWRITTEN` la clausola che non nomina la
+sua casa, `ID_COLLISION` un id di Decision già speso altrove, `TREE_NOT_OURS` un path sporco che
+nessuna riga `Files` dichiara e `TREE_UNREADABLE` un albero che `git` non riesce a leggere (un
+committer per tree). Le lezioni escono come righe `LESSON_PROPOSAL` su stderr: sono **proposte**, e
+lo Step 3 decide quali qualificano e le scrive. Il gate non tocca `lessons.md` da solo.
 
 Then feed the repository memory with the same handoff, one machine-readable line — the offline
 distill decides later what is durable, so never skip this because the session felt routine.

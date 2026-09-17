@@ -5,6 +5,20 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
+- **`/end` non chiude su una decisione che non ha casa, e i sei campi del log sono i cinque elementi
+  del confine ripartibile** (`end` 1.19.0). Le sei righe erano un formato gradito; sono ciò che rende
+  la sessione ripartibile, e la sessione dopo apre da lì. Ora la skill nomina la corrispondenza
+  (scope e decisioni → `Key context`; stato e prossimo → `In progress` + `Next session`; file e
+  albero → `Files`; verifiche ed esito → `Done`; domande aperte → `Blocker`), dichiara che un campo
+  vuoto si scrive `none` e che un campo **assente** è il confine rotto, e aggiunge il rifiuto: una
+  clausola taggata `#decisione` o `#superata` deve nominare la Decision, la voce di `decisions.md` o
+  l'issue che la porta — una ritrattazione compresa, che va accanto al numero. Dove il repo porta il
+  gate del backbone la regola è eseguibile e i suoi sei rifiuti sono elencati; dove non c'è, un solo
+  rigo di degrado e le sei righe restano la checklist. **Il guard era invertito:** la catena
+  `[ -f ] && … || echo` trasformava ogni rifiuto del gate in «nessun gate» con exit `0`, e la skill
+  proseguiva al commit proprio nei casi che il gate esiste per fermare; ora è un `if`/`else` e un
+  rifiuto ferma `/end`. Gate e test vivono nel repo dell'harness, non in questo pacchetto.
+
 - **`/update` riscritta nella forma Osmani, e il cockpit lo aggiorna il modello, non uno script**
   (`update` 3.0.0). Prova misurata su una repo cliente: **14** sezioni `## Open` impilate, **13**
   righe `Updated:`, **6** righe per `main` — con la regola «una riga per lane» scritta in prosa da
