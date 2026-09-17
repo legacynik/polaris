@@ -2,7 +2,7 @@
 name: end
 description: Polaris skill — close a repository-first team session with a handoff, decisions/lessons written to the ledgers, a plan tick and a pathspec-only commit. Trigger when stopping work, before a multi-day pause, or on "wrap up / end session / /end".
 user-invocable: true
-version: 1.19.0
+version: 1.20.0
 invokes: [git-power]
 ---
 
@@ -112,11 +112,18 @@ un campo **assente** è il confine rotto, e `/end` non chiude.
 | domande, rischi e approvazioni aperte | `Blocker` |
 
 **Fail-closed su una decisione presa e non scritta.** Una clausola di `Key context` taggata
-`#decisione` o `#superata` deve **nominare la casa che la porta**: il record della Decision,
-la voce di `decisions.md` (Step 3) o l'issue. Una ritrattazione è una decisione come le altre —
-un numero ritirato si scrive **accanto al numero**, non solo qui. Se la clausola non nomina nulla,
-si scrive prima (Step 3) e solo dopo si chiude: una decisione che vive solo in questo log è la
-decisione che la sessione dopo prende di nuovo, o rovescia senza sapere che esisteva.
+`#decisione` o `#superata` deve **nominare la casa che la porta**, in una di queste tre forme:
+
+- l'id del record — `DEC-…` o `ADR-…` — e il record deve esistere sotto `decisions/`;
+- il titolo della voce di `decisions.md` (Step 3), che la clausola ripete per esteso;
+- l'issue nella forma **qualificata**: `issue:<repo>#<numero>`, per esempio `issue:acme-api#407`.
+  Il numero nudo (`#407`, «vedi PR #424») **non** conta: è la cosa più comune che finisca in una
+  riga `Key context`, e prenderlo per una casa assolveva ogni decisione non scritta.
+
+Una ritrattazione è una decisione come le altre — un numero ritirato si scrive **accanto al
+numero**, non solo qui. Se la clausola non nomina nulla, si scrive prima (Step 3) e solo dopo si
+chiude: una decisione che vive solo in questo log è la decisione che la sessione dopo prende di
+nuovo, o rovescia senza sapere che esisteva.
 
 Dove il repo porta il gate del backbone, la stessa cosa è una verifica eseguibile e non un
 promemoria — altrimenti le sei righe sopra restano la checklist:
@@ -136,12 +143,13 @@ ramo `||` e stampava «nessun gate», con `$?` a `0`: la skill proseguiva al com
 esattamente nei casi che il gate esiste per fermare, e il messaggio accusava l'installazione invece
 della sessione. Un rifiuto deve fermare `/end`; l'assenza del gate è l'unico caso che degrada.
 
-Sei rifiuti, tutti prima della ricevuta: `HANDOFF_MISSING` se non gli si passa il log e
+Sette rifiuti, tutti prima della ricevuta: `HANDOFF_MISSING` se non gli si passa il log e
 `HANDOFF_UNREADABLE` se il path non è leggibile (i cinque elementi si leggono, non si inventano),
 `HANDOFF_INCOMPLETE` nomina l'elemento mancante, `DECISION_UNWRITTEN` la clausola che non nomina la
 sua casa, `ID_COLLISION` un id di Decision già speso altrove, `TREE_NOT_OURS` un path sporco che
 nessuna riga `Files` dichiara e `TREE_UNREADABLE` un albero che `git` non riesce a leggere (un
-committer per tree). Le lezioni escono come righe `LESSON_PROPOSAL` su stderr: sono **proposte**, e
+committer per tree), `SESSION_UNKNOWN` un sid che non ha una `start.json`.
+Le lezioni escono come righe `LESSON_PROPOSAL` su stderr: sono **proposte**, e
 lo Step 3 decide quali qualificano e le scrive. Il gate non tocca `lessons.md` da solo.
 
 Then feed the repository memory with the same handoff, one machine-readable line — the offline

@@ -17,7 +17,9 @@ All notable changes to Polaris Team OS. The installed version is pinned in
   rigo di degrado e le sei righe restano la checklist. **Il guard era invertito:** la catena
   `[ -f ] && … || echo` trasformava ogni rifiuto del gate in «nessun gate» con exit `0`, e la skill
   proseguiva al commit proprio nei casi che il gate esiste per fermare; ora è un `if`/`else` e un
-  rifiuto ferma `/end`. Gate e test vivono nel repo dell'harness, non in questo pacchetto.
+  rifiuto ferma `/end`. La forma dell'issue è scritta per esteso (`issue:<repo>#<numero>`, mai il
+  numero nudo) perché era l'unica accettata dal gate mentre la skill diceva solo «nomina l'issue»:
+  chi seguiva la skill veniva rifiutato. Gate e test vivono nel repo dell'harness, non qui.
 
 - **`/update` riscritta nella forma Osmani, e il cockpit lo aggiorna il modello, non uno script**
   (`update` 3.0.0). Prova misurata su una repo cliente: **14** sezioni `## Open` impilate, **13**
