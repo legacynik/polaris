@@ -18,7 +18,14 @@ All notable changes to Polaris Team OS. The installed version is pinned in
   conteggio che nessuno ha potuto leggere e' `UNKNOWN`, mai uno zero inventato. Il pacchetto non
   trasporta l'harness: senza il resolver dell'host la riga non esiste (contratto #155 invariato), e un
   resolver che rifiuta resta rumoroso (`PACK: blocked — <causa>`). Niente comincia piu' per `PACK=`.
-  `SKILL.md` ha un passo nuovo (3b) che dice come leggere i due tempi. (polaris-os#405)
+  Il passo 6 instrada le tre forme di riga e `reference/two-stage-brief.md` le spiega una volta.
+  Dal giro di review: **un repo senza mappa d'area non perde il pacchetto** — non c'e' nulla da
+  chiedere e nulla su cui filtrare, quindi il brief dice `UNKNOWN: no area map — unfiltered pack` e
+  consegna il pacchetto intero, che e' il caso di ogni repo appena adottato; `ISSUES_UNLABELLED`
+  accanto a `PRS_UNLABELLED`, perche' una label come `P1` non e' un'area e quattro aree leggevano
+  `issues: 0` senza dirlo; l'indice resta consegnato anche quando il pacchetto rifiuta; e
+  `RECEIPT: none — no open session` dice quando le righe sono vere e nessuno ha registrato di
+  averle consegnate. (polaris-os#405)
 
 - **`/update` riscritta nella forma Osmani, e il cockpit lo aggiorna il modello, non uno script**
   (`update` 3.0.0). Prova misurata su una repo cliente: **14** sezioni `## Open` impilate, **13**
