@@ -19,6 +19,12 @@ import re
 from pathlib import Path
 
 
+# A field satisfied by "TODO", "." or nothing is not satisfied — the cheapest bypass there
+# is, and the rule SKILL-STANDARD.md says cost 16 skills out of 16. Lives here because two
+# gates now need the same answer: the eval corpus and the prose declaration.
+PLACEHOLDER = re.compile(r"^\s*(todo|tbd|\.{1,3}|xxx|fixme)?\s*$", re.I)
+
+
 def frontmatter(text: str) -> dict[str, str]:
     """Frontmatter fields, bounded to the leading ---...--- block ONLY.
 
@@ -82,7 +88,9 @@ def selfcheck() -> int:
         assert cases == [] and "malformed" in err, "dict without cases must FAIL loud"
         p.write_text("[1]")
         assert load_eval_cases(p)[0] == [1]
-    print("_lib selfcheck: OK (4 groups)")
+    assert all(PLACEHOLDER.match(s) for s in ("", "   ", "TODO", ".", "...", "fixme"))
+    assert not PLACEHOLDER.match("client name replaced by a placeholder")
+    print("_lib selfcheck: OK (5 groups)")
     return 0
 
 

@@ -78,7 +78,7 @@ python3 scripts/change_gate.py --skill <dir> [--base REF | --baseline FILE]
 | `io` · `lifecycle` · `invokes` · `invoked-by` | BEHAVIOUR | T1 T3 | the declared contract moved: what the next step receives changed |
 | a body line carrying a command, a path, a table row or a hard rule | BEHAVIOUR | T1 T3 | mechanism is what the agent acts on |
 | runtime bundle files under `scripts/` · `references/` · `assets/` · `templates/` | BEHAVIOUR | T1 T3 | the skill changed even when `SKILL.md` did not; generated `ratchet-state.json` is excluded |
-| body prose only | PROSE | T1, exit 3 | probably harmless, not provably so — declare it |
+| body prose only | PROSE | T1 + a declaration | probably harmless, not provably so — exit 3 until a line in `_standard/prose.allow` names this body |
 | whitespace or reordering | COSMETIC | T1 | nothing to measure |
 | nothing on record | NEW | T1 T2a T2b T3 | no baseline is not evidence of a small change |
 
@@ -90,6 +90,31 @@ stores the sha256 of the description beside the rate, and `change_gate.py` refus
 no longer matches the file. That is what stops a green from travelling across a trigger edit
 — a hash, not an mtime, so there is no clock to be wrong about. The mark is excluded from the
 hash, so promoting a skill does not void its measurement.
+
+**A prose-only edit is declared, not argued.** The gate used to answer PROSE with exit 3 and
+the sentence "declare whether behaviour moved" while accepting no declaration of any kind, so
+under CI — which runs it nude under `bash -e` — redacting three words from a body could not
+be merged by any route. The channel is one line in `_standard/prose.allow`:
+
+```
+<slug> <sha256-16 of the body> : why behaviour did not move
+```
+
+The gate prints that line, hash included, in the red it emits. The hash is the whole point: an
+unpinned declaration is a permanent switch on that door, while a pinned one dies the next time
+the body moves. It is read only by a change already classified PROSE whose prerequisites are
+already clean — it cannot rescue a TRIGGER or a BEHAVIOUR, and it cannot silence a CONCERNS.
+No flag declares it: a `--declare` that leaves nothing in the repository is a bypass with
+better manners.
+
+The list has its own gate, because a waiver list nobody prunes is a switch that takes a year
+to close: `prose_declaration.py --check skills-suite` runs on every PR and reddens a row whose
+reason is a placeholder, whose slug is not a skill here, or whose pin no body still hashes to.
+Two consequences fall out of that last rule, and they are the reason it exists. A row written
+ahead of the edit it means to excuse is red in the PR that adds it, so a hash cannot
+pre-authorise a future change. And a row survives only while it names the body on disk, so
+reverting a body to a wording declared long ago does not ride the old row — it was pruned when
+the body first moved past it.
 
 **Red, never a wall.** The gate exits 1 so a runner sees it; what it blocks is promotion and
 install, not the save. Fail-closed only inside the suite's own CI and the AFK pipeline, where
@@ -273,6 +298,8 @@ passing in silence. That is the difference between "not verifiable here" and "ve
   over-demands on a line that merely *mentions* one, and it is deliberately blind to a prose edit
   that changes meaning without those markers.
   Fail-closed in the direction that costs money, not the one that ships an unmeasured change.
+  The `prose.allow` line is where a person takes that blindness on the record: the gate cannot
+  read meaning, so it asks for a signature bound to the exact body it could not read.
 - The receipt check greps the changelog for the slug. It proves a row exists, not that the
   numbers in it are true. Those are the founder's to write.
 
@@ -280,6 +307,7 @@ passing in silence. That is the difference between "not verifiable here" and "ve
 
 ```bash
 python3 scripts/change_gate.py --skill <dir> [--base REF|--baseline FILE]   # what it owes
+python3 scripts/prose_declaration.py --check <skills-suite>                # the waiver list
 python3 scripts/new_skill.py <slug> --root <skills-suite> --donor <slug>...
 python3 scripts/new_skill.py --check <root>
 python3 scripts/collision_check.py --skill <dir> --catalog-dir <root> [--donor <slug>...]

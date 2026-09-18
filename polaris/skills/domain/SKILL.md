@@ -34,12 +34,11 @@ Settle **one** question of what the domain is called and where it divides. The s
 does not describe the thing, a line that cuts where the domain does not divide. Two criteria
 of correctness, two doors.
 
-The rules are not here. They are in
-`references/company-os-book-library/_extract/khononov-learning-ddd/DECISION-RULES.md`, and
-every step below names the rule ids it loads. **Load only what the step names.** Never the
-`chapters/` files — those are study material, not decision input. Resolve that root in order:
-this skill's own directory, then the repository root. **The library does not travel with an
-install**, so on a product repo both resolutions fail — the common case, not an edge one.
+The rules travel with this skill: `references/decision-rules/khononov-learning-ddd.md`,
+resolved from this skill's own directory, so they load on any repository — not only the one that
+holds the library. Every step below names the rule ids it loads. **Load only what the step
+names**; the file is a rule index, not a document to read whole. The `chapters/` files stay in
+the vault library and are never decision input — study material only.
 
 A run that cannot load it still settles the question from the repository's own evidence: the
 term as the code uses it, the boundaries the census proves. What it may not do is present a

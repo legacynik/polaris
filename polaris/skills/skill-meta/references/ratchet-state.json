@@ -47,14 +47,12 @@
     "floor": 0.95,
     "last_rate": 1.0,
     "model": "claude-haiku-4-5-20251001",
-    "input_tokens": 100692,
-    "output_tokens": 36129,
-    "wall_ms": 425371,
-    "valid_runs": 15,
+    "input_tokens": 37587,
+    "output_tokens": 12183,
+    "wall_ms": 126375,
+    "valid_runs": 5,
     "excluded_runs": 0,
-    "superseded_floor": 0.88,
-    "superseded_model": "deterministic-ranker-no-llm",
-    "desc_sha256": "7f5b2f341583b760"
+    "desc_sha256": "08a67afd2fb4ec7f"
   },
   "review": {
     "floor": 0.95,
@@ -134,5 +132,27 @@
     "valid_runs": 15,
     "excluded_runs": 0,
     "desc_sha256": "ca73f94bef7338a5"
+  },
+  "crasher": {
+    "floor": 0.95,
+    "last_rate": 1.0,
+    "model": "claude-haiku-4-5-20251001",
+    "input_tokens": 34226,
+    "output_tokens": 5864,
+    "wall_ms": 79784,
+    "valid_runs": 3,
+    "excluded_runs": 0,
+    "desc_sha256": "da1a3ecbef3910ad"
+  },
+  "reference-capture": {
+    "floor": 0.95,
+    "last_rate": 1.0,
+    "model": "claude-sonnet-5",
+    "input_tokens": 27397,
+    "output_tokens": 43,
+    "wall_ms": 24277,
+    "valid_runs": 7,
+    "excluded_runs": 0,
+    "desc_sha256": "b573a225bb812293"
   }
 }
