@@ -2,7 +2,7 @@
 name: start
 description: Polaris skill — resume the current objective from the latest local handoff. First use also provisions your own team path.
 user-invocable: true
-version: 1.7.0
+version: 1.8.0
 ---
 
 # /start — resume, do not survey
@@ -107,6 +107,41 @@ current state and recall is never mandatory at session start.
 
 Compare the local branch from Step 1 with the current plan's branch. If both are present and differ,
 stop with the exact mismatch. This is a local safety gate, not a reason to fetch.
+
+## Step 3b — After a compaction, put the pack back (never rebuild it)
+
+A compaction empties the context window and leaves the receipt on disk. **Do not run `/start`
+again and do not re-read the resume set**: the pack was already resolved, and re-resolving it
+walks the tracker over the network for an answer that has not changed. Ask the host repository
+for it back:
+
+```bash
+python3 "$ROOT/scripts/contextpack_reinsert.py" reinsert --root "$ROOT"
+```
+
+No output and no such file: the repository carries no resolver, and there is nothing to put
+back (contract #155). Otherwise read what it prints:
+
+- `REINSERT: HEAD unchanged … — 0 tracker calls` followed by `PACK:` and the `layer:` rows —
+  the same pack, reprinted from the receipt. Nothing was recomputed and nothing was fetched.
+- `REINSERT: HEAD moved <a> -> <b>` — commits landed under the session, so the pack was
+  resolved again and a second receipt now sits beside the first, naming it in `CHAIN: prev=`.
+- `RECEIPT_MISSING:` or `AREA_MISMATCH:` — there was no usable receipt, so it resolved one.
+  Both are costs, not failures; the command still exits 0.
+- `NO_OPEN_SESSION:` — the compaction happened outside a session. Nothing to reinsert.
+
+Wire it to the host so it runs on its own. On Claude Code this is a `SessionStart` hook with
+the `compact` matcher, in the repository's `.claude/settings.json`:
+
+```json
+{ "hooks": { "SessionStart": [ { "matcher": "compact", "hooks": [
+  { "type": "command",
+    "command": "python3 \"$CLAUDE_PROJECT_DIR/_polaris/scripts/contextpack_reinsert.py\" reinsert --root \"$CLAUDE_PROJECT_DIR/_polaris\"" } ] } ] } }
+```
+
+On a host with no compaction event, run the command above by hand the first time the context
+looks thinner than the work. The session id is not a flag anybody has to fill: the command
+resolves the session that is open today, and says `NO_OPEN_SESSION` when there is none.
 
 ## Step 4 — Render the resume brief
 

@@ -5,6 +5,21 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
+- **Dopo una compaction il pacchetto torna dalla ricevuta, non da un secondo calcolo**
+  (`start` 1.7.0 → **1.8.0**). Una compaction svuota la finestra di contesto e non tocca niente su
+  disco: il pacchetto era gia' risolto, e rifarlo significa ricamminare il tracker in rete per una
+  risposta che non e' cambiata. Il passo 3b chiede invece al repo ospite di **rimetterlo davanti**
+  (`contextpack_reinsert.py reinsert`): a `HEAD` fermo ristampa le righe della ricevuta con **zero**
+  chiamate al tracker; solo un `HEAD` avanzato paga una riemissione, e la seconda ricevuta si mette
+  ACCANTO alla prima nominandola in `CHAIN: prev=` — cosi' cio' che l'agente aveva PRIMA della
+  compaction resta auditabile. Ricevuta assente o ricevuta di un'altra area sono costi dichiarati
+  (`RECEIPT_MISSING`, `AREA_MISMATCH`), non errori: si riemette e si esce 0. Il passo porta anche
+  l'hook dell'host (`SessionStart` con matcher `compact`), perche' un meccanismo che dipende dal
+  fatto che qualcuno se lo ricordi non e' un meccanismo; il `sid` non e' un flag da riempire, il
+  comando risolve da solo la sessione aperta oggi e dice `NO_OPEN_SESSION` quando non ce n'e'. Il
+  pacchetto non trasporta l'harness: senza resolver dell'host non stampa nulla (contratto #155).
+  `reference/two-stage-brief.md` spiega le righe una volta sola. (polaris-os#406)
+
 - **`/start` a due tempi: l'indice delle aree prima, il pacchetto dell'area dopo — e mai piu' una
   riga opaca** (`start` 1.6.0 → **1.7.0**). Il brief portava `PACK=CTX-<id>`, e polaris-os#326 ha
   misurato quanto vale un id opaco: l'agente lo ignorava, quindi il resolver era invisibile proprio
