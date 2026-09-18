@@ -1,0 +1,51 @@
+# .fix/contract.yml — la cerimonia di QUESTA repo.
+#
+# Il gate non contiene comandi, host o path: li legge da qui. È ciò che rende
+# la stessa skill usabile su repo con stack diversi.
+#
+# Regola: un valore che non sai NON si inventa. Lascialo vuoto con un commento
+# che dice cosa manca — il gate fallirà su quella tappa, ed è corretto: un
+# contratto inventato è peggio di uno incompleto.
+
+# Vocabolario controllato di `dominio`. Per-repo, dal glossario del prodotto.
+# È la chiave di aggregazione: senza, i record non sono contabili e la query
+# cross-repo («quante volte si è rotto X») non esiste.
+dominii: []
+
+test:
+  # Come si lancia la suite. Serve alla tappa 5 (verde).
+  suite: ""
+  # Un solo modulo. {modulo} viene sostituito dal gate.
+  modulo: ""
+
+ci:
+  # Il comando con cui la CI RACCOGLIE i test (es. `pytest --collect-only -q <subset>`,
+  # lo stesso subset che il workflow esegue). Serve alla tappa `raccolto`: un test
+  # committato ma assente da questo output è ORFANO — la CI non lo eseguirà mai (R5).
+  collect: ""
+
+# Il perimetro PROD di questa repo: i path (glob) il cui codice finisce deployato.
+# Lo legge sweep_gate.py: una PR FUORI da questi path si auto-fonde con solo
+# approve + SHA fresca; DENTRO serve risk:trivial + attestazione runtime.
+# Non dichiarato = via stretta per tutto: il gate non indovina cosa è prod.
+deployabili: []
+
+staging:
+  # Come ci si arriva. Serve alla tappa 7 (real-test olistico).
+  deploy: ""
+  # Come si legge cosa è successo.
+  logs: ""
+  # Lo smoke test, se esiste.
+  smoke: ""
+  url: ""
+
+prod:
+  deploy: ""
+  # DEVE avere un exit code: serve alla tappa 9 (prod-verified).
+  # «Ho deployato» non è una prova; questo comando lo è.
+  osserva: ""
+
+# Path della porta tdd-dev, per la tappa 4 (ciclo test-first con rosso registrato).
+tdd_dev: ""
+# Path della foglia real-test, per la tappa 7.
+real_test: ""
