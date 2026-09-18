@@ -101,7 +101,13 @@ class TheThreeSignals(unittest.TestCase):
 
 
 class TheBackboneIsFeatureDetected(unittest.TestCase):
-    """D3 — with a typed backbone the brief carries the pack id; without one, nothing changes."""
+    """D3 / polaris-os#405 — with a typed backbone the brief carries the host's two-stage
+    readout, as LINES; without one, nothing changes.
+
+    It used to carry `PACK=CTX-<id>`, and polaris-os#326 measured what one opaque id is worth:
+    the agent ignored it. What the host answers now is the area index with its counts, the
+    area chosen or the one question to ask, and the rows of that area's pack. Nothing the
+    package prints starts with `PACK=` any more."""
 
     @staticmethod
     def _backbone(repo, *, emits=None, blocks=None):
@@ -113,18 +119,22 @@ class TheBackboneIsFeatureDetected(unittest.TestCase):
             {"schema_version": 1, "repo": "host", "workspace": "w",
              "manifest_hash": "abc", "decisions": [], "live_documents": []}))
         (root / "scripts").mkdir()
-        body = ("import json,sys\n"
-                f"print(json.dumps({{'context_pack_id': {emits!r}}}))\n" if emits else
+        body = (f"print({emits!r})\n" if emits else
                 f"import sys\nsys.stderr.write({blocks!r})\nsys.exit(1)\n")
-        (root / "scripts" / "contextpack.py").write_text(body)
+        (root / "scripts" / "contextpack_dashboard.py").write_text(body)
         return root
 
-    def test_the_pack_id_comes_from_running_the_resolver_not_from_a_manifest_key(self):
-        """The live manifest has NO `pack_id`: reading one means the signal is dead in every
-        real repo while its fixture invents the field that makes it pass."""
+    def test_the_brief_carries_the_rows_the_host_resolver_prints(self):
+        """Rows, not an id: the agent can act on `layer: … source_id: …` and could not act
+        on `PACK=CTX-…`."""
         repo = host_repo()
-        self._backbone(repo, emits="CTX-polaris-ee16119dd0cf")
-        self.assertIn("PACK=CTX-polaris-ee16119dd0cf", signals(repo))
+        self._backbone(repo, emits="AREA: memoria  issues: 3  prs: 1  last_decision: DEC-9\n"
+                                   "layer: sealed  source_id: DEC-9  path: decisions/DEC-9.md"
+                                   "  freshness: CURRENT")
+        out = signals(repo)
+        self.assertIn("AREA: memoria  issues: 3", out)
+        self.assertIn("layer: sealed  source_id: DEC-9", out)
+        self.assertNotIn("PACK=", out)
 
     def test_a_blocked_pack_is_loud_not_silent(self):
         """DB-FR-05: a blocked emission blocks. A silent empty line is indistinguishable from
@@ -132,16 +142,19 @@ class TheBackboneIsFeatureDetected(unittest.TestCase):
         repo = host_repo()
         self._backbone(repo, blocks="DECISION_SCOPE_STALE: docs/x.md\n")
         out = signals(repo)
-        self.assertIn("PACK=BLOCKED", out)
+        self.assertIn("PACK: blocked", out)
         self.assertIn("DECISION_SCOPE_STALE", out)
+        self.assertNotIn("PACK=", out)
 
     def test_a_repo_without_the_backbone_prints_no_pack_line_and_no_error(self):
+        """#155 unchanged: a repository with no typed backbone must not even learn that the
+        feature exists, so an absent resolver is silence — not `PACK: none`."""
         repo = host_repo()
         out = run_script("start", "brief_signals.py", "--root", str(repo / "_polaris"),
                          "--current", str(repo / "_polaris" / "state" / "current.md"),
                          cwd=str(repo))
         self.assertEqual(out.returncode, 0)
-        self.assertNotIn("PACK=", out.stdout)
+        self.assertNotIn("PACK", out.stdout)
         self.assertEqual(out.stderr.strip(), "", "a missing backbone is not an error")
 
 

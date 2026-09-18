@@ -5,6 +5,27 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
+- **`/start` a due tempi: l'indice delle aree prima, il pacchetto dell'area dopo — e mai piu' una
+  riga opaca** (`start` 1.6.0 → **1.7.0**). Il brief portava `PACK=CTX-<id>`, e polaris-os#326 ha
+  misurato quanto vale un id opaco: l'agente lo ignorava, quindi il resolver era invisibile proprio
+  alla sessione per cui esiste, e l'indice del repo restava a voce. Ora `emit_pack` esegue il brief a
+  due tempi dell'host e stampa cio' che risponde: **tempo 0** una riga per area con tre conteggi —
+  issue aperte, PR aperte, ultima Decision (`AREA: <slug>  issues: N  prs: N  last_decision: …`), piu'
+  la priorita' 1 del cockpit; **tempo 1** il pacchetto dell'area scelta **per righe**
+  (`layer: … source_id: … path: … freshness: …`), su cui si agisce. La scelta dell'area segue tre
+  segnali (branch, issue aperte del contributor, priorita' 1) e quando nessuno risponde il brief porta
+  `QUESTION: which area? candidates: …`: **una** domanda con l'indice davanti, mai un'ipotesi. Un
+  conteggio che nessuno ha potuto leggere e' `UNKNOWN`, mai uno zero inventato. Il pacchetto non
+  trasporta l'harness: senza il resolver dell'host la riga non esiste (contratto #155 invariato), e un
+  resolver che rifiuta resta rumoroso (`PACK: blocked — <causa>`). Niente comincia piu' per `PACK=`.
+  Il passo 6 instrada le tre forme di riga e `reference/two-stage-brief.md` le spiega una volta.
+  Dal giro di review: **un repo senza mappa d'area non perde il pacchetto** — non c'e' nulla da
+  chiedere e nulla su cui filtrare, quindi il brief dice `UNKNOWN: no area map — unfiltered pack` e
+  consegna il pacchetto intero, che e' il caso di ogni repo appena adottato; `ISSUES_UNLABELLED`
+  accanto a `PRS_UNLABELLED`, perche' una label come `P1` non e' un'area e quattro aree leggevano
+  `issues: 0` senza dirlo; l'indice resta consegnato anche quando il pacchetto rifiuta; e
+  `RECEIPT: none — no open session` dice quando le righe sono vere e nessuno ha registrato di
+  averle consegnate. (polaris-os#405)
 - **`/end` non chiude su una decisione che non ha casa, e i sei campi del log sono i cinque elementi
   del confine ripartibile** (`end` 1.19.0). Le sei righe erano un formato gradito; sono ciò che rende
   la sessione ripartibile, e la sessione dopo apre da lì. Ora la skill nomina la corrispondenza

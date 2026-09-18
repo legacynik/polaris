@@ -151,7 +151,7 @@ def check_brief(tmp: Path, report, options) -> list[bool]:
     todos.write_text(todos.read_text().replace("|------|-------------|------|\n| | | |", due))
     opts = options(str(root), str(root / "state" / "current.md"), str(tmp))
     out = report(opts)
-    silent = ("futuro", "DEFERRED=", "SECTIONS_MISSING=", "PACK=")   # nothing to say, no line
+    silent = ("futuro", "DEFERRED=", "SECTIONS_MISSING=", "PACK")   # nothing to say, no line
     ok = ["TODOS_ACTIVE=1" in out,
           any(o.startswith("FOLLOWUP_DUE=") and "scaduto" in o for o in out)]
     ok += [not any(o.startswith(q) or q in o for o in out) for q in silent]
@@ -159,15 +159,17 @@ def check_brief(tmp: Path, report, options) -> list[bool]:
 
 
 def _check_pack(root: Path, report, opts) -> list[bool]:
-    """The pack line comes from RUNNING the resolver: a stub that only exists is not a backbone,
-    and a resolver that refuses must be loud. The manifest carries no `pack_id` — the live one
-    has none, and a fixture that invents it keeps a dead signal green."""
+    """The brief comes from RUNNING the host's resolver: a stub that only exists is not a
+    backbone, and a resolver that refuses must be loud. Since polaris-os#405 what comes back
+    is ROWS, never `PACK=<id>` — the one line polaris-os#326 measured the agent ignoring."""
     (root / "decisions").mkdir(exist_ok=True)
     (root / "decisions" / "manifest.json").write_text('{"schema_version": 1, "decisions": []}')
     (root / "scripts").mkdir(exist_ok=True)
-    resolver = root / "scripts" / "contextpack.py"
-    resolver.write_text("print('{\"context_pack_id\": \"p-1\"}')\n")
-    ok = ["PACK=p-1" in report(opts)]
+    resolver = root / "scripts" / "contextpack_dashboard.py"
+    resolver.write_text("print('AREA: memoria  issues: 2  prs: 0  last_decision: none')\n")
+    out = report(opts)
+    ok = [any(o.startswith("AREA: memoria") for o in out),
+          not any(o.startswith("PACK=") for o in out)]
     resolver.write_text("import sys\nsys.stderr.write('SCOPE_STALE: x\\n')\nsys.exit(1)\n")
     out = report(opts)
-    return ok + [any(o.startswith("PACK=BLOCKED") and "SCOPE_STALE" in o for o in out)]
+    return ok + [any(o.startswith("PACK: blocked") and "SCOPE_STALE" in o for o in out)]

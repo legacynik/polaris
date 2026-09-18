@@ -130,34 +130,35 @@ def emit_sections(root: Path, current: Path) -> list[str]:
 PACK_TIMEOUT = 25
 
 
-def _pack_verdict(compiler: Path, root: Path) -> str:
-    """Run the host resolver and answer ONE line: the pack id, or why it did not emit."""
+def _brief_lines(compiler: Path, root: Path, login: str) -> list[str]:
+    """Run the host's two-stage brief and hand back its LINES, or why it did not answer."""
+    args = [sys.executable, "-I", str(compiler), "brief", "--root", str(root)]
     try:
-        done = subprocess.run([sys.executable, "-I", str(compiler), "resolve", "--root", str(root)],
+        done = subprocess.run(args + (["--login", login] if login else []),
                               capture_output=True, text=True, timeout=PACK_TIMEOUT)
     except (OSError, subprocess.TimeoutExpired):
-        return "BLOCKED:the resolver did not answer"
+        return ["PACK: blocked — the resolver did not answer"]
     if done.returncode:
         cause = (done.stderr or done.stdout).strip().splitlines()
-        return f"BLOCKED:{cause[0][:120] if cause else 'no cause given'}"
-    try:
-        return json.loads(done.stdout).get("context_pack_id") or ""
-    except ValueError:
-        return "BLOCKED:the resolver did not answer JSON"
+        return [f"PACK: blocked — {cause[0][:120] if cause else 'no cause given'}"]
+    return [line for line in done.stdout.splitlines() if line.strip()] or ["PACK: none"]
 
 
-def emit_pack(root: Path) -> list[str]:
-    """D3 — feature-detect: RUN the host resolver, or say nothing when there is no backbone.
+def emit_pack(root: Path, login: str = "") -> list[str]:
+    """D3 / polaris-os#405 — feature-detect: RUN the host's two-stage brief, or say nothing.
 
-    This used to read a `pack_id` key out of `decisions/manifest.json`. The live manifest has no
-    such key — its keys are `decisions`, `manifest_hash`, `repo`, `workspace`, `live_documents`,
-    `domain_source`, `legacy_sources`, `schema_version` — so the signal was dead in every real
-    repository while its fixture wrote the field that made it pass. A blocked emission is now
-    LOUD (DB-FR-05: a blocked emission blocks), because a silent empty line is indistinguishable
-    from a repository that carries no backbone at all.
+    Until #405 this printed ONE line, `PACK=CTX-<id>`, and polaris-os#326 measured what that
+    is worth: the agent ignored it, so the whole resolver was invisible to the session it was
+    built for. It now prints what the host answers — the area index with its counts, the area
+    chosen or the one question to ask, and the pack of that area as one row per line. The
+    package carries none of that: it runs the host's script when the host has one.
+
+    Feature-detection is unchanged in spirit (#155): a repository with no typed backbone must
+    not even learn the feature exists, so an absent resolver is SILENCE, not a line. A
+    resolver that exists and refuses is still loud — the cause is named — because a blocked
+    emission blocks (DB-FR-05). Neither shape starts with `PACK=` any more.
     """
-    compiler = root / "scripts" / "contextpack.py"
+    compiler = root / "scripts" / "contextpack_dashboard.py"
     if not (compiler.is_file() and (root / "decisions" / "manifest.json").is_file()):
         return []
-    verdict = _pack_verdict(compiler, root)
-    return [f"PACK={verdict}"] if verdict else []
+    return _brief_lines(compiler, root, login)
