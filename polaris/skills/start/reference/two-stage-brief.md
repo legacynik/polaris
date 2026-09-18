@@ -63,3 +63,50 @@ a document the pack merely pointed at. `freshness: UNKNOWN` is a claim nothing p
   the normal case until `/start` itself opens one.
 - No line at all — the repository has no resolver. It must not learn the feature exists
   (contract #155), so there is nothing to report.
+
+## After a compaction — the pack comes back from the receipt
+
+The brief above is resolved once. A compaction throws it out of the context window and changes
+nothing on disk, so the repair is a READ, not a second resolution (polaris-os#406):
+`contextpack_reinsert.py reinsert` reads the newest receipt of the open session and, when `HEAD`
+is where the receipt says it was, prints its rows again with **zero** tracker calls. Only a moved
+`HEAD` is a reason to pay for a new emission.
+
+```
+REINSERT: HEAD unchanged <sha12> — 0 tracker calls
+PACK: CTX-<id> seal=<sha12> (reused from area-<slug>.json)
+CHAIN: prev=<sha12>
+<layer>   <source_id>  <source_hash12>
+```
+
+Two things the rows are NOT. They are not the documents: a receipt keeps an address, a layer and
+a hash per row, which is what progressive delivery hands over anyway — open what the work needs.
+And they are not a fresh claim: the hash is what the row was worth at `sealed_commit`, so state
+still resolves against the code.
+
+Six lines say the receipt could not be trusted and the pack was resolved instead:
+`RECEIPT_MISSING` (none), `RECEIPT_UNREADABLE` (one that no longer parses — kept, never
+overwritten), `RECEIPT_TAMPERED` (it does not hash to its own claims), `SID_MISMATCH` (it was
+written for another session), `AREA_MISMATCH` (no receipt for this area) and `CHAIN_BROKEN`.
+Each is a cost, not a failure, and none of them leaves the agent without a pack.
+
+`CHAIN: prev=` is what ties a pack receipt to the session that received it. The first receipt of
+a session names its `start.json`; each later one names the receipt it superseded, and none of
+them replaces the one before — after a compaction at a moved `HEAD` the session keeps both, so
+what the agent had BEFORE the compaction is still auditable. `contextpack_reinsert.py chain
+--root <root> --sid <sid>` verifies those links. It reports `CHAIN_BROKEN` for a predecessor
+no receipt of the session can show, and for a `prev` walk that loops instead of reaching the
+start receipt — a receipt naming itself, or two naming each other, make every link resolve
+while the chain terminates nowhere. `CHAIN_UNANCHORED` is the third and weakest: every link
+is there and the oldest names no predecessor, which is also what a session looks like until
+`/start` opens one, so it is reported, blocks no reinsertion and fails no exit code.
+
+Chains are **per area** — a receipt's predecessor is the one it superseded in its own area,
+and the first of each area reaches the `start.json`. So `chain` takes an optional `--area`,
+and a reinsertion asks only about the area it is reinserting: a break under one area is not
+a reason to re-resolve another, and charging it across areas made the cost permanent.
+
+**What the chain is worth.** It catches a deleted, replaced, foreign or edited receipt. It is
+not a signature: anyone able to rewrite every receipt of a session consistently can still
+produce a chain that verifies. Against that the only proof is re-resolving the pack at
+`sealed_commit` and comparing seals.

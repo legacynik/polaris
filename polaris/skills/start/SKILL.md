@@ -2,7 +2,7 @@
 name: start
 description: Polaris skill — resume the current objective from the latest local handoff. First use also provisions your own team path.
 user-invocable: true
-version: 1.7.0
+version: 1.8.0
 ---
 
 # /start — resume, do not survey
@@ -47,6 +47,17 @@ mkdir -p "$ROOT/team/$LOGIN/weeks" "$ROOT/team/$LOGIN/reports" "$ROOT/team/$LOGI
 cp "$CLAUDE_PLUGIN_ROOT/skills/start/templates/repo-contract/profile.yml" "$ROOT/team/$LOGIN/profile.yml"
 perl -pi -e "s/^github: .*/github: $LOGIN/" "$ROOT/team/$LOGIN/profile.yml"
 ```
+
+Then install the team settings — the permissions preset and the compaction hook of Step 3b.
+It merges and never clobbers: a second run changes nothing and says so, and a
+`.claude/settings.json` it cannot parse stops it (`SETTINGS_UNREADABLE`, exit 1, nothing
+written) rather than being replaced.
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/start/scripts/install_settings.py" --repo "$MAIN_WT"
+```
+
+Hooks are read at session start, so the one it writes takes effect from the NEXT session.
 
 The identity gate runs in BOTH branches, whether the profile was just created or already existed:
 
@@ -107,6 +118,43 @@ current state and recall is never mandatory at session start.
 
 Compare the local branch from Step 1 with the current plan's branch. If both are present and differ,
 stop with the exact mismatch. This is a local safety gate, not a reason to fetch.
+
+## Step 3b — After a compaction, put the pack back (never rebuild it)
+
+A compaction empties the context window and leaves the receipt on disk. **Do not run `/start`
+again and do not re-read the resume set**: the pack was already resolved, and re-resolving it
+walks the tracker over the network for an answer that has not changed.
+
+Step 2 installs a `SessionStart` hook with the `compact` matcher, so on Claude Code this runs
+by itself. On a host with no compaction event, or before that hook's first session, run it:
+
+```bash
+python3 "$ROOT/scripts/contextpack_reinsert.py" reinsert --root "$ROOT"
+```
+
+No output and no such file: the repository carries no resolver, and there is nothing to put
+back (contract #155). Otherwise read what it prints:
+
+- `REINSERT: HEAD unchanged … — 0 tracker calls` followed by `PACK:` and the rows — the same
+  pack, reprinted from the receipt. Nothing was recomputed and nothing was fetched.
+- `REINSERT: HEAD moved <a> -> <b>` — commits landed under the session, so the pack was
+  resolved again and a second receipt now sits beside the first, naming it in `CHAIN: prev=`.
+- `RECEIPT_MISSING:`, `RECEIPT_UNREADABLE:`, `RECEIPT_TAMPERED:`, `SID_MISMATCH:`,
+  `AREA_MISMATCH:` or `CHAIN_BROKEN:` — the receipt on disk could not be trusted, so the pack
+  was resolved instead of reused. All are costs, not failures; the command still exits 0, and
+  nothing on disk is overwritten. Report the line: it says something about the session.
+- `NO_OPEN_SESSION:` — no session receipt is open. **This is what you will see today**: a pack
+  receipt belongs to a session, and the shipped `/start` does not yet open one
+  (polaris-os#155). Until it does, the hook is wired and silent, and the pack after a
+  compaction is whatever the brief resolves next.
+
+`CHAIN_UNANCHORED:` may appear beside any of these. It is a report, not a refusal: every
+link is there and nothing ties that area's packs to a start receipt, which is what every
+session looks like until `/start` opens one.
+
+The session id is not a flag anybody has to fill: the command resolves the session open today.
+`chain --root "$ROOT" --sid <sid> [--area <slug>]` verifies the receipt chain on demand —
+exit 1 on a `CHAIN_BROKEN` and 0 on anything it merely reports.
 
 ## Step 4 — Render the resume brief
 
