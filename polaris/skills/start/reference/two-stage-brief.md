@@ -84,9 +84,24 @@ a hash per row, which is what progressive delivery hands over anyway — open wh
 And they are not a fresh claim: the hash is what the row was worth at `sealed_commit`, so state
 still resolves against the code.
 
+Six lines say the receipt could not be trusted and the pack was resolved instead:
+`RECEIPT_MISSING` (none), `RECEIPT_UNREADABLE` (one that no longer parses — kept, never
+overwritten), `RECEIPT_TAMPERED` (it does not hash to its own claims), `SID_MISMATCH` (it was
+written for another session), `AREA_MISMATCH` (no receipt for this area) and `CHAIN_BROKEN`.
+Each is a cost, not a failure, and none of them leaves the agent without a pack.
+
 `CHAIN: prev=` is what ties a pack receipt to the session that received it. The first receipt of
 a session names its `start.json`; each later one names the receipt it superseded, and none of
 them replaces the one before — after a compaction at a moved `HEAD` the session keeps both, so
 what the agent had BEFORE the compaction is still auditable. `contextpack_reinsert.py chain
---root <root> --sid <sid>` verifies those links and reports `CHAIN_BROKEN` for a receipt whose
-predecessor no longer exists.
+--root <root> --sid <sid>` verifies those links. It reports `CHAIN_BROKEN` for a predecessor
+no receipt of the session can show, and for a `prev` walk that loops instead of reaching the
+start receipt — a receipt naming itself, or two naming each other, make every link resolve
+while the chain terminates nowhere. `CHAIN_UNANCHORED` is the third and weakest: every link
+is there and the oldest names no predecessor, which is also what a session looks like until
+`/start` opens one, so it is reported and does not block a reinsertion.
+
+**What the chain is worth.** It catches a deleted, replaced, foreign or edited receipt. It is
+not a signature: anyone able to rewrite every receipt of a session consistently can still
+produce a chain that verifies. Against that the only proof is re-resolving the pack at
+`sealed_commit` and comparing seals.

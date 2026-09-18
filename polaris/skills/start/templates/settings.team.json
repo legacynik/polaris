@@ -4,5 +4,18 @@
       "Bash(polmem *)",
       "Bash(python3 scripts/polaris_memory_repo.py*)"
     ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "r=\"$CLAUDE_PROJECT_DIR/_polaris\"; [ -f \"$r/config.yml\" ] || r=\"$CLAUDE_PROJECT_DIR\"; p=\"$r/scripts/contextpack_reinsert.py\"; [ -f \"$p\" ] && python3 \"$p\" reinsert --root \"$r\" || true"
+          }
+        ]
+      }
+    ]
   }
 }

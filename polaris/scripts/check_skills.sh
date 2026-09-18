@@ -29,5 +29,10 @@ for f in skills/*/SKILL.md; do
   fi
 done
 [[ $doors -gt 0 ]] || { echo "FAIL doors: none shipped — the suite sync never ran"; fail=1; }
+# The compaction hook is a STRING in a template until somebody runs it, and a string is
+# green under every breakage there is. Its selfcheck installs the template into a throwaway
+# repository and EXECUTES the hook command twice — once with no resolver (must be silent and
+# exit 0), once with one (must run it).
+python3 skills/start/scripts/install_settings.py --selfcheck || fail=1
 [[ $fail -eq 0 ]] && echo "check_skills: OK ($doors doors)"
 exit $fail

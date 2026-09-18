@@ -48,6 +48,15 @@ cp "$CLAUDE_PLUGIN_ROOT/skills/start/templates/repo-contract/profile.yml" "$ROOT
 perl -pi -e "s/^github: .*/github: $LOGIN/" "$ROOT/team/$LOGIN/profile.yml"
 ```
 
+Then install the team settings — the permissions preset and the compaction hook of Step 3b.
+It merges and never clobbers: a second run changes nothing and says so.
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/start/scripts/install_settings.py" --repo "$MAIN_WT"
+```
+
+Hooks are read at session start, so the one it writes takes effect from the NEXT session.
+
 The identity gate runs in BOTH branches, whether the profile was just created or already existed:
 
 ```bash
@@ -112,8 +121,10 @@ stop with the exact mismatch. This is a local safety gate, not a reason to fetch
 
 A compaction empties the context window and leaves the receipt on disk. **Do not run `/start`
 again and do not re-read the resume set**: the pack was already resolved, and re-resolving it
-walks the tracker over the network for an answer that has not changed. Ask the host repository
-for it back:
+walks the tracker over the network for an answer that has not changed.
+
+Step 2 installs a `SessionStart` hook with the `compact` matcher, so on Claude Code this runs
+by itself. On a host with no compaction event, or before that hook's first session, run it:
 
 ```bash
 python3 "$ROOT/scripts/contextpack_reinsert.py" reinsert --root "$ROOT"
@@ -122,26 +133,21 @@ python3 "$ROOT/scripts/contextpack_reinsert.py" reinsert --root "$ROOT"
 No output and no such file: the repository carries no resolver, and there is nothing to put
 back (contract #155). Otherwise read what it prints:
 
-- `REINSERT: HEAD unchanged … — 0 tracker calls` followed by `PACK:` and the `layer:` rows —
-  the same pack, reprinted from the receipt. Nothing was recomputed and nothing was fetched.
+- `REINSERT: HEAD unchanged … — 0 tracker calls` followed by `PACK:` and the rows — the same
+  pack, reprinted from the receipt. Nothing was recomputed and nothing was fetched.
 - `REINSERT: HEAD moved <a> -> <b>` — commits landed under the session, so the pack was
   resolved again and a second receipt now sits beside the first, naming it in `CHAIN: prev=`.
-- `RECEIPT_MISSING:` or `AREA_MISMATCH:` — there was no usable receipt, so it resolved one.
-  Both are costs, not failures; the command still exits 0.
-- `NO_OPEN_SESSION:` — the compaction happened outside a session. Nothing to reinsert.
+- `RECEIPT_MISSING:`, `RECEIPT_UNREADABLE:`, `RECEIPT_TAMPERED:`, `SID_MISMATCH:`,
+  `AREA_MISMATCH:` or `CHAIN_BROKEN:` — the receipt on disk could not be trusted, so the pack
+  was resolved instead of reused. All are costs, not failures; the command still exits 0, and
+  nothing on disk is overwritten. Report the line: it says something about the session.
+- `NO_OPEN_SESSION:` — no session receipt is open. **This is what you will see today**: a pack
+  receipt belongs to a session, and the shipped `/start` does not yet open one
+  (polaris-os#155). Until it does, the hook is wired and silent, and the pack after a
+  compaction is whatever the brief resolves next.
 
-Wire it to the host so it runs on its own. On Claude Code this is a `SessionStart` hook with
-the `compact` matcher, in the repository's `.claude/settings.json`:
-
-```json
-{ "hooks": { "SessionStart": [ { "matcher": "compact", "hooks": [
-  { "type": "command",
-    "command": "python3 \"$CLAUDE_PROJECT_DIR/_polaris/scripts/contextpack_reinsert.py\" reinsert --root \"$CLAUDE_PROJECT_DIR/_polaris\"" } ] } ] } }
-```
-
-On a host with no compaction event, run the command above by hand the first time the context
-looks thinner than the work. The session id is not a flag anybody has to fill: the command
-resolves the session that is open today, and says `NO_OPEN_SESSION` when there is none.
+The session id is not a flag anybody has to fill: the command resolves the session open today.
+`chain --root "$ROOT" --sid <sid>` verifies the receipt chain of one session on demand.
 
 ## Step 4 — Render the resume brief
 

@@ -15,10 +15,19 @@ All notable changes to Polaris Team OS. The installed version is pinned in
   compaction resta auditabile. Ricevuta assente o ricevuta di un'altra area sono costi dichiarati
   (`RECEIPT_MISSING`, `AREA_MISMATCH`), non errori: si riemette e si esce 0. Il passo porta anche
   l'hook dell'host (`SessionStart` con matcher `compact`), perche' un meccanismo che dipende dal
-  fatto che qualcuno se lo ricordi non e' un meccanismo; il `sid` non e' un flag da riempire, il
-  comando risolve da solo la sessione aperta oggi e dice `NO_OPEN_SESSION` quando non ce n'e'. Il
-  pacchetto non trasporta l'harness: senza resolver dell'host non stampa nulla (contratto #155).
-  `reference/two-stage-brief.md` spiega le righe una volta sola. (polaris-os#406)
+  fatto che qualcuno se lo ricordi non e' un meccanismo. Dal giro di review: l'hook era **JSON in
+  prosa**, e il JSON in prosa non installa niente — ora sta in `templates/settings.team.json`, che
+  pero' non aveva **nessun** installer (il suo, `pol-bootstrap`, e' stato rimosso e il template era
+  orfano insieme al preset dei permessi). Il passo 2 chiama `scripts/install_settings.py`, che fonde
+  senza mai sovrascrivere e al secondo giro non cambia nulla; il suo `--selfcheck`, agganciato a
+  `check_skills.sh`, **esegue** il comando dell'hook due volte — senza resolver (muto, exit 0) e con
+  un resolver (lo lancia) — perche' un hook e' una stringa finche' qualcuno non lo esegue. Il `sid`
+  non e' un flag da riempire: il comando risolve da solo la sessione aperta oggi. Detto onestamente:
+  **oggi vedrai `NO_OPEN_SESSION`**, perche' una ricevuta del pack appartiene a una sessione e il
+  `/start` spedito non ne apre ancora una (polaris-os#155); l'hook resta cablato e silenzioso finche'
+  quello non atterra. Il pacchetto non trasporta l'harness: senza resolver dell'host non stampa nulla
+  (contratto #155). `reference/two-stage-brief.md` spiega le righe una volta sola, comprese le sei
+  che dicono che la ricevuta non era affidabile e cosa vale davvero la catena. (polaris-os#406)
 
 - **`/start` a due tempi: l'indice delle aree prima, il pacchetto dell'area dopo — e mai piu' una
   riga opaca** (`start` 1.6.0 → **1.7.0**). Il brief portava `PACK=CTX-<id>`, e polaris-os#326 ha
