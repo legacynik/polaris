@@ -99,7 +99,12 @@ no receipt of the session can show, and for a `prev` walk that loops instead of 
 start receipt — a receipt naming itself, or two naming each other, make every link resolve
 while the chain terminates nowhere. `CHAIN_UNANCHORED` is the third and weakest: every link
 is there and the oldest names no predecessor, which is also what a session looks like until
-`/start` opens one, so it is reported and does not block a reinsertion.
+`/start` opens one, so it is reported, blocks no reinsertion and fails no exit code.
+
+Chains are **per area** — a receipt's predecessor is the one it superseded in its own area,
+and the first of each area reaches the `start.json`. So `chain` takes an optional `--area`,
+and a reinsertion asks only about the area it is reinserting: a break under one area is not
+a reason to re-resolve another, and charging it across areas made the cost permanent.
 
 **What the chain is worth.** It catches a deleted, replaced, foreign or edited receipt. It is
 not a signature: anyone able to rewrite every receipt of a session consistently can still

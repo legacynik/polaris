@@ -49,7 +49,9 @@ perl -pi -e "s/^github: .*/github: $LOGIN/" "$ROOT/team/$LOGIN/profile.yml"
 ```
 
 Then install the team settings — the permissions preset and the compaction hook of Step 3b.
-It merges and never clobbers: a second run changes nothing and says so.
+It merges and never clobbers: a second run changes nothing and says so, and a
+`.claude/settings.json` it cannot parse stops it (`SETTINGS_UNREADABLE`, exit 1, nothing
+written) rather than being replaced.
 
 ```bash
 python3 "${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/start/scripts/install_settings.py" --repo "$MAIN_WT"
@@ -146,8 +148,13 @@ back (contract #155). Otherwise read what it prints:
   (polaris-os#155). Until it does, the hook is wired and silent, and the pack after a
   compaction is whatever the brief resolves next.
 
+`CHAIN_UNANCHORED:` may appear beside any of these. It is a report, not a refusal: every
+link is there and nothing ties that area's packs to a start receipt, which is what every
+session looks like until `/start` opens one.
+
 The session id is not a flag anybody has to fill: the command resolves the session open today.
-`chain --root "$ROOT" --sid <sid>` verifies the receipt chain of one session on demand.
+`chain --root "$ROOT" --sid <sid> [--area <slug>]` verifies the receipt chain on demand —
+exit 1 on a `CHAIN_BROKEN` and 0 on anything it merely reports.
 
 ## Step 4 — Render the resume brief
 

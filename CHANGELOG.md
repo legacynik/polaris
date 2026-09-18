@@ -27,7 +27,15 @@ All notable changes to Polaris Team OS. The installed version is pinned in
   `/start` spedito non ne apre ancora una (polaris-os#155); l'hook resta cablato e silenzioso finche'
   quello non atterra. Il pacchetto non trasporta l'harness: senza resolver dell'host non stampa nulla
   (contratto #155). `reference/two-stage-brief.md` spiega le righe una volta sola, comprese le sei
-  che dicono che la ricevuta non era affidabile e cosa vale davvero la catena. (polaris-os#406)
+  che dicono che la ricevuta non era affidabile e cosa vale davvero la catena.
+  Dal secondo giro di review, il reperto peggiore di tutto il task: l'installer **distruggeva** il
+  file che prometteva di non toccare. Un `.claude/settings.json` con una parentesi di troppo non
+  parsava, il merge partiva da `{}` e ci scriveva sopra il template — via la `deny` list, il
+  `model`, i permessi e gli hook di ogni altro plugin, senza backup e con una scrittura non
+  atomica. Ora un file che esiste, non parsa e non e' vuoto ferma l'installazione
+  (`SETTINGS_UNREADABLE`, exit 1, niente scritto), la scrittura e' atomica, e il `--selfcheck`
+  tiene giu' entrambe le meta': che un file malformato non venga toccato, e che su un file sano
+  sopravvivano `deny`, `model` e gli hook altrui. (polaris-os#406)
 
 - **`/start` a due tempi: l'indice delle aree prima, il pacchetto dell'area dopo — e mai piu' una
   riga opaca** (`start` 1.6.0 → **1.7.0**). Il brief portava `PACK=CTX-<id>`, e polaris-os#326 ha
