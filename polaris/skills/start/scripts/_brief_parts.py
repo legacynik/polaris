@@ -8,6 +8,7 @@ writes and nothing fetches: a brief that fails a session is worse than a thin on
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 from pathlib import Path
@@ -128,6 +129,7 @@ def emit_sections(root: Path, current: Path) -> list[str]:
 
 
 PACK_TIMEOUT = 25
+RESOLVER = Path("scripts") / "contextpack_dashboard.py"
 
 
 def _brief_lines(compiler: Path, root: Path, login: str) -> list[str]:
@@ -144,21 +146,55 @@ def _brief_lines(compiler: Path, root: Path, login: str) -> list[str]:
     return [line for line in done.stdout.splitlines() if line.strip()] or ["PACK: none"]
 
 
+def _vault(root: Path) -> Path | None:
+    """The vault this repository declares — `$POLARIS_VAULT` first, then `polaris.vault`.
+
+    The SAME contract the vault's own `arch_doctor_sources.vault` holds: the environment wins
+    over the declaration, a candidate counts only when it is a directory on this machine, and
+    neither is ever invented. A repository declares a vault with
+    `git config polaris.vault <path>`, locally, so the declaration never travels in a commit.
+    """
+    for candidate in (os.environ.get("POLARIS_VAULT", ""),
+                      git(root, "config", "--get", "polaris.vault")):
+        if candidate and Path(candidate).is_dir():
+            return Path(candidate)
+    return None
+
+
+def _resolver(root: Path) -> Path | None:
+    """Where the compiler is: the host's own first, then the declared vault, nothing else."""
+    for base in (root, _vault(root)):
+        if base is not None and (base / RESOLVER).is_file():
+            return base / RESOLVER
+    return None
+
+
 def emit_pack(root: Path, login: str = "") -> list[str]:
-    """D3 / polaris-os#405 — feature-detect: RUN the host's two-stage brief, or say nothing.
+    """D3 / polaris-os#405 — feature-detect: RUN the two-stage brief, or say nothing.
 
     Until #405 this printed ONE line, `PACK=CTX-<id>`, and polaris-os#326 measured what that
     is worth: the agent ignored it, so the whole resolver was invisible to the session it was
-    built for. It now prints what the host answers — the area index with its counts, the area
-    chosen or the one question to ask, and the pack of that area as one row per line. The
-    package carries none of that: it runs the host's script when the host has one.
+    built for. It now prints what the resolver answers — the area index with its counts, the
+    area chosen or the one question to ask, and the pack of that area as one row per line.
 
-    Feature-detection is unchanged in spirit (#155): a repository with no typed backbone must
-    not even learn the feature exists, so an absent resolver is SILENCE, not a line. A
-    resolver that exists and refuses is still loud — the cause is named — because a blocked
-    emission blocks (DB-FR-05). Neither shape starts with `PACK=` any more.
+    Two things changed for the product repositories. The compiler is looked up in the HOST
+    first and then in the **vault the repository declares**, because a product repo carries
+    the contract and never the harness: the host-only lookup is why `/start` showed nothing
+    in repositories whose vault already answers with a full pack. And the pack is compiled
+    against the CHECKOUT — `git rev-parse --show-toplevel`, falling back to `root` outside a
+    checkout — not against `$ROOT`, which is the `_polaris/` contract directory: the typed
+    documents live beside it, so compiling there answered zero `declared` rows.
+
+    No `decisions/manifest.json` is required. A prose pack — the `declared` layer, freshness
+    `UNKNOWN` stated row by row — is a valid pack by contract (T4, polaris-os#403), and the
+    manifest is one shape of one repository. The resolver refuses when it must, out loud.
+
+    Feature-detection is unchanged in spirit (#155): a repository with neither a resolver nor
+    a declared vault that holds one must not even learn the feature exists, so an absent
+    resolver is SILENCE, not a line. A resolver that exists and refuses is still loud — the
+    cause is named — because a blocked emission blocks (DB-FR-05).
     """
-    compiler = root / "scripts" / "contextpack_dashboard.py"
-    if not (compiler.is_file() and (root / "decisions" / "manifest.json").is_file()):
+    compiler = _resolver(root)
+    if compiler is None:
         return []
-    return _brief_lines(compiler, root, login)
+    return _brief_lines(compiler, Path(git(root, "rev-parse", "--show-toplevel") or root), login)

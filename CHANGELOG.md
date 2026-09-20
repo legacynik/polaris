@@ -5,6 +5,25 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
+- **Il brief trova il resolver anche quando l'harness non e' nel repo ospite** (`start` 1.8.0 →
+  **1.9.0**). Misurato su due repo prodotto: il compiler del vault rispondeva gia' con un pacchetto
+  intero (29 e 34 righe `layer: declared` — `CONTEXT.md` in prosa piu' gli ADR), e `/start` non ne
+  mostrava **una**. Il tubo non era collegato: il pacchetto cercava
+  `scripts/contextpack_dashboard.py` DENTRO il repo ospite e pretendeva un `decisions/manifest.json`
+  che nessun repo prodotto ha. Ora il resolver si cerca prima nell'host — chi spedisce il suo
+  compiler lo possiede — e poi nel **vault che il repo dichiara** (`$POLARIS_VAULT`, altrimenti
+  `git config polaris.vault`, dichiarazione LOCALE che non viaggia in un commit): lo stesso
+  contratto che `arch_doctor_sources.vault` tiene nel vault, non un secondo modo di dire la stessa
+  cosa. Nessuno dei due presente resta **silenzio** (#155), e un vault dichiarato che non ha piu'
+  lo script e' quello stesso caso, mai un errore; un resolver che rifiuta resta rumoroso
+  (`PACK: blocked — <CODE>`, DB-FR-05). Il requisito del manifest **cade**: un pacchetto in prosa,
+  strato `declared` con `freshness: UNKNOWN` dichiarata riga per riga, e' valido per contratto
+  (polaris-os#403) — a rifiutare ci pensa il resolver, non un pre-check del pacchetto. Il reperto
+  meno ovvio del giro: il pacchetto va compilato sul **checkout** (`git rev-parse --show-toplevel`),
+  non su `$ROOT`, che e' la cartella del contratto `_polaris/`; i documenti tipati stanno ACCANTO ad
+  essa, e compilando dentro di essa gli stessi due repo rispondevano **0** righe `declared` invece di
+  29 e 34. `reference/two-stage-brief.md` spiega i due posti e il pacchetto in prosa una volta sola.
+
 - **Dopo una compaction il pacchetto torna dalla ricevuta, non da un secondo calcolo**
   (`start` 1.7.0 → **1.8.0**). Una compaction svuota la finestra di contesto e non tocca niente su
   disco: il pacchetto era gia' risolto, e rifarlo significa ricamminare il tracker in rete per una
