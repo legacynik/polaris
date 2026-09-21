@@ -7,6 +7,19 @@ exists for, and the founder kept being the index of his own repository out loud.
 
 Read it once, in order, and act on it. Do not summarise it away.
 
+## How it reaches the reader — **Pack**, verbatim
+
+Measured end to end: the resolver printed 42 `layer:` rows and 3 `UNKNOWN:` lines, and the brief
+that reached the session carried **zero** of them, replaced by one sentence saying the pack was
+unfiltered. That sentence is not a summary of the context, it is the loss of it: a `layer:` row
+is an address the work opens, and a count of addresses opens nothing.
+
+So the brief carries a `**Pack**` section, and the rows go into it **verbatim** — the
+`UNKNOWN:` / `AREA:` / `QUESTION:` / `RECEIPT:` lines first, then one `layer:` row per line, in
+the order the resolver printed them. Over **40** rows, print the first 40 and close with
+`… and <K> more rows`; never drop the ones a reader cannot see, silently. Nothing here is
+rephrased, merged, sorted or turned into prose.
+
 ## Where the resolver lives — the host, then the vault the repo declares
 
 A product repository carries the **contract** (`_polaris/`) and never the harness, so looking for

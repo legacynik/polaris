@@ -325,6 +325,28 @@ class TheResolverIsFoundThroughTheDeclaredVault(unittest.TestCase):
         self.assertIn(str(vault / "scripts" / "contextpack_dashboard.py"), out)
 
 
+class TheBriefMustPrintThePackRowsItResolved(unittest.TestCase):
+    """A GUARD, declared as one: nothing in this package renders the brief — the model does,
+    from the instruction. So no test here can prove the rows reach a reader.
+
+    What it is guarding against was measured end to end on a host repo: `brief_signals.py`
+    printed 42 `layer:` rows and 3 `UNKNOWN:` lines, and the rendered brief carried **zero**,
+    summarised into one sentence about `DOMAIN.md` being absent. A row is an ADDRESS; a
+    sentence about the rows is not the context, it is the loss of it. The instruction has to
+    say VERBATIM, state the cap, and say it in both places a reader looks.
+    """
+
+    def test_the_skill_and_the_reference_both_prescribe_verbatim_pack_rows(self):
+        from host_repo import PKG
+        start = PKG / "skills" / "start"
+        for path in (start / "SKILL.md", start / "reference" / "two-stage-brief.md"):
+            text = path.read_text(encoding="utf-8")
+            self.assertIn("**Pack**", text, path.name)
+            self.assertIn("verbatim", text.lower(), path.name)
+            self.assertIn("40", text, f"{path.name} must state the cap, not imply it")
+            self.assertIn("layer:", text, path.name)
+
+
 class TheSkillActuallyCallsIt(unittest.TestCase):
     def test_start_resolves_the_shipped_signals_script(self):
         from host_repo import skill_block
