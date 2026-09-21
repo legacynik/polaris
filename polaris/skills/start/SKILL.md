@@ -2,7 +2,7 @@
 name: start
 description: Polaris skill — resume the current objective from the latest local handoff. First use also provisions your own team path.
 user-invocable: true
-version: 1.9.0
+version: 1.10.0
 ---
 
 # /start — resume, do not survey
@@ -170,6 +170,12 @@ Answer with the brief ONLY, as plain markdown, NEVER inside a code fence. Use th
 - Checkpoint: <latest verified handoff/checkpoint>
 - Blocker: <one active blocker, if any>
 - Next action: <the concrete continuation step from the handoff, reconciled with the plan>
+
+**Pack** — only when Step 6 printed resolver lines. Copy them **verbatim**, never summarised
+and never counted: first its `UNKNOWN:`, `AREA:`, `QUESTION:`, `RECEIPT:` lines, then every
+`layer:` row, one per line. Over **40** rows, print the first 40 and one last line
+`… and <K> more rows`. A `layer:` row is an ADDRESS — a sentence about the rows is not the
+context, it is the loss of it.
 
 If the plan and handoff disagree, name the mismatch in `Blocker`; do not invent a reconciliation.
 If there is no handoff, derive `Next action` from the current plan and say that no checkpoint

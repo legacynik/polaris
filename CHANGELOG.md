@@ -5,6 +5,20 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
+- **Il brief STAMPA le righe del pacchetto, non le riassume** (`start` 1.9.0 → **1.10.0**).
+  Misurato end to end su un repo ospite con una sessione fresca: `brief_signals.py` emette 42 righe
+  `layer:` e 3 righe `UNKNOWN:`, e il brief reso ne portava **zero** — una frase al posto di tutto
+  («DOMAIN.md e' assente, quindi il pacchetto non e' filtrato per area»). Il resolver funzionava, il
+  tubo era collegato, e il contesto moriva nell'ultimo metro. Il passo 6 diceva solo che le righe
+  `layer:` «sono il pacchetto dell'area scelta»: descrivere non e' consegnare. Il passo 4 ora
+  prescrive una sezione `**Pack**` con le righe copiate **verbatim** — prima `UNKNOWN:`/`AREA:`/
+  `QUESTION:`/`RECEIPT:`, poi una riga `layer:` per riga, nell'ordine emesso — con un tetto
+  dichiarato: oltre **40** righe si stampano le prime 40 e una riga `… and <K> more rows`, mai un
+  taglio silenzioso. Una riga `layer:` e' un INDIRIZZO: una frase sulle righe non e' il contesto, e'
+  la sua perdita. Il test e' dichiarato per quello che e': una **guardia**, non una prova — nel
+  pacchetto non esiste un renderer, il brief lo rende il modello, quindi si tiene che l'istruzione
+  dica «verbatim» e dichiari il tetto in entrambi i posti dove un lettore guarda.
+
 - **Il brief trova il resolver anche quando l'harness non e' nel repo ospite** (`start` 1.8.0 →
   **1.9.0**). Misurato su due repo prodotto: il compiler del vault rispondeva gia' con un pacchetto
   intero (29 e 34 righe `layer: declared` — `CONTEXT.md` in prosa piu' gli ADR), e `/start` non ne
