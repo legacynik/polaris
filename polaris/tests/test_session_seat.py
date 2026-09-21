@@ -14,7 +14,9 @@ those may cost the handoff commit, and none may overwrite a receipt that already
 from __future__ import annotations
 
 import json
+import os
 import subprocess
+import sys
 import unittest
 from pathlib import Path
 
@@ -178,6 +180,47 @@ class TheChainQuestionReachesTheSeat(unittest.TestCase):
                               capture_output=True, text=True)
         self.assertTrue((root_seen(done.stdout) / "state" / "session" / sid).is_dir(),
                         "the chain is verified against a root with no session in it")
+
+
+class HygieneNeverFailsTheBrief(unittest.TestCase):
+    """C3 — the seat's own `.gitignore` is hygiene. Hygiene that raises is a gate."""
+
+    def test_a_read_only_state_directory_still_leaves_one_line_and_exit_zero(self):
+        repo = declaring()
+        (repo / "state").mkdir()
+        (repo / "state").chmod(0o555)
+        try:
+            done = block("start", OPEN, repo)
+        finally:
+            (repo / "state").chmod(0o755)
+        self.assertEqual(done.returncode, 0, "a brief must never die of its own housekeeping")
+        self.assertIn("SESSION: blocked", done.stdout)
+        self.assertNotIn("Traceback", done.stderr)
+
+
+class TheSelfcheckRunsWhereNothingIsInstalled(unittest.TestCase):
+    """C4 — the hook names `$CLAUDE_PLUGIN_ROOT`, and a checkout is not an installation."""
+
+    def test_install_settings_selfcheck_passes_with_no_installed_copy_on_the_machine(self):
+        env = {k: v for k, v in os.environ.items()
+               if k not in ("CLAUDE_PLUGIN_ROOT", "POLARIS_VAULT")}
+        done = subprocess.run([sys.executable,
+                               str(PKG / "skills" / "start" / "scripts" / "install_settings.py"),
+                               "--selfcheck"], capture_output=True, text=True, env=env)
+        self.assertEqual(done.returncode, 0, done.stdout + done.stderr)
+
+
+class ASeatOfSomebodyElseIsNamed(unittest.TestCase):
+    """C5 — `--login` and `polaris.login` disagreeing left a session open forever, silently."""
+
+    def test_close_says_whose_the_open_seat_is_when_it_is_not_ours(self):
+        repo = declaring()
+        sid = sid_of(block("start", OPEN, repo, LOGIN="other-panel").stdout)
+        handoff(repo)
+        done = close(repo)                       # the shipped block uses $LOGIN = acme-dev
+        self.assertEqual(done.returncode, 0, "not ours is not a refusal")
+        self.assertIn("other-panel", done.stdout)
+        self.assertFalse((seat(repo, sid) / "end.json").exists(), "and it is not closed either")
 
 
 CRASHES = "import sys\nraise SystemError('EPERM: state/session is not writable')\n"

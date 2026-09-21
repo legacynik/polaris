@@ -25,6 +25,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _brief_parts import git  # noqa: E402
 
 ISSUE = re.compile(r"(?:^|[/_-])(\d+)(?:[/_-]|$)")
+SEAT = re.compile(r"^s-(.+)-\d{8}-[0-9a-f]{6}(?:-\d+)?$")
 LIMIT = 100  # sessions of one day on one checkout; beyond it something else is wrong
 
 
@@ -66,8 +67,22 @@ def free_sid(root: Path, login: str) -> str:
 
 def open_seat(root: Path, login: str) -> Path | None:
     """The session still open in this checkout for this contributor, newest first."""
-    found = [home for home in seats(root).glob(f"s-{who(root, login)}-*") if is_open(home)]
+    return newest(seats(root).glob(f"s-{who(root, login)}-*"))
+
+
+def newest(homes) -> Path | None:
+    found = [home for home in homes if is_open(home)]
     return max(found, key=lambda home: home.stat().st_mtime) if found else None
+
+
+def other_login(root: Path, login: str) -> str:
+    """Whose the open seat is, when it is not ours.
+
+    `--login` and `polaris.login` disagreeing is silent by construction: the glob finds
+    nothing, `/end` closes nothing and says nothing, and that session stays open forever."""
+    home = newest(seats(root).glob("s-*"))
+    found = SEAT.match(home.name) if home is not None else None
+    return found.group(1) if found and found.group(1) != who(root, login) else ""
 
 
 def ignore_itself(root: Path) -> None:
@@ -78,9 +93,12 @@ def ignore_itself(root: Path) -> None:
     a tracked file of somebody else's repository, and `/end`'s clean-tree gate stays true.
     """
     mark = seats(root) / ".gitignore"
-    if not mark.exists():
-        mark.parent.mkdir(parents=True, exist_ok=True)
-        mark.write_text("*\n")
+    try:
+        if not mark.exists():
+            mark.parent.mkdir(parents=True, exist_ok=True)
+            mark.write_text("*\n")
+    except OSError:
+        pass   # a read-only tree is the engine's refusal to report, not the brief's to raise
 
 
 def work_item(root: Path) -> str:

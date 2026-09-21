@@ -150,9 +150,14 @@ def _hook_command(repo: Path) -> str:
 
 def _probe(command: str, repo: Path) -> tuple[int, str]:
     """RUN the hook command. A hook is a string until somebody executes it, and a string
-    is green under every breakage there is."""
+    is green under every breakage there is.
+
+    Against THIS package: the command names `$CLAUDE_PLUGIN_ROOT`, which outside an install
+    falls back to `~/.agents/skills`. A checkout is not an installation, so the probe was
+    green or red depending on what the machine happened to have installed."""
     done = subprocess.run(["sh", "-c", command], cwd=repo, capture_output=True, text=True,
-                          env={**os.environ, "CLAUDE_PROJECT_DIR": str(repo)})
+                          env={**os.environ, "CLAUDE_PROJECT_DIR": str(repo),
+                               "CLAUDE_PLUGIN_ROOT": str(HERE.parents[2])})
     return done.returncode, done.stdout.strip()
 
 

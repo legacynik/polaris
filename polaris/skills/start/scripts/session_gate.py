@@ -26,7 +26,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _brief_parts import _resolver, _vault  # noqa: E402
 from _session_seat import (free_sid, ignore_itself, open_seat,  # noqa: E402
-                           top_of, work_item)
+                           other_login, top_of, work_item)
 
 ENGINE = Path("scripts") / "session_continuity.py"
 REINSERT = Path("scripts") / "contextpack_reinsert.py"
@@ -111,7 +111,9 @@ def cmd_close(engine: Path, root: Path, opts: argparse.Namespace) -> int:
         return 1
     home = open_seat(root, opts.login)
     if home is None:
-        print("SESSION: none open — nothing to close")
+        stranger = other_login(root, opts.login)
+        print(f"SESSION: open seat belongs to {stranger} — pass --login or set polaris.login"
+              if stranger else "SESSION: none open — nothing to close")
         return 0
     done = run(engine, ["end", "--root", str(top_of(root)), "--sid", home.name,
                         "--handoff", opts.handoff])

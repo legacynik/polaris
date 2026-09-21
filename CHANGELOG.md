@@ -55,6 +55,12 @@ All notable changes to Polaris Team OS. The installed version is pinned in
   qualunque domanda sulla sessione, exit 1. E `chain`, che era rimasto l'ultimo lettore a chiedere
   `$ROOT`, passa dalla porta come `reinsert`: stessa radice, ma l'exit code arriva al chiamante,
   perché una verifica che inghiotte `CHAIN_BROKEN` non verifica niente.
+  Tre cose che una riga sola rompeva: l'ignore del seat su un `state/` non scrivibile faceva
+  morire il brief con un traceback (è igiene, ora non alza), il selfcheck di `install_settings`
+  eseguiva l'hook contro la copia **installata** invece del pacchetto in cui vive (rosso 12/13 su
+  una macchina senza install, e `check_skills.sh` con lui), e `--login` divergente da
+  `polaris.login` lasciava una sessione aperta per sempre in silenzio — ora `/end` dice di chi è
+  il seat aperto invece di tacere.
 
 - **Una repo che esiste gia' entra dalla porta `init`, e la porta non trasporta l'harness**
   (`init` **0.1.0** nuova, pacchetto 0.25.2 → **0.26.0**). Il pacchetto spediva le skill ma nessun
