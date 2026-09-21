@@ -2,7 +2,7 @@
 name: end
 description: Polaris skill — close a repository-first team session with a handoff, decisions/lessons written to the ledgers, a plan tick and a pathspec-only commit. Trigger when stopping work, before a multi-day pause, or on "wrap up / end session / /end".
 user-invocable: true
-version: 1.20.0
+version: 1.21.0
 invokes: [git-power]
 ---
 
@@ -129,19 +129,20 @@ Dove il repo porta il gate del backbone, la stessa cosa è una verifica eseguibi
 promemoria — altrimenti le sei righe sopra restano la checklist:
 
 ```bash
-GATE="$ROOT/scripts/session_continuity.py"
-if [ -f "$GATE" ]; then
-  python3 "$GATE" end --root "$ROOT" --sid "<sid>" \
-    --handoff "$ROOT/team/$LOGIN/sessions/$(date +%F)-@$LOGIN.md" || exit 1
-else
-  echo "NOTA: nessun gate del backbone in questo repo — le sei righe sono la checklist"
-fi
+python3 "${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/start/scripts/session_gate.py" close \
+  --root "$ROOT" --handoff "$ROOT/team/$LOGIN/sessions/$(date +%F)-@$LOGIN.md" || exit 1
 ```
 
-**`if`, non `&&` … `||`.** Con la catena, OGNI rifiuto del gate — anche `ID_COLLISION` — cadeva nel
-ramo `||` e stampava «nessun gate», con `$?` a `0`: la skill proseguiva al commit dello Step 5
-esattamente nei casi che il gate esiste per fermare, e il messaggio accusava l'installazione invece
-della sessione. Un rifiuto deve fermare `/end`; l'assenza del gate è l'unico caso che degrada.
+Chiude **la sessione che `/start` ha aperto in questo checkout**: il sid non si passa e non si
+inventa — è checkout + giorno + login, ricalcolato qui (polaris-os#155). Il motore è quello del
+repo, se lo porta, altrimenti quello del vault dichiarato (`git config polaris.vault`), la stessa
+ricerca che fa il pack del brief.
+
+**Il `|| exit 1` vale solo per i rifiuti.** Prima questo blocco era un `if [ -f "$GATE" ]` su un
+path solo-host, e con una catena `&&` … `||` OGNI rifiuto — anche `ID_COLLISION` — cadeva nel ramo
+`||` stampando «nessun gate» con `$?` a `0`: la skill proseguiva al commit dello Step 5 proprio nei
+casi che il gate esiste per fermare. Ora l'assenza del motore esce 0 stampando la nota, e il
+`|| exit 1` intercetta soltanto i rifiuti veri.
 
 Sette rifiuti, tutti prima della ricevuta: `HANDOFF_MISSING` se non gli si passa il log e
 `HANDOFF_UNREADABLE` se il path non è leggibile (i cinque elementi si leggono, non si inventano),
@@ -216,8 +217,9 @@ entry in the vault's own ring, so work done here is visible from there without g
 everything-file anywhere:
 
 ```bash
-VAULT="$(git config --get polaris.vault-root || true)"   # declared per repo, never guessed
-[ -n "$VAULT" ] && [ -d "$VAULT" ] && [ "$VAULT" != "$ROOT" ] || VAULT=""
+VAULT="$(python3 "${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/start/scripts/session_gate.py" \
+  vault --root "$ROOT")"                                 # declared per repo, never guessed
+[ -n "$VAULT" ] && [ "$VAULT" != "$ROOT" ] || VAULT=""
 ```
 
 ```bash
@@ -229,9 +231,10 @@ RC="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/update/scripts/recent_context.py
 No declaration, or a declared path that is not there → no copy, and this repo's cockpit is the only
 record. A literal path used to live here, which meant every install looked for a directory that
 exists on one machine and the public package carried a home directory. Set it once per repo:
-`git config polaris.vault-root <path>`, the same mechanism `polaris.login` already uses.
-The separator is a **dash**: `git config` refuses a key with an underscore outright, so the
-underscored spelling this line used to carry made the vault copy a branch that never ran.
+`git config polaris.vault <path>`, the same mechanism `polaris.login` already uses — **one key**,
+the one `/start`, `/init` and the doctor already read. `polaris.vault-root` was a second spelling
+of the same fact and is still read for one cycle, with a deprecation note on stderr naming the
+key that replaces it.
 
 Three surfaces carry a session and no fourth exists: the thread line in `current.md` (thin index),
 the `## Recent Context` entry (summary, capped), the committed session log (full handoff). The

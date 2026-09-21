@@ -5,6 +5,34 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
+- **La sessione si APRE da `/start`, e le altre due porte raggiungono quella** (`start` 1.10.0 →
+  **1.11.0**, `update` 3.0.0 → **3.1.0**, `end` 1.20.0 → **1.21.0**, pacchetto 0.26.0 → **0.27.0**).
+  Il motore della continuità (`scripts/session_continuity.py`) stava nel vault da settimane e
+  **nessuna skill chiamava il suo `start`**: la ricevuta del pack (`area-<slug>.json`) e il
+  reinserimento dopo una compaction rispondevano `RECEIPT: none` e `NO_OPEN_SESSION`, cioè tutto il
+  lavoro del resolver moriva con la finestra di contesto in cui era stato stampato
+  (polaris-os#155).
+  Ora `/start` ha un passo 5b — **prima** dei segnali, perché la ricevuta appartiene a una sessione
+  già aperta — che apre con un **sid derivato**: `s-<login>-<YYYYMMDD>-<hash6 del checkout>`.
+  Derivato, non passato: `/update` e `/end` lo ricalcolano e arrivano alla stessa sessione senza
+  che nulla viaggi fra i processi. Una seconda `/start` nello stesso giorno è un **resume**, non un
+  errore; un pack rifiutato è **una riga** (`SESSION: blocked — <CODE>`) e il brief continua; un
+  repo senza motore non stampa niente e non scrive niente — la feature-detection di #155 resta
+  intatta.
+  `/update` aggiunge un evento append-only al checkpoint, `/end` chiude la stessa sessione: il
+  `sid` non si scrive più a mano (il corpo spediva letteralmente `--sid "<sid>"`) e il gate non si
+  cerca più solo nel repo (`$ROOT/scripts/…`, che in una repo di prodotto non esiste) ma **host poi
+  vault dichiarato**, la stessa ricerca del compilatore del brief.
+  **Una chiave sola per il vault.** `/end` leggeva `polaris.vault-root` mentre `/start`, `/init` e
+  il doctor leggono `polaris.vault`: due chiavi per lo stesso fatto sono una repo che risponde a una
+  porta e non all'altra. Ora la chiave è `polaris.vault`; la vecchia è ancora **letta per un giro**,
+  con una nota di deprecazione su stderr che nomina quella che la sostituisce.
+  Prova reale su una repo di prodotto (worktree usa e getta, `origin/main`, nessun backbone
+  tipizzato): `SESSION: opened s-…`, la ricevuta `state/session/<sid>/area-all.json` con lo stesso
+  `pack_seal` della `start.json`, un evento con `prev` = ricevuta di start, `end.json` che li lega,
+  e il reinserimento che passa da `NO_OPEN_SESSION` a `REINSERT: HEAD unchanged … 0 tracker calls`
+  con `CHAIN: prev=<ricevuta di start>`.
+
 - **Una repo che esiste gia' entra dalla porta `init`, e la porta non trasporta l'harness**
   (`init` **0.1.0** nuova, pacchetto 0.25.2 → **0.26.0**). Il pacchetto spediva le skill ma nessun
   modo di *entrare*: in una repo di prodotto senza triade tipizzata il context pack non emette

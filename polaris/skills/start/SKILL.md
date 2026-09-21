@@ -2,7 +2,7 @@
 name: start
 description: Polaris skill — resume the current objective from the latest local handoff. First use also provisions your own team path.
 user-invocable: true
-version: 1.10.0
+version: 1.11.0
 ---
 
 # /start — resume, do not survey
@@ -102,6 +102,21 @@ Read these local files, in order:
    `RADAR=none` → inline fallback: `git worktree list` to flag a stray `state/current.md` in an
    extra worktree, and
    `git log --all --not main --since='14 days ago' --oneline -- '*sessions/*.md' | head -5`.
+5b. **Open the session — BEFORE 6, always** (the receipt below belongs to a session, and
+   `/update` and `/end` reach the one opened here):
+
+   ```bash
+   python3 "${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/start/scripts/session_gate.py" open \
+     --root "$ROOT" --login "$LOGIN"
+   ```
+
+   One line or none. `SESSION: opened <sid>` — the session is open and the pack below gets a
+   `RECEIPT:`. `SESSION: resumed <sid>` — a session of today's checkout was already open, which
+   is the normal second `/start`, not an error. `SESSION: blocked — <CODE>` — the engine refused
+   (a stale seal, an invalid pack): report the line and go on, the brief is not the gate.
+   Nothing at all: this repo has no engine, and there is nothing to open. Never pass `--sid`:
+   the id is the checkout, the day and the login, so the other two doors recompute it.
+
 6. **The signals this repo already produces (ALWAYS)** — read-only, under a second:
 
    ```bash
@@ -145,10 +160,9 @@ back (contract #155). Otherwise read what it prints:
   `AREA_MISMATCH:` or `CHAIN_BROKEN:` — the receipt on disk could not be trusted, so the pack
   was resolved instead of reused. All are costs, not failures; the command still exits 0, and
   nothing on disk is overwritten. Report the line: it says something about the session.
-- `NO_OPEN_SESSION:` — no session receipt is open. **This is what you will see today**: a pack
-  receipt belongs to a session, and the shipped `/start` does not yet open one
-  (polaris-os#155). Until it does, the hook is wired and silent, and the pack after a
-  compaction is whatever the brief resolves next.
+- `NO_OPEN_SESSION:` — no session receipt is open, so there is no pack to put back. Since
+  polaris-os#155 Step 5b opens one, so this now means the session was closed by `/end`, or
+  this repository carries no engine at all.
 
 `CHAIN_UNANCHORED:` may appear beside any of these. It is a report, not a refusal: every
 link is there and nothing ties that area's packs to a start receipt, which is what every
@@ -171,7 +185,8 @@ Answer with the brief ONLY, as plain markdown, NEVER inside a code fence. Use th
 - Blocker: <one active blocker, if any>
 - Next action: <the concrete continuation step from the handoff, reconciled with the plan>
 
-**Pack** — only when Step 6 printed resolver lines. Copy them **verbatim**, never summarised
+**Pack** — the `SESSION:` line of Step 5b when there is one, then the Step 6 resolver lines
+when there are any. Copy them **verbatim**, never summarised
 and never counted: first its `UNKNOWN:`, `AREA:`, `QUESTION:`, `RECEIPT:` lines, then every
 `layer:` row, one per line. Over **40** rows, print the first 40 and one last line
 `… and <K> more rows`. A `layer:` row is an ADDRESS — a sentence about the rows is not the
