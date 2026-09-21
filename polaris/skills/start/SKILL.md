@@ -2,7 +2,7 @@
 name: start
 description: Polaris skill — resume the current objective from the latest local handoff. First use also provisions your own team path.
 user-invocable: true
-version: 1.8.0
+version: 1.10.0
 ---
 
 # /start — resume, do not survey
@@ -111,7 +111,9 @@ Read these local files, in order:
 
    Each line is self-describing: read it. `AREA:` rows index the areas, `layer:` rows are the
    chosen area's pack; on `QUESTION:` ask it and stop. Todos and `RECENT` go with the work,
-   `SPOOL_LEGACY`/`DRIFT`/`SECTIONS_MISSING` under `**Segnali**`. See `reference/two-stage-brief.md`.
+   `SPOOL_LEGACY`/`DRIFT`/`SECTIONS_MISSING` under `**Segnali**`. The resolver is the host's,
+   else the vault the repo declares (`git config polaris.vault`); a prose pack is a pack.
+   See `reference/two-stage-brief.md`.
 
 Do not read lessons, `.wiki/hot.md`, or unrelated files speculatively. Memory is not
 current state and recall is never mandatory at session start.
@@ -168,6 +170,12 @@ Answer with the brief ONLY, as plain markdown, NEVER inside a code fence. Use th
 - Checkpoint: <latest verified handoff/checkpoint>
 - Blocker: <one active blocker, if any>
 - Next action: <the concrete continuation step from the handoff, reconciled with the plan>
+
+**Pack** — only when Step 6 printed resolver lines. Copy them **verbatim**, never summarised
+and never counted: first its `UNKNOWN:`, `AREA:`, `QUESTION:`, `RECEIPT:` lines, then every
+`layer:` row, one per line. Over **40** rows, print the first 40 and one last line
+`… and <K> more rows`. A `layer:` row is an ADDRESS — a sentence about the rows is not the
+context, it is the loss of it.
 
 If the plan and handoff disagree, name the mismatch in `Blocker`; do not invent a reconciliation.
 If there is no handoff, derive `Next action` from the current plan and say that no checkpoint

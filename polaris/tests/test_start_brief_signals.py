@@ -10,8 +10,11 @@ Every case runs the shipped `start/scripts/brief_signals.py` in a real host repo
 from __future__ import annotations
 
 import json
+import os
+import tempfile
 import unittest
 from datetime import date, timedelta
+from pathlib import Path
 
 from host_repo import LOGIN, git, host_repo, run_script, seed_state
 
@@ -156,6 +159,192 @@ class TheBackboneIsFeatureDetected(unittest.TestCase):
         self.assertEqual(out.returncode, 0)
         self.assertNotIn("PACK", out.stdout)
         self.assertEqual(out.stderr.strip(), "", "a missing backbone is not an error")
+
+
+def clean_env(**extra: str) -> dict:
+    """The session's environment minus the vault this machine happens to declare.
+
+    Every case below is about what the REPOSITORY declares. A `$POLARIS_VAULT` inherited from
+    the founder's own shell would make the silent cases pass for the wrong reason.
+    """
+    env = {k: v for k, v in os.environ.items() if k != "POLARIS_VAULT"}
+    return {**env, **extra}
+
+
+def brief_of(repo, **env: str):
+    """The shipped signals script on a host repo, with the environment under test."""
+    root = repo / "_polaris"
+    return run_script("start", "brief_signals.py", "--root", str(root),
+                      "--current", str(root / "state" / "current.md"),
+                      cwd=str(repo), env=clean_env(**env))
+
+
+def stub_vault(body: str) -> Path:
+    """A throwaway vault carrying `scripts/contextpack_dashboard.py` and nothing else."""
+    vault = Path(tempfile.mkdtemp(prefix="pm-vault-"))
+    (vault / "scripts").mkdir()
+    (vault / "scripts" / "contextpack_dashboard.py").write_text(body)
+    return vault
+
+
+class TheResolverIsFoundThroughTheDeclaredVault(unittest.TestCase):
+    """polaris-os L-ctx step 1 — a product repo carries the contract, never the harness.
+
+    Measured before this change: the vault's resolver answers a product repo with a full
+    prose pack (29 and 34 `layer: declared` rows in the two host repos), and `/start` never
+    showed one of them, because the package looked for the compiler INSIDE the host and for
+    a `decisions/manifest.json` no product repo has. The host is asked first — a repo that
+    ships its own compiler owns it — then the vault the repo declares, and nothing else.
+    """
+
+    ECHO = "import sys\nprint('ROOT_SEEN: ' + sys.argv[sys.argv.index('--root') + 1])\n"
+
+    def test_no_resolver_and_no_declared_vault_stays_silent(self):
+        """(a) #155: a repo with neither must not learn the feature exists."""
+        out = brief_of(host_repo())
+        self.assertEqual(out.returncode, 0)
+        self.assertNotIn("PACK", out.stdout)
+        self.assertEqual(out.stderr.strip(), "")
+
+    def test_the_declared_vault_resolver_answers_for_the_host(self):
+        """(b) `polaris.vault` is the fallback the whole lane hangs on."""
+        repo = host_repo()
+        vault = stub_vault("print('AREA: memoria  issues: 3  prs: 1  last_decision: DEC-9')\n"
+                           "print('layer: declared  source_id: CONTEXT.md  path: CONTEXT.md"
+                           "  freshness: UNKNOWN')\nprint('layer: flight  source_id: b  path: -"
+                           "  freshness: UNKNOWN')\n")
+        git(repo, "config", "polaris.vault", str(vault))
+        out = brief_of(repo)
+        self.assertIn("AREA: memoria  issues: 3", out.stdout)
+        self.assertEqual(2, len([ln for ln in out.stdout.splitlines()
+                                 if ln.startswith("layer: ")]), out.stdout)
+
+    def test_the_environment_wins_over_the_declared_vault(self):
+        """(c) `$POLARIS_VAULT` is how one session points somewhere else for one run."""
+        repo = host_repo()
+        git(repo, "config", "polaris.vault", str(stub_vault("print('FROM: config')\n")))
+        out = brief_of(repo, POLARIS_VAULT=str(stub_vault("print('FROM: env')\n")))
+        self.assertIn("FROM: env", out.stdout)
+        self.assertNotIn("FROM: config", out.stdout)
+
+    def test_a_declared_vault_without_the_script_is_silence_not_an_error(self):
+        """(d) A stale `polaris.vault` must degrade to the no-backbone case."""
+        repo = host_repo()
+        git(repo, "config", "polaris.vault", tempfile.mkdtemp(prefix="pm-empty-"))
+        out = brief_of(repo)
+        self.assertEqual(out.returncode, 0)
+        self.assertNotIn("PACK", out.stdout)
+        self.assertEqual(out.stderr.strip(), "")
+
+    def test_a_refusing_vault_resolver_is_loud(self):
+        """(e) DB-FR-05: a blocked emission blocks, wherever the resolver lives."""
+        repo = host_repo()
+        git(repo, "config", "polaris.vault", str(stub_vault(
+            "import sys\nsys.stderr.write('DECISION_SCOPE_STALE: docs/x.md\\n')\nsys.exit(2)\n")))
+        out = brief_of(repo)
+        self.assertIn("PACK: blocked", out.stdout)
+        self.assertIn("DECISION_SCOPE_STALE", out.stdout)
+
+    def test_a_prose_pack_needs_no_decisions_manifest(self):
+        """(f) T4/#403: the `declared` layer IS a valid pack. Requiring `decisions/manifest.json`
+        is what kept every product repo silent — none of them has one."""
+        repo = host_repo()
+        git(repo, "config", "polaris.vault", str(stub_vault(
+            "print('layer: declared  source_id: CONTEXT.md  path: CONTEXT.md"
+            "  freshness: UNKNOWN')\n")))
+        self.assertFalse((repo / "_polaris" / "decisions" / "manifest.json").exists())
+        self.assertIn("layer: declared", brief_of(repo).stdout)
+
+    def test_the_pack_is_compiled_against_the_checkout_not_the_contract_dir(self):
+        """(g) The typed documents live at the CHECKOUT root (`CONTEXT.md`, `decisions/`),
+        while `/start` passes `$ROOT` = `<repo>/_polaris`. Compiling the pack against the
+        contract directory is what made the two host repos answer 0 `declared` rows instead
+        of 29 and 34."""
+        repo = host_repo()
+        git(repo, "config", "polaris.vault", str(stub_vault(self.ECHO)))
+        self.assertIn(f"ROOT_SEEN: {repo}", brief_of(repo).stdout.splitlines(),
+                      "a substring assertion passes on `<repo>/_polaris` too")
+
+    def test_the_host_resolver_wins_over_a_healthy_vault_even_when_it_refuses(self):
+        """(h) Precedence, at the only moment it is observable: a host that ships its own
+        compiler OWNS the answer, so its refusal is the answer — the declared vault is a
+        fallback for a repo that has none, never a second opinion on a repo that does. The
+        doctor's `resolve` holds the same order."""
+        repo = host_repo()
+        root = repo / "_polaris"
+        (root / "scripts").mkdir()
+        (root / "scripts" / "contextpack_dashboard.py").write_text(
+            "import sys\nsys.stderr.write('HOST_REFUSED: the host said no\\n')\nsys.exit(2)\n")
+        git(repo, "config", "polaris.vault", str(stub_vault("print('FROM: the vault')\n")))
+        out = brief_of(repo).stdout
+        self.assertIn("PACK: blocked", out)
+        self.assertIn("HOST_REFUSED", out)
+        self.assertNotIn("FROM: the vault", out)
+
+    def test_a_relative_declared_vault_resolves_against_the_repo_not_the_cwd(self):
+        """(i) `git config polaris.vault ../vault` answered 0 rows from one directory and the
+        whole pack from another, because a relative path was resolved against the PROCESS's
+        cwd. A declaration belongs to the repository, so it resolves against the repository."""
+        repo = host_repo()
+        vault = stub_vault("print('layer: declared  source_id: CONTEXT.md  path: CONTEXT.md"
+                           "  freshness: UNKNOWN')\n")
+        (repo / "_polaris" / "vault-link").symlink_to(vault, target_is_directory=True)
+        git(repo, "config", "polaris.vault", "vault-link")
+        self.assertIn("layer: declared", brief_of(repo).stdout)
+
+    def test_a_tilde_in_the_declared_vault_is_expanded(self):
+        """(j) `~/dev/vault` is how a human writes a path. Unexpanded it is a directory that
+        does not exist, and the brief went SILENT — the one shape indistinguishable from a
+        repository that never declared a vault at all."""
+        repo = host_repo()
+        vault = stub_vault("print('FROM: the home vault')\n")
+        git(repo, "config", "polaris.vault", f"~/{vault.name}")
+        self.assertIn("FROM: the home vault", brief_of(repo, HOME=str(vault.parent)).stdout)
+
+    def test_a_resolver_that_prints_bytes_no_decoder_accepts_does_not_kill_the_brief(self):
+        """(k) A `UnicodeDecodeError` out of the compiler is not a pack problem: it took the
+        WHOLE brief with it — todos, recent, drift, everything — and a brief that fails a
+        session is worse than a thin one."""
+        repo = host_repo()
+        git(repo, "config", "polaris.vault", str(stub_vault(
+            "import sys\nsys.stdout.buffer.write(b'layer: declared \\xff\\xfe bad\\n')\n")))
+        out = brief_of(repo)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertIn("TODOS=absent", out.stdout, "the rest of the brief must survive")
+        self.assertIn("layer: declared", out.stdout)
+
+    def test_a_blocked_pack_names_the_resolver_that_refused(self):
+        """(l) `PACK: blocked — <CODE>` did not say WHICH compiler refused. With two possible
+        places, a reader cannot tell a broken host from a broken vault."""
+        repo = host_repo()
+        vault = stub_vault("import sys\nsys.stderr.write('DECISION_SCOPE_STALE: x\\n')\n"
+                           "sys.exit(2)\n")
+        git(repo, "config", "polaris.vault", str(vault))
+        out = brief_of(repo).stdout
+        self.assertIn("PACK: blocked", out)
+        self.assertIn(str(vault / "scripts" / "contextpack_dashboard.py"), out)
+
+
+class TheBriefMustPrintThePackRowsItResolved(unittest.TestCase):
+    """A GUARD, declared as one: nothing in this package renders the brief — the model does,
+    from the instruction. So no test here can prove the rows reach a reader.
+
+    What it is guarding against was measured end to end on a host repo: `brief_signals.py`
+    printed 42 `layer:` rows and 3 `UNKNOWN:` lines, and the rendered brief carried **zero**,
+    summarised into one sentence about `DOMAIN.md` being absent. A row is an ADDRESS; a
+    sentence about the rows is not the context, it is the loss of it. The instruction has to
+    say VERBATIM, state the cap, and say it in both places a reader looks.
+    """
+
+    def test_the_skill_and_the_reference_both_prescribe_verbatim_pack_rows(self):
+        from host_repo import PKG
+        start = PKG / "skills" / "start"
+        for path in (start / "SKILL.md", start / "reference" / "two-stage-brief.md"):
+            text = path.read_text(encoding="utf-8")
+            self.assertIn("**Pack**", text, path.name)
+            self.assertIn("verbatim", text.lower(), path.name)
+            self.assertIn("40", text, f"{path.name} must state the cap, not imply it")
+            self.assertIn("layer:", text, path.name)
 
 
 class TheSkillActuallyCallsIt(unittest.TestCase):
