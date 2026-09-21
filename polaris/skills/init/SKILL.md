@@ -1,7 +1,7 @@
 ---
 name: init
 description: ◇ Use to bring a repository that already exists into the harness — the first time a repo has no typed CONTEXT.md, ARCHITECTURE.md or DOMAIN.md, or when the context pack emits nothing there. Audits before it writes, asks one question per unprovable choice, and applies only the minimal mode. Do NOT use to refactor a repository, to create documentation areas, or on a repo already sealed READY.
-version: 0.1.0
+version: 0.2.0
 user-invocable: true
 auto: false
 lifecycle: one alignment plan per run → the founder signs the areas → apply seals the backbone once
@@ -64,6 +64,10 @@ JSON: each live document as `absent`, `prose` or `typed`; every blocking finding
 run cannot prove. Read them. A blocker whose remedy says *founder answer required* will not clear
 by re-running.
 
+The `vault` field says what `polaris.vault` currently points at and whether it still resolves.
+Re-read it every run: the pointer lives in the shared `.git/config`, so a parallel session
+rewrites it under you, and a dead pointer means the pack stops emitting with no error.
+
 ## Step 3 — Propose, and get the areas signed
 
 ```bash
@@ -73,6 +77,10 @@ python3 -I "$VAULT/scripts/polaris_init.py" propose --root .
 A Markdown plan: what `apply` would do, the candidate areas as a table to sign, and the questions
 numbered. Put it in front of the founder and **wait**. The areas table is the signature request;
 candidates come from a declared map or from the folders that exist, never from the domain.
+
+A cockpit with no `## Active Priorities` heading is listed here as a question, because the brief
+then reads `no priority 1`. It is never written: which priorities, in which order, is the
+founder's to state.
 
 ## Step 4 — Apply the minimal mode, then check the pack
 

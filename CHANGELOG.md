@@ -20,6 +20,14 @@ All notable changes to Polaris Team OS. The installed version is pinned in
   (#331 KILL): un dossier senza manifest firmato blocca il sigillo invece di far inventare un
   manifest all'agente.
 
+- **Il puntatore al vault si rilegge a ogni giro, e il cockpit si chiede** (`init` 0.1.0 →
+  **0.2.0**). `polaris.vault` vive nel `.git/config` condiviso: un'altra sessione lo riscrive
+  sotto di te, e un puntatore morto non da' errore — il pack semplicemente smette di emettere.
+  `audit` ora porta un campo `vault` con cio' che e' dichiarato e se risolve ancora. E un cockpit
+  senza intestazione `## Active Priorities` (misurato: le priorita' ci sono, l'intestazione era
+  finita dentro una riga di prosa) diventa una **domanda** in `propose`, mai una scrittura: quali
+  siano le priorita' e in che ordine lo dice il founder, non questo strumento.
+
 - **Dopo una compaction il pacchetto torna dalla ricevuta, non da un secondo calcolo**
   (`start` 1.7.0 → **1.8.0**). Una compaction svuota la finestra di contesto e non tocca niente su
   disco: il pacchetto era gia' risolto, e rifarlo significa ricamminare il tracker in rete per una
