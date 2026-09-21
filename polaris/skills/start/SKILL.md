@@ -178,8 +178,16 @@ put back (contract #155). Otherwise read what it prints:
 link is there and nothing ties that area's packs to a start receipt.
 
 The session id is not a flag anybody has to fill: the command resolves the session open today.
-`chain --root "$ROOT" --sid <sid> [--area <slug>]` verifies the receipt chain on demand —
-exit 1 on a `CHAIN_BROKEN` and 0 on anything it merely reports.
+The same door verifies the receipt chain on demand — exit 1 on a `CHAIN_BROKEN`, 0 on anything
+it merely reports:
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/start/scripts/session_gate.py" \
+  chain --root "$ROOT"
+```
+
+`--sid` and `--area` narrow it to one session or one area; without them it asks about the
+session open today, the same one everything else here is about.
 
 ## Step 4 — Render the resume brief
 

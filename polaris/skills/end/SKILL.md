@@ -149,7 +149,12 @@ path solo-host, e con una catena `&&` … `||` OGNI rifiuto — anche `ID_COLLIS
 casi che il gate esiste per fermare. Ora l'assenza del motore esce 0 stampando la nota, e il
 `|| exit 1` intercetta soltanto i rifiuti veri.
 
-Sette rifiuti, tutti prima della ricevuta: `HANDOFF_MISSING` se non gli si passa il log e
+Sette rifiuti, tutti prima della ricevuta — ma solo **con una sessione aperta**: senza, il motore
+non gira e restano i due che il log si guadagna da solo, che la porta controlla per prima
+(`HANDOFF_MISSING`, `HANDOFF_UNREADABLE`, exit 1). Gli altri cinque — decisione non scritta, id già
+speso, albero altrui — non hanno una sessione contro cui girare: valgono comunque come regola, e
+quello che scoprono va in una issue, non in un rifiuto che non esiste.
+I sette: `HANDOFF_MISSING` se non gli si passa il log e
 `HANDOFF_UNREADABLE` se il path non è leggibile (i cinque elementi si leggono, non si inventano),
 `HANDOFF_INCOMPLETE` nomina l'elemento mancante, `DECISION_UNWRITTEN` la clausola che non nomina la
 sua casa, `ID_COLLISION` un id di Decision già speso altrove, `TREE_NOT_OURS` un path sporco che

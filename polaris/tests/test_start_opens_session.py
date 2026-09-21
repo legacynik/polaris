@@ -51,8 +51,11 @@ if cmd == "update":
                              "note": flag("--note")}) + "\n")
     sys.exit(0)
 if cmd == "end":
+    if not flag("--handoff"):
+        sys.stderr.write("HANDOFF_MISSING: no session log passed\n")
+        sys.exit(2)
     if not Path(flag("--handoff")).is_file():
-        sys.stderr.write("HANDOFF_MISSING: %s\n" % flag("--handoff"))
+        sys.stderr.write("HANDOFF_UNREADABLE: %s\n" % flag("--handoff"))
         sys.exit(2)
     (seat / "end.json").write_text(json.dumps(
         {"phase": "end", "sid": sid, "chain": {"start_receipt": rec["receipt_hash"]}}))
@@ -182,9 +185,9 @@ class TheCheckpointAndTheClose(unittest.TestCase):
     def test_f2_a_refusal_of_the_gate_stops_end(self):
         repo = declaring()
         sid_of(block("start", OPEN, repo).stdout)
-        done = block("end", CLOSE, repo)  # no handoff on disk
+        done = block("end", CLOSE, repo)  # no handoff on disk: refused before the engine
         self.assertNotEqual(done.returncode, 0, "a refused close must stop /end, not warn")
-        self.assertIn("HANDOFF_MISSING", done.stdout + done.stderr)
+        self.assertIn("HANDOFF_UNREADABLE", done.stdout + done.stderr)
 
     def test_f3_end_without_an_engine_degrades_and_does_not_block(self):
         repo = host_repo()

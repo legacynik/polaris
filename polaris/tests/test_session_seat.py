@@ -146,6 +146,40 @@ class TheDoorsSurviveARealDay(unittest.TestCase):
         self.assertNotEqual(sid_of(again.stdout), first)
 
 
+class TheHandoffIsReadBeforeAnythingElse(unittest.TestCase):
+    """C1 — with no session open NONE of the seven refusals runs, so the one that does not
+    need a session has to run here: a log that is not on disk is not a closed boundary."""
+
+    def test_a_close_with_no_log_on_disk_refuses_even_with_no_session_open(self):
+        repo = declaring()                      # no handoff(), so today's log does not exist
+        done = close(repo)
+        self.assertEqual(done.returncode, 1, "a missing log must stop /end, session or not")
+        self.assertIn("HANDOFF_UNREADABLE", done.stdout + done.stderr)
+
+    def test_a_close_whose_log_path_is_a_directory_refuses_too(self):
+        repo = declaring()
+        opened(repo)
+        log = handoff(repo)
+        log.unlink()
+        log.mkdir()
+        done = close(repo)
+        self.assertEqual(done.returncode, 1)
+        self.assertIn("HANDOFF_UNREADABLE", done.stdout + done.stderr)
+
+
+class TheChainQuestionReachesTheSeat(unittest.TestCase):
+    """C2 — `chain` had the root the reinsertion had: `$ROOT`, where no session ever is."""
+
+    def test_the_chain_command_the_package_ships_asks_about_the_checkout(self):
+        repo = with_echo("contextpack_reinsert.py")
+        sid = opened(repo)
+        done = subprocess.run(["bash", "-c", skill_block("start", "chain --root")],
+                              cwd=str(repo), env={**env_for(repo), "POLARIS_VAULT": ""},
+                              capture_output=True, text=True)
+        self.assertTrue((root_seen(done.stdout) / "state" / "session" / sid).is_dir(),
+                        "the chain is verified against a root with no session in it")
+
+
 CRASHES = "import sys\nraise SystemError('EPERM: state/session is not writable')\n"
 
 

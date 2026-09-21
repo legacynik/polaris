@@ -84,6 +84,20 @@ def cmd_note(engine: Path, root: Path, opts: argparse.Namespace) -> int:
     return 0
 
 
+def unreadable(handoff: str) -> str:
+    """The refusal the LOG earns on its own, or nothing.
+
+    With no session open the engine never runs, and with it none of the seven refusals of
+    #407 — including the two that have nothing to do with a session. A `/end` that closes
+    nothing and finds no log on disk was exiting 0, which is the one case where the six
+    lines are neither verified nor written."""
+    if not handoff:
+        return "HANDOFF_MISSING: close needs --handoff <session log>: the five elements are read from it"
+    if not Path(handoff).is_file():
+        return f"HANDOFF_UNREADABLE: {handoff}: not a readable file"
+    return ""
+
+
 def cmd_close(engine: Path, root: Path, opts: argparse.Namespace) -> int:
     """Close the open session. A refusal STOPS `/end`; nothing open does not.
 
@@ -91,6 +105,10 @@ def cmd_close(engine: Path, root: Path, opts: argparse.Namespace) -> int:
     `/end` of one session — three ways to lose the handoff commit if this exited non-zero,
     and none of them a broken boundary. A receipt already written is never rewritten.
     """
+    refusal = unreadable(opts.handoff)
+    if refusal:
+        print(refusal, file=sys.stderr)
+        return 1
     home = open_seat(root, opts.login)
     if home is None:
         print("SESSION: none open — nothing to close")
@@ -102,17 +120,23 @@ def cmd_close(engine: Path, root: Path, opts: argparse.Namespace) -> int:
     return done.returncode
 
 
-def cmd_reinsert(script: Path, root: Path, opts: argparse.Namespace) -> int:
-    """Put the pack back from the receipt, against the root the session actually lives under."""
-    done = run(script, ["reinsert", "--root", str(top_of(root))]
-               + (["--sid", opts.sid] if opts.sid else []))
+def cmd_pack(script: Path, root: Path, opts: argparse.Namespace) -> int:
+    """`reinsert` or `chain`, against the root the session actually lives under.
+
+    One function for both because the mistake was shared: each asked `$ROOT`, and in a
+    product repository `<repo>/_polaris/state/session` is empty. `reinsert` swallows the
+    exit code — a pack that cannot come back is a cost, never a failed session — while
+    `chain` is a verification and its `CHAIN_BROKEN` must reach the caller."""
+    args = [opts.command, "--root", str(top_of(root))]
+    args += (["--sid", opts.sid] if opts.sid else []) + (["--area", opts.area] if opts.area else [])
+    done = run(script, args)
     sys.stdout.write(done.stdout)
     sys.stderr.write(done.stderr)
-    return 0  # a reinsertion that cannot happen is a cost, never a failed session
+    return 0 if opts.command == "reinsert" else done.returncode
 
 
-DOORS = {"open": (ENGINE, cmd_open), "note": (ENGINE, cmd_note),
-         "close": (ENGINE, cmd_close), "reinsert": (REINSERT, cmd_reinsert)}
+DOORS = {"open": (ENGINE, cmd_open), "note": (ENGINE, cmd_note), "close": (ENGINE, cmd_close),
+         "reinsert": (REINSERT, cmd_pack), "chain": (REINSERT, cmd_pack)}
 NO_ENGINE = "NOTA: nessun gate del backbone in questo repo — le sei righe sopra sono la checklist"
 
 
@@ -120,7 +144,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="#155 — the session the three doors share")
     ap.add_argument("command", choices=[*DOORS, "sid", "vault"])
     ap.add_argument("--root", default=".", help="the Polaris root of THIS worktree")
-    for flag in ("--login", "--sid", "--note", "--handoff"):
+    for flag in ("--login", "--sid", "--note", "--handoff", "--area"):
         ap.add_argument(flag, default="")
     opts = ap.parse_args()
     root = Path(opts.root)

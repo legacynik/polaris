@@ -49,6 +49,12 @@ All notable changes to Polaris Team OS. The installed version is pinned in
   stesso (`state/session/.gitignore`), così non sporca `git status` nei repo ospite, e la causa di
   un rifiuto è il **codice** del motore o la sua ultima riga, mai `Traceback (most recent call
   last):`.
+  **Giro 2.** Senza sessione aperta il motore non gira, e con lui nessuno dei sette rifiuti di
+  #407: un `/end` con il log di sessione non ancora su disco usciva 0. Ora i due rifiuti che il log
+  si guadagna da solo — `HANDOFF_MISSING`, `HANDOFF_UNREADABLE` — li controlla la porta **prima** di
+  qualunque domanda sulla sessione, exit 1. E `chain`, che era rimasto l'ultimo lettore a chiedere
+  `$ROOT`, passa dalla porta come `reinsert`: stessa radice, ma l'exit code arriva al chiamante,
+  perché una verifica che inghiotte `CHAIN_BROKEN` non verifica niente.
 
 - **Una repo che esiste gia' entra dalla porta `init`, e la porta non trasporta l'harness**
   (`init` **0.1.0** nuova, pacchetto 0.25.2 → **0.26.0**). Il pacchetto spediva le skill ma nessun
