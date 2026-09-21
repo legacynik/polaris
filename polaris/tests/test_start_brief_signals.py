@@ -262,7 +262,67 @@ class TheResolverIsFoundThroughTheDeclaredVault(unittest.TestCase):
         of 29 and 34."""
         repo = host_repo()
         git(repo, "config", "polaris.vault", str(stub_vault(self.ECHO)))
-        self.assertIn(f"ROOT_SEEN: {repo}", brief_of(repo).stdout)
+        self.assertIn(f"ROOT_SEEN: {repo}", brief_of(repo).stdout.splitlines(),
+                      "a substring assertion passes on `<repo>/_polaris` too")
+
+    def test_the_host_resolver_wins_over_a_healthy_vault_even_when_it_refuses(self):
+        """(h) Precedence, at the only moment it is observable: a host that ships its own
+        compiler OWNS the answer, so its refusal is the answer — the declared vault is a
+        fallback for a repo that has none, never a second opinion on a repo that does. The
+        doctor's `resolve` holds the same order."""
+        repo = host_repo()
+        root = repo / "_polaris"
+        (root / "scripts").mkdir()
+        (root / "scripts" / "contextpack_dashboard.py").write_text(
+            "import sys\nsys.stderr.write('HOST_REFUSED: the host said no\\n')\nsys.exit(2)\n")
+        git(repo, "config", "polaris.vault", str(stub_vault("print('FROM: the vault')\n")))
+        out = brief_of(repo).stdout
+        self.assertIn("PACK: blocked", out)
+        self.assertIn("HOST_REFUSED", out)
+        self.assertNotIn("FROM: the vault", out)
+
+    def test_a_relative_declared_vault_resolves_against_the_repo_not_the_cwd(self):
+        """(i) `git config polaris.vault ../vault` answered 0 rows from one directory and the
+        whole pack from another, because a relative path was resolved against the PROCESS's
+        cwd. A declaration belongs to the repository, so it resolves against the repository."""
+        repo = host_repo()
+        vault = stub_vault("print('layer: declared  source_id: CONTEXT.md  path: CONTEXT.md"
+                           "  freshness: UNKNOWN')\n")
+        (repo / "_polaris" / "vault-link").symlink_to(vault, target_is_directory=True)
+        git(repo, "config", "polaris.vault", "vault-link")
+        self.assertIn("layer: declared", brief_of(repo).stdout)
+
+    def test_a_tilde_in_the_declared_vault_is_expanded(self):
+        """(j) `~/dev/vault` is how a human writes a path. Unexpanded it is a directory that
+        does not exist, and the brief went SILENT — the one shape indistinguishable from a
+        repository that never declared a vault at all."""
+        repo = host_repo()
+        vault = stub_vault("print('FROM: the home vault')\n")
+        git(repo, "config", "polaris.vault", f"~/{vault.name}")
+        self.assertIn("FROM: the home vault", brief_of(repo, HOME=str(vault.parent)).stdout)
+
+    def test_a_resolver_that_prints_bytes_no_decoder_accepts_does_not_kill_the_brief(self):
+        """(k) A `UnicodeDecodeError` out of the compiler is not a pack problem: it took the
+        WHOLE brief with it — todos, recent, drift, everything — and a brief that fails a
+        session is worse than a thin one."""
+        repo = host_repo()
+        git(repo, "config", "polaris.vault", str(stub_vault(
+            "import sys\nsys.stdout.buffer.write(b'layer: declared \\xff\\xfe bad\\n')\n")))
+        out = brief_of(repo)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertIn("TODOS=absent", out.stdout, "the rest of the brief must survive")
+        self.assertIn("layer: declared", out.stdout)
+
+    def test_a_blocked_pack_names_the_resolver_that_refused(self):
+        """(l) `PACK: blocked — <CODE>` did not say WHICH compiler refused. With two possible
+        places, a reader cannot tell a broken host from a broken vault."""
+        repo = host_repo()
+        vault = stub_vault("import sys\nsys.stderr.write('DECISION_SCOPE_STALE: x\\n')\n"
+                           "sys.exit(2)\n")
+        git(repo, "config", "polaris.vault", str(vault))
+        out = brief_of(repo).stdout
+        self.assertIn("PACK: blocked", out)
+        self.assertIn(str(vault / "scripts" / "contextpack_dashboard.py"), out)
 
 
 class TheSkillActuallyCallsIt(unittest.TestCase):

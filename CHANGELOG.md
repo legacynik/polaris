@@ -22,7 +22,14 @@ All notable changes to Polaris Team OS. The installed version is pinned in
   meno ovvio del giro: il pacchetto va compilato sul **checkout** (`git rev-parse --show-toplevel`),
   non su `$ROOT`, che e' la cartella del contratto `_polaris/`; i documenti tipati stanno ACCANTO ad
   essa, e compilando dentro di essa gli stessi due repo rispondevano **0** righe `declared` invece di
-  29 e 34. `reference/two-stage-brief.md` spiega i due posti e il pacchetto in prosa una volta sola.
+  29 e 34. Dal primo giro di review, quattro cose che mordono: il test del checkout passava anche
+  sbagliando, perche' `assertIn` su tutto lo stdout e' contento di `<repo>/_polaris` (ora confronta la
+  riga intera); la precedenza host→vault non aveva prova, e ora un host che RIFIUTA vince su un vault
+  sano, perche' chi spedisce il suo compiler possiede la risposta; un `polaris.vault` relativo veniva
+  risolto contro la cwd del processo e un `~` non veniva espanso — entrambi finivano in SILENZIO, la
+  sola risposta indistinguibile da un repo che non ha dichiarato niente; e l'output non-UTF-8 di un
+  resolver uccideva **tutta** la brief con un `UnicodeDecodeError`, non solo il pacchetto. In piu' la
+  riga di rifiuto ora nomina il resolver che ha rifiutato. `reference/two-stage-brief.md` spiega i due posti e il pacchetto in prosa una volta sola.
 
 - **Dopo una compaction il pacchetto torna dalla ricevuta, non da un secondo calcolo**
   (`start` 1.7.0 → **1.8.0**). Una compaction svuota la finestra di contesto e non tocca niente su

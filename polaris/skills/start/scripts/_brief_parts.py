@@ -137,12 +137,14 @@ def _brief_lines(compiler: Path, root: Path, login: str) -> list[str]:
     args = [sys.executable, "-I", str(compiler), "brief", "--root", str(root)]
     try:
         done = subprocess.run(args + (["--login", login] if login else []),
-                              capture_output=True, text=True, timeout=PACK_TIMEOUT)
+                              capture_output=True, text=True, errors="replace",
+                              timeout=PACK_TIMEOUT)
     except (OSError, subprocess.TimeoutExpired):
-        return ["PACK: blocked — the resolver did not answer"]
+        return [f"PACK: blocked — the resolver did not answer ({compiler})"]
     if done.returncode:
         cause = (done.stderr or done.stdout).strip().splitlines()
-        return [f"PACK: blocked — {cause[0][:120] if cause else 'no cause given'}"]
+        return [f"PACK: blocked — {cause[0][:120] if cause else 'no cause given'}"
+                f" ({compiler})"]
     return [line for line in done.stdout.splitlines() if line.strip()] or ["PACK: none"]
 
 
@@ -151,13 +153,23 @@ def _vault(root: Path) -> Path | None:
 
     The SAME contract the vault's own `arch_doctor_sources.vault` holds: the environment wins
     over the declaration, a candidate counts only when it is a directory on this machine, and
-    neither is ever invented. A repository declares a vault with
-    `git config polaris.vault <path>`, locally, so the declaration never travels in a commit.
+    neither is ever invented. The declaration is LOCAL (`git config polaris.vault <path>`), so
+    it never travels in a commit.
+
+    Two shapes a human writes and a bare `Path` gets wrong, both measured as SILENCE — the one
+    answer indistinguishable from a repository that declared nothing. `~/dev/vault` unexpanded
+    is a directory that does not exist. And a relative `../vault` resolved against the PROCESS
+    cwd answers a different thing from every directory: the declaration belongs to the
+    repository, so it resolves against the repository.
     """
     for candidate in (os.environ.get("POLARIS_VAULT", ""),
                       git(root, "config", "--get", "polaris.vault")):
-        if candidate and Path(candidate).is_dir():
-            return Path(candidate)
+        if not candidate:
+            continue
+        declared = Path(candidate).expanduser()
+        declared = declared if declared.is_absolute() else root / declared
+        if declared.is_dir():
+            return declared
     return None
 
 
