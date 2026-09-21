@@ -28,6 +28,14 @@ All notable changes to Polaris Team OS. The installed version is pinned in
   finita dentro una riga di prosa) diventa una **domanda** in `propose`, mai una scrittura: quali
   siano le priorita' e in che ordine lo dice il founder, non questo strumento.
 
+- **La prova non e' piu' un falso verde** (`init` 0.2.0 → **0.3.0**). Il passo 4 risolveva il pack
+  PRIMA del commit: il pack sigilla contro l'albero committato, quindi a `HEAD` senza backbone
+  stampava `CTX-UNKNOWN` con `documents: 0` ed usciva **0** — sembrava riuscito e non lo era. Ora
+  il commit (pathspec: triade + `decisions/`) sta prima del resolve, e la sezione «Proof it
+  worked» legge i **valori**: `workspace` diverso da `UNKNOWN` e `documents: 3`, non l'exit code.
+  Due test lo fissano. Dichiarato anche che `VAULT_UNDECLARED` non e' raggiungibile da qui: il
+  passo 1 si ferma prima, e la skill stampa la riga di rimedio invece di fingere di gestirlo.
+
 - **Dopo una compaction il pacchetto torna dalla ricevuta, non da un secondo calcolo**
   (`start` 1.7.0 → **1.8.0**). Una compaction svuota la finestra di contesto e non tocca niente su
   disco: il pacchetto era gia' risolto, e rifarlo significa ricamminare il tracker in rete per una

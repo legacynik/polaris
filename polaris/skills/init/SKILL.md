@@ -1,7 +1,7 @@
 ---
 name: init
 description: ◇ Use to bring a repository that already exists into the harness — the first time a repo has no typed CONTEXT.md, ARCHITECTURE.md or DOMAIN.md, or when the context pack emits nothing there. Audits before it writes, asks one question per unprovable choice, and applies only the minimal mode. Do NOT use to refactor a repository, to create documentation areas, or on a repo already sealed READY.
-version: 0.2.0
+version: 0.3.0
 user-invocable: true
 auto: false
 lifecycle: one alignment plan per run → the founder signs the areas → apply seals the backbone once
@@ -89,8 +89,14 @@ Only after the answers. Minimal is the only mode.
 ```bash
 python3 -I "$VAULT/scripts/polaris_init.py" apply --mode minimal --root .
 python3 -I "$VAULT/scripts/check_context_backbone.py" --init .
+git add CONTEXT.md ARCHITECTURE.md DOMAIN.md decisions/
+git commit -m "chore(polaris): init minimal — typed backbone with UNKNOWN, prose kept"
 python3 -I "$VAULT/scripts/contextpack.py" resolve --root . | head -20
 ```
+
+The commit is **not** optional and **not** last. The pack seals against the committed tree,
+so resolving before the commit reads a HEAD that has none of this: it exits 0 and prints
+`CTX-UNKNOWN` with `documents: 0`, which looks like success and is not.
 
 `apply` adds the typed frontmatter around the prose, writes the two missing documents with their
 unproven lines as `UNKNOWN`, declares every shadow copy derived, records one accepted Decision for
@@ -102,6 +108,12 @@ audit's questions are the work, not a re-run.
 
 ## Proof it worked
 
+Exit 0 proves nothing here — read the values.
+
 - `--init` prints `"verdict": "READY"` and `decisions/manifest.json` exists.
-- `contextpack.py resolve` exits 0 and prints a `context_pack_id`, where it printed none before.
-- The prose that was in `CONTEXT.md` is still in `CONTEXT.md`.
+- `contextpack.py resolve`, **after the commit**, prints `workspace` that is not `UNKNOWN`
+  and `documents: 3`. A `CTX-UNKNOWN` id with `documents: 0` is the failure that exits 0.
+- The prose that was in `CONTEXT.md` is still in `CONTEXT.md`, line for line.
+
+If `audit` reported `VAULT_UNDECLARED`, you never reached this step: Step 1 stops first. Print
+that row's remedy and stop there — it says to declare the vault, which is Step 1's own message.
