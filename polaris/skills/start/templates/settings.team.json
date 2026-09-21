@@ -12,7 +12,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "r=\"$CLAUDE_PROJECT_DIR/_polaris\"; [ -f \"$r/config.yml\" ] || r=\"$CLAUDE_PROJECT_DIR\"; p=\"$r/scripts/contextpack_reinsert.py\"; [ -f \"$p\" ] && python3 \"$p\" reinsert --root \"$r\" || true"
+            "command": "r=\"$CLAUDE_PROJECT_DIR/_polaris\"; [ -f \"$r/config.yml\" ] || r=\"$CLAUDE_PROJECT_DIR\"; g=\"${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/start/scripts/session_gate.py\"; [ -f \"$g\" ] && python3 \"$g\" reinsert --root \"$r\" || true"
           }
         ]
       }

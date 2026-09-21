@@ -130,6 +130,7 @@ def emit_sections(root: Path, current: Path) -> list[str]:
 
 PACK_TIMEOUT = 25
 RESOLVER = Path("scripts") / "contextpack_dashboard.py"
+LEGACY_KEY = "polaris.vault-root"  # one fact, one key: read for one cycle, then gone
 
 
 def _brief_lines(compiler: Path, root: Path, login: str) -> list[str]:
@@ -161,23 +162,32 @@ def _vault(root: Path) -> Path | None:
     is a directory that does not exist. And a relative `../vault` resolved against the PROCESS
     cwd answers a different thing from every directory: the declaration belongs to the
     repository, so it resolves against the repository.
+
+    ONE key names the vault. `/end` shipped a second spelling of the same fact,
+    `polaris.vault-root`, and two keys for one fact is a repository that answers one door and
+    not the other. The legacy key is still READ — a machine that set it keeps working — and
+    says so on stderr, once per call, naming the key that replaces it.
     """
-    for candidate in (os.environ.get("POLARIS_VAULT", ""),
-                      git(root, "config", "--get", "polaris.vault")):
+    for key, candidate in (("", os.environ.get("POLARIS_VAULT", "")),
+                           ("", git(root, "config", "--get", "polaris.vault")),
+                           (LEGACY_KEY, git(root, "config", "--get", LEGACY_KEY))):
         if not candidate:
             continue
         declared = Path(candidate).expanduser()
         declared = declared if declared.is_absolute() else root / declared
         if declared.is_dir():
+            if key:
+                print(f"NOTA: {key} è deprecato — git config polaris.vault {declared}",
+                      file=sys.stderr)
             return declared
     return None
 
 
-def _resolver(root: Path) -> Path | None:
-    """Where the compiler is: the host's own first, then the declared vault, nothing else."""
+def _resolver(root: Path, rel: Path = RESOLVER) -> Path | None:
+    """Where a vault script is: the host's own first, then the declared vault, nothing else."""
     for base in (root, _vault(root)):
-        if base is not None and (base / RESOLVER).is_file():
-            return base / RESOLVER
+        if base is not None and (base / rel).is_file():
+            return base / rel
     return None
 
 

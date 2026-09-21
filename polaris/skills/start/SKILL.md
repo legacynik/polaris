@@ -2,7 +2,7 @@
 name: start
 description: Polaris skill — resume the current objective from the latest local handoff. First use also provisions your own team path.
 user-invocable: true
-version: 1.10.0
+version: 1.11.0
 ---
 
 # /start — resume, do not survey
@@ -102,6 +102,25 @@ Read these local files, in order:
    `RADAR=none` → inline fallback: `git worktree list` to flag a stray `state/current.md` in an
    extra worktree, and
    `git log --all --not main --since='14 days ago' --oneline -- '*sessions/*.md' | head -5`.
+5b. **Open the session — BEFORE 6, always** (the receipt below belongs to a session, and
+   `/update` and `/end` reach the one opened here):
+
+   ```bash
+   python3 "${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/start/scripts/session_gate.py" open \
+     --root "$ROOT" --login "$LOGIN"
+   ```
+
+   One line or none. `SESSION: opened <sid>` — the session is open, so the `RECEIPT: none —
+   no open session` line of Step 6 goes away and the pack receipt is written beside the
+   session instead. `SESSION: resumed <sid>` — a session of today's checkout was already open, which
+   is the normal second `/start`, not an error. `SESSION: blocked — <CODE>` — the engine refused
+   (a stale seal, an invalid pack): report the line and go on, the brief is not the gate.
+   Nothing at all: this repo has no engine, and there is nothing to open. Never pass `--sid`:
+   the id is the checkout, the day and the login, and after a `/end` the same day the next
+   `/start` opens a NEW seat (`…-2`) instead of resuming a closed one. `/update` and `/end`
+   do not recompute it — they act on the session that is open, which is what survives
+   midnight and a panel that never ran `/start`.
+
 6. **The signals this repo already produces (ALWAYS)** — read-only, under a second:
 
    ```bash
@@ -131,11 +150,17 @@ Step 2 installs a `SessionStart` hook with the `compact` matcher, so on Claude C
 by itself. On a host with no compaction event, or before that hook's first session, run it:
 
 ```bash
-python3 "$ROOT/scripts/contextpack_reinsert.py" reinsert --root "$ROOT"
+python3 "${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/start/scripts/session_gate.py" \
+  reinsert --root "$ROOT"
 ```
 
-No output and no such file: the repository carries no resolver, and there is nothing to put
-back (contract #155). Otherwise read what it prints:
+The door finds the reinserter where it finds everything else — this repository first, then
+the vault it declares — and asks it for the CHECKOUT, which is where the session and the pack
+receipt both live. Asking for `$ROOT` (`<repo>/_polaris`) answered `NO_OPEN_SESSION` in every
+product repository, on the one path that runs by itself.
+
+No output at all: no reinserter here and none in the declared vault, so there is nothing to
+put back (contract #155). Otherwise read what it prints:
 
 - `REINSERT: HEAD unchanged … — 0 tracker calls` followed by `PACK:` and the rows — the same
   pack, reprinted from the receipt. Nothing was recomputed and nothing was fetched.
@@ -145,18 +170,24 @@ back (contract #155). Otherwise read what it prints:
   `AREA_MISMATCH:` or `CHAIN_BROKEN:` — the receipt on disk could not be trusted, so the pack
   was resolved instead of reused. All are costs, not failures; the command still exits 0, and
   nothing on disk is overwritten. Report the line: it says something about the session.
-- `NO_OPEN_SESSION:` — no session receipt is open. **This is what you will see today**: a pack
-  receipt belongs to a session, and the shipped `/start` does not yet open one
-  (polaris-os#155). Until it does, the hook is wired and silent, and the pack after a
-  compaction is whatever the brief resolves next.
+- `NO_OPEN_SESSION:` — no session receipt is open, so there is no pack to put back. Since
+  polaris-os#155 Step 5b opens one, so this now means the session was closed by `/end`, or
+  this repository carries no engine at all.
 
 `CHAIN_UNANCHORED:` may appear beside any of these. It is a report, not a refusal: every
-link is there and nothing ties that area's packs to a start receipt, which is what every
-session looks like until `/start` opens one.
+link is there and nothing ties that area's packs to a start receipt.
 
 The session id is not a flag anybody has to fill: the command resolves the session open today.
-`chain --root "$ROOT" --sid <sid> [--area <slug>]` verifies the receipt chain on demand —
-exit 1 on a `CHAIN_BROKEN` and 0 on anything it merely reports.
+The same door verifies the receipt chain on demand — exit 1 on a `CHAIN_BROKEN`, 0 on anything
+it merely reports:
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/start/scripts/session_gate.py" \
+  chain --root "$ROOT"
+```
+
+`--sid` and `--area` narrow it to one session or one area; without them it asks about the
+session open today, the same one everything else here is about.
 
 ## Step 4 — Render the resume brief
 
@@ -171,7 +202,8 @@ Answer with the brief ONLY, as plain markdown, NEVER inside a code fence. Use th
 - Blocker: <one active blocker, if any>
 - Next action: <the concrete continuation step from the handoff, reconciled with the plan>
 
-**Pack** — only when Step 6 printed resolver lines. Copy them **verbatim**, never summarised
+**Pack** — the `SESSION:` line of Step 5b when there is one, then the Step 6 resolver lines
+when there are any. Copy them **verbatim**, never summarised
 and never counted: first its `UNKNOWN:`, `AREA:`, `QUESTION:`, `RECEIPT:` lines, then every
 `layer:` row, one per line. Over **40** rows, print the first 40 and one last line
 `… and <K> more rows`. A `layer:` row is an ADDRESS — a sentence about the rows is not the

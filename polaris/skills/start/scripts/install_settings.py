@@ -30,6 +30,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -54,6 +55,22 @@ def _commands(doc: dict, event: str) -> set[str]:
             for one in block.get("hooks") or []}
 
 
+OURS = re.compile(r"contextpack_reinsert|session_gate\.py")
+
+
+def _drop_ours(into: dict, event: str) -> None:
+    """Remove the blocks that are an OLDER version of the hook we are about to write.
+
+    Merging by command alone installed a SECOND block the day the command changed, and the
+    stale one kept running — against the wrong root, silently. A block whose every command
+    is one of ours is ours to replace; anybody else's is never touched."""
+    blocks = into.get("hooks", {}).get(event) or []
+    kept = [block for block in blocks
+            if not all(OURS.search(one.get("command", "")) for one in block.get("hooks") or [{}])]
+    if len(kept) != len(blocks):
+        into["hooks"][event] = kept
+
+
 def _merge_hooks(into: dict, wanted: dict) -> list[str]:
     """Add the template's hook blocks this file does not already run. By COMMAND, not by
     matcher: a repository that renamed the matcher still has the hook."""
@@ -63,6 +80,7 @@ def _merge_hooks(into: dict, wanted: dict) -> list[str]:
         new = [block for block in blocks
                if any(one.get("command") not in have for one in block.get("hooks") or [])]
         if new:
+            _drop_ours(into, event)
             into.setdefault("hooks", {}).setdefault(event, []).extend(new)
             added.append(event)
     return added
@@ -132,9 +150,14 @@ def _hook_command(repo: Path) -> str:
 
 def _probe(command: str, repo: Path) -> tuple[int, str]:
     """RUN the hook command. A hook is a string until somebody executes it, and a string
-    is green under every breakage there is."""
+    is green under every breakage there is.
+
+    Against THIS package: the command names `$CLAUDE_PLUGIN_ROOT`, which outside an install
+    falls back to `~/.agents/skills`. A checkout is not an installation, so the probe was
+    green or red depending on what the machine happened to have installed."""
     done = subprocess.run(["sh", "-c", command], cwd=repo, capture_output=True, text=True,
-                          env={**os.environ, "CLAUDE_PROJECT_DIR": str(repo)})
+                          env={**os.environ, "CLAUDE_PROJECT_DIR": str(repo),
+                               "CLAUDE_PLUGIN_ROOT": str(HERE.parents[2])})
     return done.returncode, done.stdout.strip()
 
 
@@ -175,7 +198,7 @@ def _keeps_what_was_there(repo: Path) -> list[tuple[str, bool]]:
              doc.get("model") == "opus" and doc["permissions"].get("deny") == OTHERS[
                  "permissions"]["deny"]),
             ("and the compaction hook landed beside them",
-             "contextpack_reinsert.py" in _hook_command(repo))]
+             "session_gate.py" in _hook_command(repo))]
     return out
 
 
@@ -187,7 +210,7 @@ def _cases(repo: Path) -> list[tuple[str, bool]]:
     command = _hook_command(repo)
     out = [("template is valid JSON with a SessionStart hook", bool(blocks)),
            ("the matcher is `compact`", "compact" in [b.get("matcher") for b in blocks]),
-           ("it names the reinserter", "contextpack_reinsert.py" in command),
+           ("it names the door that finds the reinserter", "session_gate.py" in command),
            ("the permissions preset survived the merge",
             "Bash(polmem *)" in doc.get("permissions", {}).get("allow", []))]
     code, said = _probe(command, repo)
@@ -196,7 +219,24 @@ def _cases(repo: Path) -> list[tuple[str, bool]]:
     code, said = _probe(command, repo)
     out.append(("runs the resolver when the repo has one", code == 0 and "stub ran" in said))
     out.append(("a second install changes nothing", install(repo) == ["SETTINGS: already current"]))
-    return out + _keeps_what_was_there(repo / "other")
+    return out + _keeps_what_was_there(repo / "other") + [_upgrades(repo / "old")]
+
+
+LEGACY = {"hooks": {"SessionStart": [{"matcher": "compact", "hooks": [
+    {"type": "command", "command": 'python3 "$CLAUDE_PROJECT_DIR/_polaris/scripts/'
+                                   'contextpack_reinsert.py" reinsert --root "$r" || true'}]}]}}
+
+
+def _upgrades(repo: Path) -> tuple[str, bool]:
+    """A machine that already ran the previous version keeps ONE hook, not two.
+
+    Two blocks on one event is not a cosmetic duplicate: the stale one keeps running, and it
+    is the one that asks the wrong root."""
+    _settings(repo, json.dumps(LEGACY))
+    install(repo)
+    blocks = _load(repo / ".claude" / "settings.json")["hooks"]["SessionStart"]
+    return ("an older copy of the hook is replaced, not doubled",
+            len(blocks) == 1 and "session_gate.py" in _hook_command(repo))
 
 
 def cmd_selfcheck() -> int:

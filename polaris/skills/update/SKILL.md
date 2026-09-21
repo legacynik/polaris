@@ -3,7 +3,7 @@ name: update
 description: Polaris skill — record a short repository-first checkpoint during an active session. Trigger after meaningful progress, a blocker, a context switch, or on "checkpoint / save progress / /update".
 user-invocable: true
 model: sonnet
-version: 3.0.0
+version: 3.1.0
 invokes: [git-power]
 ---
 
@@ -107,6 +107,17 @@ python3 "$GP" commit-check --repo "$PWD"      # git-power, when installed
 
 `verify` fails on a stacked `Updated:`, a cockpit older than the log, or a scratch not harvested.
 A foreign or unknown dirty path blocks: assign it, never stash or commit for another panel.
+
+Then tick the session the `/start` of this checkout opened — one append-only event, so the
+restartable boundary knows this checkpoint happened even if `/end` never runs:
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/start/scripts/session_gate.py" note \
+  --root "$ROOT" --note "<title of the entry just written>"
+```
+
+Silence is the answer when no session is open and when the repo carries no engine. It never
+fails a checkpoint: what is durable is the log you just committed, not this event.
 
 ### 8. Output
 
