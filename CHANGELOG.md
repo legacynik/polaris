@@ -32,6 +32,23 @@ All notable changes to Polaris Team OS. The installed version is pinned in
   `pack_seal` della `start.json`, un evento con `prev` = ricevuta di start, `end.json` che li lega,
   e il reinserimento che passa da `NO_OPEN_SESSION` a `REINSERT: HEAD unchanged … 0 tracker calls`
   con `CHAIN: prev=<ricevuta di start>`.
+  **Giro 1 della review.** Il seat resta sotto il **checkout**, che è la sola radice contro cui
+  il pack è compilato (`emit_pack` passa `git rev-parse --show-toplevel`) e quindi la sola dove la
+  dashboard cerca la sessione; a essere sbagliati erano i **lettori**: lo Step 3b e l'hook di
+  compaction chiedevano `$ROOT` (`<repo>/_polaris`) e in ogni repo di prodotto rispondevano
+  `NO_OPEN_SESSION` — l'hook, per giunta, cercava `contextpack_reinsert.py` solo nel repo, quindi
+  non ha mai fatto nulla lì. Ora passano dalla porta (`session_gate.py reinsert`, host poi vault,
+  radice del checkout) e `install_settings` **sostituisce** il blocco vecchio invece di
+  affiancarne uno nuovo che continuerebbe a girare.
+  `/update` e `/end` non ricalcolano più il sid: agiscono sulla **sessione aperta**. A mezzanotte
+  la derivazione cambia mentre la sessione è ancora aperta, un pannello può non aver mai fatto
+  `/start`, e un secondo `/end` non ha più niente da chiudere: tutti e tre uscivano `SESSION_UNKNOWN`
+  rc 2, cioè `/end` moriva prima di committare l'handoff. Ora sono `SESSION: none open — nothing to
+  close` con exit 0, e una ricevuta già scritta non viene mai riscritta; dopo una chiusura `/start`
+  apre un **seat nuovo** (`…-2`) invece di «riprendere» una sessione chiusa. Il seat ignora sé
+  stesso (`state/session/.gitignore`), così non sporca `git status` nei repo ospite, e la causa di
+  un rifiuto è il **codice** del motore o la sua ultima riga, mai `Traceback (most recent call
+  last):`.
 
 - **Una repo che esiste gia' entra dalla porta `init`, e la porta non trasporta l'harness**
   (`init` **0.1.0** nuova, pacchetto 0.25.2 → **0.26.0**). Il pacchetto spediva le skill ma nessun

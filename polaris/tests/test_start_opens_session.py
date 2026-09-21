@@ -84,7 +84,8 @@ def block(skill: str, needle: str, repo: Path, **extra: str):
     return run_block(skill, needle, repo, POLARIS_VAULT="", **extra)
 
 
-CLOSE = 'session_gate.py" close'  # the shipped block quotes the path
+OPEN = 'session_gate.py" open'    # the shipped blocks quote the path
+CLOSE = 'session_gate.py" close'
 
 
 def seat(repo: Path, sid: str) -> Path:
@@ -110,7 +111,7 @@ class StartOpensTheSession(unittest.TestCase):
 
     def test_a_the_session_opens_and_the_brief_names_it(self):
         repo = declaring()
-        done = block("start", "session_gate.py", repo)
+        done = block("start", OPEN, repo)
         self.assertEqual(done.returncode, 0, done.stderr)
         sid = sid_of(done.stdout)
         self.assertIn("SESSION: opened", done.stdout)
@@ -120,8 +121,8 @@ class StartOpensTheSession(unittest.TestCase):
 
     def test_b_a_second_start_the_same_day_resumes_the_same_session(self):
         repo = declaring()
-        first = sid_of(block("start", "session_gate.py", repo).stdout)
-        again = block("start", "session_gate.py", repo)
+        first = sid_of(block("start", OPEN, repo).stdout)
+        again = block("start", OPEN, repo)
         self.assertIn("SESSION: resumed", again.stdout)
         self.assertEqual(again.returncode, 0, "SESSION_EXISTS is a resume, never a failure")
         self.assertEqual(sid_of(again.stdout), first, "the sid is the checkout, the day, the login")
@@ -129,21 +130,23 @@ class StartOpensTheSession(unittest.TestCase):
 
     def test_c_a_repo_with_no_engine_prints_nothing_and_writes_nothing(self):
         repo = host_repo()
-        done = block("start", "session_gate.py", repo)
+        done = block("start", OPEN, repo)
         self.assertEqual(done.returncode, 0)
         self.assertEqual(done.stdout.strip(), "", "a repo with no engine must not learn it exists")
-        self.assertFalse((repo / "state" / "session").exists())
+        self.assertEqual(list(repo.glob("state/session/*/start.json")), [],
+                         "no engine, no receipt — the seat directory itself proves nothing")
 
     def test_d_a_refused_pack_is_one_line_and_the_brief_goes_on(self):
         repo = declaring(REFUSES)
-        done = block("start", "session_gate.py", repo)
+        done = block("start", OPEN, repo)
         self.assertEqual(done.returncode, 0, "a blocked session must not abort /start")
         self.assertIn("SESSION: blocked — CONTEXTPACK_INVALID", done.stdout)
-        self.assertFalse((repo / "state" / "session").exists())
+        self.assertEqual(list(repo.glob("state/session/*/start.json")), [],
+                         "a refusal leaves no receipt; the real engine still makes the seat")
 
     def test_g_the_legacy_vault_root_key_is_still_read_once_with_a_warning(self):
         repo = declaring(key="polaris.vault-root")
-        done = block("start", "session_gate.py", repo)
+        done = block("start", OPEN, repo)
         self.assertIn("SESSION: opened", done.stdout)
         self.assertIn("polaris.vault-root", done.stderr)
         self.assertIn("polaris.vault", done.stderr, "the warning must name the key that replaces it")
@@ -154,7 +157,7 @@ class TheCheckpointAndTheClose(unittest.TestCase):
 
     def test_e_update_writes_an_event_chained_to_the_start_receipt(self):
         repo = declaring()
-        sid = sid_of(block("start", "session_gate.py", repo).stdout)
+        sid = sid_of(block("start", OPEN, repo).stdout)
         done = block("update", "session_gate.py", repo, ROOT=str(repo / "_polaris"))
         self.assertEqual(done.returncode, 0, done.stderr)
         rows = [json.loads(l) for l in (seat(repo, sid) / "events.jsonl").read_text().splitlines()]
@@ -169,7 +172,7 @@ class TheCheckpointAndTheClose(unittest.TestCase):
 
     def test_f_end_closes_the_same_session_with_a_linked_receipt(self):
         repo = declaring()
-        sid = sid_of(block("start", "session_gate.py", repo).stdout)
+        sid = sid_of(block("start", OPEN, repo).stdout)
         handoff(repo)
         done = block("end", CLOSE, repo)
         self.assertEqual(done.returncode, 0, done.stdout + done.stderr)
@@ -178,7 +181,7 @@ class TheCheckpointAndTheClose(unittest.TestCase):
 
     def test_f2_a_refusal_of_the_gate_stops_end(self):
         repo = declaring()
-        sid_of(block("start", "session_gate.py", repo).stdout)
+        sid_of(block("start", OPEN, repo).stdout)
         done = block("end", CLOSE, repo)  # no handoff on disk
         self.assertNotEqual(done.returncode, 0, "a refused close must stop /end, not warn")
         self.assertIn("HANDOFF_MISSING", done.stdout + done.stderr)

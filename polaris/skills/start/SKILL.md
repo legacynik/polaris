@@ -110,12 +110,16 @@ Read these local files, in order:
      --root "$ROOT" --login "$LOGIN"
    ```
 
-   One line or none. `SESSION: opened <sid>` — the session is open and the pack below gets a
-   `RECEIPT:`. `SESSION: resumed <sid>` — a session of today's checkout was already open, which
+   One line or none. `SESSION: opened <sid>` — the session is open, so the `RECEIPT: none —
+   no open session` line of Step 6 goes away and the pack receipt is written beside the
+   session instead. `SESSION: resumed <sid>` — a session of today's checkout was already open, which
    is the normal second `/start`, not an error. `SESSION: blocked — <CODE>` — the engine refused
    (a stale seal, an invalid pack): report the line and go on, the brief is not the gate.
    Nothing at all: this repo has no engine, and there is nothing to open. Never pass `--sid`:
-   the id is the checkout, the day and the login, so the other two doors recompute it.
+   the id is the checkout, the day and the login, and after a `/end` the same day the next
+   `/start` opens a NEW seat (`…-2`) instead of resuming a closed one. `/update` and `/end`
+   do not recompute it — they act on the session that is open, which is what survives
+   midnight and a panel that never ran `/start`.
 
 6. **The signals this repo already produces (ALWAYS)** — read-only, under a second:
 
@@ -146,11 +150,17 @@ Step 2 installs a `SessionStart` hook with the `compact` matcher, so on Claude C
 by itself. On a host with no compaction event, or before that hook's first session, run it:
 
 ```bash
-python3 "$ROOT/scripts/contextpack_reinsert.py" reinsert --root "$ROOT"
+python3 "${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/start/scripts/session_gate.py" \
+  reinsert --root "$ROOT"
 ```
 
-No output and no such file: the repository carries no resolver, and there is nothing to put
-back (contract #155). Otherwise read what it prints:
+The door finds the reinserter where it finds everything else — this repository first, then
+the vault it declares — and asks it for the CHECKOUT, which is where the session and the pack
+receipt both live. Asking for `$ROOT` (`<repo>/_polaris`) answered `NO_OPEN_SESSION` in every
+product repository, on the one path that runs by itself.
+
+No output at all: no reinserter here and none in the declared vault, so there is nothing to
+put back (contract #155). Otherwise read what it prints:
 
 - `REINSERT: HEAD unchanged … — 0 tracker calls` followed by `PACK:` and the rows — the same
   pack, reprinted from the receipt. Nothing was recomputed and nothing was fetched.
@@ -165,8 +175,7 @@ back (contract #155). Otherwise read what it prints:
   this repository carries no engine at all.
 
 `CHAIN_UNANCHORED:` may appear beside any of these. It is a report, not a refusal: every
-link is there and nothing ties that area's packs to a start receipt, which is what every
-session looks like until `/start` opens one.
+link is there and nothing ties that area's packs to a start receipt.
 
 The session id is not a flag anybody has to fill: the command resolves the session open today.
 `chain --root "$ROOT" --sid <sid> [--area <slug>]` verifies the receipt chain on demand —

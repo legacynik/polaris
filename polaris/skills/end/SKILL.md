@@ -138,6 +138,11 @@ inventa — è checkout + giorno + login, ricalcolato qui (polaris-os#155). Il m
 repo, se lo porta, altrimenti quello del vault dichiarato (`git config polaris.vault`), la stessa
 ricerca che fa il pack del brief.
 
+Chiude **la sessione aperta**, non il sid di oggi: a mezzanotte la derivazione cambia mentre la
+sessione è ancora aperta, e un pannello può non aver mai fatto `/start`. `SESSION: none open —
+nothing to close` esce 0 e `/end` prosegue: la cosa durevole è il commit dell'handoff, e una
+ricevuta già scritta non viene mai riscritta.
+
 **Il `|| exit 1` vale solo per i rifiuti.** Prima questo blocco era un `if [ -f "$GATE" ]` su un
 path solo-host, e con una catena `&&` … `||` OGNI rifiuto — anche `ID_COLLISION` — cadeva nel ramo
 `||` stampando «nessun gate» con `$?` a `0`: la skill proseguiva al commit dello Step 5 proprio nei
