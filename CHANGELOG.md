@@ -5,6 +5,37 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
+- **Una repo che esiste gia' entra dalla porta `init`, e la porta non trasporta l'harness**
+  (`init` **0.1.0** nuova, pacchetto 0.25.2 → **0.26.0**). Il pacchetto spediva le skill ma nessun
+  modo di *entrare*: in una repo di prodotto senza triade tipizzata il context pack non emette
+  niente, e il doctor dice «harness not installed». La porta esegue i quattro passi nell'ordine che
+  il founder ha fissato — **audit** (JSON: ogni documento vivo `absent`/`prose`/`typed`, ogni
+  bloccante col rimedio, e UNA domanda per ogni scelta non provabile), **propose** (piano in
+  Markdown con la tabella delle aree **da firmare**), la firma, **apply --mode minimal** — e solo
+  alla fine mostra il pack. I primi due verbi scrivono **zero file**: e' il contratto della spec
+  `repo-adoption` («il primo giro non esegue lavoro»), non una cortesia.
+  La porta **chiama** `polaris_init.py` del vault risolto da `git config polaris.vault` e, se non
+  c'e', dice una riga ed esce 0: il pacchetto non vendorizza gli script, e il test lo verifica
+  (`test_it_ships_no_copy_of_the_harness`). Le aree restano **proposte e firmate, mai derivate**
+  (#331 KILL): un dossier senza manifest firmato blocca il sigillo invece di far inventare un
+  manifest all'agente.
+
+- **Il puntatore al vault si rilegge a ogni giro, e il cockpit si chiede** (`init` 0.1.0 →
+  **0.2.0**). `polaris.vault` vive nel `.git/config` condiviso: un'altra sessione lo riscrive
+  sotto di te, e un puntatore morto non da' errore — il pack semplicemente smette di emettere.
+  `audit` ora porta un campo `vault` con cio' che e' dichiarato e se risolve ancora. E un cockpit
+  senza intestazione `## Active Priorities` (misurato: le priorita' ci sono, l'intestazione era
+  finita dentro una riga di prosa) diventa una **domanda** in `propose`, mai una scrittura: quali
+  siano le priorita' e in che ordine lo dice il founder, non questo strumento.
+
+- **La prova non e' piu' un falso verde** (`init` 0.2.0 → **0.3.0**). Il passo 4 risolveva il pack
+  PRIMA del commit: il pack sigilla contro l'albero committato, quindi a `HEAD` senza backbone
+  stampava `CTX-UNKNOWN` con `documents: 0` ed usciva **0** — sembrava riuscito e non lo era. Ora
+  il commit (pathspec: triade + `decisions/`) sta prima del resolve, e la sezione «Proof it
+  worked» legge i **valori**: `workspace` diverso da `UNKNOWN` e `documents: 3`, non l'exit code.
+  Due test lo fissano. Dichiarato anche che `VAULT_UNDECLARED` non e' raggiungibile da qui: il
+  passo 1 si ferma prima, e la skill stampa la riga di rimedio invece di fingere di gestirlo.
+
 - **Il brief STAMPA le righe del pacchetto, non le riassume** (`start` 1.9.0 → **1.10.0**).
   Misurato end to end su un repo ospite con una sessione fresca: `brief_signals.py` emette 42 righe
   `layer:` e 3 righe `UNKNOWN:`, e il brief reso ne portava **zero** — una frase al posto di tutto
