@@ -7,6 +7,33 @@ exists for, and the founder kept being the index of his own repository out loud.
 
 Read it once, in order, and act on it. Do not summarise it away.
 
+## Where the resolver lives — the host, then the vault the repo declares
+
+A product repository carries the **contract** (`_polaris/`) and never the harness, so looking for
+the compiler only inside the host is why `/start` stayed silent in repositories whose vault
+already answers with a full pack. Two places are tried, first one wins, and nothing else:
+
+1. `<root>/scripts/contextpack_dashboard.py` — a host that ships its own compiler owns it.
+2. `<vault>/scripts/contextpack_dashboard.py`, where `<vault>` is `$POLARIS_VAULT` if it is set
+   and a directory, else what the repository declares with
+   `git config polaris.vault <path>` — a LOCAL declaration, so it never travels in a commit.
+   `~` is expanded and a relative path resolves against the REPOSITORY, never against the
+   directory the session happens to be standing in.
+
+Neither present is still SILENCE (contract #155): a repository with no backbone within reach must
+not learn the feature exists. A declared vault that no longer holds the script is that same case,
+never an error.
+
+The pack is compiled against the **checkout** (`git rev-parse --show-toplevel`), not against
+`$ROOT`: the typed documents — `CONTEXT.md`, `DOMAIN.md`, `decisions/` — live at the root of the
+repository, beside the `_polaris/` contract directory, not inside it.
+
+And a **prose pack is a pack**. No `decisions/manifest.json` is required: the `declared` layer,
+with `freshness: UNKNOWN` stated on every row, is valid by contract (polaris-os#403). Requiring a
+manifest is what kept every product repository silent, since none of them has one. The resolver
+still refuses out loud when it must — `PACK: blocked — <CODE>` — and that refusal is the gate,
+not a precondition the package checks for it.
+
 ## Stage one — the index of the areas
 
 ```
@@ -56,7 +83,7 @@ a document the pack merely pointed at. `freshness: UNKNOWN` is a claim nothing p
 - `QUESTION: which area? candidates: …` — no signal answered. Ask exactly that one question,
   with the index already in front of the reader, and stop. Never guess an area, and never
   resolve a second one to compare.
-- `PACK: blocked — <CODE>: <detail>` — the resolver refused. The index above it is still
+- `PACK: blocked — <CODE>: <detail> (<path>)` — the resolver refused, and the path says WHICH one: with two possible places, an unnamed refusal cannot be acted on. The index above it is still
   good: name the cause in the brief, use the index, and do not work around the refusal.
 - `RECEIPT: none — no open session` — the rows are real, and nothing recorded that they were
   handed over. It appears when no session receipt is open and younger than a day, which is

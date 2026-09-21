@@ -2,7 +2,7 @@
 name: start
 description: Polaris skill — resume the current objective from the latest local handoff. First use also provisions your own team path.
 user-invocable: true
-version: 1.8.0
+version: 1.9.0
 ---
 
 # /start — resume, do not survey
@@ -111,7 +111,9 @@ Read these local files, in order:
 
    Each line is self-describing: read it. `AREA:` rows index the areas, `layer:` rows are the
    chosen area's pack; on `QUESTION:` ask it and stop. Todos and `RECENT` go with the work,
-   `SPOOL_LEGACY`/`DRIFT`/`SECTIONS_MISSING` under `**Segnali**`. See `reference/two-stage-brief.md`.
+   `SPOOL_LEGACY`/`DRIFT`/`SECTIONS_MISSING` under `**Segnali**`. The resolver is the host's,
+   else the vault the repo declares (`git config polaris.vault`); a prose pack is a pack.
+   See `reference/two-stage-brief.md`.
 
 Do not read lessons, `.wiki/hot.md`, or unrelated files speculatively. Memory is not
 current state and recall is never mandatory at session start.
