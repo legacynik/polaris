@@ -342,8 +342,9 @@ class TheBriefMustPrintThePackRowsItResolved(unittest.TestCase):
             text = path.read_text(encoding="utf-8")
             self.assertIn("**Pack**", text, path.name)
             self.assertIn("verbatim", text.lower(), path.name)
-            self.assertIn("40", text, f"{path.name} must state the cap, not imply it")
-            self.assertIn("layer:", text, path.name)
+            # 2026-09-23: the rows moved to lane entry; both places must say so
+            self.assertIn("held for lane entry", text, path.name)
+            self.assertIn("No `layer:` row is printed at `/start`", text, path.name)
 
 
 class TheSkillActuallyCallsIt(unittest.TestCase):

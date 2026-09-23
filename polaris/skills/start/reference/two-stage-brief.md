@@ -7,18 +7,18 @@ exists for, and the founder kept being the index of his own repository out loud.
 
 Read it once, in order, and act on it. Do not summarise it away.
 
-## How it reaches the reader — **Pack**, verbatim
+## How it reaches the reader — **Pack**, verbatim, and no rows at `/start`
 
 Measured end to end: the resolver printed 42 `layer:` rows and 3 `UNKNOWN:` lines, and the brief
-that reached the session carried **zero** of them, replaced by one sentence saying the pack was
-unfiltered. That sentence is not a summary of the context, it is the loss of it: a `layer:` row
-is an address the work opens, and a count of addresses opens nothing.
+that reached the session carried **zero** of them. The fix of that day (print the rows verbatim,
+cap 40) was then measured itself on 2026-09-23: six fresh agents, three repositories, `/start`
+with and without the pack — identical briefs, +15% tokens, **0 of 131** rows changed a brief.
+The rows belong to the moment a lane is entered, not to the resume.
 
-So the brief carries a `**Pack**` section, and the rows go into it **verbatim** — the
-`UNKNOWN:` / `AREA:` / `QUESTION:` / `RECEIPT:` lines first, then one `layer:` row per line, in
-the order the resolver printed them. Over **40** rows, print the first 40 and close with
-`… and <K> more rows`; never drop the ones a reader cannot see, silently. Nothing here is
-rephrased, merged, sorted or turned into prose.
+So at `/start` the brief's `**Pack**` section carries, **verbatim**, only what the resolver says
+about itself — `UNKNOWN:`, `RECEIPT:`, `PACK: blocked …` — and one count line,
+`PACK: <n> rows held for lane entry`. No `layer:` row is printed at `/start`, and no area is
+asked. Nothing here is rephrased, merged or turned into prose.
 
 ## Where the resolver lives — the host, then the vault the repo declares
 
