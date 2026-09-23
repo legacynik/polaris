@@ -113,6 +113,16 @@ def emit_drift(main_wt: Path, login: str) -> list[str]:
     return out + [f"DRIFT={branch} · {len(foreign)} modified files not yours in the main worktree"]
 
 
+def emit_priorities(current: Path, now: str) -> list[str]:
+    """The cockpit's order, when /end has not written it for a week (2026-09-23): named, never
+    presented as today's. A missing cockpit is `emit_sections`' line, not a second one here."""
+    import state_priorities  # the writer's own reader: one rule for "stale", in one place
+    try:
+        return [line] if current.is_file() and (line := state_priorities.staleness(current, now)) else []
+    except (OSError, ValueError):
+        return []
+
+
 def emit_sections(root: Path, current: Path) -> list[str]:
     """#243 signal 3 — the sections the state file lost. An absent file invents nothing."""
     out = []

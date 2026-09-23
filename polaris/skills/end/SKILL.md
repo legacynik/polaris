@@ -2,7 +2,7 @@
 name: end
 description: Polaris skill — close a repository-first team session with a handoff, decisions/lessons written to the ledgers, a plan tick and a pathspec-only commit. Trigger when stopping work, before a multi-day pause, or on "wrap up / end session / /end".
 user-invocable: true
-version: 1.21.0
+version: 1.22.0
 invokes: [git-power]
 ---
 
@@ -456,6 +456,27 @@ evidence in the log.
 On a clean handoff the `Next` line is the first step for the next session; leave other panels' `Next`
 lines alone. Closed threads leave the pointer — their story lives in the session log you just wrote,
 not here.
+
+## Step 4b — Reconcile `## Active Priorities` (the only writer of the order)
+
+The cockpit is the one view the founder reads, and `/start` reads only it — so the order of the
+work lives here and **this step is its only writer**. Every `/end`, after Step 4, rebuild the
+ordered list from four inputs: `state/goals.md` (where we are going), the `## Active` rows of
+`state/todos.md`, the `## Open` threads that survived Step 4, and what this session changed.
+Rules: at most **7** lines; each is `#<issue or lane> — <outcome in one line>`; work that landed
+leaves; the first line is the next thing to do. If the order did not change, write it anyway —
+the stamp records that it was reviewed today, and `/start` names an order older than 7 days.
+
+Never edit the section by hand or by string surgery: on 2026-09-13 an unanchored `s.index` matched
+a backtick mention of the heading and fused it into a sentence, and the order stayed wrong for ten
+days. The script finds the real heading, writes atomically under the cockpit lock, and adds the
+section before `## Open` when it is missing:
+
+```bash
+PR="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/update/scripts/state_priorities.py"
+[ -f "$PR" ] || { echo "STOP: state_priorities.py not resolved — never hand-edit the order"; exit 1; }
+printf '%s\n' "<#N — first>" "<#M — second>" | python3 "$PR" set "$CURRENT"
+```
 
 ## Step 5 — Land the handoff in git (same guard as `/update`, in code)
 

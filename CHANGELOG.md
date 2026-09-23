@@ -5,6 +5,18 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
+- **`## Active Priorities` ha un proprietario: `/end`** (`end` 1.21.0 → **1.22.0**, `update` 3.1.0 →
+  **3.2.0**, `start` 1.12.0 → **1.13.0**, pacchetto 0.28.0 → **0.29.0**). Nessuna porta scriveva la
+  sezione: `/update` scrive `## Open`, `/end` `## Recent Context`, e in una repo prodotto le priorità
+  sono rimaste al 13/09 per dieci giorni. Quel giorno una modifica a mano aveva trovato l'intestazione
+  con `s.index` non ancorato, agganciando una menzione fra backtick nella prosa e fondendo la nuova
+  intestazione in una frase. Ora `/end` (Step 4b) ricostruisce l'ordine da `goals.md`, `todos.md`, i
+  thread `## Open` e la sessione, e lo scrive con `update/scripts/state_priorities.py set`: intestazione
+  trovata dal registro fence-aware, scrittura atomica sotto lock, timbro di data. `/start` legge solo
+  il cockpit e nomina un ordine più vecchio di 7 giorni (`PRIORITIES_STALE=<n>d`) invece di
+  presentarlo come attuale. Prova: `polaris/tests/test_state_priorities.py` (4) e
+  `test_start_priorities_signal.py` (1), RED→GREEN in `tests/tdd/PRIORITIES-*.jsonl`.
+
 - **`/start` non stampa più il pack** (`start` 1.11.0 → **1.12.0**, pacchetto 0.27.0 → **0.28.0**).
   Misurato il 2026-09-23 su tre repository, sei agenti a contesto fresco, `/start` con e senza
   pack: brief identici, +15% token, **0 righe `layer:` su 131** hanno cambiato un brief, e un
