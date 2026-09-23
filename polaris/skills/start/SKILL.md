@@ -2,7 +2,7 @@
 name: start
 description: Polaris skill — resume the current objective from the latest local handoff. First use also provisions your own team path.
 user-invocable: true
-version: 1.11.0
+version: 1.12.0
 ---
 
 # /start — resume, do not survey
@@ -128,8 +128,10 @@ Read these local files, in order:
      --root "$ROOT" --current "$CURRENT" --login "$LOGIN" --main-wt "$MAIN_WT"
    ```
 
-   Each line is self-describing: read it. `AREA:` rows index the areas, `layer:` rows are the
-   chosen area's pack; on `QUESTION:` ask it and stop. Todos and `RECENT` go with the work,
+   Each line is self-describing: read it. `AREA:` rows index the areas; the pack itself is
+   NOT printed here — one `PACK: <n> rows held for lane entry` line counts it, because the
+   pack loads when a lane is entered, never at `/start` (measured 2026-09-23: 0 of 131 rows
+   changed a brief). Never ask which area. Todos and `RECENT` go with the work,
    `SPOOL_LEGACY`/`DRIFT`/`SECTIONS_MISSING` under `**Segnali**`. The resolver is the host's,
    else the vault the repo declares (`git config polaris.vault`); a prose pack is a pack.
    See `reference/two-stage-brief.md`.
@@ -203,11 +205,8 @@ Answer with the brief ONLY, as plain markdown, NEVER inside a code fence. Use th
 - Next action: <the concrete continuation step from the handoff, reconciled with the plan>
 
 **Pack** — the `SESSION:` line of Step 5b when there is one, then the Step 6 resolver lines
-when there are any. Copy them **verbatim**, never summarised
-and never counted: first its `UNKNOWN:`, `AREA:`, `QUESTION:`, `RECEIPT:` lines, then every
-`layer:` row, one per line. Over **40** rows, print the first 40 and one last line
-`… and <K> more rows`. A `layer:` row is an ADDRESS — a sentence about the rows is not the
-context, it is the loss of it.
+when there are any, verbatim: `UNKNOWN:`, `RECEIPT:`, `PACK: blocked …` and the one
+`PACK: <n> rows held for lane entry` count. No `layer:` row is printed at `/start`.
 
 If the plan and handoff disagree, name the mismatch in `Blocker`; do not invent a reconciliation.
 If there is no handoff, derive `Next action` from the current plan and say that no checkpoint

@@ -219,4 +219,14 @@ def emit_pack(root: Path, login: str = "") -> list[str]:
     compiler = _resolver(root)
     if compiler is None:
         return []
-    return _brief_lines(compiler, Path(git(root, "rev-parse", "--show-toplevel") or root), login)
+    lines = _brief_lines(compiler, Path(git(root, "rev-parse", "--show-toplevel") or root), login)
+    return _held_for_lane(lines)
+
+
+def _held_for_lane(lines: list[str]) -> list[str]:
+    """2026-09-23: /start prints no pack rows and asks no area — the pack loads on entering
+    a lane. Measured: 0 of 131 rows changed a brief across three repositories. The rows are
+    counted in one line; everything else the resolver says (blocked, UNKNOWN) stays."""
+    rows = [ln for ln in lines if ln.startswith("layer: ")]
+    kept = [ln for ln in lines if not ln.startswith(("layer: ", "QUESTION:", "AREA_CHOSEN:"))]
+    return kept + ([f"PACK: {len(rows)} rows held for lane entry"] if rows else [])
