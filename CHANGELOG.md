@@ -5,6 +5,16 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
+- **`/start` non stampa più il pack** (`start` 1.11.0 → **1.12.0**, pacchetto 0.27.0 → **0.28.0**).
+  Misurato il 2026-09-23 su tre repository, sei agenti a contesto fresco, `/start` con e senza
+  pack: brief identici, +15% token, **0 righe `layer:` su 131** hanno cambiato un brief, e un
+  repository fermava il brief per chiedere «quale area?» per un pack che nessuno leggeva. Decisione
+  founder: il pack si carica all'ingresso in una lane, mai a `/start`. Il resolver gira ancora
+  (un'emissione bloccata resta rumorosa); le righe sono contate in una sola riga
+  `PACK: <n> rows held for lane entry`, la domanda sull'area non viene più posta.
+  Prova: `polaris/tests/test_start_no_pack_rows.py`, RED→GREEN in `tests/tdd/START-NO-PACK.jsonl`;
+  cinque test del contratto precedente (#405, «stampa le righe») aggiornati al conteggio.
+
 - **La sessione si APRE da `/start`, e le altre due porte raggiungono quella** (`start` 1.10.0 →
   **1.11.0**, `update` 3.0.0 → **3.1.0**, `end` 1.20.0 → **1.21.0**, pacchetto 0.26.0 → **0.27.0**).
   Il motore della continuità (`scripts/session_continuity.py`) stava nel vault da settimane e

@@ -1,6 +1,6 @@
 {
   "name": "polaris-team-os",
-  "version": "0.27.0",
+  "version": "0.28.0",
   "description": "Polaris Team OS: nine repository-first commands — /start, /polaris-status, /polaris-grill, /update, /end, /plan-week, /report, /polaris-memory and /pol-apex-curate — plus the /init door that brings an existing repository into the harness, plus polmem memory CLI. /start is a bounded local resume. Start with docs/TEAM-ONBOARDING.md.",
   "author": {
     "name": "Niccolò Franzin",

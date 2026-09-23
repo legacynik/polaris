@@ -136,7 +136,7 @@ class TheBackboneIsFeatureDetected(unittest.TestCase):
                                    "  freshness: CURRENT")
         out = signals(repo)
         self.assertIn("AREA: memoria  issues: 3", out)
-        self.assertIn("layer: sealed  source_id: DEC-9", out)
+        self.assertIn("PACK: 1 rows held for lane entry", out)  # 2026-09-23: counted, not printed
         self.assertNotIn("PACK=", out)
 
     def test_a_blocked_pack_is_loud_not_silent(self):
@@ -216,8 +216,7 @@ class TheResolverIsFoundThroughTheDeclaredVault(unittest.TestCase):
         git(repo, "config", "polaris.vault", str(vault))
         out = brief_of(repo)
         self.assertIn("AREA: memoria  issues: 3", out.stdout)
-        self.assertEqual(2, len([ln for ln in out.stdout.splitlines()
-                                 if ln.startswith("layer: ")]), out.stdout)
+        self.assertIn("PACK: 2 rows held for lane entry", out.stdout)  # 2026-09-23: counted, not printed
 
     def test_the_environment_wins_over_the_declared_vault(self):
         """(c) `$POLARIS_VAULT` is how one session points somewhere else for one run."""
@@ -253,7 +252,7 @@ class TheResolverIsFoundThroughTheDeclaredVault(unittest.TestCase):
             "print('layer: declared  source_id: CONTEXT.md  path: CONTEXT.md"
             "  freshness: UNKNOWN')\n")))
         self.assertFalse((repo / "_polaris" / "decisions" / "manifest.json").exists())
-        self.assertIn("layer: declared", brief_of(repo).stdout)
+        self.assertIn("PACK: 1 rows held for lane entry", brief_of(repo).stdout)
 
     def test_the_pack_is_compiled_against_the_checkout_not_the_contract_dir(self):
         """(g) The typed documents live at the CHECKOUT root (`CONTEXT.md`, `decisions/`),
@@ -290,7 +289,7 @@ class TheResolverIsFoundThroughTheDeclaredVault(unittest.TestCase):
                            "  freshness: UNKNOWN')\n")
         (repo / "_polaris" / "vault-link").symlink_to(vault, target_is_directory=True)
         git(repo, "config", "polaris.vault", "vault-link")
-        self.assertIn("layer: declared", brief_of(repo).stdout)
+        self.assertIn("PACK: 1 rows held for lane entry", brief_of(repo).stdout)
 
     def test_a_tilde_in_the_declared_vault_is_expanded(self):
         """(j) `~/dev/vault` is how a human writes a path. Unexpanded it is a directory that
@@ -311,7 +310,7 @@ class TheResolverIsFoundThroughTheDeclaredVault(unittest.TestCase):
         out = brief_of(repo)
         self.assertEqual(out.returncode, 0, out.stderr)
         self.assertIn("TODOS=absent", out.stdout, "the rest of the brief must survive")
-        self.assertIn("layer: declared", out.stdout)
+        self.assertIn("PACK: 1 rows held for lane entry", out.stdout)
 
     def test_a_blocked_pack_names_the_resolver_that_refused(self):
         """(l) `PACK: blocked — <CODE>` did not say WHICH compiler refused. With two possible
@@ -343,8 +342,9 @@ class TheBriefMustPrintThePackRowsItResolved(unittest.TestCase):
             text = path.read_text(encoding="utf-8")
             self.assertIn("**Pack**", text, path.name)
             self.assertIn("verbatim", text.lower(), path.name)
-            self.assertIn("40", text, f"{path.name} must state the cap, not imply it")
-            self.assertIn("layer:", text, path.name)
+            # 2026-09-23: the rows moved to lane entry; both places must say so
+            self.assertIn("held for lane entry", text, path.name)
+            self.assertIn("No `layer:` row is printed at `/start`", text, path.name)
 
 
 class TheSkillActuallyCallsIt(unittest.TestCase):
