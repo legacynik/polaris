@@ -2,7 +2,7 @@
 name: start
 description: Polaris skill — resume the current objective from the latest local handoff. First use also provisions your own team path.
 user-invocable: true
-version: 1.12.0
+version: 1.13.0
 ---
 
 # /start — resume, do not survey
@@ -132,7 +132,8 @@ Read these local files, in order:
    NOT printed here — one `PACK: <n> rows held for lane entry` line counts it, because the
    pack loads when a lane is entered, never at `/start` (measured 2026-09-23: 0 of 131 rows
    changed a brief). Never ask which area. Todos and `RECENT` go with the work,
-   `SPOOL_LEGACY`/`DRIFT`/`SECTIONS_MISSING` under `**Segnali**`. The resolver is the host's,
+   `SPOOL_LEGACY`/`DRIFT`/`SECTIONS_MISSING`/`PRIORITIES_STALE` under `**Segnali**` — a stale
+   order is named, never briefed as today's priorities. The resolver is the host's,
    else the vault the repo declares (`git config polaris.vault`); a prose pack is a pack.
    See `reference/two-stage-brief.md`.
 
