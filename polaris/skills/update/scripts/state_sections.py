@@ -45,7 +45,9 @@ def exact(name: str) -> re.Pattern:
     """The declared heading at ITS OWN level, whole line, no qualifier — for a section a script
     rewrites wholesale. The any-level `heading()` let `### Active Priorities` inside another
     section be taken for the order and deleted (breaker on polaris#42)."""
-    return re.compile(rf"^{re.escape(name.strip())}[ \t]*$")
+    # Level exact, qualifier allowed (`## Active Priorities — l'ordine del lavoro` IS the section:
+    # the whole-line version added a second section on the vault's first real run, 2026-09-24).
+    return re.compile(rf"^{re.escape(name.strip())}{QUALIFIER}")
 
 
 def _selfcheck() -> int:

@@ -5,6 +5,12 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
+- **`exact()` accetta di nuovo il qualificatore** (`update` 3.2.1 → **3.2.2**, pacchetto → **0.29.2**).
+  #43 aveva ristretto l'intestazione alla riga intera `## Active Priorities`; il cockpit del vault la scrive
+  `## Active Priorities — l'ordine del lavoro`, lo script non l'ha riconosciuta e al primo uso reale ha
+  aggiunto una seconda sezione. Livello esatto (un `###` altrove resta escluso), qualificatore ammesso
+  come nel resto del registro. Prova: `polaris/tests/test_state_priorities_qualified.py`.
+
 - **Breaker su `state_priorities` e `/end` Step 4b** (`end` 1.22.0 → **1.22.1**, `update` 3.2.0 → **3.2.1**,
   pacchetto → **0.29.1**). Cinque difetti con input riproducibile, corretti:
   - lo snippet dello Step 4b usava virgolette doppie: una lane con backtick veniva eseguita dalla shell e
