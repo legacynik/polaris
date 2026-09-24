@@ -24,12 +24,14 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from state_lines import read, section, write  # noqa: E402
 from state_lock import LockError, locked, still_mine, write_atomic  # noqa: E402
-from state_sections import heading  # noqa: E402
+from state_sections import exact, heading  # noqa: E402
 
 TITLE = "## Active Priorities"
 STAMP = re.compile(r"^<!-- pol:priorities updated=(\d{4}-\d{2}-\d{2}) -->$")
-NUMBERED = re.compile(r"^\s*(?:\d+[.)]|[-*])\s+")
+NUMBERED = re.compile(r"^\s*(?:\d+[.)]|[-*])(?:\s+|$)")  # a bare `1.` is a marker, not an item
 STALE_DAYS = 7
+# The h2 exactly (`exact`), never the any-level `heading()`: breaker on polaris#42.
+OWN = exact(TITLE)
 FOOTER = "<!-- pol:state-contract -->"
 
 
@@ -41,7 +43,7 @@ def block(items: list[str], now: str) -> list[str]:
 
 def placed(lines: list[str], items: list[str], now: str) -> list[str]:
     """Replace the real section's body; without one, add it before `## Open` (else the footer)."""
-    span = section(lines, heading(TITLE))
+    span = section(lines, OWN)
     if span:
         return lines[:span[0]] + block(items, now) + lines[span[1]:]
     open_body = section(lines, heading("## Open"))
@@ -68,11 +70,14 @@ def cmd_set(path: Path, now: str) -> int:
 def staleness(path: Path, now: str) -> str:
     """The one line /start owes when the order is old or unstamped; "" when it is fresh."""
     lines, _, _ = read(path)
-    span = section(lines, heading(TITLE))
+    span = section(lines, OWN)
     stamps = [m.group(1) for ln in (lines[span[0]:span[1]] if span else []) if (m := STAMP.match(ln))]
     if not stamps:
         return "PRIORITIES_STALE=unstamped — /end has never written the order"
-    age = (date.fromisoformat(now) - date.fromisoformat(stamps[0])).days
+    try:
+        age = (date.fromisoformat(now) - date.fromisoformat(stamps[0])).days
+    except ValueError:   # a bad date silenced /start, which reads as fresh
+        return f"PRIORITIES_STALE=malformed — stamp {stamps[0]!r} is not a date"
     return f"PRIORITIES_STALE={age}d — last written {stamps[0]} by /end" if age > STALE_DAYS else ""
 
 

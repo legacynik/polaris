@@ -2,7 +2,7 @@
 name: end
 description: Polaris skill — close a repository-first team session with a handoff, decisions/lessons written to the ledgers, a plan tick and a pathspec-only commit. Trigger when stopping work, before a multi-day pause, or on "wrap up / end session / /end".
 user-invocable: true
-version: 1.22.0
+version: 1.22.1
 invokes: [git-power]
 ---
 
@@ -463,9 +463,15 @@ The cockpit is the one view the founder reads, and `/start` reads only it — so
 work lives here and **this step is its only writer**. Every `/end`, after Step 4, rebuild the
 ordered list from four inputs: `state/goals.md` (where we are going), the `## Active` rows of
 `state/todos.md`, the `## Open` threads that survived Step 4, and what this session changed.
-Rules: at most **7** lines; each is `#<issue or lane> — <outcome in one line>`; work that landed
-leaves; the first line is the next thing to do. If the order did not change, write it anyway —
+Rules: each line is `#<issue or lane> — <outcome in one line>`; the first line is the next thing
+to do. An item leaves **only** when Step 4 closed it as `PROVEN` — an `OPEN` or `AMBIGUOUS` lane
+stays in the order, and if Step 4 stopped on `BLOCKED`, do not rewrite the order this session.
+Keep it to **7** lines by folding the tail into one last line (`… — also: #A, #B, #C`), never by
+dropping a live item in silence. If the order did not change, write it anyway —
 the stamp records that it was reviewed today, and `/start` names an order older than 7 days.
+
+The heredoc is QUOTED (`<<'ORDER'`) on purpose: lane ids carry backticks, and inside double
+quotes the shell would run them and write a corrupted order with exit 0.
 
 Never edit the section by hand or by string surgery: on 2026-09-13 an unanchored `s.index` matched
 a backtick mention of the heading and fused it into a sentence, and the order stayed wrong for ten
@@ -474,8 +480,12 @@ section before `## Open` when it is missing:
 
 ```bash
 PR="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/update/scripts/state_priorities.py"
+[ -f "$PR" ] || PR="$HOME/.agents/skills/update/scripts/state_priorities.py"
 [ -f "$PR" ] || { echo "STOP: state_priorities.py not resolved — never hand-edit the order"; exit 1; }
-printf '%s\n' "<#N — first>" "<#M — second>" | python3 "$PR" set "$CURRENT"
+python3 "$PR" set "$CURRENT" <<'ORDER'
+#N — first
+#M — second
+ORDER
 ```
 
 ## Step 5 — Land the handoff in git (same guard as `/update`, in code)
