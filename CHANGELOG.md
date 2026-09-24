@@ -5,6 +5,18 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
+- **Breaker su `state_priorities` e `/end` Step 4b** (`end` 1.22.0 → **1.22.1**, `update` 3.2.0 → **3.2.1**,
+  pacchetto → **0.29.1**). Cinque difetti con input riproducibile, corretti:
+  - lo snippet dello Step 4b usava virgolette doppie: una lane con backtick veniva eseguita dalla shell e
+    l'ordine scritto corrotto con exit 0. Ora heredoc quotato (`<<'ORDER'`) e fallback su `$HOME/.agents`;
+  - l'intestazione era cercata a qualunque livello: un `### Active Priorities` dentro un'altra sezione veniva
+    riscritto e cancellato. Nuovo `state_sections.exact()` nel registro unico: solo l'h2, riga intera;
+  - un input di soli marcatori (`1.`, `*`) passava come elementi e cancellava l'ordine: ora STOP;
+  - un timbro malformato zittiva `/start`: ora `PRIORITIES_STALE=malformed`;
+  - lo Step 4b poteva togliere una lane viva: ora esce solo ciò che lo Step 4 ha chiuso `PROVEN`, su
+    `BLOCKED` non si riscrive l'ordine, e oltre 7 righe la coda si piega in una riga, mai si scarta.
+  Prova: `polaris/tests/test_state_priorities_breaker.py`, tre ricevute in `tests/tdd/PRIORITIES-B42-*`.
+
 - **`## Active Priorities` ha un proprietario: `/end`** (`end` 1.21.0 → **1.22.0**, `update` 3.1.0 →
   **3.2.0**, `start` 1.12.0 → **1.13.0**, pacchetto 0.28.0 → **0.29.0**). Nessuna porta scriveva la
   sezione: `/update` scrive `## Open`, `/end` `## Recent Context`, e in una repo prodotto le priorità
