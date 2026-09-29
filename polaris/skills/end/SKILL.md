@@ -2,7 +2,7 @@
 name: end
 description: Polaris skill — close a repository-first team session with a handoff, decisions/lessons written to the ledgers, a plan tick and a pathspec-only commit. Trigger when stopping work, before a multi-day pause, or on "wrap up / end session / /end".
 user-invocable: true
-version: 1.17.0
+version: 1.22.1
 invokes: [git-power]
 ---
 
@@ -97,6 +97,72 @@ adesso non esiste più. `Files` come `path · simbolo · perché` è ciò che pe
 log di incontrarsi sullo stesso simbolo mesi dopo. SHA e numeri si leggono da `git log`, non si
 ricordano.
 
+### I sei campi sono i cinque elementi del confine — nessuno è opzionale
+
+Le sei righe non sono un formato gradito: sono i **cinque elementi** che rendono la sessione
+ripartibile, e la sessione dopo apre da qui. Un campo senza contenuto si scrive `none`, esplicito;
+un campo **assente** è il confine rotto, e `/end` non chiude.
+
+| elemento | campo |
+|---|---|
+| scope e decisioni | `Key context` |
+| stato dei task e prossimo task | `In progress` + `Next session` |
+| file cambiati e stato del working tree | `Files` |
+| comandi di verifica lanciati ed esito | `Done` |
+| domande, rischi e approvazioni aperte | `Blocker` |
+
+**Fail-closed su una decisione presa e non scritta.** Una clausola di `Key context` taggata
+`#decisione` o `#superata` deve **nominare la casa che la porta**, in una di queste tre forme:
+
+- l'id del record — `DEC-…` o `ADR-…` — e il record deve esistere sotto `decisions/`;
+- il titolo della voce di `decisions.md` (Step 3), che la clausola ripete per esteso;
+- l'issue nella forma **qualificata**: `issue:<repo>#<numero>`, per esempio `issue:acme-api#407`.
+  Il numero nudo (`#407`, «vedi PR #424») **non** conta: è la cosa più comune che finisca in una
+  riga `Key context`, e prenderlo per una casa assolveva ogni decisione non scritta.
+
+Una ritrattazione è una decisione come le altre — un numero ritirato si scrive **accanto al
+numero**, non solo qui. Se la clausola non nomina nulla, si scrive prima (Step 3) e solo dopo si
+chiude: una decisione che vive solo in questo log è la decisione che la sessione dopo prende di
+nuovo, o rovescia senza sapere che esisteva.
+
+Dove il repo porta il gate del backbone, la stessa cosa è una verifica eseguibile e non un
+promemoria — altrimenti le sei righe sopra restano la checklist:
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/start/scripts/session_gate.py" close \
+  --root "$ROOT" --handoff "$ROOT/team/$LOGIN/sessions/$(date +%F)-@$LOGIN.md" || exit 1
+```
+
+Chiude **la sessione che `/start` ha aperto in questo checkout**: il sid non si passa e non si
+inventa — è checkout + giorno + login, ricalcolato qui (polaris-os#155). Il motore è quello del
+repo, se lo porta, altrimenti quello del vault dichiarato (`git config polaris.vault`), la stessa
+ricerca che fa il pack del brief.
+
+Chiude **la sessione aperta**, non il sid di oggi: a mezzanotte la derivazione cambia mentre la
+sessione è ancora aperta, e un pannello può non aver mai fatto `/start`. `SESSION: none open —
+nothing to close` esce 0 e `/end` prosegue: la cosa durevole è il commit dell'handoff, e una
+ricevuta già scritta non viene mai riscritta.
+
+**Il `|| exit 1` vale solo per i rifiuti.** Prima questo blocco era un `if [ -f "$GATE" ]` su un
+path solo-host, e con una catena `&&` … `||` OGNI rifiuto — anche `ID_COLLISION` — cadeva nel ramo
+`||` stampando «nessun gate» con `$?` a `0`: la skill proseguiva al commit dello Step 5 proprio nei
+casi che il gate esiste per fermare. Ora l'assenza del motore esce 0 stampando la nota, e il
+`|| exit 1` intercetta soltanto i rifiuti veri.
+
+Sette rifiuti, tutti prima della ricevuta — ma solo **con una sessione aperta**: senza, il motore
+non gira e restano i due che il log si guadagna da solo, che la porta controlla per prima
+(`HANDOFF_MISSING`, `HANDOFF_UNREADABLE`, exit 1). Gli altri cinque — decisione non scritta, id già
+speso, albero altrui — non hanno una sessione contro cui girare: valgono comunque come regola, e
+quello che scoprono va in una issue, non in un rifiuto che non esiste.
+I sette: `HANDOFF_MISSING` se non gli si passa il log e
+`HANDOFF_UNREADABLE` se il path non è leggibile (i cinque elementi si leggono, non si inventano),
+`HANDOFF_INCOMPLETE` nomina l'elemento mancante, `DECISION_UNWRITTEN` la clausola che non nomina la
+sua casa, `ID_COLLISION` un id di Decision già speso altrove, `TREE_NOT_OURS` un path sporco che
+nessuna riga `Files` dichiara e `TREE_UNREADABLE` un albero che `git` non riesce a leggere (un
+committer per tree), `SESSION_UNKNOWN` un sid che non ha una `start.json`.
+Le lezioni escono come righe `LESSON_PROPOSAL` su stderr: sono **proposte**, e
+lo Step 3 decide quali qualificano e le scrive. Il gate non tocca `lessons.md` da solo.
+
 Then feed the repository memory with the same handoff, one machine-readable line — the offline
 distill decides later what is durable, so never skip this because the session felt routine.
 
@@ -161,8 +227,9 @@ entry in the vault's own ring, so work done here is visible from there without g
 everything-file anywhere:
 
 ```bash
-VAULT="$(git config --get polaris.vault-root || true)"   # declared per repo, never guessed
-[ -n "$VAULT" ] && [ -d "$VAULT" ] && [ "$VAULT" != "$ROOT" ] || VAULT=""
+VAULT="$(python3 "${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/start/scripts/session_gate.py" \
+  vault --root "$ROOT")"                                 # declared per repo, never guessed
+[ -n "$VAULT" ] && [ "$VAULT" != "$ROOT" ] || VAULT=""
 ```
 
 ```bash
@@ -174,9 +241,10 @@ RC="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/update/scripts/recent_context.py
 No declaration, or a declared path that is not there → no copy, and this repo's cockpit is the only
 record. A literal path used to live here, which meant every install looked for a directory that
 exists on one machine and the public package carried a home directory. Set it once per repo:
-`git config polaris.vault-root <path>`, the same mechanism `polaris.login` already uses.
-The separator is a **dash**: `git config` refuses a key with an underscore outright, so the
-underscored spelling this line used to carry made the vault copy a branch that never ran.
+`git config polaris.vault <path>`, the same mechanism `polaris.login` already uses — **one key**,
+the one `/start`, `/init` and the doctor already read. `polaris.vault-root` was a second spelling
+of the same fact and is still read for one cycle, with a deprecation note on stderr naming the
+key that replaces it.
 
 Three surfaces carry a session and no fourth exists: the thread line in `current.md` (thin index),
 the `## Recent Context` entry (summary, capped), the committed session log (full handoff). The
@@ -388,6 +456,37 @@ evidence in the log.
 On a clean handoff the `Next` line is the first step for the next session; leave other panels' `Next`
 lines alone. Closed threads leave the pointer — their story lives in the session log you just wrote,
 not here.
+
+## Step 4b — Reconcile `## Active Priorities` (the only writer of the order)
+
+The cockpit is the one view the founder reads, and `/start` reads only it — so the order of the
+work lives here and **this step is its only writer**. Every `/end`, after Step 4, rebuild the
+ordered list from four inputs: `state/goals.md` (where we are going), the `## Active` rows of
+`state/todos.md`, the `## Open` threads that survived Step 4, and what this session changed.
+Rules: each line is `#<issue or lane> — <outcome in one line>`; the first line is the next thing
+to do. An item leaves **only** when Step 4 closed it as `PROVEN` — an `OPEN` or `AMBIGUOUS` lane
+stays in the order, and if Step 4 stopped on `BLOCKED`, do not rewrite the order this session.
+Keep it to **7** lines by folding the tail into one last line (`… — also: #A, #B, #C`), never by
+dropping a live item in silence. If the order did not change, write it anyway —
+the stamp records that it was reviewed today, and `/start` names an order older than 7 days.
+
+The heredoc is QUOTED (`<<'ORDER'`) on purpose: lane ids carry backticks, and inside double
+quotes the shell would run them and write a corrupted order with exit 0.
+
+Never edit the section by hand or by string surgery: on 2026-09-13 an unanchored `s.index` matched
+a backtick mention of the heading and fused it into a sentence, and the order stayed wrong for ten
+days. The script finds the real heading, writes atomically under the cockpit lock, and adds the
+section before `## Open` when it is missing:
+
+```bash
+PR="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/update/scripts/state_priorities.py"
+[ -f "$PR" ] || PR="$HOME/.agents/skills/update/scripts/state_priorities.py"
+[ -f "$PR" ] || { echo "STOP: state_priorities.py not resolved — never hand-edit the order"; exit 1; }
+python3 "$PR" set "$CURRENT" <<'ORDER'
+#N — first
+#M — second
+ORDER
+```
 
 ## Step 5 — Land the handoff in git (same guard as `/update`, in code)
 

@@ -5,6 +5,243 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
+- **`exact()` accetta di nuovo il qualificatore** (`update` 3.2.1 → **3.2.2**, pacchetto → **0.29.2**).
+  #43 aveva ristretto l'intestazione alla riga intera `## Active Priorities`; il cockpit del vault la scrive
+  `## Active Priorities — l'ordine del lavoro`, lo script non l'ha riconosciuta e al primo uso reale ha
+  aggiunto una seconda sezione. Livello esatto (un `###` altrove resta escluso), qualificatore ammesso
+  come nel resto del registro. Prova: `polaris/tests/test_state_priorities_qualified.py`.
+
+- **Breaker su `state_priorities` e `/end` Step 4b** (`end` 1.22.0 → **1.22.1**, `update` 3.2.0 → **3.2.1**,
+  pacchetto → **0.29.1**). Cinque difetti con input riproducibile, corretti:
+  - lo snippet dello Step 4b usava virgolette doppie: una lane con backtick veniva eseguita dalla shell e
+    l'ordine scritto corrotto con exit 0. Ora heredoc quotato (`<<'ORDER'`) e fallback su `$HOME/.agents`;
+  - l'intestazione era cercata a qualunque livello: un `### Active Priorities` dentro un'altra sezione veniva
+    riscritto e cancellato. Nuovo `state_sections.exact()` nel registro unico: solo l'h2, riga intera;
+  - un input di soli marcatori (`1.`, `*`) passava come elementi e cancellava l'ordine: ora STOP;
+  - un timbro malformato zittiva `/start`: ora `PRIORITIES_STALE=malformed`;
+  - lo Step 4b poteva togliere una lane viva: ora esce solo ciò che lo Step 4 ha chiuso `PROVEN`, su
+    `BLOCKED` non si riscrive l'ordine, e oltre 7 righe la coda si piega in una riga, mai si scarta.
+  Prova: `polaris/tests/test_state_priorities_breaker.py`, tre ricevute in `tests/tdd/PRIORITIES-B42-*`.
+
+- **`## Active Priorities` ha un proprietario: `/end`** (`end` 1.21.0 → **1.22.0**, `update` 3.1.0 →
+  **3.2.0**, `start` 1.12.0 → **1.13.0**, pacchetto 0.28.0 → **0.29.0**). Nessuna porta scriveva la
+  sezione: `/update` scrive `## Open`, `/end` `## Recent Context`, e in una repo prodotto le priorità
+  sono rimaste al 13/09 per dieci giorni. Quel giorno una modifica a mano aveva trovato l'intestazione
+  con `s.index` non ancorato, agganciando una menzione fra backtick nella prosa e fondendo la nuova
+  intestazione in una frase. Ora `/end` (Step 4b) ricostruisce l'ordine da `goals.md`, `todos.md`, i
+  thread `## Open` e la sessione, e lo scrive con `update/scripts/state_priorities.py set`: intestazione
+  trovata dal registro fence-aware, scrittura atomica sotto lock, timbro di data. `/start` legge solo
+  il cockpit e nomina un ordine più vecchio di 7 giorni (`PRIORITIES_STALE=<n>d`) invece di
+  presentarlo come attuale. Prova: `polaris/tests/test_state_priorities.py` (4) e
+  `test_start_priorities_signal.py` (1), RED→GREEN in `tests/tdd/PRIORITIES-*.jsonl`.
+
+- **`/start` non stampa più il pack** (`start` 1.11.0 → **1.12.0**, pacchetto 0.27.0 → **0.28.0**).
+  Misurato il 2026-09-23 su tre repository, sei agenti a contesto fresco, `/start` con e senza
+  pack: brief identici, +15% token, **0 righe `layer:` su 131** hanno cambiato un brief, e un
+  repository fermava il brief per chiedere «quale area?» per un pack che nessuno leggeva. Decisione
+  founder: il pack si carica all'ingresso in una lane, mai a `/start`. Il resolver gira ancora
+  (un'emissione bloccata resta rumorosa); le righe sono contate in una sola riga
+  `PACK: <n> rows held for lane entry`, la domanda sull'area non viene più posta.
+  Prova: `polaris/tests/test_start_no_pack_rows.py`, RED→GREEN in `tests/tdd/START-NO-PACK.jsonl`;
+  cinque test del contratto precedente (#405, «stampa le righe») aggiornati al conteggio.
+
+- **La sessione si APRE da `/start`, e le altre due porte raggiungono quella** (`start` 1.10.0 →
+  **1.11.0**, `update` 3.0.0 → **3.1.0**, `end` 1.20.0 → **1.21.0**, pacchetto 0.26.0 → **0.27.0**).
+  Il motore della continuità (`scripts/session_continuity.py`) stava nel vault da settimane e
+  **nessuna skill chiamava il suo `start`**: la ricevuta del pack (`area-<slug>.json`) e il
+  reinserimento dopo una compaction rispondevano `RECEIPT: none` e `NO_OPEN_SESSION`, cioè tutto il
+  lavoro del resolver moriva con la finestra di contesto in cui era stato stampato
+  (polaris-os#155).
+  Ora `/start` ha un passo 5b — **prima** dei segnali, perché la ricevuta appartiene a una sessione
+  già aperta — che apre con un **sid derivato**: `s-<login>-<YYYYMMDD>-<hash6 del checkout>`.
+  Derivato, non passato: `/update` e `/end` lo ricalcolano e arrivano alla stessa sessione senza
+  che nulla viaggi fra i processi. Una seconda `/start` nello stesso giorno è un **resume**, non un
+  errore; un pack rifiutato è **una riga** (`SESSION: blocked — <CODE>`) e il brief continua; un
+  repo senza motore non stampa niente e non scrive niente — la feature-detection di #155 resta
+  intatta.
+  `/update` aggiunge un evento append-only al checkpoint, `/end` chiude la stessa sessione: il
+  `sid` non si scrive più a mano (il corpo spediva letteralmente `--sid "<sid>"`) e il gate non si
+  cerca più solo nel repo (`$ROOT/scripts/…`, che in una repo di prodotto non esiste) ma **host poi
+  vault dichiarato**, la stessa ricerca del compilatore del brief.
+  **Una chiave sola per il vault.** `/end` leggeva `polaris.vault-root` mentre `/start`, `/init` e
+  il doctor leggono `polaris.vault`: due chiavi per lo stesso fatto sono una repo che risponde a una
+  porta e non all'altra. Ora la chiave è `polaris.vault`; la vecchia è ancora **letta per un giro**,
+  con una nota di deprecazione su stderr che nomina quella che la sostituisce.
+  Prova reale su una repo di prodotto (worktree usa e getta, `origin/main`, nessun backbone
+  tipizzato): `SESSION: opened s-…`, la ricevuta `state/session/<sid>/area-all.json` con lo stesso
+  `pack_seal` della `start.json`, un evento con `prev` = ricevuta di start, `end.json` che li lega,
+  e il reinserimento che passa da `NO_OPEN_SESSION` a `REINSERT: HEAD unchanged … 0 tracker calls`
+  con `CHAIN: prev=<ricevuta di start>`.
+  **Giro 1 della review.** Il seat resta sotto il **checkout**, che è la sola radice contro cui
+  il pack è compilato (`emit_pack` passa `git rev-parse --show-toplevel`) e quindi la sola dove la
+  dashboard cerca la sessione; a essere sbagliati erano i **lettori**: lo Step 3b e l'hook di
+  compaction chiedevano `$ROOT` (`<repo>/_polaris`) e in ogni repo di prodotto rispondevano
+  `NO_OPEN_SESSION` — l'hook, per giunta, cercava `contextpack_reinsert.py` solo nel repo, quindi
+  non ha mai fatto nulla lì. Ora passano dalla porta (`session_gate.py reinsert`, host poi vault,
+  radice del checkout) e `install_settings` **sostituisce** il blocco vecchio invece di
+  affiancarne uno nuovo che continuerebbe a girare.
+  `/update` e `/end` non ricalcolano più il sid: agiscono sulla **sessione aperta**. A mezzanotte
+  la derivazione cambia mentre la sessione è ancora aperta, un pannello può non aver mai fatto
+  `/start`, e un secondo `/end` non ha più niente da chiudere: tutti e tre uscivano `SESSION_UNKNOWN`
+  rc 2, cioè `/end` moriva prima di committare l'handoff. Ora sono `SESSION: none open — nothing to
+  close` con exit 0, e una ricevuta già scritta non viene mai riscritta; dopo una chiusura `/start`
+  apre un **seat nuovo** (`…-2`) invece di «riprendere» una sessione chiusa. Il seat ignora sé
+  stesso (`state/session/.gitignore`), così non sporca `git status` nei repo ospite, e la causa di
+  un rifiuto è il **codice** del motore o la sua ultima riga, mai `Traceback (most recent call
+  last):`.
+  **Giro 2.** Senza sessione aperta il motore non gira, e con lui nessuno dei sette rifiuti di
+  #407: un `/end` con il log di sessione non ancora su disco usciva 0. Ora i due rifiuti che il log
+  si guadagna da solo — `HANDOFF_MISSING`, `HANDOFF_UNREADABLE` — li controlla la porta **prima** di
+  qualunque domanda sulla sessione, exit 1. E `chain`, che era rimasto l'ultimo lettore a chiedere
+  `$ROOT`, passa dalla porta come `reinsert`: stessa radice, ma l'exit code arriva al chiamante,
+  perché una verifica che inghiotte `CHAIN_BROKEN` non verifica niente.
+  Tre cose che una riga sola rompeva: l'ignore del seat su un `state/` non scrivibile faceva
+  morire il brief con un traceback (è igiene, ora non alza), il selfcheck di `install_settings`
+  eseguiva l'hook contro la copia **installata** invece del pacchetto in cui vive (rosso 12/13 su
+  una macchina senza install, e `check_skills.sh` con lui), e `--login` divergente da
+  `polaris.login` lasciava una sessione aperta per sempre in silenzio — ora `/end` dice di chi è
+  il seat aperto invece di tacere.
+
+- **Una repo che esiste gia' entra dalla porta `init`, e la porta non trasporta l'harness**
+  (`init` **0.1.0** nuova, pacchetto 0.25.2 → **0.26.0**). Il pacchetto spediva le skill ma nessun
+  modo di *entrare*: in una repo di prodotto senza triade tipizzata il context pack non emette
+  niente, e il doctor dice «harness not installed». La porta esegue i quattro passi nell'ordine che
+  il founder ha fissato — **audit** (JSON: ogni documento vivo `absent`/`prose`/`typed`, ogni
+  bloccante col rimedio, e UNA domanda per ogni scelta non provabile), **propose** (piano in
+  Markdown con la tabella delle aree **da firmare**), la firma, **apply --mode minimal** — e solo
+  alla fine mostra il pack. I primi due verbi scrivono **zero file**: e' il contratto della spec
+  `repo-adoption` («il primo giro non esegue lavoro»), non una cortesia.
+  La porta **chiama** `polaris_init.py` del vault risolto da `git config polaris.vault` e, se non
+  c'e', dice una riga ed esce 0: il pacchetto non vendorizza gli script, e il test lo verifica
+  (`test_it_ships_no_copy_of_the_harness`). Le aree restano **proposte e firmate, mai derivate**
+  (#331 KILL): un dossier senza manifest firmato blocca il sigillo invece di far inventare un
+  manifest all'agente.
+
+- **Il puntatore al vault si rilegge a ogni giro, e il cockpit si chiede** (`init` 0.1.0 →
+  **0.2.0**). `polaris.vault` vive nel `.git/config` condiviso: un'altra sessione lo riscrive
+  sotto di te, e un puntatore morto non da' errore — il pack semplicemente smette di emettere.
+  `audit` ora porta un campo `vault` con cio' che e' dichiarato e se risolve ancora. E un cockpit
+  senza intestazione `## Active Priorities` (misurato: le priorita' ci sono, l'intestazione era
+  finita dentro una riga di prosa) diventa una **domanda** in `propose`, mai una scrittura: quali
+  siano le priorita' e in che ordine lo dice il founder, non questo strumento.
+
+- **La prova non e' piu' un falso verde** (`init` 0.2.0 → **0.3.0**). Il passo 4 risolveva il pack
+  PRIMA del commit: il pack sigilla contro l'albero committato, quindi a `HEAD` senza backbone
+  stampava `CTX-UNKNOWN` con `documents: 0` ed usciva **0** — sembrava riuscito e non lo era. Ora
+  il commit (pathspec: triade + `decisions/`) sta prima del resolve, e la sezione «Proof it
+  worked» legge i **valori**: `workspace` diverso da `UNKNOWN` e `documents: 3`, non l'exit code.
+  Due test lo fissano. Dichiarato anche che `VAULT_UNDECLARED` non e' raggiungibile da qui: il
+  passo 1 si ferma prima, e la skill stampa la riga di rimedio invece di fingere di gestirlo.
+
+- **Il brief STAMPA le righe del pacchetto, non le riassume** (`start` 1.9.0 → **1.10.0**).
+  Misurato end to end su un repo ospite con una sessione fresca: `brief_signals.py` emette 42 righe
+  `layer:` e 3 righe `UNKNOWN:`, e il brief reso ne portava **zero** — una frase al posto di tutto
+  («DOMAIN.md e' assente, quindi il pacchetto non e' filtrato per area»). Il resolver funzionava, il
+  tubo era collegato, e il contesto moriva nell'ultimo metro. Il passo 6 diceva solo che le righe
+  `layer:` «sono il pacchetto dell'area scelta»: descrivere non e' consegnare. Il passo 4 ora
+  prescrive una sezione `**Pack**` con le righe copiate **verbatim** — prima `UNKNOWN:`/`AREA:`/
+  `QUESTION:`/`RECEIPT:`, poi una riga `layer:` per riga, nell'ordine emesso — con un tetto
+  dichiarato: oltre **40** righe si stampano le prime 40 e una riga `… and <K> more rows`, mai un
+  taglio silenzioso. Una riga `layer:` e' un INDIRIZZO: una frase sulle righe non e' il contesto, e'
+  la sua perdita. Il test e' dichiarato per quello che e': una **guardia**, non una prova — nel
+  pacchetto non esiste un renderer, il brief lo rende il modello, quindi si tiene che l'istruzione
+  dica «verbatim» e dichiari il tetto in entrambi i posti dove un lettore guarda.
+
+- **Il brief trova il resolver anche quando l'harness non e' nel repo ospite** (`start` 1.8.0 →
+  **1.9.0**). Misurato su due repo prodotto: il compiler del vault rispondeva gia' con un pacchetto
+  intero (29 e 34 righe `layer: declared` — `CONTEXT.md` in prosa piu' gli ADR), e `/start` non ne
+  mostrava **una**. Il tubo non era collegato: il pacchetto cercava
+  `scripts/contextpack_dashboard.py` DENTRO il repo ospite e pretendeva un `decisions/manifest.json`
+  che nessun repo prodotto ha. Ora il resolver si cerca prima nell'host — chi spedisce il suo
+  compiler lo possiede — e poi nel **vault che il repo dichiara** (`$POLARIS_VAULT`, altrimenti
+  `git config polaris.vault`, dichiarazione LOCALE che non viaggia in un commit): lo stesso
+  contratto che `arch_doctor_sources.vault` tiene nel vault, non un secondo modo di dire la stessa
+  cosa. Nessuno dei due presente resta **silenzio** (#155), e un vault dichiarato che non ha piu'
+  lo script e' quello stesso caso, mai un errore; un resolver che rifiuta resta rumoroso
+  (`PACK: blocked — <CODE>`, DB-FR-05). Il requisito del manifest **cade**: un pacchetto in prosa,
+  strato `declared` con `freshness: UNKNOWN` dichiarata riga per riga, e' valido per contratto
+  (polaris-os#403) — a rifiutare ci pensa il resolver, non un pre-check del pacchetto. Il reperto
+  meno ovvio del giro: il pacchetto va compilato sul **checkout** (`git rev-parse --show-toplevel`),
+  non su `$ROOT`, che e' la cartella del contratto `_polaris/`; i documenti tipati stanno ACCANTO ad
+  essa, e compilando dentro di essa gli stessi due repo rispondevano **0** righe `declared` invece di
+  29 e 34. Dal primo giro di review, quattro cose che mordono: il test del checkout passava anche
+  sbagliando, perche' `assertIn` su tutto lo stdout e' contento di `<repo>/_polaris` (ora confronta la
+  riga intera); la precedenza host→vault non aveva prova, e ora un host che RIFIUTA vince su un vault
+  sano, perche' chi spedisce il suo compiler possiede la risposta; un `polaris.vault` relativo veniva
+  risolto contro la cwd del processo e un `~` non veniva espanso — entrambi finivano in SILENZIO, la
+  sola risposta indistinguibile da un repo che non ha dichiarato niente; e l'output non-UTF-8 di un
+  resolver uccideva **tutta** la brief con un `UnicodeDecodeError`, non solo il pacchetto. In piu' la
+  riga di rifiuto ora nomina il resolver che ha rifiutato. `reference/two-stage-brief.md` spiega i due posti e il pacchetto in prosa una volta sola.
+
+- **Dopo una compaction il pacchetto torna dalla ricevuta, non da un secondo calcolo**
+  (`start` 1.7.0 → **1.8.0**). Una compaction svuota la finestra di contesto e non tocca niente su
+  disco: il pacchetto era gia' risolto, e rifarlo significa ricamminare il tracker in rete per una
+  risposta che non e' cambiata. Il passo 3b chiede invece al repo ospite di **rimetterlo davanti**
+  (`contextpack_reinsert.py reinsert`): a `HEAD` fermo ristampa le righe della ricevuta con **zero**
+  chiamate al tracker; solo un `HEAD` avanzato paga una riemissione, e la seconda ricevuta si mette
+  ACCANTO alla prima nominandola in `CHAIN: prev=` — cosi' cio' che l'agente aveva PRIMA della
+  compaction resta auditabile. Ricevuta assente o ricevuta di un'altra area sono costi dichiarati
+  (`RECEIPT_MISSING`, `AREA_MISMATCH`), non errori: si riemette e si esce 0. Il passo porta anche
+  l'hook dell'host (`SessionStart` con matcher `compact`), perche' un meccanismo che dipende dal
+  fatto che qualcuno se lo ricordi non e' un meccanismo. Dal giro di review: l'hook era **JSON in
+  prosa**, e il JSON in prosa non installa niente — ora sta in `templates/settings.team.json`, che
+  pero' non aveva **nessun** installer (il suo, `pol-bootstrap`, e' stato rimosso e il template era
+  orfano insieme al preset dei permessi). Il passo 2 chiama `scripts/install_settings.py`, che fonde
+  senza mai sovrascrivere e al secondo giro non cambia nulla; il suo `--selfcheck`, agganciato a
+  `check_skills.sh`, **esegue** il comando dell'hook due volte — senza resolver (muto, exit 0) e con
+  un resolver (lo lancia) — perche' un hook e' una stringa finche' qualcuno non lo esegue. Il `sid`
+  non e' un flag da riempire: il comando risolve da solo la sessione aperta oggi. Detto onestamente:
+  **oggi vedrai `NO_OPEN_SESSION`**, perche' una ricevuta del pack appartiene a una sessione e il
+  `/start` spedito non ne apre ancora una (polaris-os#155); l'hook resta cablato e silenzioso finche'
+  quello non atterra. Il pacchetto non trasporta l'harness: senza resolver dell'host non stampa nulla
+  (contratto #155). `reference/two-stage-brief.md` spiega le righe una volta sola, comprese le sei
+  che dicono che la ricevuta non era affidabile e cosa vale davvero la catena.
+  Dal secondo giro di review, il reperto peggiore di tutto il task: l'installer **distruggeva** il
+  file che prometteva di non toccare. Un `.claude/settings.json` con una parentesi di troppo non
+  parsava, il merge partiva da `{}` e ci scriveva sopra il template — via la `deny` list, il
+  `model`, i permessi e gli hook di ogni altro plugin, senza backup e con una scrittura non
+  atomica. Ora un file che esiste, non parsa e non e' vuoto ferma l'installazione
+  (`SETTINGS_UNREADABLE`, exit 1, niente scritto), la scrittura e' atomica, e il `--selfcheck`
+  tiene giu' entrambe le meta': che un file malformato non venga toccato, e che su un file sano
+  sopravvivano `deny`, `model` e gli hook altrui. (polaris-os#406)
+
+- **`/start` a due tempi: l'indice delle aree prima, il pacchetto dell'area dopo — e mai piu' una
+  riga opaca** (`start` 1.6.0 → **1.7.0**). Il brief portava `PACK=CTX-<id>`, e polaris-os#326 ha
+  misurato quanto vale un id opaco: l'agente lo ignorava, quindi il resolver era invisibile proprio
+  alla sessione per cui esiste, e l'indice del repo restava a voce. Ora `emit_pack` esegue il brief a
+  due tempi dell'host e stampa cio' che risponde: **tempo 0** una riga per area con tre conteggi —
+  issue aperte, PR aperte, ultima Decision (`AREA: <slug>  issues: N  prs: N  last_decision: …`), piu'
+  la priorita' 1 del cockpit; **tempo 1** il pacchetto dell'area scelta **per righe**
+  (`layer: … source_id: … path: … freshness: …`), su cui si agisce. La scelta dell'area segue tre
+  segnali (branch, issue aperte del contributor, priorita' 1) e quando nessuno risponde il brief porta
+  `QUESTION: which area? candidates: …`: **una** domanda con l'indice davanti, mai un'ipotesi. Un
+  conteggio che nessuno ha potuto leggere e' `UNKNOWN`, mai uno zero inventato. Il pacchetto non
+  trasporta l'harness: senza il resolver dell'host la riga non esiste (contratto #155 invariato), e un
+  resolver che rifiuta resta rumoroso (`PACK: blocked — <causa>`). Niente comincia piu' per `PACK=`.
+  Il passo 6 instrada le tre forme di riga e `reference/two-stage-brief.md` le spiega una volta.
+  Dal giro di review: **un repo senza mappa d'area non perde il pacchetto** — non c'e' nulla da
+  chiedere e nulla su cui filtrare, quindi il brief dice `UNKNOWN: no area map — unfiltered pack` e
+  consegna il pacchetto intero, che e' il caso di ogni repo appena adottato; `ISSUES_UNLABELLED`
+  accanto a `PRS_UNLABELLED`, perche' una label come `P1` non e' un'area e quattro aree leggevano
+  `issues: 0` senza dirlo; l'indice resta consegnato anche quando il pacchetto rifiuta; e
+  `RECEIPT: none — no open session` dice quando le righe sono vere e nessuno ha registrato di
+  averle consegnate. (polaris-os#405)
+- **`/end` non chiude su una decisione che non ha casa, e i sei campi del log sono i cinque elementi
+  del confine ripartibile** (`end` 1.19.0). Le sei righe erano un formato gradito; sono ciò che rende
+  la sessione ripartibile, e la sessione dopo apre da lì. Ora la skill nomina la corrispondenza
+  (scope e decisioni → `Key context`; stato e prossimo → `In progress` + `Next session`; file e
+  albero → `Files`; verifiche ed esito → `Done`; domande aperte → `Blocker`), dichiara che un campo
+  vuoto si scrive `none` e che un campo **assente** è il confine rotto, e aggiunge il rifiuto: una
+  clausola taggata `#decisione` o `#superata` deve nominare la Decision, la voce di `decisions.md` o
+  l'issue che la porta — una ritrattazione compresa, che va accanto al numero. Dove il repo porta il
+  gate del backbone la regola è eseguibile e i suoi sei rifiuti sono elencati; dove non c'è, un solo
+  rigo di degrado e le sei righe restano la checklist. **Il guard era invertito:** la catena
+  `[ -f ] && … || echo` trasformava ogni rifiuto del gate in «nessun gate» con exit `0`, e la skill
+  proseguiva al commit proprio nei casi che il gate esiste per fermare; ora è un `if`/`else` e un
+  rifiuto ferma `/end`. La forma dell'issue è scritta per esteso (`issue:<repo>#<numero>`, mai il
+  numero nudo) perché era l'unica accettata dal gate mentre la skill diceva solo «nomina l'issue»:
+  chi seguiva la skill veniva rifiutato. Gate e test vivono nel repo dell'harness, non qui.
+
 - **`/update` riscritta nella forma Osmani, e il cockpit lo aggiorna il modello, non uno script**
   (`update` 3.0.0). Prova misurata su una repo cliente: **14** sezioni `## Open` impilate, **13**
   righe `Updated:`, **6** righe per `main` — con la regola «una riga per lane» scritta in prosa da

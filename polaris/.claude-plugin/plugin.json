@@ -1,9 +1,9 @@
 {
   "name": "polaris-team-os",
-  "version": "0.25.2",
-  "description": "Polaris Team OS: nine repository-first commands \u2014 /start, /polaris-status, /polaris-grill, /update, /end, /plan-week, /report, /polaris-memory and /pol-apex-curate \u2014 plus polmem memory CLI. /start is a bounded local resume. Start with docs/TEAM-ONBOARDING.md.",
+  "version": "0.29.2",
+  "description": "Polaris Team OS: nine repository-first commands — /start, /polaris-status, /polaris-grill, /update, /end, /plan-week, /report, /polaris-memory and /pol-apex-curate — plus the /init door that brings an existing repository into the harness, plus polmem memory CLI. /start is a bounded local resume. Start with docs/TEAM-ONBOARDING.md.",
   "author": {
-    "name": "Niccol\u00f2 Franzin",
+    "name": "Niccolò Franzin",
     "url": "https://github.com/legacynik"
   },
   "keywords": [

@@ -19,8 +19,8 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _brief_parts import (emit_drift, emit_pack, emit_recent, emit_sections,  # noqa: E402
-                          emit_spool, emit_todos)
+from _brief_parts import (emit_drift, emit_pack, emit_priorities, emit_recent,  # noqa: E402
+                          emit_sections, emit_spool, emit_todos)
 
 
 def report(opts: argparse.Namespace) -> list[str]:
@@ -29,7 +29,8 @@ def report(opts: argparse.Namespace) -> list[str]:
     main_wt = Path(opts.main_wt) if opts.main_wt else root.parent
     return (emit_todos(root, opts.now) + emit_recent(current)
             + emit_spool(main_wt) + emit_drift(main_wt, opts.login)
-            + emit_sections(root, current) + emit_pack(root))
+            + emit_sections(root, current) + emit_priorities(current, opts.now)
+            + emit_pack(root, opts.login))
 
 
 def cmd_selfcheck() -> int:

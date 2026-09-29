@@ -2,7 +2,7 @@
 name: start
 description: Polaris skill — resume the current objective from the latest local handoff. First use also provisions your own team path.
 user-invocable: true
-version: 1.6.0
+version: 1.13.0
 ---
 
 # /start — resume, do not survey
@@ -48,6 +48,17 @@ cp "$CLAUDE_PLUGIN_ROOT/skills/start/templates/repo-contract/profile.yml" "$ROOT
 perl -pi -e "s/^github: .*/github: $LOGIN/" "$ROOT/team/$LOGIN/profile.yml"
 ```
 
+Then install the team settings — the permissions preset and the compaction hook of Step 3b.
+It merges and never clobbers: a second run changes nothing and says so, and a
+`.claude/settings.json` it cannot parse stops it (`SETTINGS_UNREADABLE`, exit 1, nothing
+written) rather than being replaced.
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/start/scripts/install_settings.py" --repo "$MAIN_WT"
+```
+
+Hooks are read at session start, so the one it writes takes effect from the NEXT session.
+
 The identity gate runs in BOTH branches, whether the profile was just created or already existed:
 
 ```bash
@@ -91,6 +102,25 @@ Read these local files, in order:
    `RADAR=none` → inline fallback: `git worktree list` to flag a stray `state/current.md` in an
    extra worktree, and
    `git log --all --not main --since='14 days ago' --oneline -- '*sessions/*.md' | head -5`.
+5b. **Open the session — BEFORE 6, always** (the receipt below belongs to a session, and
+   `/update` and `/end` reach the one opened here):
+
+   ```bash
+   python3 "${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/start/scripts/session_gate.py" open \
+     --root "$ROOT" --login "$LOGIN"
+   ```
+
+   One line or none. `SESSION: opened <sid>` — the session is open, so the `RECEIPT: none —
+   no open session` line of Step 6 goes away and the pack receipt is written beside the
+   session instead. `SESSION: resumed <sid>` — a session of today's checkout was already open, which
+   is the normal second `/start`, not an error. `SESSION: blocked — <CODE>` — the engine refused
+   (a stale seal, an invalid pack): report the line and go on, the brief is not the gate.
+   Nothing at all: this repo has no engine, and there is nothing to open. Never pass `--sid`:
+   the id is the checkout, the day and the login, and after a `/end` the same day the next
+   `/start` opens a NEW seat (`…-2`) instead of resuming a closed one. `/update` and `/end`
+   do not recompute it — they act on the session that is open, which is what survives
+   midnight and a panel that never ran `/start`.
+
 6. **The signals this repo already produces (ALWAYS)** — read-only, under a second:
 
    ```bash
@@ -98,15 +128,69 @@ Read these local files, in order:
      --root "$ROOT" --current "$CURRENT" --login "$LOGIN" --main-wt "$MAIN_WT"
    ```
 
-   Each line is self-describing and appears only when it has something to say, so read what comes
-   back: todos, follow-ups due and `RECENT` go with the work, `SPOOL_LEGACY`/`DRIFT`/`SECTIONS_MISSING`
-   under `**Segnali**`. A missing line is nothing to report, never an error.
+   Each line is self-describing: read it. `AREA:` rows index the areas; the pack itself is
+   NOT printed here — one `PACK: <n> rows held for lane entry` line counts it, because the
+   pack loads when a lane is entered, never at `/start` (measured 2026-09-23: 0 of 131 rows
+   changed a brief). Never ask which area. Todos and `RECENT` go with the work,
+   `SPOOL_LEGACY`/`DRIFT`/`SECTIONS_MISSING`/`PRIORITIES_STALE` under `**Segnali**` — a stale
+   order is named, never briefed as today's priorities. The resolver is the host's,
+   else the vault the repo declares (`git config polaris.vault`); a prose pack is a pack.
+   See `reference/two-stage-brief.md`.
 
 Do not read lessons, `.wiki/hot.md`, or unrelated files speculatively. Memory is not
 current state and recall is never mandatory at session start.
 
 Compare the local branch from Step 1 with the current plan's branch. If both are present and differ,
 stop with the exact mismatch. This is a local safety gate, not a reason to fetch.
+
+## Step 3b — After a compaction, put the pack back (never rebuild it)
+
+A compaction empties the context window and leaves the receipt on disk. **Do not run `/start`
+again and do not re-read the resume set**: the pack was already resolved, and re-resolving it
+walks the tracker over the network for an answer that has not changed.
+
+Step 2 installs a `SessionStart` hook with the `compact` matcher, so on Claude Code this runs
+by itself. On a host with no compaction event, or before that hook's first session, run it:
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/start/scripts/session_gate.py" \
+  reinsert --root "$ROOT"
+```
+
+The door finds the reinserter where it finds everything else — this repository first, then
+the vault it declares — and asks it for the CHECKOUT, which is where the session and the pack
+receipt both live. Asking for `$ROOT` (`<repo>/_polaris`) answered `NO_OPEN_SESSION` in every
+product repository, on the one path that runs by itself.
+
+No output at all: no reinserter here and none in the declared vault, so there is nothing to
+put back (contract #155). Otherwise read what it prints:
+
+- `REINSERT: HEAD unchanged … — 0 tracker calls` followed by `PACK:` and the rows — the same
+  pack, reprinted from the receipt. Nothing was recomputed and nothing was fetched.
+- `REINSERT: HEAD moved <a> -> <b>` — commits landed under the session, so the pack was
+  resolved again and a second receipt now sits beside the first, naming it in `CHAIN: prev=`.
+- `RECEIPT_MISSING:`, `RECEIPT_UNREADABLE:`, `RECEIPT_TAMPERED:`, `SID_MISMATCH:`,
+  `AREA_MISMATCH:` or `CHAIN_BROKEN:` — the receipt on disk could not be trusted, so the pack
+  was resolved instead of reused. All are costs, not failures; the command still exits 0, and
+  nothing on disk is overwritten. Report the line: it says something about the session.
+- `NO_OPEN_SESSION:` — no session receipt is open, so there is no pack to put back. Since
+  polaris-os#155 Step 5b opens one, so this now means the session was closed by `/end`, or
+  this repository carries no engine at all.
+
+`CHAIN_UNANCHORED:` may appear beside any of these. It is a report, not a refusal: every
+link is there and nothing ties that area's packs to a start receipt.
+
+The session id is not a flag anybody has to fill: the command resolves the session open today.
+The same door verifies the receipt chain on demand — exit 1 on a `CHAIN_BROKEN`, 0 on anything
+it merely reports:
+
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/start/scripts/session_gate.py" \
+  chain --root "$ROOT"
+```
+
+`--sid` and `--area` narrow it to one session or one area; without them it asks about the
+session open today, the same one everything else here is about.
 
 ## Step 4 — Render the resume brief
 
@@ -120,6 +204,10 @@ Answer with the brief ONLY, as plain markdown, NEVER inside a code fence. Use th
 - Checkpoint: <latest verified handoff/checkpoint>
 - Blocker: <one active blocker, if any>
 - Next action: <the concrete continuation step from the handoff, reconciled with the plan>
+
+**Pack** — the `SESSION:` line of Step 5b when there is one, then the Step 6 resolver lines
+when there are any, verbatim: `UNKNOWN:`, `RECEIPT:`, `PACK: blocked …` and the one
+`PACK: <n> rows held for lane entry` count. No `layer:` row is printed at `/start`.
 
 If the plan and handoff disagree, name the mismatch in `Blocker`; do not invent a reconciliation.
 If there is no handoff, derive `Next action` from the current plan and say that no checkpoint

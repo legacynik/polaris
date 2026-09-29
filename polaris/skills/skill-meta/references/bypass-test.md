@@ -1,6 +1,6 @@
 # Bypass-test — skill-meta
 
-Nine ways around the gate. Every one of them **must fail** now: exit ≠ 0, or the persisted
+Ten ways around the gate. Every one of them **must fail** now: exit ≠ 0, or the persisted
 state left untouched. If one passes, the gate is declared, not armed.
 
 ## Contents
@@ -14,10 +14,12 @@ state left untouched. If one passes, the gate is declared, not armed.
 - [B7 — a tier that always blocks (T2a)](#b7--a-tier-that-always-blocks-so-it-gets-skipped-t2a)
 - [B8 — flip the mark with no receipt](#b8--flip-the-promotion-mark-with-no-receipt)
 - [B9 — a pin that only computes by hand](#b9--a-pin-that-only-computes-when-the-script-is-run-by-hand)
+- [B10 — a prose declaration that declares nothing](#b10--a-prose-declaration-that-declares-nothing)
 
 B1-B4 arm the tiers. B5-B9 arm the modification gate, and all five **succeeded** against the
 version named in each `fails_before` — the outputs are in
-`docs/skill-refactor/2026-08-17-skill-meta-v1/EVIDENCE.md`.
+`docs/skill-refactor/2026-08-17-skill-meta-v1/EVIDENCE.md`. B10 arms the waiver list the gate
+grew when the PROSE class became payable.
 
 Run them all:
 
@@ -221,3 +223,43 @@ The defence is a selfcheck branch, not a comment: `trigger_ratchet.py --selfchec
 exact by-path load from an unrelated cwd and fails if the sibling import does not resolve. The
 alternative — copying the two hash lines into both scripts — would put the pin's definition in
 two places, and a pin computed two ways is not a pin.
+
+## B10 — a prose declaration that declares nothing
+
+`fails_before: skill-meta v0.9.0` — the version that first made the PROSE class payable. Any
+waiver list is one careless parser away from being a switch, and this one has three ways to
+get there. All three must fail.
+
+**a. A placeholder reason.** The row exists, the pin is right, and the justification is a full
+stop:
+
+```bash
+printf 'bugfix %s: .\n' "$SHA" > <skills-suite>/_standard/prose.allow
+python3 <skills-suite>/skill-meta/scripts/change_gate.py --skill <skills-suite>/bugfix
+# EXPECTED: exit 3 — parse() rejects the row, so nothing is declared
+python3 <skills-suite>/skill-meta/scripts/prose_declaration.py --check <skills-suite>
+# EXPECTED: exit 1 — "a declaration without one is a switch"
+```
+
+This is SKILL-STANDARD.md's rule 5 — the one that cost 16 skills out of 16 — applied to the
+newest field in the suite. The two scripts share one `PLACEHOLDER` in `_lib.py`, so the eval
+corpus and this list cannot drift apart on what counts as an answer.
+
+**b. A pin written ahead of the edit.** Add the row for the body you are *about* to write, land
+it in an earlier PR, then change the body in a later one with the waiver already merged:
+
+```bash
+printf 'bugfix %s: pre-authorised\n' "$SHA_OF_THE_BODY_I_HAVE_NOT_WRITTEN_YET" >> prose.allow
+python3 <skills-suite>/skill-meta/scripts/prose_declaration.py --check <skills-suite>
+# EXPECTED: exit 1 — "the row excuses nothing, remove it": the pin does not match the body on
+# disk, so the PR that adds the row is red before the PR that would use it exists
+```
+
+**c. A row that outlives its body.** The reverse, and the reason the list can only shrink: once
+the body moves past a declared hash the row is dead, so reverting to an old wording cannot ride
+an old row — `--check` reddened it long before, and it was removed.
+
+The defence is `prose_declaration.py --selfcheck` (ten branches, run by suite-ci) plus a
+`--check skills-suite` step that runs on **every** PR, not only those whose `SKILL.md` moved:
+the `change_gate` loop is driven by changed skill files, so a PR touching nothing but
+`prose.allow` would otherwise pass through no gate at all.

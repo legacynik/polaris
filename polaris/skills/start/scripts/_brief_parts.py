@@ -8,6 +8,7 @@ writes and nothing fetches: a brief that fails a session is worse than a thin on
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 from pathlib import Path
@@ -112,6 +113,16 @@ def emit_drift(main_wt: Path, login: str) -> list[str]:
     return out + [f"DRIFT={branch} · {len(foreign)} modified files not yours in the main worktree"]
 
 
+def emit_priorities(current: Path, now: str) -> list[str]:
+    """The cockpit's order, when /end has not written it for a week (2026-09-23): named, never
+    presented as today's. A missing cockpit is `emit_sections`' line, not a second one here."""
+    import state_priorities  # the writer's own reader: one rule for "stale", in one place
+    try:
+        return [line] if current.is_file() and (line := state_priorities.staleness(current, now)) else []
+    except (OSError, ValueError):
+        return []
+
+
 def emit_sections(root: Path, current: Path) -> list[str]:
     """#243 signal 3 — the sections the state file lost. An absent file invents nothing."""
     out = []
@@ -128,36 +139,104 @@ def emit_sections(root: Path, current: Path) -> list[str]:
 
 
 PACK_TIMEOUT = 25
+RESOLVER = Path("scripts") / "contextpack_dashboard.py"
+LEGACY_KEY = "polaris.vault-root"  # one fact, one key: read for one cycle, then gone
 
 
-def _pack_verdict(compiler: Path, root: Path) -> str:
-    """Run the host resolver and answer ONE line: the pack id, or why it did not emit."""
+def _brief_lines(compiler: Path, root: Path, login: str) -> list[str]:
+    """Run the host's two-stage brief and hand back its LINES, or why it did not answer."""
+    args = [sys.executable, "-I", str(compiler), "brief", "--root", str(root)]
     try:
-        done = subprocess.run([sys.executable, "-I", str(compiler), "resolve", "--root", str(root)],
-                              capture_output=True, text=True, timeout=PACK_TIMEOUT)
+        done = subprocess.run(args + (["--login", login] if login else []),
+                              capture_output=True, text=True, errors="replace",
+                              timeout=PACK_TIMEOUT)
     except (OSError, subprocess.TimeoutExpired):
-        return "BLOCKED:the resolver did not answer"
+        return [f"PACK: blocked — the resolver did not answer ({compiler})"]
     if done.returncode:
         cause = (done.stderr or done.stdout).strip().splitlines()
-        return f"BLOCKED:{cause[0][:120] if cause else 'no cause given'}"
-    try:
-        return json.loads(done.stdout).get("context_pack_id") or ""
-    except ValueError:
-        return "BLOCKED:the resolver did not answer JSON"
+        return [f"PACK: blocked — {cause[0][:120] if cause else 'no cause given'}"
+                f" ({compiler})"]
+    return [line for line in done.stdout.splitlines() if line.strip()] or ["PACK: none"]
 
 
-def emit_pack(root: Path) -> list[str]:
-    """D3 — feature-detect: RUN the host resolver, or say nothing when there is no backbone.
+def _vault(root: Path) -> Path | None:
+    """The vault this repository declares — `$POLARIS_VAULT` first, then `polaris.vault`.
 
-    This used to read a `pack_id` key out of `decisions/manifest.json`. The live manifest has no
-    such key — its keys are `decisions`, `manifest_hash`, `repo`, `workspace`, `live_documents`,
-    `domain_source`, `legacy_sources`, `schema_version` — so the signal was dead in every real
-    repository while its fixture wrote the field that made it pass. A blocked emission is now
-    LOUD (DB-FR-05: a blocked emission blocks), because a silent empty line is indistinguishable
-    from a repository that carries no backbone at all.
+    The SAME contract the vault's own `arch_doctor_sources.vault` holds: the environment wins
+    over the declaration, a candidate counts only when it is a directory on this machine, and
+    neither is ever invented. The declaration is LOCAL (`git config polaris.vault <path>`), so
+    it never travels in a commit.
+
+    Two shapes a human writes and a bare `Path` gets wrong, both measured as SILENCE — the one
+    answer indistinguishable from a repository that declared nothing. `~/dev/vault` unexpanded
+    is a directory that does not exist. And a relative `../vault` resolved against the PROCESS
+    cwd answers a different thing from every directory: the declaration belongs to the
+    repository, so it resolves against the repository.
+
+    ONE key names the vault. `/end` shipped a second spelling of the same fact,
+    `polaris.vault-root`, and two keys for one fact is a repository that answers one door and
+    not the other. The legacy key is still READ — a machine that set it keeps working — and
+    says so on stderr, once per call, naming the key that replaces it.
     """
-    compiler = root / "scripts" / "contextpack.py"
-    if not (compiler.is_file() and (root / "decisions" / "manifest.json").is_file()):
+    for key, candidate in (("", os.environ.get("POLARIS_VAULT", "")),
+                           ("", git(root, "config", "--get", "polaris.vault")),
+                           (LEGACY_KEY, git(root, "config", "--get", LEGACY_KEY))):
+        if not candidate:
+            continue
+        declared = Path(candidate).expanduser()
+        declared = declared if declared.is_absolute() else root / declared
+        if declared.is_dir():
+            if key:
+                print(f"NOTA: {key} è deprecato — git config polaris.vault {declared}",
+                      file=sys.stderr)
+            return declared
+    return None
+
+
+def _resolver(root: Path, rel: Path = RESOLVER) -> Path | None:
+    """Where a vault script is: the host's own first, then the declared vault, nothing else."""
+    for base in (root, _vault(root)):
+        if base is not None and (base / rel).is_file():
+            return base / rel
+    return None
+
+
+def emit_pack(root: Path, login: str = "") -> list[str]:
+    """D3 / polaris-os#405 — feature-detect: RUN the two-stage brief, or say nothing.
+
+    Until #405 this printed ONE line, `PACK=CTX-<id>`, and polaris-os#326 measured what that
+    is worth: the agent ignored it, so the whole resolver was invisible to the session it was
+    built for. It now prints what the resolver answers — the area index with its counts, the
+    area chosen or the one question to ask, and the pack of that area as one row per line.
+
+    Two things changed for the product repositories. The compiler is looked up in the HOST
+    first and then in the **vault the repository declares**, because a product repo carries
+    the contract and never the harness: the host-only lookup is why `/start` showed nothing
+    in repositories whose vault already answers with a full pack. And the pack is compiled
+    against the CHECKOUT — `git rev-parse --show-toplevel`, falling back to `root` outside a
+    checkout — not against `$ROOT`, which is the `_polaris/` contract directory: the typed
+    documents live beside it, so compiling there answered zero `declared` rows.
+
+    No `decisions/manifest.json` is required. A prose pack — the `declared` layer, freshness
+    `UNKNOWN` stated row by row — is a valid pack by contract (T4, polaris-os#403), and the
+    manifest is one shape of one repository. The resolver refuses when it must, out loud.
+
+    Feature-detection is unchanged in spirit (#155): a repository with neither a resolver nor
+    a declared vault that holds one must not even learn the feature exists, so an absent
+    resolver is SILENCE, not a line. A resolver that exists and refuses is still loud — the
+    cause is named — because a blocked emission blocks (DB-FR-05).
+    """
+    compiler = _resolver(root)
+    if compiler is None:
         return []
-    verdict = _pack_verdict(compiler, root)
-    return [f"PACK={verdict}"] if verdict else []
+    lines = _brief_lines(compiler, Path(git(root, "rev-parse", "--show-toplevel") or root), login)
+    return _held_for_lane(lines)
+
+
+def _held_for_lane(lines: list[str]) -> list[str]:
+    """2026-09-23: /start prints no pack rows and asks no area — the pack loads on entering
+    a lane. Measured: 0 of 131 rows changed a brief across three repositories. The rows are
+    counted in one line; everything else the resolver says (blocked, UNKNOWN) stays."""
+    rows = [ln for ln in lines if ln.startswith("layer: ")]
+    kept = [ln for ln in lines if not ln.startswith(("layer: ", "QUESTION:", "AREA_CHOSEN:"))]
+    return kept + ([f"PACK: {len(rows)} rows held for lane entry"] if rows else [])

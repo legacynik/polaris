@@ -1,0 +1,20 @@
+[
+  {"query": "Ho appena analizzato Memora: tienilo come reference verificata e rendilo trovabile da ogni repo.", "should_trigger": true},
+  {"query": "Salva questa piccola nota di changelog esterno senza costruire un albero wiki.", "should_trigger": true},
+  {"query": "Esiste già uno studio su Atono: aggiornalo, non creare una seconda pagina, poi rigenera l'indice.", "should_trigger": true},
+  {"query": "Questa competitor analysis è utile a Polaris; archiviala con versione fonte e meccanismi riusabili.", "should_trigger": true},
+  {"query": "Rendi l'articolo Bun in Rust una fonte canonica navigabile per il workflow Step 3.", "should_trigger": true},
+  {"query": "Trasforma questi findings verificati in un solo dossier Markdown con alias e capability ricercabili.", "should_trigger": true},
+  {"query": "Questa repo serve solo Acme-web: salva la ricerca nel repo proprietario ma falla comparire nel catalogo cross-repo.", "should_trigger": true},
+  {"query": "Conserva lo studio del repository, collega i domini interni e ricostruisci il catalogo delle references.", "should_trigger": true},
+  {"query": "Ho fretta: non cercare duplicati, crea una pagina pulita nuova per questa stessa URL e basta.", "should_trigger": true},
+  {"query": "Ricerca le best practice aggiornate dell'API ma non salvare nulla nel vault.", "should_trigger": false},
+  {"query": "Che cosa avevamo deciso sui merge gate?", "should_trigger": false},
+  {"query": "Crea una pagina wiki che spieghi il concetto di memoria episodica e collegala ad altri concetti.", "should_trigger": false},
+  {"query": "Aggiorna ARCHITECTURE.md perché il nuovo servizio cambia il confine di dominio.", "should_trigger": false},
+  {"query": "Implementa nel codice la feature descritta da questo paper.", "should_trigger": false},
+  {"query": "Importa e distilla tutto il mio vault Obsidian.", "should_trigger": false},
+  {"query": "Monitora ogni giorno pricing e changelog dei competitor e mandami un alert.", "should_trigger": false},
+  {"query": "Migliora il ranking di polmem perché non trova i documenti esistenti.", "should_trigger": false},
+  {"query": "Riassumi questa conversazione per me, senza conservarla come conoscenza permanente.", "should_trigger": false}
+]

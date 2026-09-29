@@ -40,6 +40,16 @@ def heading(name: str) -> re.Pattern:
     return re.compile(rf"^#{{1,6}}[ \t]+{re.escape(name.lstrip('# ').strip())}{QUALIFIER}", re.I)
 
 
+@functools.lru_cache(maxsize=None)
+def exact(name: str) -> re.Pattern:
+    """The declared heading at ITS OWN level, whole line, no qualifier — for a section a script
+    rewrites wholesale. The any-level `heading()` let `### Active Priorities` inside another
+    section be taken for the order and deleted (breaker on polaris#42)."""
+    # Level exact, qualifier allowed (`## Active Priorities — l'ordine del lavoro` IS the section:
+    # the whole-line version added a second section on the vault's first real run, 2026-09-24).
+    return re.compile(rf"^{re.escape(name.strip())}{QUALIFIER}")
+
+
 def _selfcheck() -> int:
     """The qualifier rule, both ways, plus the identity the readers assert on."""
     ok = [bool(heading("## Open").match("## Open — thread vivi")),
