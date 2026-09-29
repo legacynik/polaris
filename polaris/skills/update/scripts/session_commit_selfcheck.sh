@@ -32,8 +32,25 @@ _selfcheck() {
     echo more2 >> "$LOG"; commit_checkpoint "$LOG" >/dev/null
     git ls-files | grep -qE 'state/current.md|(^|/)\.env$' && { echo "FAIL S3 secret/state committed"; exit 1; }
 
-    # S4 forbidden input refused (decisions.md as arg)
-    commit_checkpoint decisions.md >/dev/null 2>&1; [ $? -eq 2 ] || { echo "FAIL S4 forbidden input accepted"; exit 1; }
+    # S4 a staged archive from another panel is not ours to absorb, even if named explicitly.
+    echo "foreign-again" >> decisions.md; git add -- decisions.md
+    local before; before="$(git rev-parse HEAD)"
+    commit_checkpoint "$LOG" decisions.md >/dev/null 2>&1
+    [ $? -eq 2 ] || { echo "FAIL S4 foreign staged archive accepted"; exit 1; }
+    [ "$(git rev-parse HEAD)" = "$before" ] || { echo "FAIL S4 foreign archive entered a commit"; exit 1; }
+    git diff --cached --name-only | grep -qx decisions.md \
+        || { echo "FAIL S4 foreign archive was unstaged"; exit 1; }
+    git restore --staged -- decisions.md
+
+    # S4b a checkpoint promotes its own durable lesson and decision before /end.
+    echo "## decided now" > decisions.md
+    echo "## learned now" > lessons.md
+    commit_checkpoint "$LOG" decisions.md lessons.md >/dev/null 2>&1 \
+        || { echo "FAIL S4b checkpoint refused owned archives"; exit 1; }
+    for f in decisions.md lessons.md; do
+        git show --name-only --format= HEAD | grep -qx "$f" \
+            || { echo "FAIL S4b checkpoint did not commit $f"; exit 1; }
+    done
 
     # S5 empty checkpoint → skip, no new commit
     local before; before="$(git rev-parse HEAD)"; commit_checkpoint "$LOG" >/dev/null
@@ -73,6 +90,7 @@ _selfcheck() {
     git merge -q -m sync "$DEF" >/dev/null 2>&1; git checkout -q "$DEF"
 
     # S8 --end mode: decisions.md / lessons.md ARE its vetted promotion → allowed, committed together
+    git restore --staged -- lessons.md
     echo "## decision" > decisions.md; echo "## lesson" > lessons.md
     commit_end "$LOG" decisions.md lessons.md >/dev/null
     for f in decisions.md lessons.md; do
@@ -164,7 +182,7 @@ _selfcheck() {
     git show HEAD:lessons.md | grep -q kept2 || { echo "FAIL S18 the other paths did not land"; exit 1; }
 
     cd / && rm -rf "$d"
-    echo "SELF-CHECK OK: first-of-day · foreign-drag-stays-staged · gitignored-state+secret · forbidden-input · empty-skip · commits-on-the-branch-you-are-on · a-sibling-worktree-changes-nothing · policy-refuses-only-on-the-default · end-promotes-ledgers · end-refuses-state+secret · end-lands-on-the-current-branch · origin/HEAD-default · master-default-repo · hook-refusal-exits-1-and-unstages · absent-path-does-not-block · detached-HEAD-refuses · unborn-branch-lands · ignored-path-named-others-land · nested-repo-path-named-others-land"
+    echo "SELF-CHECK OK: first-of-day · foreign-drag-stays-staged · gitignored-state+secret · foreign-staged-archive-refuses · checkpoint-promotes-ledgers · empty-skip · commits-on-the-branch-you-are-on · a-sibling-worktree-changes-nothing · policy-refuses-only-on-the-default · end-promotes-ledgers · end-refuses-state+secret · end-lands-on-the-current-branch · origin/HEAD-default · master-default-repo · hook-refusal-exits-1-and-unstages · absent-path-does-not-block · detached-HEAD-refuses · unborn-branch-lands · ignored-path-named-others-land · nested-repo-path-named-others-land"
 }
 
 _selfcheck

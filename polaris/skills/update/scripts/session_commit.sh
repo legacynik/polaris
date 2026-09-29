@@ -13,7 +13,7 @@
 #   • pathspec-ONLY (never `git add -A`), absent paths dropped first because `git add -- a missing`
 #     stages NOTHING: parallel panels sharing one tree never drag each other's uncommitted work.
 #   • forbidden paths refused on input AND on the staged set: `state/current.md` and `.env*` in BOTH
-#     modes; `decisions.md`/`lessons.md` in checkpoint mode only — `--end` may promote those.
+#     modes. Owned decisions/lessons may be promoted at the checkpoint, not deferred to `/end`.
 #   • `git commit -- <paths>`, never a commit of the index: what another panel pre-staged stays
 #     staged, exactly as it was, and never rides along.
 #   • branch reported, never changed; never a push; nothing ever left staged.
@@ -27,10 +27,8 @@
 set -uo pipefail
 
 _forbidden() {
-    local mode="$1" path="$2"
+    local path="$2"
     case "$path" in *state/current.md) return 0 ;; *.env|*.env.*) return 0 ;; esac
-    [ "$mode" = end ] && return 1
-    case "$(basename "$path")" in decisions.md|lessons.md) return 0 ;; esac
     return 1
 }
 
@@ -134,6 +132,16 @@ _commit() {
     git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "session_commit: not a git repo, skip"; return 0; }
     local branch; branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo '?')"
     _refused "$branch" || return 2
+    # Archives are shared ledgers. A pre-staged archive may belong to another panel; refusing
+    # before `git add` preserves its index and prevents absorbing it into this checkpoint.
+    for p in "$@"; do
+        case "$(basename "$p")" in decisions.md|lessons.md)
+            if [ -n "$(git diff --cached --name-only -- "$p")" ]; then
+                echo "session_commit: NOT committed — archive already staged ($p); resolve ownership first" >&2
+                return 2
+            fi ;;
+        esac
+    done
     _addable "$@"      # stages what git will take, names what it refuses
     [ ${#ADDABLE[@]} -gt 0 ] || { [ ${#REFUSED[@]} -gt 0 ] && return 2
         echo "session_commit: none of the named files exist yet, skip"; return 0; }

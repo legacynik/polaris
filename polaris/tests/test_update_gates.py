@@ -39,16 +39,30 @@ class OneLinePerThread(unittest.TestCase):
         repo = host_repo()
         log = session_log(repo)
         for hour in ("10:00", "17:00"):
-            out = run_block("update", '"$UP" thread', repo)
+            out = run_block("update", '"$UP" thread', repo,
+                            LANE_LINE=f"- `memory` — branch `main`; checkpoint {hour} · since 2026-09-29")
             self.assertEqual(out.returncode, 0, out.stdout + out.stderr)
             with log.open("a") as fh:
                 fh.write(f"## {hour} — checkpoint\n- Key context: x\n- Files: y\n")
         body = (repo / "_polaris" / "state" / "current.md").read_text()
-        self.assertEqual(body.count("<branch>"), 1, "the second update replaced the first line")
+        self.assertEqual(body.count("`memory`"), 1, "the second update replaced the first line")
+        self.assertIn("checkpoint 17:00", body)
         stamps = [ln for ln in body.splitlines() if ln.startswith("Updated:")]
         self.assertEqual(len(stamps), 1, f"the cockpit is state, not a ledger: {stamps}")
         entries = [ln for ln in log.read_text().splitlines() if ln.startswith("## ")]
         self.assertEqual(len(entries), 2, "the session log is the ledger and always appends")
+
+    def test_a_new_lane_adds_one_line_without_touching_the_existing_lane(self):
+        repo = host_repo()
+        first = run_block("update", '"$UP" thread', repo,
+                          LANE_LINE="- `memory` — branch `main`; first · since 2026-09-29")
+        self.assertEqual(first.returncode, 0, first.stdout + first.stderr)
+        second = run_block("update", '"$UP" thread', repo,
+                           LANE_LINE="- `billing` — branch `main`; new · since 2026-09-29")
+        self.assertEqual(second.returncode, 0, second.stdout + second.stderr)
+        body = (repo / "_polaris" / "state" / "current.md").read_text()
+        self.assertEqual(body.count("`memory`"), 1)
+        self.assertEqual(body.count("`billing`"), 1)
 
     def test_nothing_material_means_nothing_written(self):
         repo = host_repo()
@@ -67,6 +81,8 @@ class VerifyReadsContent(unittest.TestCase):
         repo = host_repo()
         log = session_log(repo)
         log.write_text("## 10:00 — probe\n- Key context: x\n- Files: y\n")
+        subprocess.run(["git", "-C", str(repo), "add", "--", str(log)], check=True)
+        subprocess.run(["git", "-C", str(repo), "commit", "-qm", "checkpoint"], check=True)
         current = repo / "_polaris" / "state" / "current.md"
         return repo, current
 
@@ -104,6 +120,101 @@ class VerifyReadsContent(unittest.TestCase):
         repo, current = self.prepared()
         current.write_text("## Open\n\n- `a` — x\n")
         self.assertEqual(checkpoint(repo, "verify").returncode, 1)
+
+
+class DurableArchiveGate(unittest.TestCase):
+    def test_prepare_refuses_a_foreign_unstaged_archive_before_editing(self):
+        repo = host_repo()
+        archive = repo / "_polaris" / "lessons.md"
+        archive.write_text("## Old lesson\n")
+        subprocess.run(["git", "-C", str(repo), "add", "--", str(archive)], check=True)
+        subprocess.run(["git", "-C", str(repo), "commit", "-qm", "old lesson"], check=True)
+        archive.write_text(archive.read_text() + "Foreign unstaged edit.\n")
+
+        out = checkpoint(repo, "prepare")
+        self.assertEqual(out.returncode, 2, out.stdout)
+        self.assertIn("ARCHIVE_DIRTY", out.stdout + out.stderr)
+        self.assertIn("Foreign unstaged edit.", archive.read_text())
+
+    def test_every_lesson_pointer_must_be_committed(self):
+        repo = host_repo()
+        session_log(repo).write_text(
+            "## 10:00 — two lessons\n- Key context: #lezione two reusable mistakes\n"
+            "- Lesson: First rule\n- Lesson: Second rule\n- Files: _polaris/lessons.md\n"
+        )
+        archive = repo / "_polaris" / "lessons.md"
+        archive.write_text(f"## {today()} — First rule (@{LOGIN})\n")
+        subprocess.run(["git", "-C", str(repo), "add", "--", str(session_log(repo)), str(archive)], check=True)
+        subprocess.run(["git", "-C", str(repo), "commit", "-qm", "partial archive"], check=True)
+        (repo / "_polaris" / "state" / "current.md").write_text(
+            f"Updated: {today()} — @{LOGIN}\n\n## Open\n\n- `a` — x\n"
+        )
+        partial = checkpoint(repo, "verify", "two lessons")
+        self.assertEqual(partial.returncode, 1, partial.stdout)
+        self.assertIn("Second rule", partial.stdout)
+
+    def test_uncommitted_session_log_is_not_a_saved_checkpoint(self):
+        repo = host_repo()
+        session_log(repo).write_text("## 10:00 — unsaved checkpoint\n- Files: none\n")
+        (repo / "_polaris" / "state" / "current.md").write_text(
+            f"Updated: {today()} — @{LOGIN}\n\n## Open\n\n- `a` — x\n"
+        )
+        unsaved = checkpoint(repo, "verify", "unsaved checkpoint")
+        self.assertEqual(unsaved.returncode, 1, unsaved.stdout)
+        self.assertIn("not committed", unsaved.stdout)
+
+    def test_lesson_checkpoint_requires_a_committed_matching_record(self):
+        repo = host_repo()
+        title = "Live eval needs explicit opt-in"
+        session_log(repo).write_text(
+            f"## 10:00 — lesson checkpoint\n- Key context: #lezione {title}\n"
+            f"- Lesson: {title}\n- Files: _polaris/lessons.md\n"
+        )
+        subprocess.run(["git", "-C", str(repo), "add", "--", str(session_log(repo))], check=True)
+        subprocess.run(["git", "-C", str(repo), "commit", "-qm", "checkpoint"], check=True)
+        (repo / "_polaris" / "state" / "current.md").write_text(
+            f"Updated: {today()} — @{LOGIN}\n\n## Open\n\n- `a` — x\n"
+        )
+        missing = checkpoint(repo, "verify", "lesson checkpoint")
+        self.assertEqual(missing.returncode, 1, missing.stdout)
+        self.assertIn("lesson", missing.stdout.lower())
+
+        archive = repo / "_polaris" / "lessons.md"
+        archive.write_text(f"## {today()} — {title} (@{LOGIN})\nRule: opt in.\n")
+        uncommitted = checkpoint(repo, "verify", "lesson checkpoint")
+        self.assertEqual(uncommitted.returncode, 1, uncommitted.stdout)
+        subprocess.run(["git", "-C", str(repo), "add", "--", str(archive)], check=True)
+        subprocess.run(["git", "-C", str(repo), "commit", "-qm", "archive lesson"], check=True)
+        saved = checkpoint(repo, "verify", "lesson checkpoint")
+        self.assertEqual(saved.returncode, 0, saved.stdout)
+        archive.write_text(archive.read_text() + "Unsaved correction.\n")
+        dirty = checkpoint(repo, "verify", "lesson checkpoint")
+        self.assertEqual(dirty.returncode, 1, dirty.stdout)
+
+    def test_decision_checkpoint_requires_a_committed_matching_record(self):
+        repo = host_repo()
+        title = "Keep one active plan per area"
+        session_log(repo).write_text(
+            f"## 10:00 — decision checkpoint\n- Key context: #decisione {title}\n"
+            f"- Decision: {title}\n- Files: _polaris/decisions.md\n"
+        )
+        subprocess.run(["git", "-C", str(repo), "add", "--", str(session_log(repo))], check=True)
+        subprocess.run(["git", "-C", str(repo), "commit", "-qm", "checkpoint"], check=True)
+        (repo / "_polaris" / "state" / "current.md").write_text(
+            f"Updated: {today()} — @{LOGIN}\n\n## Open\n\n- `a` — x\n"
+        )
+        missing = checkpoint(repo, "verify", "decision checkpoint")
+        self.assertEqual(missing.returncode, 1, missing.stdout)
+        self.assertIn("decision", missing.stdout.lower())
+
+        archive = repo / "_polaris" / "decisions.md"
+        archive.write_text(f"## {today()} — {title} (@{LOGIN})\nChose one plan.\n")
+        uncommitted = checkpoint(repo, "verify", "decision checkpoint")
+        self.assertEqual(uncommitted.returncode, 1, uncommitted.stdout)
+        subprocess.run(["git", "-C", str(repo), "add", "--", str(archive)], check=True)
+        subprocess.run(["git", "-C", str(repo), "commit", "-qm", "archive decision"], check=True)
+        saved = checkpoint(repo, "verify", "decision checkpoint")
+        self.assertEqual(saved.returncode, 0, saved.stdout)
 
 
 class TheHarvestIsCapped(unittest.TestCase):
