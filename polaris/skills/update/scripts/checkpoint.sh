@@ -60,6 +60,12 @@ harvest_from() {
 
 cmd_prepare() {
   resolve
+  local archive_dirty
+  archive_dirty="$(git -C "$HERE_WT" status --short -- "$ROOT/lessons.md" "$ROOT/decisions.md")"
+  if [ -n "$archive_dirty" ]; then
+    echo "ARCHIVE_DIRTY=$archive_dirty — resolve ownership before editing shared ledgers" >&2
+    return 2
+  fi
   cat <<EOF
 ROOT=$ROOT
 MAIN_WT=$MAIN_WT
@@ -215,6 +221,10 @@ cmd_verify() {
   elif ! grep -q "^## " "$SESSION_LOG"; then
     echo "FAIL: session log has no checkpoint entry"; fail=1
   else
+    if ! git -C "$HERE_WT" ls-files --error-unmatch -- "${SESSION_LOG#"$HERE_WT"/}" >/dev/null 2>&1 \
+        || ! git -C "$HERE_WT" diff --quiet HEAD -- "${SESSION_LOG#"$HERE_WT"/}"; then
+      echo "FAIL: session log checkpoint is not committed at $SESSION_LOG"; fail=1
+    fi
     local last
     last=$(grep "^## " "$SESSION_LOG" | tail -1)
     case "$last" in
@@ -223,6 +233,34 @@ cmd_verify() {
     esac
     grep -q "Key context" "$SESSION_LOG" || echo "WARN: no Key context today — decisions, findings and your own errors have nowhere else to live"
     grep -q "^- Files" "$SESSION_LOG"   || echo "WARN: no Files field — nothing links this session back to the code"
+
+    # Archive pointers belong to this checkpoint, not an older entry in today's shared log.
+    # Check HEAD: a working-tree-only lesson disappears with the worktree.
+    local entry
+    entry="$(awk '/^## / { block = "" } { block = block $0 ORS } END { printf "%s", block }' "$SESSION_LOG")"
+    verify_archive() {
+      local tag="$1" field="$2" path="$3" refs title saved
+      if printf '%s\n' "$entry" | grep -qF "#$tag" \
+          || printf '%s\n' "$entry" | grep -q "^- $field:"; then
+        refs="$(printf '%s\n' "$entry" | sed -n "s/^- $field: //p")"
+        if [ -z "$refs" ]; then
+          echo "FAIL: #$tag has no $field record pointer in this checkpoint"; fail=1; return
+        fi
+        saved="$(git -C "$HERE_WT" show "HEAD:${path#"$HERE_WT"/}" 2>/dev/null)" || {
+          echo "FAIL: $field record is not committed at $path"; fail=1; return; }
+        if ! git -C "$HERE_WT" diff --quiet HEAD -- "${path#"$HERE_WT"/}"; then
+          echo "FAIL: $field record has uncommitted changes at $path"; fail=1; return
+        fi
+        while IFS= read -r title; do
+          if ! printf '%s\n' "$saved" | awk -v t="$title" \
+              'index($0, "## ") == 1 && index($0, " — " t " (") > 0 { found = 1 } END { exit !found }'; then
+            echo "FAIL: $field record '$title' is not committed at $path"; fail=1
+          fi
+        done <<< "$refs"
+      fi
+    }
+    verify_archive lezione Lesson "$ROOT/lessons.md"
+    verify_archive decisione Decision "$ROOT/decisions.md"
   fi
 
   if [ -n "${SCRATCH:-}" ] && [ -f "$SCRATCH" ]; then
@@ -293,10 +331,14 @@ cmd_selfcheck() {
   tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' RETURN
   git -C "$tmp" init -q .
   git -C "$tmp" config --local polaris.login probe
+  git -C "$tmp" config user.email probe@example.test
+  git -C "$tmp" config user.name Probe
   mkdir -p "$tmp/_polaris/team/probe/sessions" "$tmp/_polaris/state"
   : > "$tmp/_polaris/config.yml"
   printf '## 10:00 — probe entry\n- Key context: x\n- Files: y\n' \
     > "$tmp/_polaris/team/probe/sessions/$(date +%F)-@probe.md"
+  git -C "$tmp" add -- "$tmp/_polaris/team/probe/sessions/$(date +%F)-@probe.md"
+  git -C "$tmp" commit -qm checkpoint
 
   # $1 name · $2 current.md body ("" = no file) · $3 expected regex · $4 expected exit (0|1)
   case_() {

@@ -3,7 +3,7 @@ name: update
 description: Polaris skill — record a short repository-first checkpoint during an active session. Trigger after meaningful progress, a blocker, a context switch, or on "checkpoint / save progress / /update".
 user-invocable: true
 model: sonnet
-version: 3.2.2
+version: 3.3.0
 invokes: [git-power]
 ---
 
@@ -40,7 +40,8 @@ aggiornare l'update precedente. Invece all'interno della session mette sempre un
 ```
 
 It resolves root, login, branch, session-log path and `CURRENT` — the MAIN worktree's cockpit,
-never this panel's. If it fails, read the message and stop. Never guess a path.
+never this panel's. `ARCHIVE_DIRTY` refuses a pre-existing staged or unstaged shared ledger;
+resolve ownership before editing it. If prepare fails, read the message and stop. Never guess a path.
 
 ### 2. Append the entry to the session log
 
@@ -61,6 +62,12 @@ SHAs and counts come from `git log`, never from memory. A founder correction is 
 line of the session and you are its only witness: write what you believed, what was true, what
 proves it, the rule that stays. An empty `Key context` beats an invented one.
 
+Keep it short. For a reusable mistake, add `#lezione` in `Key context` and
+`- Lesson: <exact title>`; for a decision already made, add `#decisione` and
+`- Decision: <exact title>`. These pointers name committed headings in this checkpoint's
+`lessons.md` and `decisions.md`. Do not mark an open bug as a lesson or invent approval for a
+decision. No qualifying record means no pointer.
+
 ### 3. Harvest the scratch delta
 
 ```bash
@@ -70,21 +77,36 @@ proves it, the rule that stays. An empty `Key context` beats an invented one.
 
 What you find becomes `Key context`.
 
+Before committing, put each pointed-to lesson or decision in the matching append-only archive,
+newest first. A lesson states the actual mistake and its repeat-prevention rule; a decision states
+the choice and evidence. An architectural decision also gets its ADR under the repo's declared
+decision house. Write qualifying records at this checkpoint; `/end` may never run.
+Audit the work since the previous checkpoint before deciding there are no records; do not infer
+"none" merely from missing tags in the draft log.
+
 ### 4. Update your lane in the cockpit
 
 Read `## Open` in `$CURRENT`. Then decide:
 
 - **A line is your lane** — same work, even under another branch name, even written by another
-  panel or on another day → **rewrite that line in place.**
-- **No line is your lane** → add one.
+  panel or on another day → keep its first backtick key and replace that line.
+- **No line is your lane** → choose a new stable key and add one line.
 
 ```md
-- `<branch>` (<repo>) — <state in one line> · since <YYYY-MM-DD>
+- `<lane-key>` (<repo>) — branch `<branch>`; <state in one line> · since <first YYYY-MM-DD>
 ```
 
-Rewrite the single `Updated: <date> — @<login>` line. Leave every other line byte-identical:
-another panel's lane is theirs. Never remove a line, never close a thread, never write a summary —
-`/end` owns closing and `## Recent Context`. If nothing material changed, do not write at all.
+Set `LANE_LINE` to that exact line, then use the existing atomic writer:
+
+```bash
+: "${LANE_LINE:?set the one-line state for the existing or new lane}"
+UP="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/update/scripts/state_upsert.py"
+printf '%s\n' "$LANE_LINE" | python3 "$UP" thread "$CURRENT" --owner "$LOGIN" --now "$(date +%F)"
+```
+
+It rewrites the one matching key or adds one new key, and maintains one `Updated:` line. Leave
+other lanes byte-identical. Never close a thread or write `## Recent Context` here; `/end` owns
+those. If nothing material changed, do not write at all.
 
 ### 5. Weekly todo, if the item exists
 
@@ -99,21 +121,33 @@ One dated line under the outcome advanced in `team/<login>/weeks/<week>.md`. No 
 ### 7. Land and verify
 
 ```bash
-git add -- <exact owned paths>                # never -A, never .env*, never state/current.md
 python3 "$GP" commit-check --repo "$PWD"      # git-power, when installed
-"$CHECKPOINT" commit
+CHECKPOINT_PATHS=("$SESSION_LOG")
+[ -f "$HANDOFF" ] && CHECKPOINT_PATHS+=("$HANDOFF")
+# Append only exact owned paths written now: weekly/todos/lessons/decisions.
+"$CHECKPOINT" commit "${CHECKPOINT_PATHS[@]}"
 "$CHECKPOINT" verify "<title of the entry just written>"
 ```
 
-`verify` fails on a stacked `Updated:`, a cockpit older than the log, or a scratch not harvested.
-A foreign or unknown dirty path blocks: assign it, never stash or commit for another panel.
+Before `commit`, append any archive, plan, or todo file this checkpoint changed to
+`CHECKPOINT_PATHS`; never include a merely dirty path owned by another panel. `verify` fails if
+the log or a pointed-to archive is not committed, the cockpit is stale/stacked, or scratch was
+not harvested. If this repo requires a remote push for lessons, follow its branch/PR policy and
+report local-only until pushed. A foreign or unknown dirty path blocks: assign it, never stash
+or commit for another panel.
+
+Il log atterra sul branch corrente, sempre. Le due eccezioni che fermano l'intero commit sono
+HEAD detached e policy `no-direct-default`; un path ignorato o annidato è invece nominato e
+rifiutato singolarmente.
 
 Then tick the session the `/start` of this checkout opened — one append-only event, so the
 restartable boundary knows this checkpoint happened even if `/end` never runs:
 
 ```bash
-python3 "${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/start/scripts/session_gate.py" note \
-  --root "$ROOT" --note "<title of the entry just written>"
+SG="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/start/scripts/session_gate.py"
+if [ -f "$SG" ]; then
+  python3 "$SG" note --root "$ROOT" --note "<title of the entry just written>"
+fi
 ```
 
 Silence is the answer when no session is open and when the repo carries no engine. It never
@@ -125,9 +159,9 @@ One line: `Checkpointed: <what>`. No summary, no next-action list — they are i
 
 ## Lessons and decisions
 
-Write to the archives (`lessons.md`, `decisions.md`) always, append-only, newest on top. Never to
-the apex (`CLAUDE.md`, `rules/*.md`) — that goes through `pol-apex-curate`. A qualifying
-architectural choice is proposed as an ADR, the only place it lives linked to the code.
+Use the append-only archives for qualifying records, not for routine progress. Never promote a
+lesson or decision only in prose or only at `/end`; never write it to the apex (`CLAUDE.md`,
+`rules/*.md`) — that goes through `pol-apex-curate`.
 
 ## Common Rationalizations
 
@@ -156,6 +190,7 @@ architectural choice is proposed as an ADR, the only place it lives linked to th
 - [ ] `## Open` has exactly one line for this lane, `Updated:` is one line, dated today
 - [ ] Every other cockpit line is byte-identical
 - [ ] `checkpoint.sh verify "<title>"` exits 0
+- [ ] Every `Lesson:` / `Decision:` pointer names a committed archive heading
 - [ ] `git status --short` is empty in this worktree and in the main one
 
 ## Never
