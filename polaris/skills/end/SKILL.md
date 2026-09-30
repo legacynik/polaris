@@ -2,7 +2,7 @@
 name: end
 description: Polaris skill — close a repository-first team session with a handoff, decisions/lessons written to the ledgers, a plan tick and a pathspec-only commit. Trigger when stopping work, before a multi-day pause, or on "wrap up / end session / /end".
 user-invocable: true
-version: 1.22.1
+version: 1.23.0
 invokes: [git-power]
 ---
 
@@ -316,13 +316,16 @@ PT="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/end/scripts/prune_threads.py"
 python3 "$PT" "$CURRENT" --owner "$LOGIN" --now "$(date +%F)"
 ```
 
-Un thread si chiude solo se **ogni** citazione che porta è provata: una lane che dice «chiude #77,
-poi #79» con #79 ancora aperta resta. Quattro verdetti, mai due. `PROVEN` è atterrato davvero. `AMBIGUOUS` è mergiato dove questo checkout
-non lo vede, **oppure** un branch che porta commit oltre la head mergiata: quella lane è viva di
-nuovo, non chiusa. `OPEN` è una PR ancora aperta — e una PR aperta non è un thread chiuso. `BLOCKED`
-è il tracker che non risponde (niente `gh`, errore, rate limit, risposta vuota): **un solo `BLOCKED`
-ferma tutto il giro** ed esce `2`, perché una potatura che toglie quattro lane e ne salta una in
-silenzio è lo stesso no-op silenzioso di prima, rovesciato. Poi si applica:
+A thread closes only when **every** citation it carries is settled: a lane reading «closes #77,
+then #79» with #79 still open stays. Five verdicts. `PROVEN` really landed. `DEAD` is abandoned
+work — a PR closed without merge, an issue closed as not planned — and closes the lane too, logged
+as `DEAD`, never as completed; a `DEAD` citation next to an `OPEN` one keeps the lane (measured
+2026-09-30: 15 of 38 lanes in a product cockpit were dead and `/end` closed none). `AMBIGUOUS` is
+merged where this checkout cannot see it, **or** a branch carrying commits past the merged head:
+that lane is alive again. `OPEN` is a PR still open. `BLOCKED` is a tracker that does not answer
+(no `gh`, an error, a rate limit, an empty answer): **one `BLOCKED` stops the whole run** and exits
+`2`, because a prune that removes four lanes and silently skips one is the old silent no-op,
+inverted. Then apply:
 
 ```bash
 PT="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/end/scripts/prune_threads.py"
@@ -341,8 +344,11 @@ lo stesso e lo dice (`"todo": "skipped"`). Chiudere significa togliere la **lane
 ciò che le sta sotto, figli indentati e blocco fence compresi: una riga orfana sotto `## Open` è
 lavoro che la sessione dopo deve riconciliare.
 
-Resta una chiusura manuale, per il thread che non cita né issue né PR — lì la prova è nel log e
-la chiave la nomini tu, una per riga, mai un giro in blocco:
+The run also prints `STALE=` for every lane that cites nothing and is older than 14 days: no
+verdict can close it, so **each one is resolved in this `/end`** — open an issue for it (then it has
+a citation), or close it by hand below with the reason in the session log. Reading `0 PROVEN` and
+moving on is how a cockpit reached 38 lanes. The manual close takes the lane id, or `#N` for the
+one lane citing #N; a missing `state/todos.md` is skipped, as the contract allows:
 
 ```bash
 CL="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/update/scripts/state_close.py"

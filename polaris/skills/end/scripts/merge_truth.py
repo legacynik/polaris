@@ -70,6 +70,8 @@ def _gh(kind: str, num: str, fields: str) -> dict | None:
 
 
 def _pr(num: str, facts: dict, default: str) -> tuple[str, str]:
+    if facts.get("state") == "CLOSED":      # closed without a merge: the work was abandoned
+        return "DEAD", f"PR #{num} closed without merge"
     if facts.get("state") != "MERGED":
         return "OPEN", f"PR #{num} is {facts.get('state')}, not MERGED"
     head = facts.get("headRefOid") or ""
@@ -88,7 +90,7 @@ def _issue(num: str, facts: dict) -> tuple[str, str]:
     if facts.get("state") != "CLOSED":
         return "OPEN", f"issue #{num} is {facts.get('state')}"
     if (facts.get("stateReason") or "").upper() != "COMPLETED":
-        return "OPEN", f"issue #{num} closed as {facts.get('stateReason')}, not completed"
+        return "DEAD", f"issue #{num} closed as {facts.get('stateReason')}, not completed"
     return "PROVEN", f"issue #{num} CLOSED as completed"
 
 
@@ -119,12 +121,16 @@ def _one(num: str, kind: str, default: str) -> tuple[str, str]:
 
 
 def verdict(line: str, default: str) -> tuple[str, str]:
-    """PROVEN only when EVERY citation is proven; otherwise the worst answer, and why."""
+    """Closable only when EVERY citation is PROVEN or DEAD; otherwise the worst answer, and why.
+
+    DEAD (a PR closed unmerged, an issue closed as not planned) is abandoned work: it closes the
+    lane like PROVEN does, but only when nothing it cites is still open or unknown.
+    """
     found = cites(line)
     if not found:
         return "OPEN", "no issue or PR cited"
     seen = [_one(num, kind, default) for num, kind in found]
-    for want in ("BLOCKED", "AMBIGUOUS", "OPEN"):        # worst answer wins, in this order
+    for want in ("BLOCKED", "AMBIGUOUS", "OPEN", "DEAD"):  # worst answer wins, in this order
         if bad := [why for kind, why in seen if kind == want]:
             return want, "; ".join(bad)
     return "PROVEN", "; ".join(why for _, why in seen)
@@ -135,10 +141,10 @@ def _selfcheck() -> int:
     merged = {"state": "MERGED", "headRefOid": "a" * 40, "mergeCommit": {"oid": "b" * 40},
               "headRefName": "feat/x"}
     ok = [_pr("1", {"state": "OPEN"}, "main")[0] == "OPEN",
-          _pr("1", {"state": "CLOSED"}, "main")[0] == "OPEN",
+          _pr("1", {"state": "CLOSED"}, "main")[0] == "DEAD",
           _pr("1", merged, "main")[0] == "AMBIGUOUS",          # no such sha in this repo
           _issue("2", {"state": "OPEN"})[0] == "OPEN",
-          _issue("2", {"state": "CLOSED", "stateReason": "NOT_PLANNED"})[0] == "OPEN",
+          _issue("2", {"state": "CLOSED", "stateReason": "NOT_PLANNED"})[0] == "DEAD",
           _issue("2", {"state": "CLOSED", "stateReason": "COMPLETED"})[0] == "PROVEN",
           cites("- `a` — chiude #77") == [("77", "any")],
           cites("- `a` — attende PR 77") == [("77", "pr")],

@@ -5,6 +5,14 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
+- **`/end` chiude anche il lavoro abbandonato** (`end` 1.22.1 → **1.23.0**, `update` 3.3.0 → **3.3.1**,
+  pacchetto → **0.30.0**). Misurato su un repo prodotto: 38 fili sotto `## Open`, 15 morti, zero chiusi.
+  Nuovo verdetto `DEAD` (PR chiusa senza merge, issue chiusa come not planned): la lane esce e il log
+  scrive `DEAD`, mai completato; un `DEAD` accanto a un `OPEN` la tiene. Le lane senza citazioni più
+  vecchie di 14 giorni escono come `STALE=` e vanno risolte nella stessa `/end`. `state_close --key #N`
+  chiude l'unica lane che cita #N; un `--todos` inesistente viene saltato. Supera la regola «not planned
+  resta aperto» di #202. Prova: `polaris/tests/test_end_dead_lanes.py`.
+
 - **`exact()` accetta di nuovo il qualificatore** (`update` 3.2.1 → **3.2.2**, pacchetto → **0.29.2**).
   #43 aveva ristretto l'intestazione alla riga intera `## Active Priorities`; il cockpit del vault la scrive
   `## Active Priorities — l'ordine del lavoro`, lo script non l'ha riconosciuta e al primo uso reale ha

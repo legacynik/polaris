@@ -51,11 +51,15 @@ class AClosedIssueIsNotAMergedPr(unittest.TestCase):
         self.assertNotIn("feat/b", (repo / "_polaris" / "state" / "current.md").read_text())
 
     def test_not_planned_is_not_completed(self):
+        """Superseded 2026-09-30 (founder: «/end non chiude mai»): not planned is abandoned work.
+        The lane leaves `## Open`, and the log says DEAD, never PROVEN or completed."""
         repo = host_repo()
         out = prune(repo, {"issue": {"77": {"state": "CLOSED", "stateReason": "NOT_PLANNED"}}},
                     "--apply")
         self.assertEqual(out.returncode, 0, out.stderr)
-        self.assertIn("feat/b", (repo / "_polaris" / "state" / "current.md").read_text())
+        self.assertNotIn("feat/b", (repo / "_polaris" / "state" / "current.md").read_text())
+        self.assertIn("DEAD: issue #77 closed as NOT_PLANNED", log_of(repo).read_text())
+        self.assertNotIn("PROVEN", log_of(repo).read_text())
 
     def test_a_thread_citing_a_pr_never_falls_back_to_the_issue(self):
         repo = host_repo()
