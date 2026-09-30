@@ -103,15 +103,19 @@ def close_todo(path: Path, key: str, now: str) -> str:
 def precheck(opts: argparse.Namespace) -> None:
     """Every refusal happens BEFORE the first byte is written.
 
-    The first version wrote the cockpit and only then discovered the todos file had no
-    `## Completed`: exit 2 with the thread already gone from `## Open` and nothing recording it.
-    A close touches two files, so both are validated first, then both are written.
+    The first version wrote the cockpit, then found the todos file had no `## Completed`: exit 2
+    with the thread gone from `## Open` and nothing recording it. So both are validated first.
     """
     lines, _, _ = read(Path(opts.path))
-    if find(lines, section(lines, OPEN) or (0, 0), opts.key) < 0:
+    span = section(lines, OPEN) or (0, 0)
+    if re.fullmatch(r"#\d+", opts.key):       # `#N` names the ONE lane citing it
+        hits = [i for i in range(*span) if re.search(rf"{opts.key}\b", lines[i])]
+        opts.key = lane_id(lines[hits[0]]) if len(hits) == 1 else opts.key
+    if find(lines, span, opts.key) < 0:
         raise UpsertError("UNKNOWN_THREAD", f"no single `{opts.key}` under `## Open` in "
                           f"{opts.path} — refusing to remove a line this key does not name")
-    if not opts.todos:
+    if not opts.todos or not Path(opts.todos).is_file():   # todos.md is optional in the contract
+        opts.todos = ""
         return
     rows, _, _ = read(Path(opts.todos))
     for name in (ACTIVE, COMPLETED):

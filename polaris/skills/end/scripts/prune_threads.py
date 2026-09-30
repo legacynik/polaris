@@ -30,6 +30,7 @@ HERE = Path(__file__).resolve().parent
 UPDATE = HERE.parent.parent / "update" / "scripts"
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(UPDATE))
+from datetime import date  # noqa: E402
 from merge_truth import CITES, default_branch, verdict  # noqa: E402  (F3: every citation)
 from state_lines import kinds, lane_id, read, section  # noqa: E402
 from state_sections import heading  # noqa: E402
@@ -44,6 +45,22 @@ def candidates(path: Path) -> list[str]:
     tags = kinds(lines)
     span = section(lines, OPEN) or (0, 0)
     return [lines[i] for i in range(*span) if tags[i] == "thread" and CITES.search(lines[i])]
+
+
+STALE_DAYS = 14
+SINCE = re.compile(r"since (\d{4}-\d{2}-\d{2})")
+
+
+def stale(path: Path, now: str) -> list[str]:
+    """Lanes citing nothing, older than STALE_DAYS: no verdict can close them, so /end names them."""
+    lines, _, _ = read(path)
+    tags, span = kinds(lines), section(lines, OPEN) or (0, 0)
+    out = []
+    for line in (lines[i] for i in range(*span) if tags[i] == "thread" and not CITES.search(lines[i])):
+        hit = SINCE.search(line)
+        if hit and now and (date.fromisoformat(now) - date.fromisoformat(hit[1])).days > STALE_DAYS:
+            out.append(line)
+    return out
 
 
 def note(log: Path, line: str, why: str) -> int:
@@ -78,12 +95,12 @@ def apply(rows: list[tuple], opts: argparse.Namespace) -> int:
     """
     path, log, bad = Path(opts.path), Path(opts.log), 0
     for line, kind, why in rows:
-        if kind != "PROVEN":
+        if kind not in ("PROVEN", "DEAD"):
             continue
         if close(path, line, opts):
             bad = 2
             continue
-        note(log, line, why)
+        note(log, line, f"{kind}: {why}")
     return bad
 
 
@@ -91,13 +108,16 @@ def run(opts: argparse.Namespace) -> int:
     rows = [(line, *verdict(line, default_branch())) for line in candidates(Path(opts.path))]
     for line, kind, why in rows:
         print(f"{kind}={line.strip()} :: {why}")
+    for line in stale(Path(opts.path), opts.now):
+        print(f"STALE={line.strip()} :: cites nothing and is older than {STALE_DAYS} days — "
+              "open an issue for it or close it with state_close.py")
     if not rows:
         print("NOTE=no open thread cites an issue or a PR")
     elif any(r[1] == "BLOCKED" for r in rows):
         print("NOTE=fail-closed — nothing removed: a candidate's state could not be read")
         return 2
     elif not opts.apply:
-        print("NOTE=read-only: re-run with --apply to remove the PROVEN threads")
+        print("NOTE=read-only: re-run with --apply to remove the PROVEN and DEAD threads")
     elif not (opts.log and opts.owner):
         print("prune_threads: --apply needs --log and --owner", file=sys.stderr)
         return 64
