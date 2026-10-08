@@ -11,7 +11,10 @@ All notable changes to Polaris Team OS. The installed version is pinned in
   ricorrenza di #89). Ora il file è quello che porta l'id della sessione (`POLARIS_SID`, che la skill
   passa da `${CLAUDE_SESSION_ID}`); senza id vale l'unico file toccato oggi, e con più candidati non si
   legge e non si timbra nulla. Tolto il tetto di 40 righe: in un file tutto della sessione tagliava le
-  righe più recenti, che il timbro dava poi per lette. Prova: `polaris/tests/test_update_scratch_session.py`.
+  righe più recenti, che il timbro dava poi per lette. Una sessione che attraversa la mezzanotte ha due
+  file: si leggono e si timbrano tutti, dal più vecchio, e `verify` fallisce finché uno ha righe non lette.
+  Il timbro è riconosciuto solo a inizio riga; una nota lasciata nella cartella non è un candidato.
+  Prova: `polaris/tests/test_update_scratch_session.py`.
 
 - **`/end` chiude anche il lavoro abbandonato** (`end` 1.22.1 → **1.23.0**, `update` 3.3.0 → **3.3.1**,
   pacchetto → **0.30.0**). Misurato su un repo prodotto: 38 fili sotto `## Open`, 15 morti, zero chiusi.

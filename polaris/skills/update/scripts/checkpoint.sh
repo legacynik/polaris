@@ -39,33 +39,48 @@ resolve() {
   scratch_for "${POLARIS_SID:-}"
 }
 
-# THIS session's scratch, never the login's newest. The stop hook writes one file per session,
-# `<date>-<sid12>.md`; "newest" is another panel's file whenever that panel wrote last, and the
-# watermark then moved in a file this session does not own (polaris-os#536). With an id: the file
-# named for it, or nothing. Without one: the only file touched today, or nothing — never a guess.
-# SCRATCH_CANDIDATES carries what was left unchosen, so the caller can say it.
+# THIS session's scratch, never the login's newest (polaris-os#536). The stop hook writes
+# `<date>-<sid12>.md`, one file per session PER DAY and per lane: a session alive across midnight
+# owns two, and the legacy lane can hold a third. So the scratch is a LIST, oldest first, and every
+# reader walks all of it. With an id: the files named for it, or nothing. Without one: the only
+# hook file touched today, or nothing — never a guess. A note someone left in the lane
+# (`DISTILL-….md`) is not a hook file and is never a candidate.
 scratch_for() {
   local sid="${1:0:12}" today f name; today="$(date +%F)"
-  SCRATCH=""; SCRATCH_CANDIDATES=()
+  SCRATCH=""; SCRATCH_SID="$sid"; SCRATCH_FILES=(); SCRATCH_CANDIDATES=()
   for f in "$MAIN_ROOT/team/$LOGIN/sessions/scratch/"*.md "$MAIN_ROOT/sessions/scratch/$LOGIN/"*.md; do
     [ -f "$f" ] || continue
     name="$(basename "$f" .md)"
-    if [ -n "$sid" ] && [ "${name:11}" = "$sid" ]; then
-      [ -z "$SCRATCH" ] || [ "$f" -nt "$SCRATCH" ] && SCRATCH="$f"
-    elif [ "$(date -r "$f" +%F 2>/dev/null)" = "$today" ]; then
-      SCRATCH_CANDIDATES+=("$f")
-    fi
+    [[ "$name" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}-.+$ ]] || continue
+    if [ -n "$sid" ] && [ "${name:11}" = "$sid" ]; then SCRATCH_FILES+=("$f")
+    elif [ "$(date -r "$f" +%F 2>/dev/null)" = "$today" ]; then SCRATCH_CANDIDATES+=("$f"); fi
   done
-  [ -n "$SCRATCH" ] && { SCRATCH_CANDIDATES=(); return 0; }
-  [ -z "$sid" ] && [ ${#SCRATCH_CANDIDATES[@]} -eq 1 ] && SCRATCH="${SCRATCH_CANDIDATES[0]}"
-  return 0
+  [ -z "$sid" ] && [ ${#SCRATCH_CANDIDATES[@]} -eq 1 ] && SCRATCH_FILES=("${SCRATCH_CANDIDATES[0]}")
+  [ ${#SCRATCH_FILES[@]} -gt 0 ] || return 0
+  SCRATCH_CANDIDATES=(); scratch_sort
+}
+
+# Oldest first by FILE NAME (its date), not by mtime: the older file touched last is still older.
+# SCRATCH is the newest, the one `prepare` prints and `verify` wants stamped today.
+scratch_sort() {
+  local f sorted=()
+  while IFS= read -r f; do sorted+=("${f#*$'\t'}"); done < <(
+    for f in "${SCRATCH_FILES[@]}"; do printf '%s\t%s\n' "$(basename "$f")" "$f"; done | sort)
+  SCRATCH_FILES=("${sorted[@]}"); SCRATCH="${sorted[${#sorted[@]}-1]}"
 }
 
 # One line, said once, when no scratch could be chosen and there was something to choose from.
 scratch_unchosen() {
-  [ -z "${SCRATCH:-}" ] && [ ${#SCRATCH_CANDIDATES[@]} -gt 0 ] || return 1
-  local f names=""; for f in "${SCRATCH_CANDIDATES[@]}"; do names="$names $(basename "$f")"; done
-  echo "checkpoint: no scratch chosen — pass this session's id (POLARIS_SID=<id>); today's files:$names"
+  [ ${#SCRATCH_FILES[@]} -eq 0 ] && [ ${#SCRATCH_CANDIDATES[@]} -gt 0 ] || return 1
+  local f names="" why="pass this session's id (POLARIS_SID=<id>)"
+  [ -n "${SCRATCH_SID:-}" ] && why="no file is named for session ${SCRATCH_SID}"
+  for f in "${SCRATCH_CANDIDATES[@]}"; do names="$names $(basename "$f")"; done
+  echo "checkpoint: no scratch chosen — $why; nothing read, nothing stamped; today's files:$names"
+}
+
+# A file still owes lines when something non-blank follows its last watermark.
+scratch_pending() {
+  awk -v from="$(harvest_from "$1")" 'NR > from && NF { found = 1 } END { exit !found }' "$1" 2>/dev/null
 }
 
 # THE cockpit of this repo — one per repo, never one per worktree. The #212 resolver owns
@@ -80,11 +95,12 @@ cockpit() {
 
 # Watermark = byte offset of the last harvest. Reading the delta keeps the checkpoint
 # cheap; re-reading a 30KB scratch on every /update turns a checkpoint into a session eater.
-harvest_from() {
-  [ -n "${SCRATCH:-}" ] && [ -f "$SCRATCH" ] || { echo 0; return; }
-  local mark
-  mark=$(grep -n '<!-- harvested' "$SCRATCH" 2>/dev/null | tail -1 | cut -d: -f1)
-  [ -n "$mark" ] && echo "$mark" || echo 0
+harvest_from() {   # [file] — the newest of the session when none is named
+  local f="${1:-${SCRATCH:-}}" mark
+  [ -n "$f" ] && [ -f "$f" ] || { echo 0; return; }
+  # Anchored: a line that QUOTES the marker in prose is content, not a watermark.
+  mark=$(grep -n '^<!-- harvested: ' "$f" 2>/dev/null | tail -1 | cut -d: -f1)
+  echo "${mark:-0}"
 }
 
 cmd_prepare() {
@@ -198,23 +214,38 @@ cmd_open_prs() {
   return 0
 }
 
-# The delta since the last watermark, whole. The file is this session's own (see scratch_for), so
-# there is no foreign flow left to cap: the cap of polaris-os#89 guarded a file every panel shared,
-# and applied to a per-session file it dropped the NEWEST lines, which harvest-done then marked read.
+# The delta since each file's last watermark, whole, oldest file first. The files are this
+# session's own (see scratch_for), so there is no foreign flow left to cap: the cap of polaris-os#89
+# guarded a file every panel shared, and applied to a per-session file it dropped the NEWEST lines,
+# which harvest-done then marked read.
 cmd_harvest_slice() {
   [ -n "${1:-}" ] && POLARIS_SID="$1"
   resolve
   scratch_unchosen && return 0
-  [ -n "${SCRATCH:-}" ] && [ -f "$SCRATCH" ] || { echo "checkpoint: no scratch, nothing to read"; return 0; }
-  awk -v from="$(harvest_from)" 'NR > from' "$SCRATCH"
+  [ ${#SCRATCH_FILES[@]} -gt 0 ] || { echo "checkpoint: no scratch, nothing to read"; return 0; }
+  local f
+  for f in "${SCRATCH_FILES[@]}"; do
+    awk -v from="$(harvest_from "$f")" 'NR > from' "$f" 2>/dev/null || echo "checkpoint: cannot read $f"
+  done
+  return 0
 }
 
+# The newest file is always stamped ("move the watermark, always"); an older one only while it
+# still owes lines. A stamp that could not be written is said so, never reported as moved.
 cmd_harvest_done() {
   resolve
   scratch_unchosen && return 0
-  [ -n "${SCRATCH:-}" ] && [ -f "$SCRATCH" ] || { echo "checkpoint: no scratch, nothing to mark"; return 0; }
-  printf '\n<!-- harvested: %s -->\n' "$(date '+%F %H:%M')" >> "$SCRATCH"
-  echo "checkpoint: watermark moved in $SCRATCH"
+  [ ${#SCRATCH_FILES[@]} -gt 0 ] || { echo "checkpoint: no scratch, nothing to mark"; return 0; }
+  local f
+  for f in "${SCRATCH_FILES[@]}"; do
+    [ "$f" = "$SCRATCH" ] || scratch_pending "$f" || continue
+    if printf '\n<!-- harvested: %s -->\n' "$(date '+%F %H:%M')" >> "$f" 2>/dev/null; then
+      echo "checkpoint: watermark moved in $f"
+    else
+      echo "checkpoint: could NOT write the watermark in $f — nothing marked there"
+    fi
+  done
+  return 0
 }
 
 cmd_commit() {
@@ -288,8 +319,15 @@ cmd_verify() {
     verify_archive decisione Decision "$ROOT/decisions.md"
   fi
 
-  if [ -n "${SCRATCH:-}" ] && [ -f "$SCRATCH" ]; then
-    grep -q "harvested: $today" "$SCRATCH" || { echo "FAIL: scratch not harvested today (run harvest-done)"; fail=1; }
+  # The harvest gate reads this session's files only: today's stamp in the newest, and no older
+  # one still owing lines. Without an id it cannot know which are ours, and says so.
+  local f owed=0
+  if [ ${#SCRATCH_FILES[@]} -gt 0 ]; then
+    for f in "${SCRATCH_FILES[@]}"; do [ "$f" = "$SCRATCH" ] || ! scratch_pending "$f" || owed=1; done
+    grep -q "^<!-- harvested: $today" "$SCRATCH" && [ "$owed" -eq 0 ] \
+      || { echo "FAIL: scratch not harvested today (run harvest-done)"; fail=1; }
+  else
+    scratch_unchosen | sed 's/^checkpoint:/WARN: harvest not checked —/' || true
   fi
 
   # current.md is the open-items ledger (v0.8.1: nothing open is ever lost). A checkpoint

@@ -11,9 +11,8 @@ foreign one modified LAST, which is the only order in which "the newest" is the 
 from __future__ import annotations
 
 import os
-import time
 import unittest
-from datetime import date
+from datetime import date, datetime, time, timedelta
 from pathlib import Path
 
 from host_repo import LOGIN, env_for, host_repo, run_script
@@ -28,19 +27,35 @@ def lane(repo: Path) -> Path:
     return path
 
 
-def scratch(repo: Path, sid: str, text: str) -> Path:
-    path = lane(repo) / f"{date.today().isoformat()}-{sid}.md"
+def at_noon(path: Path, seconds: int = 0, days: int = 0) -> Path:
+    """Pin the mtime to today's noon (+seconds, -days): never `now`, which crosses midnight."""
+    stamp = (datetime.combine(date.today(), time(12)) + timedelta(seconds=seconds, days=-days)).timestamp()
+    os.utime(path, (stamp, stamp))
+    return path
+
+
+def scratch(repo: Path, sid: str, text: str, days_ago: int = 0, where: Path | None = None) -> Path:
+    day = (date.today() - timedelta(days=days_ago)).isoformat()
+    path = (where or lane(repo)) / f"{day}-{sid}.md"
     path.write_text(f"## 10:00 [{sid}]\n- {text}\n", encoding="utf-8")
+    return at_noon(path, days=days_ago)
+
+
+def legacy(repo: Path) -> Path:
+    path = repo / "_polaris" / "sessions" / "scratch" / LOGIN
+    path.mkdir(parents=True, exist_ok=True)
     return path
 
 
 def two_panels(repo: Path) -> tuple[Path, Path]:
     """Mine first, the other panel's after: the foreign file is the newest one on disk."""
     mine = scratch(repo, MINE, "MINE own line")
-    other = scratch(repo, OTHER, "OTHER foreign line")
-    later = time.time() + 5
-    os.utime(other, (later, later))
+    other = at_noon(scratch(repo, OTHER, "OTHER foreign line"), seconds=5)
     return mine, other
+
+
+def marks(path: Path) -> int:
+    return sum(1 for ln in path.read_text(encoding="utf-8").splitlines() if ln.startswith("<!-- harvested: "))
 
 
 def checkpoint(repo: Path, *args: str, sid: str = ""):
@@ -66,8 +81,8 @@ class TheSessionOwnsItsScratch(unittest.TestCase):
         mine, other = two_panels(repo)
         out = checkpoint(repo, "harvest-done", sid=MINE)
         self.assertEqual(out.returncode, 0, out.stderr)
-        self.assertTrue(stamped(mine), "the session's own scratch was left unstamped")
-        self.assertFalse(stamped(other), "the watermark moved in a file this session does not own")
+        self.assertEqual(marks(mine), 1, "exactly one watermark, in the session's own file")
+        self.assertEqual(marks(other), 0, "the watermark moved in a file this session does not own")
 
     def test_a_full_session_uuid_finds_the_twelve_character_file(self):
         repo = host_repo()
@@ -134,11 +149,130 @@ class VerifyReadsTheSessionsWatermark(unittest.TestCase):
         repo = host_repo()
         _, other = two_panels(repo)
         other.write_text(other.read_text() + f"\n<!-- harvested: {date.today().isoformat()} 10:10 -->\n")
-        later = time.time() + 9
-        os.utime(other, (later, later))
+        at_noon(other, seconds=9)
         out = checkpoint(repo, "verify", sid=MINE)
         self.assertIn("scratch not harvested today", out.stdout + out.stderr,
                       "verify passed the harvest check on another session's watermark")
+
+
+class ASessionCanOwnSeveralFiles(unittest.TestCase):
+    """The hook names a file by the day it writes: a session alive across midnight has two, and the
+    legacy lane can hold a third. All of them are this session's; none of their lines may be lost."""
+
+    def spanning(self, repo: Path) -> tuple[Path, Path]:
+        old = scratch(repo, MINE, "DAY1 harvested", days_ago=1)
+        old.write_text(old.read_text() + "<!-- harvested: 2026-01-01 22:00 -->\n- DAY1 TAIL unharvested\n")
+        at_noon(old, days=1)
+        return old, scratch(repo, MINE, "DAY2 line")
+
+    def test_the_tail_of_yesterdays_file_is_harvested_with_todays(self):
+        repo = host_repo()
+        self.spanning(repo)
+        out = checkpoint(repo, "harvest-slice", MINE).stdout
+        self.assertIn("DAY1 TAIL unharvested", out, "lines written before midnight were lost")
+        self.assertIn("DAY2 line", out)
+        self.assertNotIn("DAY1 harvested", out, "a line before the watermark was read twice")
+        self.assertLess(out.index("DAY1 TAIL"), out.index("DAY2 line"), "the older file comes first")
+
+    def test_after_done_nothing_of_the_session_is_left_unread(self):
+        repo = host_repo()
+        old, new = self.spanning(repo)
+        checkpoint(repo, "harvest-done", sid=MINE)
+        self.assertEqual((marks(old), marks(new)), (2, 1))
+        self.assertEqual(checkpoint(repo, "harvest-slice", MINE).stdout.strip(), "")
+
+    def test_the_older_file_touched_last_does_not_hide_todays(self):
+        repo = host_repo()
+        old, _ = self.spanning(repo)
+        at_noon(old, seconds=30)
+        self.assertIn("DAY2 line", checkpoint(repo, "harvest-slice", MINE).stdout)
+
+    def test_the_legacy_lane_is_part_of_the_session(self):
+        repo = host_repo()
+        scratch(repo, MINE, "TEAM lane line")
+        scratch(repo, MINE, "LEGACY lane line", where=legacy(repo))
+        out = checkpoint(repo, "harvest-slice", MINE).stdout
+        self.assertIn("TEAM lane line", out)
+        self.assertIn("LEGACY lane line", out)
+
+    def test_verify_fails_while_an_older_file_of_the_session_has_unread_lines(self):
+        repo = host_repo()
+        old, new = self.spanning(repo)
+        new.write_text(new.read_text() + f"<!-- harvested: {date.today().isoformat()} 10:10 -->\n")
+        out = checkpoint(repo, "verify", sid=MINE)
+        self.assertIn("scratch not harvested today", out.stdout + out.stderr)
+
+    def test_a_watermark_of_another_day_does_not_pass_verify(self):
+        repo = host_repo()
+        mine = scratch(repo, MINE, "riga")
+        mine.write_text(mine.read_text() + "<!-- harvested: 2026-01-01 10:10 -->\n")
+        out = checkpoint(repo, "verify", sid=MINE)
+        self.assertIn("scratch not harvested today", out.stdout + out.stderr)
+
+
+class OnlyTheHooksFilesCount(unittest.TestCase):
+
+    def test_a_note_in_the_lane_is_not_a_candidate(self):
+        """Real lanes hold `DISTILL-PROPOSAL-….md`: it must not block the single-file path."""
+        repo = host_repo()
+        only = scratch(repo, MINE, "MINE own line")
+        note = lane(repo) / "DISTILL-PROPOSAL.md"
+        note.write_text("una nota, non uno scratch\n")
+        at_noon(note, seconds=9)
+        self.assertIn("MINE own line", checkpoint(repo, "harvest-slice").stdout)
+        checkpoint(repo, "harvest-done")
+        self.assertEqual((marks(only), marks(note)), (1, 0))
+
+    def test_a_name_that_only_ends_like_the_id_is_not_the_sessions_file(self):
+        repo = host_repo()
+        fake = lane(repo) / f"DISTILL-NOTE{MINE}.md"      # eleven characters, then the id
+        fake.write_text("- FAKE\n")
+        longer = lane(repo) / f"{date.today().isoformat()}-{MINE}-2.md"
+        longer.write_text("- LONGER\n")
+        out = checkpoint(repo, "harvest-slice", MINE).stdout
+        self.assertNotIn("FAKE", out)
+        self.assertNotIn("LONGER", out)
+
+    def test_an_old_file_of_another_session_is_not_a_candidate_today(self):
+        repo = host_repo()
+        scratch(repo, OTHER, "OTHER yesterday", days_ago=1)
+        only = scratch(repo, MINE, "MINE own line")
+        self.assertIn("MINE own line", checkpoint(repo, "harvest-slice").stdout)
+        checkpoint(repo, "harvest-done")
+        self.assertEqual(marks(only), 1)
+
+    def test_an_unknown_id_never_takes_the_only_file_of_today(self):
+        repo = host_repo()
+        other = scratch(repo, OTHER, "OTHER foreign line")
+        out = checkpoint(repo, "harvest-slice", "cccc3333-777")
+        checkpoint(repo, "harvest-done", sid="cccc3333-777")
+        self.assertNotIn("OTHER", out.stdout)
+        self.assertEqual(marks(other), 0)
+        self.assertIn("cccc3333-777", out.stdout + out.stderr, "the refusal must name the id it was given")
+
+    def test_a_line_that_quotes_the_marker_is_not_a_watermark(self):
+        repo = host_repo()
+        mine = scratch(repo, MINE, "IMPORTANT early line")
+        mine.write_text(mine.read_text() + "- abbiamo discusso il bug di `<!-- harvested` ieri\n- later line\n")
+        out = checkpoint(repo, "harvest-slice", MINE).stdout
+        self.assertIn("IMPORTANT early line", out, "prose quoting the marker was read as a watermark")
+
+    def test_verify_without_an_id_names_the_candidates_instead_of_passing_in_silence(self):
+        repo = host_repo()
+        mine, other = two_panels(repo)
+        out = checkpoint(repo, "verify")
+        self.assertIn(mine.name, out.stdout + out.stderr)
+
+    def test_a_watermark_that_could_not_be_written_is_not_reported_as_moved(self):
+        repo = host_repo()
+        mine = scratch(repo, MINE, "riga")
+        mine.chmod(0o444)
+        try:
+            out = checkpoint(repo, "harvest-done", sid=MINE)
+        finally:
+            mine.chmod(0o644)
+        self.assertNotIn("watermark moved", out.stdout)
+        self.assertEqual(out.returncode, 0, "a missing optional input never breaks a checkpoint")
 
 
 if __name__ == "__main__":

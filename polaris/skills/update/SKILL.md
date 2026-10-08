@@ -76,8 +76,8 @@ POLARIS_SID="$SID" "$CHECKPOINT" harvest-slice   # this session's scratch, the w
 POLARIS_SID="$SID" "$CHECKPOINT" harvest-done    # move the watermark in that file, always
 ```
 
-The scratch is one file per session. The script reads and stamps the file named for this
-session's id and no other; with no id it takes the only file touched today, and when several
+The scratch is one file per session and per day. The script reads and stamps the files named for
+this session's id and no others; with no id it takes the only one touched today, and when several
 panels wrote today it reads nothing, stamps nothing and prints the candidates. Then pass the id
 of your own session and re-run: never pick a file by date or size. Pass the same `POLARIS_SID`
 to `verify`.
