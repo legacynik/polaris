@@ -94,8 +94,10 @@ def apply(rows: list[tuple], opts: argparse.Namespace) -> int:
     `bad = bad or (...)` short-circuited the loop, so a lane could be left unclosed and unmentioned.
     """
     path, log, bad = Path(opts.path), Path(opts.log), 0
+    # `/update` passes --proven-only: proof may run at every checkpoint, judgment (DEAD) is /end's.
+    closable = ("PROVEN",) if getattr(opts, "proven_only", False) else ("PROVEN", "DEAD")
     for line, kind, why in rows:
-        if kind not in ("PROVEN", "DEAD"):
+        if kind not in closable:
             continue
         if close(path, line, opts):
             bad = 2
@@ -172,6 +174,7 @@ def _parser() -> argparse.ArgumentParser:
     ap.add_argument("--owner", default="")
     ap.add_argument("--now", default="")
     ap.add_argument("--apply", action="store_true", help="remove the PROVEN threads")
+    ap.add_argument("--proven-only", action="store_true", help="leave DEAD threads for /end")
     ap.add_argument("--selfcheck", action="store_true")
     return ap
 

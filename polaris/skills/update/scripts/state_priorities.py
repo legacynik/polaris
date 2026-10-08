@@ -12,6 +12,12 @@ order is old instead of presenting it as current.
 
     printf '%s\\n' "#11 domande → prod" "#12 step 1" | state_priorities.py set current.md
     state_priorities.py check current.md        # PRIORITIES_STALE=<n>d, or silence
+    state_priorities.py prune current.md        # drop what the tracker has proven closed
+
+`prune` is the one write `/update` may make here, and it decides nothing: an item leaves only when
+every issue or PR it cites is PROVEN done by the same verdict `/end` uses (abandoned work, `DEAD`,
+waits for `/end`), and the stamp keeps the day `/end` last ordered the work, because dropping a
+finished item is not re-ordering.
 """
 from __future__ import annotations
 
@@ -67,6 +73,44 @@ def cmd_set(path: Path, now: str) -> int:
     return 0
 
 
+def _items(lines: list[str]) -> tuple[list[str], str]:
+    """(the items in order, the stamp's date) of the real section; ([], "") without one."""
+    span = section(lines, OWN)
+    body = lines[span[0]:span[1]] if span else []
+    stamp = next((m.group(1) for ln in body if (m := STAMP.match(ln))), "")
+    return [NUMBERED.sub("", ln).strip() for ln in body if NUMBERED.match(ln)], stamp
+
+
+def _verdicts(items: list[str]) -> list[tuple[str, str, str]]:
+    """(item, verdict, why) for each one, from the prover `/end` closes lanes with."""
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "end" / "scripts"))
+    from merge_truth import default_branch, verdict  # noqa: E402  (one prover, never a second)
+    trunk = default_branch()
+    return [(item, *verdict(item, trunk)) for item in items]
+
+
+def cmd_prune(path: Path, now: str) -> int:
+    """Drop the items whose every citation is proven closed. One unreadable answer drops none."""
+    lines, newline, bom = read(path)
+    items, stamp = _items(lines)
+    seen = _verdicts(items)
+    if blocked := [f"{item} :: {why}" for item, kind, why in seen if kind == "BLOCKED"]:
+        print("NOTE=fail-closed — no priority removed: " + "; ".join(blocked))
+        return 2
+    gone = [(item, why) for item, kind, why in seen if kind == "PROVEN"]
+    if not gone:
+        return 0
+    kept = [item for item, kind, _ in seen if kind != "PROVEN"]
+    with locked(path):
+        lines, newline, bom = read(path)
+        body = write(placed(lines, kept, stamp or now), newline, bom)
+        still_mine(path)
+        write_atomic(path, body)
+    for item, why in gone:
+        print(f"DROPPED={item} :: {why}")
+    return 0
+
+
 def staleness(path: Path, now: str) -> str:
     """The one line /start owes when the order is old or unstamped; "" when it is fresh."""
     lines, _, _ = read(path)
@@ -91,12 +135,12 @@ def cmd_check(path: Path, now: str) -> int:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("verb", choices=("set", "check"))
+    ap.add_argument("verb", choices=("set", "check", "prune"))
     ap.add_argument("cockpit", type=Path)
     ap.add_argument("--now", default=date.today().isoformat())
     a = ap.parse_args()
     try:
-        return (cmd_set if a.verb == "set" else cmd_check)(a.cockpit, a.now)
+        return {"set": cmd_set, "check": cmd_check, "prune": cmd_prune}[a.verb](a.cockpit, a.now)
     except (LockError, OSError) as exc:
         print(f"STOP: {exc} — nothing was written", file=sys.stderr)
         return 2

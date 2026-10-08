@@ -3,7 +3,7 @@ name: update
 description: Polaris skill — record a short repository-first checkpoint during an active session. Trigger after meaningful progress, a blocker, a context switch, or on "checkpoint / save progress / /update".
 user-invocable: true
 model: sonnet
-version: 3.3.2
+version: 3.4.0
 invokes: [git-power]
 ---
 
@@ -112,8 +112,27 @@ printf '%s\n' "$LANE_LINE" | python3 "$UP" thread "$CURRENT" --owner "$LOGIN" --
 ```
 
 It rewrites the one matching key or adds one new key, and maintains one `Updated:` line. Leave
-other lanes byte-identical. Never close a thread or write `## Recent Context` here; `/end` owns
-those. If nothing material changed, do not write at all.
+other lanes byte-identical. Never close a thread by judgment or write `## Recent Context` here;
+`/end` owns those. If nothing material changed, do not write at all.
+
+### 4b. Remove what the tracker already closed
+
+```bash
+"$CHECKPOINT" reconcile
+```
+
+A panel that checkpoints and never reaches `/end` used to leave the cockpit false: a lane whose
+pull request merged yesterday still under `## Open`, an issue already closed still second in
+`## Active Priorities`. `reconcile` runs the prover `/end` closes with. A lane or a priority
+leaves only when EVERY issue or PR it cites is proven done by the tracker and by this checkout;
+the verdict is appended to today's session log, so run it after step 2. One unreadable answer
+removes nothing, and the command always exits 0. Abandoned work (closed as not planned, a PR
+closed unmerged) is a judgment and waits for `/end`. The tracker is asked once per window for
+the whole repo (three hours by default), so most checkpoints print one line and cost nothing.
+
+You decide nothing here and you do not help it: a line that cites no number, or that states a
+fact no tracker holds (a version in production, a deploy to decide), stays until `/end`. If such a
+line is false and you can prove it, say so in `Key context` and flag the line; do not delete it.
 
 ### 5. Weekly todo, if the item exists
 
@@ -137,7 +156,7 @@ POLARIS_SID="${CLAUDE_SESSION_ID}" "$CHECKPOINT" verify "<title of the entry jus
 ```
 
 Before `commit`, append any archive, plan, or todo file this checkpoint changed to
-`CHECKPOINT_PATHS`; never include a merely dirty path owned by another panel. `verify` fails if
+`CHECKPOINT_PATHS` — `state/todos.md` too when `reconcile` moved a row to `## Completed`; never include a merely dirty path owned by another panel. `verify` fails if
 the log or a pointed-to archive is not committed, the cockpit is stale/stacked, or scratch was
 not harvested. If this repo requires a remote push for lessons, follow its branch/PR policy and
 report local-only until pushed. A foreign or unknown dirty path blocks: assign it, never stash
@@ -177,7 +196,8 @@ lesson or decision only in prose or only at `/end`; never write it to the apex (
 | "It's a new session, I'll add a new `## Open` block" | Measured: 14 stacked `Open` sections and 6 lines for `main` in one repo. Sessions are many, the cockpit is one. Rewrite your line. |
 | "The branch name changed, so it's a new lane" | The lane is the work, not the string. Same work, same line. |
 | "That line was written by another panel" | If it is your work, it is your line. Panels share lanes; only lines of *other* work are not yours. |
-| "I'll shorten the cockpit while I'm here" | A line that looks old may be the only copy of a handoff. `/end` closes, against git. |
+| "I'll shorten the cockpit while I'm here" | A line that looks old may be the only copy of a handoff. `reconcile` removes what is proven closed; everything else waits for `/end`. |
+| "That lane is obviously done, I'll delete it" | Obvious is how one panel's cleanup removed another panel's live thread. If the tracker cannot prove it, it stays. |
 | "I remember the SHA" | Both versions of an A/B test wrote the same wrong SHA from memory. `git log`. |
 | "Nothing to put in Key context, I'll write something" | Noise is counted like signal. Leave it empty. |
 | "`verify` is a formality" | The rule was in prose for weeks and got skipped anyway. The gate is the rule. |
@@ -189,13 +209,13 @@ lesson or decision only in prose or only at `/end`; never write it to the apex (
 - A `state/current.md` inside a worktree
 - `git add -A`, a stash, or a commit for another panel's paths
 - A checkpoint entry with no title, no `Files`, or a number not read from git
-- Closing, pruning, or summarising from `/update`
+- Closing, pruning, or summarising by hand from `/update` — only `reconcile` removes, and only on proof
 
 ## Verification
 
 - [ ] Session log has one new titled entry with `Files`
 - [ ] `## Open` has exactly one line for this lane, `Updated:` is one line, dated today
-- [ ] Every other cockpit line is byte-identical
+- [ ] Every other cockpit line is byte-identical, except what `reconcile` reported as removed
 - [ ] `checkpoint.sh verify "<title>"` exits 0
 - [ ] Every `Lesson:` / `Decision:` pointer names a committed archive heading
 - [ ] `git status --short` is empty in this worktree and in the main one

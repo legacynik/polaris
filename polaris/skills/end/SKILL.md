@@ -2,7 +2,7 @@
 name: end
 description: Polaris skill — close a repository-first team session with a handoff, decisions/lessons written to the ledgers, a plan tick and a pathspec-only commit. Trigger when stopping work, before a multi-day pause, or on "wrap up / end session / /end".
 user-invocable: true
-version: 1.23.0
+version: 1.23.1
 invokes: [git-power]
 ---
 
@@ -296,7 +296,7 @@ prescribes:
 
 If nothing durable happened, say so. Do not log routine progress as either.
 
-## Step 4 — Prune the live pointer (the only step allowed to close a thread)
+## Step 4 — Prune the live pointer (the only step allowed to close a thread by judgment)
 
 Path per the **One home** rule: `$CURRENT` — the handoff lands where the next
 session opens. **Reconcile** it: read it first, never blind-overwrite, same rules as `/update` Step 3 (threads keyed
@@ -464,6 +464,9 @@ lines alone. Closed threads leave the pointer — their story lives in the sessi
 not here.
 
 ## Step 4b — Reconcile `## Active Priorities` (the only writer of the order)
+
+`/update` drops an item whose every citation is proven closed (`state_priorities.py prune`); it never
+adds, rewords or re-orders one, and it leaves the stamp alone. The order is still written here.
 
 The cockpit is the one view the founder reads, and `/start` reads only it — so the order of the
 work lives here and **this step is its only writer**. Every `/end`, after Step 4, rebuild the

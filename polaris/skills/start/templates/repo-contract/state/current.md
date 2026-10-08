@@ -15,8 +15,8 @@ Updated: YYYY-MM-DD — @<login>
 
 ---
 *Contract — this file is the CURRENT state: it is overwritten, never stacked. ONE `Updated:` line,
-date and owner only. `/update` adds and flags one line per thread; `/end` is the only command that
-closes. The history lives in `team/<login>/sessions/`, never here.*
+date and owner only. `/update` adds and flags one line per thread and removes only what the tracker
+proves closed; `/end` is the only command that closes by judgment. The history lives in `team/<login>/sessions/`, never here.*
 
 *Section names — the three headings above ARE the contract, and the package reads them from one
 registry. A heading may QUALIFY one of them with a SPACE and then a separator — a dash, a middot, a

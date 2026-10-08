@@ -345,22 +345,21 @@ def test_end_closes_a_thread_only_against_verified_merge() -> None:
     assert "`/update` has no closing authority" in " ".join(update.split())
 
 
-def test_update_has_no_closing_authority_only_end_closes() -> None:
-    # Founder correction (2026-07-14, issue #24 follow-up): /update runs often,
-    # sometimes from several panels within the same hour — giving it authority
-    # to remove/close a ledger item is exactly the surface that let one panel's
-    # cleanup collide with another panel's live thread. Only the deliberate,
-    # one-shot /end may close an item; /update may only add, update its own
-    # entries, or flag one stale.
-    update = (SKILLS / "update" / "SKILL.md").read_text()
-    end = (SKILLS / "end" / "SKILL.md").read_text()
-    flat_update = " ".join(update.split())
-    flat_end = " ".join(end.split())
+def test_update_removes_only_on_proof_and_end_alone_closes_by_judgment() -> None:
+    # Founder correction (2026-07-14, issue #24 follow-up): /update runs often, from several panels
+    # within the same hour, and its hand cleanup once removed another panel's live thread. So
+    # /update got no closing authority at all.
+    # Founder, 2026-10-08 (polaris-os#538): that left the cockpit false whenever a panel never
+    # reached /end — a merged PR listed as open, a closed issue second in the priorities. The rule
+    # is now split where the harm was: JUDGMENT stays with /end, PROOF may run at every checkpoint.
+    update = " ".join((SKILLS / "update" / "SKILL.md").read_text().split())
+    end = " ".join((SKILLS / "end" / "SKILL.md").read_text().split())
 
-    assert "`/update` has no closing authority" in flat_update
-    assert "never closes anything" in flat_update
-    assert "only `/end` may remove a thread" in flat_update
-    assert "only Team OS command with closing authority" in flat_end
+    assert '"$CHECKPOINT" reconcile' in update
+    assert "Never close a thread by judgment" in update
+    assert "One unreadable answer removes nothing" in update
+    assert "the only step allowed to close a thread by judgment" in end
+    assert "the only writer of the order" in end
 
 
 def test_end_checks_repo_wiring_before_remember_not_the_binary() -> None:

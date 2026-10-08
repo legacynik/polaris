@@ -1,0 +1,4 @@
+# Session logs are append-only and every panel commits its own on the branch it sits on, so one
+# day's file is born on several branches. `union` keeps both sides instead of calling it a conflict.
+# Copy this line into the repository's .gitattributes (adjust the root if it is not _polaris/).
+_polaris/team/*/sessions/*.md merge=union

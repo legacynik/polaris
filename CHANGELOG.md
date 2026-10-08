@@ -5,6 +5,22 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
+- **`/update` toglie dal cruscotto ciò che il tracker ha già chiuso** (`update` 3.3.2 → **3.4.0**,
+  `end` 1.23.0 → **1.23.1**). Un panel che fa checkpoint e non arriva a `/end` lasciava il cockpit falso:
+  una PR mergiata ancora sotto `## Open`, una issue chiusa ancora seconda nelle priorità (polaris-os#538).
+  Nuovo `checkpoint.sh reconcile`, passo 4b della skill: esegue lo stesso verificatore di `/end`
+  (`prune_threads`, `merge_truth`) e il nuovo `state_priorities.py prune`. Una lane o una priorità esce
+  solo se OGNI numero che cita è provato chiuso da tracker e checkout; una risposta illeggibile non toglie
+  nulla e il comando esce sempre 0. Il timbro delle priorità resta al giorno in cui `/end` le ha ordinate.
+  Il lavoro abbandonato (`DEAD`) resta a `/end` (`prune_threads --proven-only`): su un cockpit vero due
+  lane così portavano ancora un avviso vivo nel testo. Il tracker è interrogato una volta per finestra
+  (180 minuti, `POLARIS_RECONCILE_EVERY`) per tutto il repo: misurati 109 secondi per 13 lane.
+  Supera la regola del 2026-07-14 «`/update` non chiude nulla» solo per ciò che è provato: chiudere a
+  giudizio resta di `/end`. Prova: `polaris/tests/test_update_reconcile.py`.
+- **I log di sessione di due rami non vanno più in conflitto.** `prepare` stampa `LOG_MERGE=` e, quando
+  manca, la riga da mettere in `.gitattributes` (`merge=union`); il modello è in
+  `start/templates/repo-contract/gitattributes`. Il file del repo ospite non viene mai scritto dallo script.
+
 - **`/update` legge e timbra solo gli appunti della propria sessione** (`update` 3.3.1 → **3.3.2**).
   Con più panel sullo stesso repo `checkpoint.sh` prendeva il file scratch più recente del login: il
   checkpoint riportava il testo di un altro panel e spostava il timbro nel suo file (polaris-os#536,
