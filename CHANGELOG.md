@@ -5,6 +5,14 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
+- **`/update` legge e timbra solo gli appunti della propria sessione** (`update` 3.3.1 → **3.3.2**).
+  Con più panel sullo stesso repo `checkpoint.sh` prendeva il file scratch più recente del login: il
+  checkpoint riportava il testo di un altro panel e spostava il timbro nel suo file (polaris-os#536,
+  ricorrenza di #89). Ora il file è quello che porta l'id della sessione (`POLARIS_SID`, che la skill
+  passa da `${CLAUDE_SESSION_ID}`); senza id vale l'unico file toccato oggi, e con più candidati non si
+  legge e non si timbra nulla. Tolto il tetto di 40 righe: in un file tutto della sessione tagliava le
+  righe più recenti, che il timbro dava poi per lette. Prova: `polaris/tests/test_update_scratch_session.py`.
+
 - **`/end` chiude anche il lavoro abbandonato** (`end` 1.22.1 → **1.23.0**, `update` 3.3.0 → **3.3.1**,
   pacchetto → **0.30.0**). Misurato su un repo prodotto: 38 fili sotto `## Open`, 15 morti, zero chiusi.
   Nuovo verdetto `DEAD` (PR chiusa senza merge, issue chiusa come not planned): la lane esce e il log

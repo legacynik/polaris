@@ -217,43 +217,43 @@ class DurableArchiveGate(unittest.TestCase):
         self.assertEqual(saved.returncode, 0, saved.stdout)
 
 
-class TheHarvestIsCapped(unittest.TestCase):
-    """#89 — a shared scratch is mostly other panels' flow; own lines are never lost."""
+class TheHarvestReadsOnlyThisSession(unittest.TestCase):
+    """#89, on the layout the stop hook writes today: ONE FILE PER SESSION.
 
-    def scratch(self, repo, mix: tuple) -> Path:
-        own, foreign = mix
+    These cases used to build a single `flow.md` where every panel's lines sat together, each
+    tagged with its session id, and proved a cap on the foreign ones. No hook writes that file any
+    more: the lines carry no id, and the other panels' flow is in other files. The cases passed
+    while the script read and stamped another session's file (polaris-os#536); they now state the
+    same promise on the real layout. Selection by session lives in `test_update_scratch_session`.
+    """
+
+    def scratch(self, repo, sid: str, rows: int) -> Path:
         path = repo / "_polaris" / "team" / LOGIN / "sessions" / "scratch"
         path.mkdir(parents=True, exist_ok=True)
-        f = path / "flow.md"
-        rows = [f"[sid-other-{i}] flusso di un altro pannello" for i in range(foreign)]
-        for i in range(own):
-            rows.insert(min(len(rows), (i + 1) * (foreign // max(own, 1))),
-                        f"[sid-mine] mia riga {i}")
-        f.write_text("\n".join(rows) + "\n")
+        f = path / f"{today()}-{sid}.md"
+        f.write_text("\n".join(f"riga {i} di {sid}" for i in range(rows)) + "\n")
         return f
 
-    def test_an_eighty_percent_foreign_scratch_reads_under_the_cap(self):
+    def test_a_first_harvest_reads_none_of_another_panels_flow(self):
         repo = host_repo()
-        self.scratch(repo, (30, 120))
-        out = checkpoint(repo, "harvest-slice", "sid-mine")
+        self.scratch(repo, "aaaa1111-000", 30)
+        self.scratch(repo, "bbbb2222-999", 120)
+        out = checkpoint(repo, "harvest-slice", "aaaa1111-000")
         self.assertEqual(out.returncode, 0, out.stderr)
         lines = [ln for ln in out.stdout.splitlines() if ln.strip()]
-        self.assertLessEqual(len(lines), 40, f"read {len(lines)} lines of a 150-line scratch")
-        self.assertEqual(sum(1 for ln in lines if "sid-mine" in ln), 30, "0 own-id loss")
+        self.assertEqual(len(lines), 30, f"read {len(lines)} lines; this session wrote 30")
+        self.assertFalse([ln for ln in lines if "bbbb2222-999" in ln], "foreign flow was read")
 
-    def test_an_own_line_last_in_a_foreign_scratch_is_still_harvested(self):
+    def test_a_second_harvest_reads_only_what_came_after_the_watermark(self):
         repo = host_repo()
-        path = repo / "_polaris" / "team" / LOGIN / "sessions" / "scratch"
-        path.mkdir(parents=True, exist_ok=True)
-        (path / "flow.md").write_text("\n".join(["[sid-other] x"] * 199 + ["[sid-mine] ultima"]))
-        out = checkpoint(repo, "harvest-slice", "sid-mine")
-        self.assertEqual(out.stdout.count("ultima"), 1, "the cap must not be positional")
-
-    def test_a_single_panel_scratch_is_read_whole(self):
-        repo = host_repo()
-        self.scratch(repo, (30, 0))
-        out = checkpoint(repo, "harvest-slice", "sid-mine")
-        self.assertEqual(len([ln for ln in out.stdout.splitlines() if ln.strip()]), 30)
+        mine = self.scratch(repo, "aaaa1111-000", 30)
+        env = {**env_for(repo), "POLARIS_SID": "aaaa1111-000"}
+        run_script("update", "checkpoint.sh", "harvest-done", cwd=str(repo), env=env)
+        with mine.open("a") as f:
+            f.write("riga nuova dopo il timbro\n")
+        out = checkpoint(repo, "harvest-slice", "aaaa1111-000")
+        self.assertEqual([ln for ln in out.stdout.splitlines() if ln.strip()],
+                         ["riga nuova dopo il timbro"])
 
 
 class ThePlanTickIsRestored(unittest.TestCase):

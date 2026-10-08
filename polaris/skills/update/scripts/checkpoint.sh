@@ -36,7 +36,36 @@ resolve() {
   HANDOFF="$ROOT/team/$LOGIN/handoff/$(date +%F).md"
   cockpit
   WEEKLY="$ROOT/team/$LOGIN/weeks/$(date +%G-W%V).md"
-  SCRATCH="$(ls -t "$MAIN_ROOT/team/$LOGIN/sessions/scratch/"*.md "$MAIN_ROOT/sessions/scratch/$LOGIN/"*.md 2>/dev/null | head -1)"
+  scratch_for "${POLARIS_SID:-}"
+}
+
+# THIS session's scratch, never the login's newest. The stop hook writes one file per session,
+# `<date>-<sid12>.md`; "newest" is another panel's file whenever that panel wrote last, and the
+# watermark then moved in a file this session does not own (polaris-os#536). With an id: the file
+# named for it, or nothing. Without one: the only file touched today, or nothing — never a guess.
+# SCRATCH_CANDIDATES carries what was left unchosen, so the caller can say it.
+scratch_for() {
+  local sid="${1:0:12}" today f name; today="$(date +%F)"
+  SCRATCH=""; SCRATCH_CANDIDATES=()
+  for f in "$MAIN_ROOT/team/$LOGIN/sessions/scratch/"*.md "$MAIN_ROOT/sessions/scratch/$LOGIN/"*.md; do
+    [ -f "$f" ] || continue
+    name="$(basename "$f" .md)"
+    if [ -n "$sid" ] && [ "${name:11}" = "$sid" ]; then
+      [ -z "$SCRATCH" ] || [ "$f" -nt "$SCRATCH" ] && SCRATCH="$f"
+    elif [ "$(date -r "$f" +%F 2>/dev/null)" = "$today" ]; then
+      SCRATCH_CANDIDATES+=("$f")
+    fi
+  done
+  [ -n "$SCRATCH" ] && { SCRATCH_CANDIDATES=(); return 0; }
+  [ -z "$sid" ] && [ ${#SCRATCH_CANDIDATES[@]} -eq 1 ] && SCRATCH="${SCRATCH_CANDIDATES[0]}"
+  return 0
+}
+
+# One line, said once, when no scratch could be chosen and there was something to choose from.
+scratch_unchosen() {
+  [ -z "${SCRATCH:-}" ] && [ ${#SCRATCH_CANDIDATES[@]} -gt 0 ] || return 1
+  local f names=""; for f in "${SCRATCH_CANDIDATES[@]}"; do names="$names $(basename "$f")"; done
+  echo "checkpoint: no scratch chosen — pass this session's id (POLARIS_SID=<id>); today's files:$names"
 }
 
 # THE cockpit of this repo — one per repo, never one per worktree. The #212 resolver owns
@@ -169,24 +198,20 @@ cmd_open_prs() {
   return 0
 }
 
-# The first harvest of the day used to read the scratch from offset 0. On a multi-panel machine
-# that file is SHARED: measured 146 lines read, almost all of them another panel's flow
-# (polaris-os#89). The cap is on the FOREIGN prefix, never on position: every line carrying this
-# session's id is emitted wherever it sits, and the head is trimmed to fit what is left of the cap.
-# A cap applied by position would drop exactly the own-id line that arrived last.
+# The delta since the last watermark, whole. The file is this session's own (see scratch_for), so
+# there is no foreign flow left to cap: the cap of polaris-os#89 guarded a file every panel shared,
+# and applied to a per-session file it dropped the NEWEST lines, which harvest-done then marked read.
 cmd_harvest_slice() {
+  [ -n "${1:-}" ] && POLARIS_SID="$1"
   resolve
-  local sid="${1:-${POLARIS_SID:-}}" from cap
+  scratch_unchosen && return 0
   [ -n "${SCRATCH:-}" ] && [ -f "$SCRATCH" ] || { echo "checkpoint: no scratch, nothing to read"; return 0; }
-  from="$(harvest_from)"; cap="${HARVEST_CAP:-40}"
-  awk -v from="$from" -v sid="$sid" -v cap="$cap" '
-    NR > from { line[++n] = $0; if (sid != "" && index($0, sid)) { own[n] = 1; o++ } }
-    END { head = cap - o; if (head < 0) head = 0
-          for (i = 1; i <= n; i++) if (own[i] || i <= head) print line[i] }' "$SCRATCH"
+  awk -v from="$(harvest_from)" 'NR > from' "$SCRATCH"
 }
 
 cmd_harvest_done() {
   resolve
+  scratch_unchosen && return 0
   [ -n "${SCRATCH:-}" ] && [ -f "$SCRATCH" ] || { echo "checkpoint: no scratch, nothing to mark"; return 0; }
   printf '\n<!-- harvested: %s -->\n' "$(date '+%F %H:%M')" >> "$SCRATCH"
   echo "checkpoint: watermark moved in $SCRATCH"
