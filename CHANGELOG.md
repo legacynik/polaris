@@ -13,7 +13,10 @@ All notable changes to Polaris Team OS. The installed version is pinned in
   legge e non si timbra nulla. Tolto il tetto di 40 righe: in un file tutto della sessione tagliava le
   righe più recenti, che il timbro dava poi per lette. Una sessione che attraversa la mezzanotte ha due
   file: si leggono e si timbrano tutti, dal più vecchio, e `verify` fallisce finché uno ha righe non lette.
-  Il timbro è riconosciuto solo a inizio riga; una nota lasciata nella cartella non è un candidato.
+  Il timbro è riconosciuto solo a inizio riga. Conta come scratch solo il nome che scrive l'hook
+  (`<data>-<12 caratteri dell'id>`): una nota datata lasciata nella cartella non è un candidato. Senza id
+  vale l'unica sessione che ha scritto oggi, con tutti i suoi file. Nessun fork per file: 1,1-1,5 secondi
+  per comando misurati su una cartella vera di 186 file.
   Prova: `polaris/tests/test_update_scratch_session.py`.
 
 - **`/end` chiude anche il lavoro abbandonato** (`end` 1.22.1 → **1.23.0**, `update` 3.3.0 → **3.3.1**,

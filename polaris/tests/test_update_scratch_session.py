@@ -182,10 +182,59 @@ class ASessionCanOwnSeveralFiles(unittest.TestCase):
         self.assertEqual(checkpoint(repo, "harvest-slice", MINE).stdout.strip(), "")
 
     def test_the_older_file_touched_last_does_not_hide_todays(self):
+        """Order and "newest" come from the file NAME: an old file touched later is still old."""
         repo = host_repo()
-        old, _ = self.spanning(repo)
+        old, new = self.spanning(repo)
         at_noon(old, seconds=30)
-        self.assertIn("DAY2 line", checkpoint(repo, "harvest-slice", MINE).stdout)
+        out = checkpoint(repo, "harvest-slice", MINE).stdout
+        self.assertLess(out.index("DAY1 TAIL"), out.index("DAY2 line"))
+        self.assertIn(f"SCRATCH={new}", checkpoint(repo, "prepare", sid=MINE).stdout)
+
+    def test_the_skills_own_form_reads_the_id_from_the_environment(self):
+        """The skill body calls `POLARIS_SID=… checkpoint.sh harvest-slice`, with no argument."""
+        repo = host_repo()
+        two_panels(repo)
+        out = checkpoint(repo, "harvest-slice", sid=MINE).stdout
+        self.assertIn("MINE own line", out)
+        self.assertNotIn("OTHER", out)
+
+    def test_after_done_verify_has_no_harvest_complaint(self):
+        repo = host_repo()
+        self.spanning(repo)
+        checkpoint(repo, "harvest-done", sid=MINE)
+        out = checkpoint(repo, "verify", sid=MINE)
+        self.assertNotIn("scratch not harvested", out.stdout + out.stderr)
+
+    def test_todays_stamp_in_an_older_file_does_not_cover_the_newest(self):
+        repo = host_repo()
+        old, new = self.spanning(repo)
+        old.write_text(old.read_text() + f"<!-- harvested: {date.today().isoformat()} 09:00 -->\n")
+        out = checkpoint(repo, "verify", sid=MINE)
+        self.assertIn("scratch not harvested today", out.stdout + out.stderr)
+
+    def test_blank_lines_after_a_watermark_are_not_lines_owed(self):
+        """CRLF, spaces and tabs after the stamp are not content: nothing to read, nothing to fail."""
+        repo = host_repo()
+        old, new = self.spanning(repo)
+        checkpoint(repo, "harvest-done", sid=MINE)
+        with old.open("a", newline="") as f:
+            f.write("\r\n   \n\t\n")
+        self.assertEqual(checkpoint(repo, "harvest-slice", MINE).stdout.strip(), "")
+        self.assertNotIn("scratch not harvested", checkpoint(repo, "verify", sid=MINE).stdout)
+
+    def test_without_an_id_the_only_session_of_today_brings_its_older_file(self):
+        repo = host_repo()
+        self.spanning(repo)
+        out = checkpoint(repo, "harvest-slice").stdout
+        self.assertIn("DAY1 TAIL unharvested", out)
+        self.assertIn("DAY2 line", out)
+
+    def test_prepare_points_at_the_line_after_the_newest_files_stamp(self):
+        repo = host_repo()
+        _, new = self.spanning(repo)
+        checkpoint(repo, "harvest-done", sid=MINE)
+        lines = len(new.read_text().splitlines())
+        self.assertIn(f"HARVEST_FROM_LINE={lines}", checkpoint(repo, "prepare", sid=MINE).stdout)
 
     def test_the_legacy_lane_is_part_of_the_session(self):
         repo = host_repo()
@@ -222,6 +271,47 @@ class OnlyTheHooksFilesCount(unittest.TestCase):
         self.assertIn("MINE own line", checkpoint(repo, "harvest-slice").stdout)
         checkpoint(repo, "harvest-done")
         self.assertEqual((marks(only), marks(note)), (1, 0))
+
+    def test_a_dated_note_is_not_a_hook_file(self):
+        """Real lanes hold `2026-09-30-distill-proposal-1.md`: a date prefix does not make a scratch.
+        The hook writes `<date>-<first 12 characters of a session uuid>.md`, nothing else."""
+        repo = host_repo()
+        note = lane(repo) / f"{date.today().isoformat()}-distill-proposal-1.md"
+        note.write_text("- NOTE not a session\n")
+        at_noon(note)
+        self.assertNotIn("NOTE", checkpoint(repo, "harvest-slice").stdout)
+        checkpoint(repo, "harvest-done")
+        self.assertEqual(marks(note), 0)
+        only = scratch(repo, MINE, "MINE own line")
+        self.assertIn("MINE own line", checkpoint(repo, "harvest-slice").stdout, "the note blocked the one real file")
+        self.assertEqual(marks(only), 0)
+
+    def test_a_binary_byte_in_the_file_does_not_silence_the_slice(self):
+        """grep answers «Binary file matches» instead of a line number unless told to read text."""
+        repo = host_repo()
+        mine = scratch(repo, MINE, "has nul \x00 byte")
+        checkpoint(repo, "harvest-done", sid=MINE)
+        with mine.open("a") as f:
+            f.write("- LATE line after stamp\n")
+        self.assertIn("LATE line after stamp", checkpoint(repo, "harvest-slice", MINE).stdout)
+
+    def test_prepare_names_the_candidates_it_could_not_choose_between(self):
+        repo = host_repo()
+        mine, other = two_panels(repo)
+        out = checkpoint(repo, "prepare").stdout
+        self.assertIn(mine.name, out)
+        self.assertIn(other.name, out)
+
+    def test_a_lane_of_three_hundred_files_still_answers_fast(self):
+        import time as clock
+        repo = host_repo()
+        for i in range(300):
+            (lane(repo) / f"2026-01-01-{i:08x}-abc.md").write_text("x\n")
+        scratch(repo, MINE, "MINE own line")
+        start = clock.monotonic()
+        out = checkpoint(repo, "harvest-slice", MINE)
+        self.assertIn("MINE own line", out.stdout)
+        self.assertLess(clock.monotonic() - start, 1.5, "one fork per file in the lane")
 
     def test_a_name_that_only_ends_like_the_id_is_not_the_sessions_file(self):
         repo = host_repo()

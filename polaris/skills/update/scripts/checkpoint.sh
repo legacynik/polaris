@@ -40,24 +40,49 @@ resolve() {
 }
 
 # THIS session's scratch, never the login's newest (polaris-os#536). The stop hook writes
-# `<date>-<sid12>.md`, one file per session PER DAY and per lane: a session alive across midnight
-# owns two, and the legacy lane can hold a third. So the scratch is a LIST, oldest first, and every
-# reader walks all of it. With an id: the files named for it, or nothing. Without one: the only
-# hook file touched today, or nothing — never a guess. A note someone left in the lane
-# (`DISTILL-….md`) is not a hook file and is never a candidate.
+# `<date>-<sid12>.md`, sid12 being the first twelve characters of the session uuid, one file per
+# session PER DAY and per lane: a session alive across midnight owns two, and the legacy lane can
+# hold a third. So the scratch is a LIST, oldest first, and every reader walks all of it.
+# With an id: the files named for it, or nothing. Without one: the files of the only session that
+# wrote today, or nothing — never a guess. Anything else in the lane is a note someone left
+# (`2026-09-30-distill-proposal-1.md`), not a hook file, and is never read, stamped or offered.
 scratch_for() {
-  local sid="${1:0:12}" today f name; today="$(date +%F)"
+  local sid="${1:0:12}" f name
   SCRATCH=""; SCRATCH_SID="$sid"; SCRATCH_FILES=(); SCRATCH_CANDIDATES=()
+  [ -n "$sid" ] || sid="$(scratch_today | cut -c12-23 | sort -u | awk 'NR == 1 { one = $0 } END { if (NR == 1) print one }')"
+  [ -n "$sid" ] && while IFS= read -r f; do
+    name="${f##*/}"; [ "${name:11:12}" = "$sid" ] && SCRATCH_FILES+=("$f")
+  done < <(scratch_hook_files)
+  if [ ${#SCRATCH_FILES[@]} -eq 0 ]; then
+    while IFS= read -r f; do [ -n "$f" ] && SCRATCH_CANDIDATES+=("$f"); done < <(scratch_today paths)
+    return 0
+  fi
+  scratch_sort
+}
+
+# Every hook-named file of both lanes, one path per line. Pure shell: a lane holds hundreds of
+# files and this runs on every command, so nothing here may fork per file.
+scratch_hook_files() {
+  local f name
   for f in "$MAIN_ROOT/team/$LOGIN/sessions/scratch/"*.md "$MAIN_ROOT/sessions/scratch/$LOGIN/"*.md; do
-    [ -f "$f" ] || continue
-    name="$(basename "$f" .md)"
-    [[ "$name" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}-.+$ ]] || continue
-    if [ -n "$sid" ] && [ "${name:11}" = "$sid" ]; then SCRATCH_FILES+=("$f")
-    elif [ "$(date -r "$f" +%F 2>/dev/null)" = "$today" ]; then SCRATCH_CANDIDATES+=("$f"); fi
+    name="${f##*/}"; name="${name%.md}"
+    [[ "$name" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9a-f]{8}-[0-9a-f]{3}$ ]] && [ -f "$f" ] && printf '%s\n' "$f"
   done
-  [ -z "$sid" ] && [ ${#SCRATCH_CANDIDATES[@]} -eq 1 ] && SCRATCH_FILES=("${SCRATCH_CANDIDATES[0]}")
-  [ ${#SCRATCH_FILES[@]} -gt 0 ] || return 0
-  SCRATCH_CANDIDATES=(); scratch_sort
+  return 0
+}
+
+# The hook files MODIFIED today: names by default, full paths with `paths`. The name's date can
+# be a day off the clock's (the hook stamps another zone), so only the last few days are stat-ed.
+scratch_today() {
+  local f name today floor; today="$(date +%F)"
+  floor="$(date -v-2d +%F 2>/dev/null || date -d '2 days ago' +%F)"
+  while IFS= read -r f; do
+    name="${f##*/}"
+    [[ "${name:0:10}" < "$floor" ]] && continue
+    [ "$(date -r "$f" +%F 2>/dev/null)" = "$today" ] || continue
+    if [ "${1:-}" = paths ]; then printf '%s\n' "$f"; else printf '%s\n' "$name"; fi
+  done < <(scratch_hook_files)
+  return 0
 }
 
 # Oldest first by FILE NAME (its date), not by mtime: the older file touched last is still older.
@@ -65,7 +90,7 @@ scratch_for() {
 scratch_sort() {
   local f sorted=()
   while IFS= read -r f; do sorted+=("${f#*$'\t'}"); done < <(
-    for f in "${SCRATCH_FILES[@]}"; do printf '%s\t%s\n' "$(basename "$f")" "$f"; done | sort)
+    for f in "${SCRATCH_FILES[@]}"; do printf '%s\t%s\n' "${f##*/}" "$f"; done | sort)
   SCRATCH_FILES=("${sorted[@]}"); SCRATCH="${sorted[${#sorted[@]}-1]}"
 }
 
@@ -74,13 +99,15 @@ scratch_unchosen() {
   [ ${#SCRATCH_FILES[@]} -eq 0 ] && [ ${#SCRATCH_CANDIDATES[@]} -gt 0 ] || return 1
   local f names="" why="pass this session's id (POLARIS_SID=<id>)"
   [ -n "${SCRATCH_SID:-}" ] && why="no file is named for session ${SCRATCH_SID}"
-  for f in "${SCRATCH_CANDIDATES[@]}"; do names="$names $(basename "$f")"; done
+  for f in "${SCRATCH_CANDIDATES[@]}"; do names="$names ${f##*/}"; done
   echo "checkpoint: no scratch chosen — $why; nothing read, nothing stamped; today's files:$names"
 }
 
-# A file still owes lines when something non-blank follows its last watermark.
+# A file still owes lines when something follows its last watermark that is not blank. A CRLF
+# blank line, spaces and tabs are not content: counting them made `verify` fail on nothing.
 scratch_pending() {
-  awk -v from="$(harvest_from "$1")" 'NR > from && NF { found = 1 } END { exit !found }' "$1" 2>/dev/null
+  awk -v from="$(harvest_from "$1")" '{ sub(/\r$/, "") } NR > from && NF { found = 1 } END { exit !found }' \
+    "$1" 2>/dev/null
 }
 
 # THE cockpit of this repo — one per repo, never one per worktree. The #212 resolver owns
@@ -99,7 +126,8 @@ harvest_from() {   # [file] — the newest of the session when none is named
   local f="${1:-${SCRATCH:-}}" mark
   [ -n "$f" ] && [ -f "$f" ] || { echo 0; return; }
   # Anchored: a line that QUOTES the marker in prose is content, not a watermark.
-  mark=$(grep -n '^<!-- harvested: ' "$f" 2>/dev/null | tail -1 | cut -d: -f1)
+  # -a: with a stray binary byte grep answers "Binary file matches", not a line number.
+  mark=$(grep -a -n '^<!-- harvested: ' "$f" 2>/dev/null | tail -1 | cut -d: -f1)
   echo "${mark:-0}"
 }
 
@@ -123,6 +151,7 @@ CURRENT=$CURRENT
 WEEKLY=$([ -f "$WEEKLY" ] && echo "$WEEKLY" || echo none)
 SCRATCH=${SCRATCH:-none}
 HARVEST_FROM_LINE=$(harvest_from)
+SCRATCH_NOTE=$(scratch_unchosen || echo none)
 EOF
   # Hygiene: report, never fix silently. A sweep that moves files without saying so
   # is how a "cleanup" eats someone else's handoff.
@@ -225,7 +254,9 @@ cmd_harvest_slice() {
   [ ${#SCRATCH_FILES[@]} -gt 0 ] || { echo "checkpoint: no scratch, nothing to read"; return 0; }
   local f
   for f in "${SCRATCH_FILES[@]}"; do
-    awk -v from="$(harvest_from "$f")" 'NR > from' "$f" 2>/dev/null || echo "checkpoint: cannot read $f"
+    [ -r "$f" ] || { echo "checkpoint: cannot read $f"; continue; }
+    scratch_pending "$f" || continue      # only blank lines after the stamp: nothing owed
+    awk -v from="$(harvest_from "$f")" 'NR > from' "$f"
   done
   return 0
 }
@@ -324,7 +355,7 @@ cmd_verify() {
   local f owed=0
   if [ ${#SCRATCH_FILES[@]} -gt 0 ]; then
     for f in "${SCRATCH_FILES[@]}"; do [ "$f" = "$SCRATCH" ] || ! scratch_pending "$f" || owed=1; done
-    grep -q "^<!-- harvested: $today" "$SCRATCH" && [ "$owed" -eq 0 ] \
+    grep -a -q "^<!-- harvested: $today" "$SCRATCH" && [ "$owed" -eq 0 ] \
       || { echo "FAIL: scratch not harvested today (run harvest-done)"; fail=1; }
   else
     scratch_unchosen | sed 's/^checkpoint:/WARN: harvest not checked —/' || true
