@@ -128,12 +128,12 @@ holds:
 
 - it is ONE top-level line with nothing hanging under it (no child bullet, no fenced command, no
   line of prose);
-- EVERY issue or PR it cites is this repository's and is proven done by the tracker AND by this
+- it names no other repository, URL or link, and EVERY issue or PR it cites is proven done by the tracker AND by this
   checkout — the verdict function is the one `/end` closes with;
 - that exact line is still there, still alone, when the write happens.
 
 The whole line and its verdict are appended to today's session log, so run it after step 2; with
-no entry in the log nothing is struck. One unreadable answer removes nothing, and the command
+no entry in the log nothing is struck. An unreadable answer never strikes its line, and the command
 always exits 0. Abandoned work (closed as not planned, a PR closed unmerged), an entry with
 anything under it, a number of another repository: all of it waits for `/end`. The order is never
 re-ordered or re-stamped; a plain `1..n` list is renumbered after a strike. The tracker is asked

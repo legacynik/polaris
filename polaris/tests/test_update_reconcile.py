@@ -182,6 +182,23 @@ class WhatIsNotProvenStays(unittest.TestCase):
         self.unchanged(["1. attendere altro-org/altro-repo#77", "2. vedi docs/guida.md#77"],
                        ["- `feat/x` (acme-api) — aspetta acme/billing#77"])
 
+    def test_every_way_of_writing_someone_elses_number_stays(self):
+        """Breaker, round 2: a deny-list of glued slugs let all of these through."""
+        for tail in ("aspetta acme/billing PR 77", "aspetta acme/billing #77", "aspetta `acme/billing`#77",
+                     "vedi [#77](https://github.com/acme/billing/issues/77)",
+                     "chiude #77, attende https://github.com/acme/acme-api/pull/78"):
+            with self.subTest(tail=tail):
+                self.unchanged([], [f"- `feat/x` (acme-api) — {tail}", A])
+
+    def test_a_colour_code_is_not_a_citation(self):
+        self.unchanged([], ["- `feat/x` (acme-api) — colore del bottone #77aa00", A])
+
+    def test_a_strike_under_open_leaves_the_numbers_of_the_order_alone(self):
+        repo, path, _, scenario = proven_repo(["01. scrivere la spec", "02. parlare con il cliente"], [B, A])
+        before = path.read_text()
+        reconcile(repo, scenario)
+        self.assertEqual(path.read_text(), before.replace(B + "\n", ""))
+
     def test_without_an_entry_in_todays_log_nothing_is_removed(self):
         for body in (None, "```\n## 10:00 — dentro un blocco\n```\n", "appunti senza voce\n"):
             repo, path, log, scenario = proven_repo([P77], [B])
@@ -245,6 +262,18 @@ class ACheckpointStaysCheap(unittest.TestCase):
         out = reconcile(repo, with_issue(scenario, "78", "OPEN")).stdout
         self.assertLessEqual(len(out.splitlines()), 4, out)
         self.assertIn("2 removed", out)
+
+    def test_what_was_struck_is_always_said_even_where_the_terminal_is_not_utf8(self):
+        """Breaker, round 2: the report crashed AFTER the write and the wrapper said «nothing removed»."""
+        repo, path, _, scenario = proven_repo([P77], [B])
+        os.environ["PYTHONIOENCODING"] = "ascii"
+        try:
+            out = reconcile(repo, scenario).stdout
+        finally:
+            del os.environ["PYTHONIOENCODING"]
+        self.assertNotIn("#77", path.read_text())
+        self.assertIn("2 removed", out)
+        self.assertEqual(out.count("REMOVED="), 2, out)
 
     def test_a_second_run_inside_the_window_asks_the_tracker_nothing(self):
         """Measured: 109 seconds for 13 lanes. Once per window is enough for every panel."""

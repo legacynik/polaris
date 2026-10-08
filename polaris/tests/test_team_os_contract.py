@@ -357,7 +357,7 @@ def test_update_removes_only_on_proof_and_end_alone_closes_by_judgment() -> None
 
     assert '"$CHECKPOINT" reconcile' in update
     assert "Never close a thread by judgment" in update
-    assert "One unreadable answer removes nothing" in update
+    assert "An unreadable answer never strikes its line" in update
     assert "the only step allowed to close a thread by judgment" in end
     assert "the only writer of the order" in end
 

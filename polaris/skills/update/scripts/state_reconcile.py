@@ -33,8 +33,12 @@ from state_sections import exact, heading  # noqa: E402
 
 OPEN, ORDER = "## Open", "## Active Priorities"
 SECTIONS = {OPEN: heading(OPEN), ORDER: exact(ORDER)}
-# `#7` glued to a word, a path or a repository slug is an anchor or someone else's number.
-NOT_OURS = re.compile(r"[\w/.)-]#\d")
+# An ALLOW-list, after a deny-list of glued slugs let `org/repo PR 7`, `org/repo #7` and a markdown
+# link through: past the lane's own id, a line that names any slug, URL or link is not ours to
+# prove, and every `#` in it must be a bare number (`#77aa00` is a colour).
+LEAD = re.compile(r"^(?:[-*+]|\d+[.)])\s+`[^`]*`")
+FOREIGN = re.compile(r"[\w.-]+/[\w.-]+|://|\]\(")
+BARE = re.compile(r"(?<![\w/.)\]`-])#\d+\b(?![\w-])")
 NUMBERED = re.compile(r"^(\d+)([.)]\s+)")
 
 # One tracker call per number per run: a lane and the priority that cites it ask the same thing.
@@ -62,8 +66,13 @@ def _lone(lines: list[str], name: str) -> list[int]:
 
 def candidates(lines: list[str]) -> list[tuple[str, str]]:
     """(section, line) for every lone entry that cites numbers, all of them this repository's."""
-    return [(name, lines[i]) for name in SECTIONS for i in _lone(lines, name)
-            if merge_truth.cites(lines[i]) and not NOT_OURS.search(lines[i])]
+    out = []
+    for name, i in ((name, i) for name in SECTIONS for i in _lone(lines, name)):
+        rest = LEAD.sub("", lines[i], count=1)
+        ours = not FOREIGN.search(rest) and len(BARE.findall(rest)) == rest.count("#")
+        if ours and merge_truth.cites(lines[i]):
+            out.append((name, lines[i]))
+    return out
 
 
 def _numbered(raw: list[str]) -> tuple[list[int], bool]:
@@ -100,7 +109,8 @@ def apply(path: Path, proven: list[tuple[str, str, str]], log: Path | None = Non
         removed = [p for p in proven if _strike(raw, p[0], p[1])]
         if not removed:
             return []
-        for n, i in enumerate(_numbered(raw)[0] if was_plain else [], 1):
+        renumber = was_plain and any(p[0] == ORDER for p in removed)
+        for n, i in enumerate(_numbered(raw)[0] if renumber else [], 1):
             raw[i] = NUMBERED.sub(lambda m, n=n: f"{n}{m.group(2)}", raw[i], count=1)
         if log:
             _record(log, removed)      # first: a failed append must leave the cockpit untouched
@@ -135,13 +145,18 @@ def _say(seen: list[tuple], removed: list[tuple]) -> None:
 
 def main(argv: list[str]) -> int:
     path, log = Path(argv[1]), Path(argv[2])
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")   # the report must outlive the locale
     if not log_ready(log):
         print("checkpoint: reconcile — nothing removed: today's log has no entry to carry the verdicts")
         return 3
     found = candidates(_clean(path.read_bytes().decode("utf-8").split("\n")))
     default = merge_truth.default_branch()
     seen = [(name, line, *merge_truth.verdict(line, default)) for name, line in found]
-    removed = apply(path, [(n, ln, why) for n, ln, kind, why in seen if kind == "PROVEN"], log)
+    try:
+        removed = apply(path, [(n, ln, why) for n, ln, kind, why in seen if kind == "PROVEN"], log)
+    except OSError as exc:      # the log refused the verdicts, or the cockpit refused the write
+        print(f"checkpoint: reconcile — nothing removed: {type(exc).__name__} on {Path(exc.filename or '').name}")
+        return 3
     _say(seen, removed)
     return 3 if seen and all(s[2] == "BLOCKED" for s in seen) else 0
 

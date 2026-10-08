@@ -288,7 +288,7 @@ cmd_reconcile() {
   case "$code" in
     0) printf '%s\n' "$out"; touch "$RECONCILE_STAMP" ;;
     3) printf '%s\n' "$out" ;;
-    *) echo "checkpoint: reconcile — nothing removed (fail-closed: $(printf '%s' "$out" | tail -1 | cut -c1-120))" ;;
+    *) echo "checkpoint: reconcile stopped early ($(printf '%s' "$out" | tail -1 | cut -c1-120)) — anything struck is in today's log as «Reconciled out of»" ;;
   esac
   return 0
 }
