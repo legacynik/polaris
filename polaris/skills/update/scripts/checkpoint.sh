@@ -6,7 +6,7 @@
 #
 #   prepare       resolve root/login/branch/paths, print them, run the hygiene sweep
 #   harvest-done  move the scratch watermark forward
-#   reconcile     remove from the cockpit what the tracker has already closed (proven-only)
+#   reconcile     strike from the cockpit the single lines the tracker has proven done
 #   open-prs      list this author's open PRs and which ones carry their reason (never refuses)
 #   commit [path] land the session log (delegates to session_commit.sh)
 #   verify        fail loudly if a step was skipped
@@ -272,54 +272,38 @@ log_merge() {
   if [ "$(git -C "$HERE_WT" check-attr merge -- "$rel" 2>/dev/null | sed 's/.*: //')" = union ]; then
     echo union
   else
-    echo "missing — add to .gitattributes: ${rel%/team/*}/team/*/sessions/*.md merge=union"
+    echo "missing — add to .gitattributes: ${rel%team/"$LOGIN"/sessions/*}team/*/sessions/*.md merge=union"
   fi
 }
 
-# The cockpit stops saying open what the tracker says closed (polaris-os#538). Nothing is decided
-# here: `prune_threads --proven-only` and `state_priorities prune` ask the tracker AND this
-# checkout, one unreadable answer removes nothing, and abandoned work (DEAD) waits for `/end`.
-# Always exit 0: a checkpoint must not die because the tracker is down.
+# The cockpit stops saying open what the tracker has proven done (polaris-os#538). Nothing is
+# decided here: `state_reconcile.py` strikes single lines whose every citation is PROVEN, and
+# only if they are unchanged when it writes. Abandoned work, entries with children, unreadable
+# answers: all wait for `/end`. Always exit 0 — a checkpoint must not die because the tracker is down.
 cmd_reconcile() {
   resolve
-  local pt="$HERE/../../end/scripts/prune_threads.py" todos args out code
-  [ -f "$pt" ] || { echo "checkpoint: no pruner in this install, nothing removed"; return 0; }
-  grep -q "^## " "$SESSION_LOG" 2>/dev/null \
-    || { echo "checkpoint: nothing removed — append today's entry first, the verdicts land in it"; return 0; }
+  local out code
   reconcile_due || return 0
-  args=("$CURRENT" --owner "$LOGIN" --now "$(date +%F)" --log "$SESSION_LOG" --apply --proven-only)
-  todos="$(dirname "$CURRENT")/todos.md"; [ -f "$todos" ] && args+=(--todos "$todos")
-  out="$(cd "$HERE_WT" && python3 "$pt" "${args[@]}" 2>&1)"; code=$?
-  reconcile_say "$out" "$code"
-  out="$(cd "$HERE_WT" && python3 "$HERE/state_priorities.py" prune "$CURRENT" 2>&1)" \
-    || { echo "checkpoint: nothing removed from ## Active Priorities (fail-closed)"; return 0; }
-  printf '%s\n' "$out" | grep '^DROPPED=' | cut -c1-160
-  [ "$code" -eq 0 ] && : > "$RECONCILE_STAMP"
+  out="$(cd "$HERE_WT" && python3 "$HERE/state_reconcile.py" "$CURRENT" "$SESSION_LOG" 2>&1)"; code=$?
+  case "$code" in
+    0) printf '%s\n' "$out"; touch "$RECONCILE_STAMP" ;;
+    3) printf '%s\n' "$out" ;;
+    *) echo "checkpoint: reconcile — nothing removed (fail-closed: $(printf '%s' "$out" | tail -1 | cut -c1-120))" ;;
+  esac
   return 0
 }
 
 # Once per window for the whole repo, whichever panel asks: measured 109 seconds for 13 lanes on
-# a real cockpit, and every panel checkpoints many times a day. Only a run that got its answers
-# opens the window; a blocked one is retried at the next checkpoint.
+# a real cockpit, and every panel checkpoints many times a day. Only a run that learned something
+# opens the window; a stamp from the future (a clock that jumped) silences nothing.
 reconcile_due() {
   local every="${POLARIS_RECONCILE_EVERY:-180}" age
   RECONCILE_STAMP="$(cd "$HERE_WT" && cd "$(git rev-parse --git-common-dir)" && pwd)/polaris-reconcile"
   [ "$every" -gt 0 ] 2>/dev/null && [ -f "$RECONCILE_STAMP" ] || return 0
   age=$(( ( $(date +%s) - $(date -r "$RECONCILE_STAMP" +%s) ) / 60 ))
-  [ "$age" -lt "$every" ] || return 0
+  [ "$age" -ge 0 ] && [ "$age" -lt "$every" ] || return 0
   echo "checkpoint: reconcile skipped — done ${age} min ago (window ${every} min, POLARIS_RECONCILE_EVERY=0 forces)"
   return 1
-}
-
-# What a checkpoint needs to read: what left, and one count. The lanes that stay are not news.
-reconcile_say() {   # <pruner output> <its exit code>
-  local removed kept dead
-  [ "$2" -eq 0 ] || { printf '%s\n' "$1" | grep '^BLOCKED=' | cut -c1-160
-    echo "checkpoint: nothing removed from ## Open (fail-closed)"; return 0; }
-  removed=$(printf '%s\n' "$1" | grep -c '^{"closed"'); kept=$(printf '%s\n' "$1" | grep -cE '^(OPEN|AMBIGUOUS)=')
-  dead=$(printf '%s\n' "$1" | grep -c '^DEAD=')
-  printf '%s\n' "$1" | grep '^PROVEN=' | cut -c1-160
-  echo "checkpoint: ## Open — ${removed} removed, ${kept} still open, ${dead} abandoned left for /end"
 }
 
 # The newest file is always stamped ("move the watermark, always"); an older one only while it
@@ -555,7 +539,7 @@ case "${1:-}" in
   prepare)      cmd_prepare ;;
   harvest-slice) shift; cmd_harvest_slice "${1:-}" ;;
   harvest-done) cmd_harvest_done ;;
-  reconcile)    cmd_reconcile ;;
+  reconcile)    ( cmd_reconcile ) || echo "checkpoint: reconcile unavailable here — nothing removed"; exit 0 ;;
   open-prs)     cmd_open_prs ;;
   commit)       shift; cmd_commit "$@" ;;
   due-done)     shift; cmd_due_done "${1:-}" ;;

@@ -5,18 +5,22 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
-- **`/update` toglie dal cruscotto ciò che il tracker ha già chiuso** (`update` 3.3.2 → **3.4.0**,
-  `end` 1.23.0 → **1.23.1**). Un panel che fa checkpoint e non arriva a `/end` lasciava il cockpit falso:
-  una PR mergiata ancora sotto `## Open`, una issue chiusa ancora seconda nelle priorità (polaris-os#538).
-  Nuovo `checkpoint.sh reconcile`, passo 4b della skill: esegue lo stesso verificatore di `/end`
-  (`prune_threads`, `merge_truth`) e il nuovo `state_priorities.py prune`. Una lane o una priorità esce
-  solo se OGNI numero che cita è provato chiuso da tracker e checkout; una risposta illeggibile non toglie
-  nulla e il comando esce sempre 0. Il timbro delle priorità resta al giorno in cui `/end` le ha ordinate.
-  Il lavoro abbandonato (`DEAD`) resta a `/end` (`prune_threads --proven-only`): su un cockpit vero due
-  lane così portavano ancora un avviso vivo nel testo. Il tracker è interrogato una volta per finestra
-  (180 minuti, `POLARIS_RECONCILE_EVERY`) per tutto il repo: misurati 109 secondi per 13 lane.
+- **`/update` toglie dal cruscotto ciò che il tracker prova fatto** (`update` 3.3.2 → **3.4.0**,
+  `end` 1.23.0 → **1.23.1**, solo testo). Un panel che fa checkpoint e non arriva a `/end` lasciava il
+  cockpit falso: una PR mergiata ancora sotto `## Open`, una issue chiusa ancora seconda nelle priorità
+  (polaris-os#538). Nuovo `checkpoint.sh reconcile`, passo 4b della skill, con uno script suo
+  (`state_reconcile.py`) più stretto di `/end`: toglie una riga da `## Open` o `## Active Priorities` solo
+  se è una riga sola senza nulla appeso sotto, se OGNI numero che cita è di questo repo ed è `PROVEN` per
+  `merge_truth.verdict` (la funzione di `/end`), e se quella riga identica è ancora lì al momento della
+  scrittura, sotto lock. Ogni altro byte del file resta identico; un elenco `1..n` viene rinumerato, il
+  timbro delle priorità non si tocca, `todos.md` non si tocca. La riga intera e il verdetto vanno nel log
+  di sessione prima della scrittura: senza una voce nel log, o con il log non scrivibile, non esce nulla.
+  Lavoro abbandonato (`DEAD`), voci con figli, numeri di altri repo (`org/repo#7`), ancore (`guida.md#7`),
+  risposte illeggibili: restano a `/end`. Il comando esce sempre 0. Il tracker è interrogato una volta per
+  finestra per tutto il repo (180 minuti, `POLARIS_RECONCILE_EVERY`): misurati 109 secondi per 13 lane;
+  la finestra non si apre se nessuna risposta era leggibile. Gli script di `/end` non cambiano.
   Supera la regola del 2026-07-14 «`/update` non chiude nulla» solo per ciò che è provato: chiudere a
-  giudizio resta di `/end`. Prova: `polaris/tests/test_update_reconcile.py`.
+  giudizio resta di `/end`. Prova: `polaris/tests/test_update_reconcile.py` (31 casi).
 - **I log di sessione di due rami non vanno più in conflitto.** `prepare` stampa `LOG_MERGE=` e, quando
   manca, la riga da mettere in `.gitattributes` (`merge=union`); il modello è in
   `start/templates/repo-contract/gitattributes`. Il file del repo ospite non viene mai scritto dallo script.

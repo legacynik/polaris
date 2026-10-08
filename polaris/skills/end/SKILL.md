@@ -465,8 +465,8 @@ not here.
 
 ## Step 4b — Reconcile `## Active Priorities` (the only writer of the order)
 
-`/update` drops an item whose every citation is proven closed (`state_priorities.py prune`); it never
-adds, rewords or re-orders one, and it leaves the stamp alone. The order is still written here.
+`/update` strikes a single-line item whose every citation is proven done (`state_reconcile.py`); it
+never adds, rewords or re-orders one, and it leaves the stamp alone. The order is still written here.
 
 The cockpit is the one view the founder reads, and `/start` reads only it — so the order of the
 work lives here and **this step is its only writer**. Every `/end`, after Step 4, rebuild the

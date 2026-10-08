@@ -115,7 +115,7 @@ It rewrites the one matching key or adds one new key, and maintains one `Updated
 other lanes byte-identical. Never close a thread by judgment or write `## Recent Context` here;
 `/end` owns those. If nothing material changed, do not write at all.
 
-### 4b. Remove what the tracker already closed
+### 4b. Strike what the tracker has proven done
 
 ```bash
 "$CHECKPOINT" reconcile
@@ -123,14 +123,28 @@ other lanes byte-identical. Never close a thread by judgment or write `## Recent
 
 A panel that checkpoints and never reaches `/end` used to leave the cockpit false: a lane whose
 pull request merged yesterday still under `## Open`, an issue already closed still second in
-`## Active Priorities`. `reconcile` runs the prover `/end` closes with. A lane or a priority
-leaves only when EVERY issue or PR it cites is proven done by the tracker and by this checkout;
-the verdict is appended to today's session log, so run it after step 2. One unreadable answer
-removes nothing, and the command always exits 0. Abandoned work (closed as not planned, a PR
-closed unmerged) is a judgment and waits for `/end`. The tracker is asked once per window for
-the whole repo (three hours by default), so most checkpoints print one line and cost nothing.
+`## Active Priorities`. `reconcile` strikes a line from those two sections only when all of this
+holds:
 
-You decide nothing here and you do not help it: a line that cites no number, or that states a
+- it is ONE top-level line with nothing hanging under it (no child bullet, no fenced command, no
+  line of prose);
+- EVERY issue or PR it cites is this repository's and is proven done by the tracker AND by this
+  checkout — the verdict function is the one `/end` closes with;
+- that exact line is still there, still alone, when the write happens.
+
+The whole line and its verdict are appended to today's session log, so run it after step 2; with
+no entry in the log nothing is struck. One unreadable answer removes nothing, and the command
+always exits 0. Abandoned work (closed as not planned, a PR closed unmerged), an entry with
+anything under it, a number of another repository: all of it waits for `/end`. The order is never
+re-ordered or re-stamped; a plain `1..n` list is renumbered after a strike. The tracker is asked
+once per window for the whole repo (three hours by default), so most checkpoints print one line.
+
+Read every `REMOVED=` line it prints. The numbers are done, but the prose may still carry live
+work — measured on a real cockpit: the one lane struck held a handoff to another panel. Whatever
+is still alive goes into `Key context` of the entry you just wrote, and into your own lane if it
+is yours. Nothing is lost either way: the whole line sits in today's log.
+
+You decide nothing else here and you do not help it: a line that cites no number, or that states a
 fact no tracker holds (a version in production, a deploy to decide), stays until `/end`. If such a
 line is false and you can prove it, say so in `Key context` and flag the line; do not delete it.
 
@@ -156,7 +170,7 @@ POLARIS_SID="${CLAUDE_SESSION_ID}" "$CHECKPOINT" verify "<title of the entry jus
 ```
 
 Before `commit`, append any archive, plan, or todo file this checkpoint changed to
-`CHECKPOINT_PATHS` — `state/todos.md` too when `reconcile` moved a row to `## Completed`; never include a merely dirty path owned by another panel. `verify` fails if
+`CHECKPOINT_PATHS`; never include a merely dirty path owned by another panel. `verify` fails if
 the log or a pointed-to archive is not committed, the cockpit is stale/stacked, or scratch was
 not harvested. If this repo requires a remote push for lessons, follow its branch/PR policy and
 report local-only until pushed. A foreign or unknown dirty path blocks: assign it, never stash
