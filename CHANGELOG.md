@@ -5,6 +5,13 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
+- **`pr` and `retro` join the Polaris skill catalog** (each 1.0.0, package **0.31.0**).
+  Upstream: `mattpocock/skills@49dd158d` (MIT); `pr` writes a GH-visible Summary,
+  before/after Evidence and Merge Danger; `retro` is explicitly invoked and proposes
+  improvements to the agent environment. The same skill directories are linked into
+  Claude Code, Codex and Hermes on this workstation. `pr` credits Humanlayer's
+  `show-me` visual patterns.
+
 - **`/end` chiude anche il lavoro abbandonato** (`end` 1.22.1 → **1.23.0**, `update` 3.3.0 → **3.3.1**,
   pacchetto → **0.30.0**). Misurato su un repo prodotto: 38 fili sotto `## Open`, 15 morti, zero chiusi.
   Nuovo verdetto `DEAD` (PR chiusa senza merge, issue chiusa come not planned): la lane esce e il log

@@ -17,6 +17,8 @@ of this repository: read the relevant SKILL.md below and follow it exactly.
 | report | [polaris/skills/report/SKILL.md](polaris/skills/report/SKILL.md) | Weekly report — planned versus actual, evidence from the tracker |
 | polaris-memory | [polaris/skills/polaris-memory/SKILL.md](polaris/skills/polaris-memory/SKILL.md) | Search/record team memory via the `polmem` CLI — recall-first before building; recall ≠ current state |
 | pol-apex-curate | [polaris/skills/pol-apex-curate/SKILL.md](polaris/skills/pol-apex-curate/SKILL.md) | Curate a repo's `CLAUDE.md` apex — distill lessons/decisions into a ≤200-line, propose-only patch |
+| pr | [polaris/skills/pr/SKILL.md](polaris/skills/pr/SKILL.md) | Write a GitHub PR body with the smallest visual, before/after evidence and merge danger |
+| retro | [polaris/skills/retro/SKILL.md](polaris/skills/retro/SKILL.md) | On request, inspect a session and propose evidence-backed improvements to the agent environment |
 
 ## Notes for non-Claude agents
 
