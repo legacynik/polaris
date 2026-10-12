@@ -5,6 +5,13 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
+- **Six skill paths resolve without the Claude Code plugin** (`plan-week` 1.4.0 → **1.4.1**,
+  `pol-apex-curate` 1.1.0 → **1.1.1**, `polaris-status` 1.3.0 → **1.3.1**, `report` 1.3.0 → **1.3.1**,
+  `start` 1.13.0 → **1.13.1**, package → **0.31.1**). They named a bare `$CLAUDE_PLUGIN_ROOT/skills/...`,
+  which is empty when the skills are installed with `npx skills` into `~/.agents/skills`, so the
+  template copies, the apex gate and the wiki quality check pointed at `/skills/...`. They now use
+  `${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}`, the chain every other call site already had.
+
 - **`pr` and `retro` join the Polaris skill catalog** (each 1.0.0, package **0.31.0**).
   Upstream: `mattpocock/skills@49dd158d` (MIT); `pr` writes a GH-visible Summary,
   before/after Evidence and Merge Danger; `retro` is explicitly invoked and proposes
