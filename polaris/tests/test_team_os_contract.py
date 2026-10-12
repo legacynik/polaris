@@ -1,25 +1,29 @@
-"""Release contract for the small, repository-first Polaris Team OS surface."""
+"""Package contract — what a machine reads from the shipped tree.
+
+No test here asserts a sentence of a SKILL.md body. A sentence can be rewritten while the
+behaviour stays, and can stay while the behaviour breaks: a substring tests neither. This file
+was red on main for weeks for exactly that reason, and a real breach hid behind the noise.
+
+- A rule a script enforces is tested by running the script, or the shipped block that calls it:
+  test_update_gates, test_end_*, test_merge_truth, test_commit_*, test_report_week,
+  test_start_identity, test_end_journal_wiring.
+- A rule that lives only in prose is judged by review and by the evals under `polaris/evals`.
+- What stays here is structure: the manifest, frontmatter, links, templates, size budgets, and
+  denylists that walk the tree. A denylist survives any rewording and fails only when the banned
+  thing comes back.
+"""
 
 import json
 import re
 from pathlib import Path
 
+import yaml
+
 
 ROOT = Path(__file__).resolve().parents[1]
+REPO = ROOT.parent
 SKILLS = ROOT / "skills"
 TEMPLATES = ROOT / "skills" / "start" / "templates" / "repo-contract"
-
-
-def test_marketplace_exposes_the_same_skills_to_agent_skills_cli() -> None:
-    marketplace = json.loads((ROOT.parent / ".claude-plugin" / "marketplace.json").read_text())
-    plugin = marketplace["plugins"][0]
-    declared = {Path(path).name for path in plugin["skills"]}
-    shipped = {path.name for path in SKILLS.iterdir() if path.is_dir()}
-    assert plugin["source"] == "./polaris"
-    assert declared == shipped
-    for relative in plugin["skills"]:
-        assert (ROOT / relative.removeprefix("./") / "SKILL.md").is_file()
-
 
 SESSION_COMMANDS = {
     "start",
@@ -29,7 +33,7 @@ SESSION_COMMANDS = {
     "end",
     "plan-week",
     "report",
-    "pol-apex-curate",  # founder-only OS curation, shipped with a portable ($CLAUDE_PLUGIN_ROOT) apex tool
+    "pol-apex-curate",
     "polaris-memory",
 }
 # A Polaris door marks itself in its own description, and the door set is READ from the
@@ -39,72 +43,55 @@ SESSION_COMMANDS = {
 DOOR_MARKER = "◇ "
 
 
-def description_of(skill: Path) -> str:
-    raw = (skill / "SKILL.md").read_text()
-    front = raw.split("\n---\n", 1)[0] if raw.startswith("---\n") else ""
-    found = re.search(r"(?m)^description:\s*(.*)$", front)
-    return found.group(1) if found else ""
+def body(skill: str) -> str:
+    return (SKILLS / skill / "SKILL.md").read_text()
+
+
+def frontmatter(skill_md: Path) -> dict:
+    raw = skill_md.read_text()
+    assert raw.startswith("---\n"), f"{skill_md}: no frontmatter"
+    return yaml.safe_load(raw.split("\n---\n", 1)[0].removeprefix("---\n"))
+
+
+def shipped() -> set[str]:
+    return {path.name for path in SKILLS.iterdir() if path.is_dir()}
 
 
 def shipped_doors() -> set[str]:
-    return {path.name for path in SKILLS.iterdir()
-            if path.is_dir() and description_of(path).startswith(DOOR_MARKER)}
+    return {name for name in shipped()
+            if str(frontmatter(SKILLS / name / "SKILL.md").get("description", "")).startswith(DOOR_MARKER)}
+
+
+def test_marketplace_exposes_the_same_skills_to_agent_skills_cli() -> None:
+    marketplace = json.loads((REPO / ".claude-plugin" / "marketplace.json").read_text())
+    plugin = marketplace["plugins"][0]
+    declared = {Path(path).name for path in plugin["skills"]}
+    assert plugin["source"] == "./polaris"
+    assert declared == shipped()
+    for relative in plugin["skills"]:
+        assert (ROOT / relative.removeprefix("./") / "SKILL.md").is_file()
 
 
 def test_only_the_team_commands_and_the_marked_doors_are_shipped() -> None:
-    shipped = {path.name for path in SKILLS.iterdir() if path.is_dir()}
     doors = shipped_doors()
     assert doors, "no Polaris door in the package: the sync never ran"
-    assert shipped == SESSION_COMMANDS | doors
+    assert shipped() == SESSION_COMMANDS | doors
 
 
-def test_start_and_status_have_non_overlapping_cost_contracts() -> None:
-    start = (SKILLS / "start" / "SKILL.md").read_text()
-    status = (SKILLS / "polaris-status" / "SKILL.md").read_text()
-
-    for expensive in ("git fetch", "git log origin/main", "gh pr list", "polmem health"):
-        assert expensive not in start
-        assert expensive in status
-    assert "Do not use for \"start\", \"resume\", \"continue\"" in status
-    assert "Never hardcode a personal filesystem path" in status
-    assert "`/start` restores the current outcome" in status
-
-
-def test_polaris_grill_is_repo_grounded_and_handoff_only() -> None:
-    grill = (SKILLS / "polaris-grill" / "SKILL.md").read_text()
-    flat = " ".join(grill.split())
-
-    for required in (
-        "polmem recall",
-        "_polaris/decisions.md",
-        "_polaris/lessons.md",
-        "_polaris/state/current.md",
-        "Context7",
-        "database-schema",
-        "Database and backend discovery",
-        "Auto-answer before asking",
-        "one question at a time",
-        "Evidence",
-        "Inference",
-        "Unknown",
-        "canonical spec path",
-        "single context window",
-        "fresh context",
-    ):
-        assert required in grill
-
-    assert "Memory is context, never proof of current state" in flat
-    assert "Do not implement" in flat
-    assert "does not create issues, branches, pull requests or assignments" in flat
-    assert "Never send proprietary code" in flat
-    assert "never run DDL, DML, migrations, or type generation" in flat
-    assert "user-invocable: true" in grill
+def test_every_skill_frontmatter_loads_the_way_an_installer_reads_it() -> None:
+    # The skills CLI and the agent hosts parse this block as strict YAML and skip, without an
+    # error anyone sees, a skill whose block does not load (polaris-os#545: five skills, one
+    # unquoted `: ` each). The limits are the Agent Skills ones the hosts warn on.
+    for name in sorted(shipped()):
+        meta = frontmatter(SKILLS / name / "SKILL.md")
+        assert meta["name"] == name, f"{name}: frontmatter name is {meta['name']!r}"
+        assert isinstance(meta["description"], str) and meta["description"].strip(), name
+        assert len(meta["description"]) <= 1024, f"{name}: description is {len(meta['description'])} chars"
+        assert meta["user-invocable"] is True, name
 
 
 def test_polaris_grill_ships_a_reviewed_skillopt_benchmark() -> None:
-    benchmark = json.loads(
-        (ROOT / "evals" / "polaris-grill-skillopt.tasks.json").read_text()
-    )
+    benchmark = json.loads((ROOT / "evals" / "polaris-grill-skillopt.tasks.json").read_text())
 
     assert benchmark["format"] == "skillopt_sleep.tasks.v1"
     assert benchmark["target_skill_path"] == "polaris/skills/polaris-grill/SKILL.md"
@@ -114,368 +101,75 @@ def test_polaris_grill_ships_a_reviewed_skillopt_benchmark() -> None:
     assert all(task["origin"] == "real" for task in benchmark["tasks"])
 
 
-def test_every_command_is_repo_first_and_not_founder_vault_based() -> None:
-    for skill in SKILLS.glob("*/SKILL.md"):
-        text = skill.read_text()
-        assert "user-invocable: true" in text
-        assert "POLARIS_VAULT" not in text
-        assert "Desktop/All Vibe Proj" not in text
+def test_the_repo_contract_templates_a_host_repo_needs_are_shipped() -> None:
+    for name in ("config.yml", "profile.yml", "weekly-plan.md", "weekly-report.md",
+                 "state.gitignore", "README.md", "state/current.md", "state/todos.md",
+                 "state/goals.md"):
+        assert (TEMPLATES / name).is_file(), f"missing template {name}"
 
 
-def test_the_new_commands_have_one_shared_team_contract() -> None:
-    start = (SKILLS / "start" / "SKILL.md").read_text()
-    update = (SKILLS / "update" / "SKILL.md").read_text()
-    end = (SKILLS / "end" / "SKILL.md").read_text()
-    plan = (SKILLS / "plan-week" / "SKILL.md").read_text()
-    report = (SKILLS / "report" / "SKILL.md").read_text()
-
-    assert "`_polaris/`" in start
-    for lifecycle_skill in (start, update, end):
-        assert "state/current.md" in lifecycle_skill
-    # current.md semantics: RECONCILE — blind overwrite loses other panels' open
-    # items (the fear that bred checkpoint stacking); append breeds 83KB diaries.
-    for writer in (update, end):
-        assert "econcile" in writer
-        flat_writer = " ".join(writer.split())
-        # /update 3.0.0 (#32) states it as the positive rule: its own line is rewritten, the rest untouched.
-        assert ("never blind-overwrite" in writer or "exact semantics" in flat_writer
-                or "Leave other lanes byte-identical" in flat_writer)
-    assert "does not create issues, branches, pull requests or assignments" in " ".join(
-        plan.split()
-    )
-    assert "planned versus actual" in report
+def test_the_state_templates_carry_the_sections_the_state_scripts_look_for() -> None:
+    todos = (TEMPLATES / "state" / "todos.md").read_text()
+    for section in ("## Active", "## Completed", "## Follow-ups"):
+        assert section in todos
+    assert "## Recent Context" in (TEMPLATES / "state" / "current.md").read_text()
 
 
-def test_contract_root_is_single_underscore_polaris() -> None:
-    # The Polaris root is `_polaris/`, full stop — the dual-root (`polaris/` or
-    # `_polaris/`) resolver was a drift from the convention every product repo
-    # already uses, and "root chosen per-repo" is exactly how one repo ended up
-    # carrying both.
-    start = (SKILLS / "start" / "SKILL.md").read_text()
-    update = (SKILLS / "update" / "SKILL.md").read_text()
-    readme = (ROOT.parent / "README.md").read_text()
-    onboarding = (ROOT.parent / "docs" / "TEAM-ONBOARDING.md").read_text()
-
-    assert "_polaris/config.yml" in start
-    # Founder-vault case: a repo whose root IS _polaris resolves to its own root.
-    assert "root is itself named `_polaris`" in start
-    for text in (start, update, readme, onboarding):
-        flat = " ".join(text.split())
-        assert "`polaris/` or `_polaris/`" not in flat
-        assert "`polaris/` if" not in flat
+def test_agents_md_links_every_session_command_to_a_file_that_exists() -> None:
+    agents = (REPO / "AGENTS.md").read_text()
+    linked = set(re.findall(r"\]\((polaris/skills/([a-z0-9-]+)/SKILL\.md)\)", agents))
+    assert linked, "AGENTS.md links no skill"
+    for path, _name in linked:
+        assert (REPO / path).is_file(), f"AGENTS.md links a skill that is not shipped: {path}"
+    assert SESSION_COMMANDS <= {name for _path, name in linked}
 
 
-def test_start_provisions_own_path_from_the_real_github_login() -> None:
-    # A contributor's path is created on THEIR machine from THEIR GitHub login
-    # (`gh api user`) — never pre-created for someone else and never guessed:
-    # placeholder folders (team/jeanpierre) break every gh evidence query.
-    start = (SKILLS / "start" / "SKILL.md").read_text()
-    onboarding = (ROOT.parent / "docs" / "TEAM-ONBOARDING.md").read_text()
-
-    assert "gh api user --jq .login" in start
-    assert "Never create `team/<login>/` folders for other people" in start
-    assert "gh api user --jq .login" in onboarding
-    assert "Never create a `team/` folder for a teammate" in onboarding
-
-
-def test_plans_and_reports_are_authored_by_their_owner() -> None:
-    # Locked 2026-07-13: the contributor writes THEIR OWN plan (/plan-week runs
-    # on their machine, in their own team/<login>/weeks/); the CEO signs it but
-    # never writes it for them. Worked examples must not model placeholder
-    # logins (team/jeanpierre) — that is the exact pattern that shipped a broken
-    # contract into a product repo.
-    plan = (SKILLS / "plan-week" / "SKILL.md").read_text()
-    report = (SKILLS / "report" / "SKILL.md").read_text()
-
-    assert "Never write another contributor's plan" in " ".join(plan.split())
-    for text in (plan, report):
-        assert "team/jeanpierre" not in text
-        assert "team/somebody-else" not in text
-
-
-def test_start_is_a_bounded_local_resume_not_a_status_command() -> None:
-    # Locked 2026-07-16: /start resumes the current objective from the latest
-    # handoff. The expensive situational view belongs to explicit
-    # /polaris-status, never to every session start.
-    start = (SKILLS / "start" / "SKILL.md").read_text()
-    for forbidden in (
-        "git fetch",
-        "git log origin/main",
-        "git branch -vv",
-        "gh pr list",
-        "polmem health",
-        "polmem recall",
-        "10 most recent",
-        "team/*/weeks/",
-    ):
-        assert forbidden not in start, forbidden
-    assert "Do not scan `team/*/sessions/`" in start
-    assert "current outcome" in start
-    assert "handoff/checkpoint" in start
-    assert "Next action:" in start
-    assert "**RESUME**" in start
-    assert "Answer with the brief ONLY" in start
-    assert "NEVER inside a code fence" in start
-    assert "`language:`" in start
-    # Structural budget: the v0.8.1 start skill was 10,949 bytes / 1,667 words.
-    # Keep the resume contract small enough that future features cannot silently
-    # turn it back into a status dashboard. The word cap moved 900 -> 940 exactly
-    # once, for the declared signals step (polaris-os#243): one command whose output
-    # is self-describing, so the skill carries the routing and not the vocabulary.
-    # The BYTE cap did not move — a step that needs more prose than this fails here.
-    # 2026-10-12: it did fail, and nobody looked. Five merges between 09-18 and 09-23 (#36, #37,
-    # #39, #40, #42) took the skill from 6,579 to 11,677 bytes and 1,743 words with this test red
-    # on main. Both caps are re-based on that measured size so the guard bites again from here;
-    # bringing the skill back under 7,000 bytes / 940 words is tracked in polaris-os#546.
+def test_start_stays_inside_its_size_budget() -> None:
+    # /start runs at the top of every session: what it costs is paid every time. The v0.8.1 body
+    # was 10,949 bytes and had turned into a status dashboard; the cap was 7,000 bytes / 940 words.
+    # 2026-10-12: five merges between 09-18 and 09-23 (#36, #37, #39, #40, #42) took it to 11,677
+    # bytes and 1,743 words with this check red on main. Both caps are re-based on that measured
+    # size so the guard bites again from here; bringing the body back under 7,000 / 940 is
+    # tracked in polaris-os#546.
+    start = body("start")
     assert len(start.encode()) <= 12_000
     assert len(start.split()) <= 1_800
 
 
-def test_codex_review_findings_stay_fixed() -> None:
-    # 2026-07-13 external Codex review of v0.5.0..v0.6.1 — pin every fix:
-    start = (SKILLS / "start" / "SKILL.md").read_text()
-    end = (SKILLS / "end" / "SKILL.md").read_text()
-    report = (SKILLS / "report" / "SKILL.md").read_text()
-    onboarding = (ROOT.parent / "docs" / "TEAM-ONBOARDING.md").read_text()
-    agents = (ROOT.parent / "AGENTS.md").read_text()
-
-    # H1: a copied-but-unedited profile keeps github: octocat → wrong gh target.
-    assert 'grep -q "^github: $LOGIN$"' in start
-    # H2: non-Claude CLIs need the checkout shim, the installed launcher is Claude-only.
-    assert "polaris/bin/polmem" in agents
-    # H3: remember WRITES committed history — privacy rule is explicit.
-    assert "no secrets, credentials, customer data or personal information" in end
-    assert "**writes**" in onboarding
-    # M: gh list default is 30 — explicit limits; open PRs are "now", not "as of".
-    assert report.count("--limit 200") >= 3
-    assert "open at report time" in report
-    # M (SUPERSEDED 2026-07-15): "an unsigned plan is not a commitment baseline"
-    # assumed the signature model. With no signature, the contributor's own plan
-    # IS the baseline — that is what makes planned-vs-actual honest. What
-    # survives of the finding: a baseline overtaken by a real reprioritisation
-    # must not be reported as a miss. See test_no_signature_gate_anywhere_*.
-    assert "the contributor's own stated intent" in " ".join(report.split())
-    assert "not a miss" in report
-    # M: decisions/lessons carry the owner marker for deterministic attribution.
-    assert "(@<login>)" in end
+def test_start_runs_none_of_the_commands_that_belong_to_status() -> None:
+    # /start resumes from local files. Network calls, history scans and memory queries are what
+    # /polaris-status is for, and each one here was once in /start.
+    start = body("start")
+    for forbidden in ("git fetch", "git log origin/main", "git branch -vv", "gh pr list",
+                      "polmem", "10 most recent", "team/*/weeks/"):
+        assert forbidden not in start, forbidden
 
 
-def test_terra_review_findings_stay_fixed() -> None:
-    # 2026-07-13 second external review (gpt-5.6) — pin every fix:
-    start = (SKILLS / "start" / "SKILL.md").read_text()
-    end = (SKILLS / "end" / "SKILL.md").read_text()
-    report = (SKILLS / "report" / "SKILL.md").read_text()
-    onboarding = (ROOT.parent / "docs" / "TEAM-ONBOARDING.md").read_text()
-
-    # H1: the identity gate HARD-STOPS (|| echo continued happily) and covers
-    # pre-existing profiles, not only freshly created ones.
-    assert 'exit 1' in start
-    assert "runs in BOTH branches" in start
-    # H2 replacement: recurring starts resolve identity locally; gh is a one-time
-    # machine setup path, not a network call paid on every resume.
-    assert "git config --local --get polaris.login" in start
-    assert "git config --local polaris.login" in start
-    # H3: the handoff commit stages the journal line remember just wrote.
-    assert ".wiki/journal" in end
-    # M (REVERSED 2026-07-15): "an unsigned weekly file is never briefed as active
-    # work" was itself the defect — it is how /start told a contributor their own
-    # focus was not authorised work. The plan is theirs and is briefed as active;
-    # only a RED item waiting on a NAMED approver is briefed as blocked.
-    assert "brief it as active work" in start
-    assert "waiting on its **named** approver" in start
-    # M: commit evidence paginates past 100.
-    assert "--paginate" in report
-    # M: onboarding preflights gh install + auth.
-    assert "gh auth status" in onboarding and "gh auth login" in onboarding
-
-
-def test_current_md_converges_on_the_main_worktree_nothing_open_lost() -> None:
-    # The founder's actual workflow (2026-07-15): "lavoro con mille panel wt
-    # diversi ma devo fare poi handoff su main di current". current.md is
-    # gitignored, so it never travels with a branch — a panel that writes it in
-    # its own worktree writes a handoff nobody reads, because the next session
-    # opens the MAIN checkout. Measured on one live repo: three worktrees, three
-    # orphaned copies (80KB @ 12 Jul, 66KB @ 8 Jul, one absent) — each one a
-    # handoff its author never saw again. So resolve to the main worktree and let
-    # the panels converge there. v0.8.1's per-checkout isolation was the bug, not
-    # the safety; and size stays an OUTPUT of only-open-truth, never an eviction
-    # criterion.
-    update = (SKILLS / "update" / "SKILL.md").read_text()
-    end = (SKILLS / "end" / "SKILL.md").read_text()
-    flat = " ".join(update.split())
-
-    for writer in (update, end):
-        # Mechanical resolution — main worktree is the first entry of the list.
-        # The resolver moved out of the prose into the shipped scripts, where a model in a
-        # hurry cannot skip it; `checkpoint.sh`/`resume_paths.sh` carry the porcelain rule now.
-        assert "checkpoint.sh" in writer or "resume_paths.sh" in writer
-    # The rule is asserted where it runs: both resolvers take the first porcelain entry.
-    for resolver in (SKILLS / "update" / "scripts" / "checkpoint.sh",
-                     SKILLS / "start" / "scripts" / "resume_paths.sh"):
-        assert 'MAIN_WT="$(git worktree list --porcelain' in resolver.read_text()
-    assert "the MAIN worktree's cockpit, never this panel's" in flat
-    assert "write a cockpit inside a worktree" in flat
-
-    # The branch is the panel's identity: one panel, one worktree, one branch —
-    # which is also what makes /end's merge check possible without any panel
-    # having to know which others are alive.
-    # Reversed on purpose by /update 3.0.0 (#32): the lane is the work and survives a branch
-    # rename, so the key is the lane and the branch is carried on its line.
-    assert "The lane is the work, not the string" in flat
-    # The thread-line format the shipped body documents TODAY: the pair (branch, repo) plus the
-    # `since` stamp. The old `feat/123-short-name: <one concrete first step>` example predates
-    # both, and pinning it would keep the test green against a format nothing writes.
-    assert "- `<lane-key>` (<repo>) — branch `<branch>`; <state in one line> · since <first YYYY-MM-DD>" in update
-    assert "touch another panel's lane" in flat
-
-    assert "Never close a thread" in flat
-    assert "never a silent delete" in " ".join(end.split())
-    assert "I'll shorten the cockpit while I'm here" in flat
-    # The `stale?` flag /update used to set is gone since 3.0.0; /end names stale lanes itself (1.23.0).
-    assert "STALE=" in end
-    assert "Closing, pruning, or summarising from `/update`" in flat
-    assert "## Open" in update
-    # Orphans from before this rule are surfaced, never silently deleted.
-    assert "may be the only copy of a handoff" in flat
-
-
-def test_end_closes_a_thread_only_against_verified_merge() -> None:
-    # THE founder requirement (2026-07-15), and the one an inference-based rule
-    # gets wrong: with several panels on several worktrees, a branch parked for
-    # days while its owner works elsewhere is LIVE work. "No recent activity" and
-    # "no active branch" are not death certificates — merge status is, and it is
-    # mechanically checkable. An open PR is not a closed thread.
-    end = (SKILLS / "end" / "SKILL.md").read_text()
-    flat = " ".join(end.split())
-    assert "only when its work actually landed" in flat
-    assert "git worktree list" in end          # a worktree holding the branch = live
-    assert "git branch --merged origin/main" in end
-    assert "gh pr list --head" in end
-    assert "an open PR is not a closed thread" in flat
-    assert "parked, not dead" in flat
-    # /update stays powerless here regardless.
-    update = (SKILLS / "update" / "SKILL.md").read_text()
-    assert "Never close a thread or write `## Recent Context` here; `/end` owns those" in " ".join(update.split())
-
-
-def test_update_has_no_closing_authority_only_end_closes() -> None:
-    # Founder correction (2026-07-14, issue #24 follow-up): /update runs often,
-    # sometimes from several panels within the same hour — giving it authority
-    # to remove/close a ledger item is exactly the surface that let one panel's
-    # cleanup collide with another panel's live thread. Only the deliberate,
-    # one-shot /end may close an item; /update may only add, update its own
-    # entries, or flag one stale.
-    update = (SKILLS / "update" / "SKILL.md").read_text()
-    end = (SKILLS / "end" / "SKILL.md").read_text()
-    flat_update = " ".join(update.split())
-    flat_end = " ".join(end.split())
-
-    assert "Never close a thread or write `## Recent Context` here; `/end` owns those" in flat_update
-    assert "Closing, pruning, or summarising from `/update`" in flat_update
-    assert "`/end` closes, against git" in flat_update
-    assert "only Team OS command with closing authority" in flat_end
-
-
-def test_end_checks_repo_wiring_before_remember_not_the_binary() -> None:
-    # Found by a live eval, then reproduced by hand (2026-07-15): `polmem` is
-    # often installed GLOBALLY and wired to another repo. Run `remember` in a
-    # repo with no `.wiki/journal/` and it does not fail — it silently writes the
-    # handoff into that other vault, carrying this session's content out of this
-    # repository and breaking /end's own "never writes outside the current
-    # repository" guarantee. The old failure branches only covered "binary
-    # missing" and "announces not memory-wired"; neither catches the dangerous
-    # middle state, and `command -v polmem` passes right through it. So the
-    # wiring test must be the repo's directory, never the binary resolving.
-    end = (SKILLS / "end" / "SKILL.md").read_text()
-    flat = " ".join(end.split())
-    assert "test -d .wiki/journal" in end
-    assert "the binary resolving is not the test" in flat
-    assert "silently lands in **someone else's** journal" in flat
-    # The remember call must come AFTER the wiring check, or the check is theatre.
-    assert end.index("test -d .wiki/journal") < end.index("polmem remember")
-
-
-def test_end_feeds_the_repo_journal() -> None:
-    # /end FEEDS one machine-readable line into the repo journal. Recall is
-    # explicit/on-demand; it is deliberately not coupled to /start anymore.
-    end = (SKILLS / "end" / "SKILL.md").read_text()
-    assert "polmem remember" in end
-    assert "not memory-wired" in end  # same failure branch as /start
-
-
-def test_no_signature_gate_anywhere_work_is_owner_led() -> None:
-    # Founder correction (2026-07-15): the signature model is REVERSED, not
-    # tuned. v0.8.0's `auto_authorized: secondary` was a patch on a broken
-    # default — "blocked until the CEO signs" — and the default was the bug.
-    # The repo's own charter says it plainly: green work is self-merged by its
-    # owner after the applicable gates, amber proceeds on a recorded decision
-    # ("silence is not a block"), and the lead "is not the default technical
-    # gate" — their review of the weekly focus is PRIORITY ALIGNMENT, "not a
-    # technical approval gate". A plugin that ships the opposite trains
-    # contributors to ask permission for reversible work and makes the founder
-    # the bottleneck for the whole team at once.
-    texts = {
-        "plan-week": (SKILLS / "plan-week" / "SKILL.md").read_text(),
-        "start": (SKILLS / "start" / "SKILL.md").read_text(),
-        "report": (SKILLS / "report" / "SKILL.md").read_text(),
-        "end": (SKILLS / "end" / "SKILL.md").read_text(),
-        "config.yml": (TEMPLATES / "config.yml").read_text(),
-        "profile.yml": (TEMPLATES / "profile.yml").read_text(),
-        "weekly-plan.md": (TEMPLATES / "weekly-plan.md").read_text(),
-        "README.md": (TEMPLATES / "README.md").read_text(),
-    }
-    for name, text in texts.items():
-        for banned in ("ceo_signature", "execution_authorized", "auto_authorized",
-                       "auto-authorized", "unapproved proposal"):
-            assert banned not in text, f"{banned} still gates work in {name}"
-
-    plan = texts["plan-week"]
-    flat_plan = " ".join(plan.split())
-    # The plan states truth, not a permission state.
-    assert "lead_review: pending" in plan
-    assert "priority alignment, never a gate" in plan
-    assert "silence is not a block" in flat_plan
-    # The gate survives exactly where being wrong is irreversible — and it names
-    # an approver rather than defaulting to the lead.
-    assert "red stop-lines" in flat_plan
-    assert "waits for its named approver" in flat_plan
-    for red in ("RLS", "personal-data", "processor/vendor", "irreversible data migration"):
-        assert red in plan, red
-    # The repo's own charter outranks the plugin: an audited repo may name
-    # approvers this list cannot know about (e.g. a signed SoD matrix).
-    assert "charter wins over this section" in flat_plan
-    assert "segregation-of-duties" in plan
-    # /start briefs the contributor's plan as their work, not as a pending request.
-    assert "brief it as active work, never as something\n   awaiting permission" in texts["start"]
-    assert "never blocks urgent or clearly-owned work" in " ".join(texts["start"].split())
+def test_no_skill_reads_a_personal_vault() -> None:
+    for skill in shipped():
+        for banned in ("POLARIS_VAULT", "Desktop/All Vibe Proj"):
+            assert banned not in body(skill), f"{skill}: {banned}"
 
 
 def test_no_permission_language_survives_anywhere_in_the_shipped_surface() -> None:
-    # The targeted assertions above check the places we KNEW about; this sweeps
-    # every shipped file, because a live grep found two the targeted tests
-    # missed — including /plan-week's `description:` frontmatter ("the CEO signs
-    # it"), which is the single string the model reads when deciding whether and
-    # how to run the skill. A gate deleted from the body but left in the
-    # description still ships the gate.
-    root = ROOT.parent
+    # A sweep, not a list of files: a live grep found the signature gate in /plan-week's
+    # `description:` after the body had been cleaned, and the description is the one string a
+    # model reads when deciding whether to run the skill.
     surface = [
         *SKILLS.glob("*/SKILL.md"),
         *TEMPLATES.glob("*"),
-        root / "README.md",
-        root / "AGENTS.md",
-        root / "docs" / "TEAM-ONBOARDING.md",
+        REPO / "README.md",
+        REPO / "AGENTS.md",
+        REPO / "docs" / "TEAM-ONBOARDING.md",
     ]
-    # "CEO" is banned as a bare word, not as a phrase: the first pass banned
-    # "CEO signs" and plan-week Step 1 sailed through saying "the CEO reviews
-    # and signs it". There is no CEO role in this contract — there is a repo
-    # owner, and (where the repo has one) a lead who sets priorities and red
-    # stop-lines. A title that grants authority by rank is how the gate grows
-    # back.
+    # "CEO" is banned as a bare word, not as a phrase: the first pass banned "CEO signs" and
+    # "the CEO reviews and signs it" sailed through. A title that grants authority by rank is
+    # how the gate grows back.
     banned = ("ceo_signature", "execution_authorized", "auto_authorized",
               "auto-authorized", "unapproved proposal", "CEO", "ceo",
               "signature gates", "until signed", "proposal until")
     offenders = [
-        f"{path.relative_to(root)}: {term}"
+        f"{path.relative_to(REPO)}: {term}"
         for path in surface if path.is_file()
         for term in banned
         if re.search(rf"(?<![A-Za-z]){re.escape(term)}(?![A-Za-z])", path.read_text())
@@ -483,219 +177,43 @@ def test_no_permission_language_survives_anywhere_in_the_shipped_surface() -> No
     assert not offenders, f"permission-gate language still ships: {offenders}"
 
 
-def test_capacity_is_a_planning_guide_not_a_quota() -> None:
-    # The live contract corrected this by hand before the plugin did — a real
-    # contributor profile carries `weekly_capacity: 3 # planning guide, not a
-    # quota`. A hard cap turns an honesty device into a lid on output.
-    plan = (SKILLS / "plan-week" / "SKILL.md").read_text()
-    flat = " ".join(plan.split())
-    assert "a planning guide, not a quota" in flat
-    assert "Capacity rule (hard)" not in plan
-    assert "not to cap output" in flat
-
-
-def test_lessons_are_part_of_the_contract() -> None:
-    # Product repos carry lessons.md next to decisions.md; /end proposes durable
-    # lessons the same gated way it proposes decisions.
-    end = (SKILLS / "end" / "SKILL.md").read_text()
-    readme = (ROOT.parent / "README.md").read_text()
-    assert "lessons.md" in end
-    assert "lessons.md" in readme
-
-
-def test_evidence_skills_pin_the_iso_week_filename_convention() -> None:
-    plan = (SKILLS / "plan-week" / "SKILL.md").read_text()
-    report = (SKILLS / "report" / "SKILL.md").read_text()
-    # plan-week writes weeks/YYYY-Www.md (ISO week). report writes reports/YYYY-MM-DD.md, the week's
-    # Sunday, since the Sunday-to-Saturday rule of 2026-07-28 — lock both, and the reason.
-    assert "weeks/YYYY-Www.md" in plan
-    assert "reports/YYYY-MM-DD.md" in report
-    assert "Dated, not `YYYY-Www`" in " ".join(report.split())
-
-
-def test_evidence_skills_ship_concrete_tracker_commands() -> None:
-    plan = (SKILLS / "plan-week" / "SKILL.md").read_text()
-    report = (SKILLS / "report" / "SKILL.md").read_text()
-    # plan-week must pull live issues; report must gather tracker evidence.
-    assert "gh issue list" in plan
-    assert "weekly_capacity" in plan
-    assert "gh pr list" in report
-    assert "gh issue list" in report
-    # The report is ground-truth-first: remote synced, commits resolved
-    # login->commits SERVER-SIDE (the REAL test proved an author-email pattern
-    # returns 0 on a real repo: squash commits carry the user's configured
-    # email, e.g. gmail, not the noreply form), session logs as the day-by-day
-    # backbone, decisions.md scanned in-range.
-    assert "git fetch --prune" in report
-    assert "commits?author=$LOGIN" in report
-    assert "@users.noreply.github.com" not in report
-    assert "team/<login>/sessions/" in report
-    assert "decisions.md" in report
-
-
-def test_report_is_a_real_report_not_just_a_diff_table() -> None:
-    # Locked 2026-07-13: "il report non deve essere solo planned/actual" — the
-    # real weekly reports (a product repo, W20–W27) carry a TL;DR, day-by-day evidence,
-    # merged-PR ground truth, metrics, and an explicit PM-action section. The
-    # skill and template pin that structure, and scale down honestly.
-    report = (SKILLS / "report" / "SKILL.md").read_text()
-    report_tpl = (TEMPLATES / "weekly-report.md").read_text()
-    for header in ("## TL;DR", "## Planned versus actual", "## Metrics",
-                   "## Bottleneck", "## PM action", "## Next week"):
-        assert header in report, f"missing {header} in skill"
-        assert header in report_tpl, f"missing {header} in template"
-    assert "never pad" in " ".join(report.split())
-    # The bottleneck hunt is a ritual, not a vibe: mandatory, with a removal proposal.
-    flat = " ".join(report.split())
-    assert "mandatory, never" in flat and "removal proposal" in flat
-
-
-def test_report_uses_login_evidence_not_local_git_identity() -> None:
-    # The off-by-one + wrong-identity defects from the live benchmark: the report
-    # must query the tracker by the contributor's GitHub login and must NOT fall
-    # back to git-author-by-local-email (resolves to the running machine, useless
-    # for a teammate report).
-    report = (SKILLS / "report" / "SKILL.md").read_text()
-    assert 'git config user.email' not in report or 'Never use' in report
-    assert 'author:$LOGIN' in report
-
-
-def test_report_pins_the_iso_week_computation() -> None:
-    # Week = ISO week of the reported period; the evidence window is derived from
-    # WEEK so filename and evidence cannot disagree (the W29-vs-W28 misfile).
-    report = (SKILLS / "report" / "SKILL.md").read_text()
-    # One Python block prints all four values, so filename, window and plan label cannot drift.
-    assert "read WEEK SINCE UNTIL PLANWEEK" in report
-    assert "isocalendar" in report
-
-
-def test_plan_week_ranks_severity_over_staleness_and_grounds_scope() -> None:
-    plan = (SKILLS / "plan-week" / "SKILL.md").read_text()
-    flat = " ".join(plan.split())
-    assert "[CRITICAL]" in plan  # severity signal in the title is a first-tier rank
-    assert "severity outranks age" in flat
-    # staleness must be introduced after the severity rule (final tiebreak only).
-    assert flat.index("severity outranks age") < flat.index("final tiebreak")
-    # scope grounding when preferred_areas is empty.
-    assert "preferred_areas` is empty" in plan
-    assert "CODEOWNERS" in plan
-
-
-def test_start_does_not_boot_or_query_memory() -> None:
-    start = (SKILLS / "start" / "SKILL.md").read_text()
-    assert "polmem" not in start
-    assert "recall is never mandatory" in start
-    assert "Memory is not\ncurrent state" in start
-
-
-def test_repo_contract_templates_exist_are_english_and_match_worked_examples() -> None:
-    for name in ("config.yml", "profile.yml", "weekly-plan.md", "weekly-report.md",
-                 "state.gitignore", "README.md"):
-        assert (TEMPLATES / name).is_file(), f"missing template {name}"
-
-    # The root README is the contract's front door: it must pin the single root,
-    # own-path provisioning, the OWNERSHIP boundary (2026-07-15: the signature
-    # gate it used to pin is gone — red stop-lines replace it) and privacy.
-    root_readme = (TEMPLATES / "README.md").read_text()
-    for required in (
-        "One root: `_polaris/`",
-        "Never create another contributor's path",
-        "Your plan does not wait for a signature",
-        "silence is not a block",
-        "named** approver",
-        "Privacy boundaries",
-    ):
-        assert required in root_readme
-
-    plan_tpl = (TEMPLATES / "weekly-plan.md").read_text()
-    report_tpl = (TEMPLATES / "weekly-report.md").read_text()
-
-    # English, reconciled to the skills' worked examples — no residual Italian headers.
-    for stale in ("Previsto vs consegnato", "Lavoro proposto", "Non iniziare", "Cosa abbiamo"):
-        assert stale not in plan_tpl and stale not in report_tpl
-
-    # Headers must match the skills' worked examples exactly.
-    plan_skill = (SKILLS / "plan-week" / "SKILL.md").read_text()
-    report_skill = (SKILLS / "report" / "SKILL.md").read_text()
-    for header in ("## Outcome", "## Not starting", "## Evidence"):
-        assert header in plan_tpl and header in plan_skill
-    for header in ("## TL;DR", "## Planned versus actual", "## PM action"):
-        assert header in report_tpl and header in report_skill
-
-    # Contributor schema is explicit about the exact GitHub login.
-    config_tpl = (TEMPLATES / "config.yml").read_text()
-    profile_tpl = (TEMPLATES / "profile.yml").read_text()
-    assert "exact GitHub login" in config_tpl
-    assert "exact GitHub login" in profile_tpl
-
-
-def test_sessions_are_per_contributor_not_shared() -> None:
-    # v0.4.4: session logs moved from the shared <root>/sessions/ to the per-contributor
-    # <root>/team/<login>/sessions/ — same isolation as weeks/ and reports/, so contributors
-    # never collide writing to the same directory.
-    start = (SKILLS / "start" / "SKILL.md").read_text()
-    update = (SKILLS / "update" / "SKILL.md").read_text()
-    end = (SKILLS / "end" / "SKILL.md").read_text()
-    for skill in (start, update, end):
-        assert "team/<login>/sessions/" in skill
-
-    # Collision discovery belongs to explicit status, not resume.
-    assert "Do not scan `team/*/sessions/`" in start
-
-    readme = (ROOT.parent / "README.md").read_text()
-    onboarding = (ROOT.parent / "docs" / "TEAM-ONBOARDING.md").read_text()
-    assert "sessions/            # per-day handoffs" in readme
-    assert "_polaris/team/<your-github-login>/sessions/" in onboarding
-    assert "Migrating from" in onboarding
-
-
-def test_agents_md_bridges_the_skills_to_non_claude_clis() -> None:
-    # Codex/other agent CLIs consume the skills from a repo checkout via
-    # AGENTS.md — it must link every shipped skill and explain the
-    # $CLAUDE_PLUGIN_ROOT substitution.
-    agents = (ROOT.parent / "AGENTS.md").read_text()
-    for name in (
-        "start",
-        "polaris-grill",
-        "polaris-status",
-        "update",
-        "end",
-        "plan-week",
-        "report",
-        "polaris-memory",
-        "pol-apex-curate",
-    ):
-        assert f"polaris/skills/{name}/SKILL.md" in agents
-    assert "$CLAUDE_PLUGIN_ROOT" in agents
-    assert "_polaris/" in agents
-
-
-def test_lifecycle_skills_verify_the_branch() -> None:
-    for name in ("start", "end"):
-        text = (SKILLS / name / "SKILL.md").read_text()
-        assert "git rev-parse --abbrev-ref HEAD" in text
-
-
-def test_onboarding_contains_a_real_tooling_preflight() -> None:
-    onboarding = (ROOT.parent / "docs" / "TEAM-ONBOARDING.md").read_text()
-
-    for required in (
-        "superpowers@claude-plugins-official",
-        "context7@claude-plugins-official",
-        "claude plugin list",
-        "claude mcp list",
-        "codebase-memory-mcp",
-    ):
-        assert required in onboarding
+def test_retired_conventions_do_not_come_back() -> None:
+    docs = {
+        "README.md": (REPO / "README.md").read_text(),
+        "docs/TEAM-ONBOARDING.md": (REPO / "docs" / "TEAM-ONBOARDING.md").read_text(),
+        "weekly-plan.md": (TEMPLATES / "weekly-plan.md").read_text(),
+        "weekly-report.md": (TEMPLATES / "weekly-report.md").read_text(),
+        **{name: body(name) for name in ("start", "update", "plan-week", "report")},
+    }
+    retired = {
+        # A second contract root: one repo ended up carrying both `polaris/` and `_polaris/`.
+        "`polaris/` or `_polaris/`": ("start", "update", "README.md", "docs/TEAM-ONBOARDING.md"),
+        "`polaris/` if": ("start", "update", "README.md", "docs/TEAM-ONBOARDING.md"),
+        # Worked examples with a placeholder login shipped a broken contract into a product repo.
+        "team/jeanpierre": ("plan-week", "report"),
+        "team/somebody-else": ("plan-week", "report"),
+        # Capacity as a hard cap turned an honesty device into a lid on output.
+        "Capacity rule (hard)": ("plan-week",),
+        # Commits looked up by the noreply e-mail return nothing for squash merges.
+        "@users.noreply.github.com": ("report",),
+        # The templates are English; these are the headers the Italian drafts carried.
+        "Previsto vs consegnato": ("weekly-plan.md", "weekly-report.md"),
+        "Lavoro proposto": ("weekly-plan.md", "weekly-report.md"),
+        "Non iniziare": ("weekly-plan.md", "weekly-report.md"),
+        "Cosa abbiamo": ("weekly-plan.md", "weekly-report.md"),
+    }
+    offenders = [f"{where}: {term}" for term, places in retired.items() for where in places
+                 if term in " ".join(docs[where].split())]
+    assert not offenders, f"a retired convention is back: {offenders}"
 
 
 def test_the_shipped_tree_carries_no_machine_path_and_no_real_login() -> None:
     """polaris#5 — the public package never leaves the private perimeter.
 
     A walk, not a list of files to check: a guard that names seven files has a hole the size of the
-    eighth. What IS a list, deliberately, is the exemption — three paths, each named with its
-    reason, so an exemption cannot be granted by accident the way a `# perimeter-guard` comment
-    anywhere in the tree could.
+    eighth. What IS a list, deliberately, is the exemption — each path named with its reason, so an
+    exemption cannot be granted by accident the way a `# perimeter-guard` comment anywhere in the
+    tree could.
     """
     allowed = {
         "polaris/bin/polaris-update": "the repository's own public slug, in its own installer",
@@ -706,7 +224,7 @@ def test_the_shipped_tree_carries_no_machine_path_and_no_real_login() -> None:
     needles = re.compile(r"/Users/|All Vibe|nichome|legacynik")
     offenders = []
     for path in ROOT.rglob("*"):
-        relative = path.relative_to(ROOT.parent).as_posix()
+        relative = path.relative_to(REPO).as_posix()
         if not path.is_file() or relative in allowed or "__pycache__" in relative:
             continue
         try:
@@ -716,12 +234,3 @@ def test_the_shipped_tree_carries_no_machine_path_and_no_real_login() -> None:
         offenders += [f"{relative}:{n}" for n, line in enumerate(text.splitlines(), 1)
                       if needles.search(line)]
     assert offenders == [], f"the package ships a private-perimeter string: {offenders}"
-
-
-def test_the_state_templates_a_host_repo_needs_are_shipped() -> None:
-    for name in ("current.md", "todos.md", "goals.md"):
-        assert (TEMPLATES / "state" / name).is_file(), f"no template for state/{name}"
-    todos = (TEMPLATES / "state" / "todos.md").read_text()
-    for section in ("## Active", "## Completed", "## Follow-ups"):
-        assert section in todos
-    assert "## Recent Context" in (TEMPLATES / "state" / "current.md").read_text()
