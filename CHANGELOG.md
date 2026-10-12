@@ -5,6 +5,17 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
+- **The contract test stops pinning sentences** (tests and CI only, no skill changed).
+  `test_team_os_contract.py` asserted 169 times, mostly that a phrase existed in a SKILL.md: it
+  went red when a skill was reworded and stayed green when a mechanism broke. It now asserts only
+  what a machine reads (manifest, frontmatter as strict YAML, links, templates, the `start` size
+  budget, denylists that walk the tree). Three blocks no test ran are now executed verbatim from
+  the skills: the `/report` week resolver (`test_report_week.py`), the `/start` provisioning and
+  identity gate (`test_start_identity.py`), the `/end` journal check (`test_end_journal_wiring.py`).
+  Every new test was proven by breaking its mechanism. A workflow runs the suite on every pull
+  request: until now a red test stopped no merge. Rules that live only in prose are no longer
+  "tested" by substring; they belong to review and to the evals under `polaris/evals`.
+
 - **The team contract test follows the skills again** (tests and `AGENTS.md` only, no skill changed).
   `test_team_os_contract.py` had been red on `main` since `update` 3.0.0 (#32) and the Sunday-dated
   report of 2026-07-28: its assertions pinned sentences those rewrites replaced. Each one now names
