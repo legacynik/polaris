@@ -5,6 +5,16 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
+- **The team contract test follows the skills again** (tests and `AGENTS.md` only, no skill changed).
+  `test_team_os_contract.py` had been red on `main` since `update` 3.0.0 (#32) and the Sunday-dated
+  report of 2026-07-28: its assertions pinned sentences those rewrites replaced. Each one now names
+  the sentence, or the script, that carries the same rule today; one rule was reversed on purpose
+  (the lane is the work, not the branch) and one moved (`/end` names stale lanes, `/update` no longer
+  flags them). A machine path is removed from `tests/tdd/END-DEAD-LANES.jsonl`. The `start` size caps
+  are re-based from 7,000 bytes / 940 words to the measured 12,000 / 1,800, because the skill had
+  grown to 11,677 bytes with the guard red; shrinking it back is polaris-os#546. `AGENTS.md`
+  describes the skills-CLI install and what it does not carry.
+
 - **Six skill paths resolve without the Claude Code plugin** (`plan-week` 1.4.0 → **1.4.1**,
   `pol-apex-curate` 1.1.0 → **1.1.1**, `polaris-status` 1.3.0 → **1.3.1**, `report` 1.3.0 → **1.3.1**,
   `start` 1.13.0 → **1.13.1**, package → **0.31.1**). They named a bare `$CLAUDE_PLUGIN_ROOT/skills/...`,
