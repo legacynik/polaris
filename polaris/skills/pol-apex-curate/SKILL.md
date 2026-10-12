@@ -2,7 +2,7 @@
 name: pol-apex-curate
 description: Curate a repo's CLAUDE.md (the always-loaded apex) — distill lessons/decisions into a ≤200-line PROPOSAL, route situational rules to .claude/rules/ with paths:, flag stale project.md/context.md. PROPOSE-ONLY — never writes CLAUDE.md; the apex write is the human's yes/no (G1). Use when polmem health shows apex-cap RED, when /start surfaces an apex alert, or on demand ("curate the apex", "CLAUDE.md è gonfio", "distilla le lezioni in CLAUDE.md").
 user-invocable: true
-version: 1.1.0
+version: 1.1.1
 ---
 
 # pol-apex-curate — apex curation (propose-only)
@@ -50,7 +50,7 @@ not just a flag.
 ## Self-check before presenting (deterministic, mandatory)
 Extract the proposed apex body (everything above the first `---` separator) to
 `/tmp/apex-body.md`, then run:
-`python3 "$CLAUDE_PLUGIN_ROOT/skills/pol-apex-curate/mcp/apex_gate_cli.py" --file /tmp/apex-body.md --against <repo>/CLAUDE.md`
+`python3 "${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/pol-apex-curate/mcp/apex_gate_cli.py" --file /tmp/apex-body.md --against <repo>/CLAUDE.md`
 Exit 1 or any WARN → fix the proposal and re-run. Present only a clean proposal.
 
 ## Handoff

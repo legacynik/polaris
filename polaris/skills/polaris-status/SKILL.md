@@ -2,7 +2,7 @@
 name: polaris-status
 description: Polaris skill — render an explicit, comprehensive status across a portfolio or one product repository, including live Git/GitHub pulse, active outcomes, team collisions, freshness, memory health, and the highest-leverage next move. Use for "polaris status", "pol status", "status completo", cross-repo priorities, portfolio briefing, or an explicit request to see everything. Do not use for "start", "resume", "continue", session recovery, or a single implementation task — `/start` is a local resume-only workflow.
 user-invocable: true
-version: 1.3.0
+version: 1.3.1
 ---
 
 # /polaris-status — observe the whole system
@@ -197,7 +197,7 @@ one-confirm approval — you never mark or delete by hand.
 3. **Wiki retrieval quality.** Two independent ways a wiki degrades retrieval — surface both:
 
    ```bash
-   python3 "$CLAUDE_PLUGIN_ROOT/skills/polaris-status/scripts/wiki_quality_check.py" .wiki --max-age 45 --front-door-lag 3
+   python3 "${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/polaris-status/scripts/wiki_quality_check.py" .wiki --max-age 45 --front-door-lag 3
    ```
 
    - `[archive?]` — active docs stale on BOTH the `updated:` frontmatter AND git-last-commit → real

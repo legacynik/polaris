@@ -2,7 +2,7 @@
 name: start
 description: Polaris skill — resume the current objective from the latest local handoff. First use also provisions your own team path.
 user-invocable: true
-version: 1.13.0
+version: 1.13.1
 ---
 
 # /start — resume, do not survey
@@ -44,7 +44,7 @@ plugin template. Never create `team/<login>/` folders for other people.
 
 ```bash
 mkdir -p "$ROOT/team/$LOGIN/weeks" "$ROOT/team/$LOGIN/reports" "$ROOT/team/$LOGIN/sessions"
-cp "$CLAUDE_PLUGIN_ROOT/skills/start/templates/repo-contract/profile.yml" "$ROOT/team/$LOGIN/profile.yml"
+cp "${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/start/templates/repo-contract/profile.yml" "$ROOT/team/$LOGIN/profile.yml"
 perl -pi -e "s/^github: .*/github: $LOGIN/" "$ROOT/team/$LOGIN/profile.yml"
 ```
 
