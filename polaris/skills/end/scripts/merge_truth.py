@@ -21,8 +21,9 @@ import re
 import shutil
 import subprocess
 
-CITES = re.compile(r"#(\d+)|\bPR\s*(\d+)", re.I)
+CITES = re.compile(r"([\w.-]+(?:/[\w.-]+)?)?#(\d+)|\bPR\s*(\d+)", re.I)
 PR_FIELDS = "state,mergeCommit,headRefOid,headRefName"
+ABSENT = re.compile(r"Could not resolve to an? (PullRequest|issue or pull request) with the number")
 
 
 def _run(args: list[str]) -> tuple[int, str]:
@@ -46,6 +47,20 @@ def default_branch() -> str:
     return "main"
 
 
+def _own_names() -> set[str]:
+    """How a citation may spell THIS repository: the checkout directory, and `origin` as
+    `name` or `owner/name`. A checkout renamed on disk still answers to its remote."""
+    names = set()
+    rc, top = _run(["git", "rev-parse", "--show-toplevel"])
+    if rc == 0 and top:
+        names.add(top.rsplit("/", 1)[-1].lower())
+    rc, url = _run(["git", "remote", "get-url", "origin"])
+    if rc == 0 and url:
+        parts = re.sub(r"\.git$", "", url).replace(":", "/").lower().split("/")
+        names.update({parts[-1], "/".join(parts[-2:])})
+    return names
+
+
 def _reaches(sha: str, default: str) -> bool:
     """True only where THIS checkout can see the commit in its default branch."""
     return bool(sha) and _run(["git", "merge-base", "--is-ancestor", sha, default])[0] == 0
@@ -57,16 +72,26 @@ def _gh(kind: str, num: str, fields: str) -> dict | None:
     An object whose requested keys are ALL null is silence wearing a JSON hat — it says nothing
     about the PR, so it must reach the caller as BLOCKED, not as a state of `None` reading `OPEN`.
     """
+    return _ask(kind, num, fields)[0]
+
+
+def _ask(kind: str, num: str, fields: str) -> tuple[dict | None, bool]:
+    """(facts, absent). `absent` is the one failure that is an ANSWER: the tracker was read and
+    this repository has no such number — usually another tracker's number cited bare."""
     if not shutil.which("gh"):
-        return None
-    rc, out = _run(["gh", kind, "view", num, "--json", fields])
-    if rc or not out:
-        return None
+        return None, False
     try:
-        facts = json.loads(out)
+        done = subprocess.run(["gh", kind, "view", num, "--json", fields],
+                              capture_output=True, text=True)
+    except OSError:
+        return None, False
+    if done.returncode or not done.stdout.strip():
+        return None, bool(ABSENT.search(done.stderr))
+    try:
+        facts = json.loads(done.stdout)
     except ValueError:
-        return None
-    return facts if facts and any(v is not None for v in facts.values()) else None
+        return None, False
+    return (facts if facts and any(v is not None for v in facts.values()) else None), False
 
 
 def _pr(num: str, facts: dict, default: str) -> tuple[str, str]:
@@ -101,9 +126,12 @@ def cites(text: str) -> list[tuple[str, str]]:
     moment #77 merged, with #79 still open. A lane is done when everything it points at is done.
     `PR 12` is a PR citation and never falls back to the issue of that number.
     """
-    out = []
+    out, own = [], _own_names()
     for m in CITES.finditer(text):
-        hit = (m.group(1), "any") if m.group(1) else (m.group(2), "pr")
+        if m.group(1) and m.group(1).lower() not in own:  # another repository's tracker
+            hit = (m.group(0), "foreign")
+        else:
+            hit = (m.group(2), "any") if m.group(2) else (m.group(3), "pr")
         if hit not in out:
             out.append(hit)
     return out
@@ -111,12 +139,18 @@ def cites(text: str) -> list[tuple[str, str]]:
 
 def _one(num: str, kind: str, default: str) -> tuple[str, str]:
     """The verdict for a single citation."""
-    if facts := _gh("pr", num, PR_FIELDS):
+    if kind == "foreign":
+        return "OPEN", f"{num} belongs to another repository, which this checkout cannot read"
+    facts, no_pr = _ask("pr", num, PR_FIELDS)
+    if facts:
         return _pr(num, facts, default)
     if kind == "pr":
         return "BLOCKED", f"PR {num} could not be read, and a PR citation is not an issue"
-    if facts := _gh("issue", num, "state,stateReason"):
+    facts, no_issue = _ask("issue", num, "state,stateReason")
+    if facts:
         return _issue(num, facts)
+    if no_pr and no_issue:
+        return "OPEN", f"#{num} is neither a PR nor an issue of this repository"
     return "BLOCKED", f"neither PR nor issue #{num} could be read — absent gh, error or empty answer"
 
 

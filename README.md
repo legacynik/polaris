@@ -31,8 +31,12 @@ npx skills add legacynik/polaris --list
 npx skills add legacynik/polaris --skill '*' -a codex -a claude-code
 ```
 
-The marketplace manifest declares all nine paths, so the plugin and Skills CLI consume the same
-`SKILL.md` files; there is no provider-specific duplicate.
+The marketplace manifest declares all shipped skill paths, so the plugin and Skills CLI consume
+the same `SKILL.md` files; there is no provider-specific duplicate.
+
+`/pr` writes the reviewable GitHub PR body (Summary, Evidence, Merge Danger). `/retro`
+reviews an agent session only when requested and proposes improvements; it does not silently
+change CI or shared instructions. Both ship in the same skills set as the session commands.
 
 ## The nine commands
 

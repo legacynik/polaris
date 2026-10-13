@@ -19,6 +19,50 @@ All notable changes to Polaris Team OS. The installed version is pinned in
   per comando misurati su una cartella vera di 186 file.
   Prova: `polaris/tests/test_update_scratch_session.py`.
 
+- **A citation of another repository never decides a lane here** (`end` 1.23.0 → **1.23.1**,
+  package → **0.31.2**). The prune read `<other-repo>#123` as issue 123 of the current repository:
+  it got no answer, called it `BLOCKED`, and one `BLOCKED` stops the whole run, so a cockpit that
+  mentioned any other tracker was never pruned. A qualified citation is now compared with this
+  checkout's own names (directory and `origin`); a foreign one is `OPEN` and keeps its lane. A
+  bare number that is neither a PR nor an issue here is `OPEN` too, on the tracker's own
+  «could not resolve» answer; no `gh`, an error or a rate limit stay `BLOCKED`. Not covered: a
+  bare number of another tracker that also exists here.
+
+- **The contract test stops pinning sentences** (tests and CI only, no skill changed).
+  `test_team_os_contract.py` asserted 169 times, mostly that a phrase existed in a SKILL.md: it
+  went red when a skill was reworded and stayed green when a mechanism broke. It now asserts only
+  what a machine reads (manifest, frontmatter as strict YAML, links, templates, the `start` size
+  budget, denylists that walk the tree). Three blocks no test ran are now executed verbatim from
+  the skills: the `/report` week resolver (`test_report_week.py`), the `/start` provisioning and
+  identity gate (`test_start_identity.py`), the `/end` journal check (`test_end_journal_wiring.py`).
+  Every new test was proven by breaking its mechanism. A workflow runs the suite on every pull
+  request: until now a red test stopped no merge. Rules that live only in prose are no longer
+  "tested" by substring; they belong to review and to the evals under `polaris/evals`.
+
+- **The team contract test follows the skills again** (tests and `AGENTS.md` only, no skill changed).
+  `test_team_os_contract.py` had been red on `main` since `update` 3.0.0 (#32) and the Sunday-dated
+  report of 2026-07-28: its assertions pinned sentences those rewrites replaced. Each one now names
+  the sentence, or the script, that carries the same rule today; one rule was reversed on purpose
+  (the lane is the work, not the branch) and one moved (`/end` names stale lanes, `/update` no longer
+  flags them). A machine path is removed from `tests/tdd/END-DEAD-LANES.jsonl`. The `start` size caps
+  are re-based from 7,000 bytes / 940 words to the measured 12,000 / 1,800, because the skill had
+  grown to 11,677 bytes with the guard red; shrinking it back is polaris-os#546. `AGENTS.md`
+  describes the skills-CLI install and what it does not carry.
+
+- **Six skill paths resolve without the Claude Code plugin** (`plan-week` 1.4.0 → **1.4.1**,
+  `pol-apex-curate` 1.1.0 → **1.1.1**, `polaris-status` 1.3.0 → **1.3.1**, `report` 1.3.0 → **1.3.1**,
+  `start` 1.13.0 → **1.13.1**, package → **0.31.1**). They named a bare `$CLAUDE_PLUGIN_ROOT/skills/...`,
+  which is empty when the skills are installed with `npx skills` into `~/.agents/skills`, so the
+  template copies, the apex gate and the wiki quality check pointed at `/skills/...`. They now use
+  `${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}`, the chain every other call site already had.
+
+- **`pr` and `retro` join the Polaris skill catalog** (each 1.0.0, package **0.31.0**).
+  Upstream: `mattpocock/skills@49dd158d` (MIT); `pr` writes a GH-visible Summary,
+  before/after Evidence and Merge Danger; `retro` is explicitly invoked and proposes
+  improvements to the agent environment. The same skill directories are linked into
+  Claude Code, Codex and Hermes on this workstation. `pr` credits Humanlayer's
+  `show-me` visual patterns.
+
 - **`/end` chiude anche il lavoro abbandonato** (`end` 1.22.1 → **1.23.0**, `update` 3.3.0 → **3.3.1**,
   pacchetto → **0.30.0**). Misurato su un repo prodotto: 38 fili sotto `## Open`, 15 morti, zero chiusi.
   Nuovo verdetto `DEAD` (PR chiusa senza merge, issue chiusa come not planned): la lane esce e il log
