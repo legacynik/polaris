@@ -105,8 +105,10 @@ scratch_unchosen() {
 
 # A file still owes lines when something follows its last watermark that is not blank. A CRLF
 # blank line, spaces and tabs are not content: counting them made `verify` fail on nothing.
+# LC_ALL=C: under a UTF-8 locale awk aborts on a byte that is not UTF-8, and the abort read as
+# "nothing owed" — the lines after it were stamped unread.
 scratch_pending() {
-  awk -v from="$(harvest_from "$1")" '{ sub(/\r$/, "") } NR > from && NF { found = 1 } END { exit !found }' \
+  LC_ALL=C awk -v from="$(harvest_from "$1")" '{ sub(/\r$/, "") } NR > from && NF { found = 1 } END { exit !found }' \
     "$1" 2>/dev/null
 }
 

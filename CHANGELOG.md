@@ -17,6 +17,9 @@ All notable changes to Polaris Team OS. The installed version is pinned in
   (`<data>-<12 caratteri dell'id>`): una nota datata lasciata nella cartella non è un candidato. Senza id
   vale l'unica sessione che ha scritto oggi, con tutti i suoi file. Nessun fork per file: 1,1-1,5 secondi
   per comando misurati su una cartella vera di 186 file.
+  Un byte non UTF-8 nel file non azzera più la lettura (`awk` in locale C).
+  Limite dichiarato: senza id, se oggi ha scritto una sola sessione, il checkpoint legge quella —
+  che può non essere la propria.
   Prova: `polaris/tests/test_update_scratch_session.py`.
 
 - **A citation of another repository never decides a lane here** (`end` 1.23.0 → **1.23.1**,

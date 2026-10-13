@@ -295,6 +295,19 @@ class OnlyTheHooksFilesCount(unittest.TestCase):
             f.write("- LATE line after stamp\n")
         self.assertIn("LATE line after stamp", checkpoint(repo, "harvest-slice", MINE).stdout)
 
+    def test_a_byte_that_is_not_utf8_does_not_silence_the_lines_after_the_stamp(self):
+        """awk under a UTF-8 locale aborts on the byte, and its failure read as «nothing owed»."""
+        repo = host_repo()
+        mine = scratch(repo, MINE, "old note")
+        with mine.open("ab") as f:
+            f.write(b"- latin \xff byte\n")
+        checkpoint(repo, "harvest-done", sid=MINE)
+        with mine.open("a") as f:
+            f.write("- LATE line after stamp\n")
+        env = {**env_for(repo), "POLARIS_SID": MINE, "LC_ALL": "en_US.UTF-8"}
+        done = run_script("update", "checkpoint.sh", "harvest-slice", cwd=str(repo), env=env)
+        self.assertIn("LATE line after stamp", done.stdout)
+
     def test_prepare_names_the_candidates_it_could_not_choose_between(self):
         repo = host_repo()
         mine, other = two_panels(repo)
