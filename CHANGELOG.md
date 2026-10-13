@@ -5,6 +5,23 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
+- **`/update` legge e timbra solo gli appunti della propria sessione** (`update` 3.3.1 → **3.3.2**).
+  Con più panel sullo stesso repo `checkpoint.sh` prendeva il file scratch più recente del login: il
+  checkpoint riportava il testo di un altro panel e spostava il timbro nel suo file (polaris-os#536,
+  ricorrenza di #89). Ora il file è quello che porta l'id della sessione (`POLARIS_SID`, che la skill
+  passa da `${CLAUDE_SESSION_ID}`); senza id vale l'unico file toccato oggi, e con più candidati non si
+  legge e non si timbra nulla. Tolto il tetto di 40 righe: in un file tutto della sessione tagliava le
+  righe più recenti, che il timbro dava poi per lette. Una sessione che attraversa la mezzanotte ha due
+  file: si leggono e si timbrano tutti, dal più vecchio, e `verify` fallisce finché uno ha righe non lette.
+  Il timbro è riconosciuto solo a inizio riga. Conta come scratch solo il nome che scrive l'hook
+  (`<data>-<12 caratteri dell'id>`): una nota datata lasciata nella cartella non è un candidato. Senza id
+  vale l'unica sessione che ha scritto oggi, con tutti i suoi file. Nessun fork per file: 1,1-1,5 secondi
+  per comando misurati su una cartella vera di 186 file.
+  Un byte non UTF-8 nel file non azzera più la lettura (`awk` in locale C).
+  Limite dichiarato: senza id, se oggi ha scritto una sola sessione, il checkpoint legge quella —
+  che può non essere la propria.
+  Prova: `polaris/tests/test_update_scratch_session.py`.
+
 - **A citation of another repository never decides a lane here** (`end` 1.23.0 → **1.23.1**,
   package → **0.31.2**). The prune read `<other-repo>#123` as issue 123 of the current repository:
   it got no answer, called it `BLOCKED`, and one `BLOCKED` stops the whole run, so a cockpit that

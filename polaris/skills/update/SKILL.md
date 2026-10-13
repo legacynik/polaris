@@ -3,7 +3,7 @@ name: update
 description: Polaris skill — record a short repository-first checkpoint during an active session. Trigger after meaningful progress, a blocker, a context switch, or on "checkpoint / save progress / /update".
 user-invocable: true
 model: sonnet
-version: 3.3.1
+version: 3.3.2
 invokes: [git-power]
 ---
 
@@ -71,9 +71,16 @@ decision. No qualifying record means no pointer.
 ### 3. Harvest the scratch delta
 
 ```bash
-"$CHECKPOINT" harvest-slice "$POLARIS_SID"   # your lines, capped
-"$CHECKPOINT" harvest-done                    # move the watermark, always
+SID="${CLAUDE_SESSION_ID}"                     # this session's id; empty on a harness that has none
+POLARIS_SID="$SID" "$CHECKPOINT" harvest-slice   # this session's scratch, the whole delta
+POLARIS_SID="$SID" "$CHECKPOINT" harvest-done    # move the watermark in that file, always
 ```
+
+The scratch is one file per session and per day. The script reads and stamps the files named for
+this session's id and no others; with no id it takes the only one touched today, and when several
+panels wrote today it reads nothing, stamps nothing and prints the candidates. Then pass the id
+of your own session and re-run: never pick a file by date or size. Pass the same `POLARIS_SID`
+to `verify`.
 
 What you find becomes `Key context`.
 
@@ -126,7 +133,7 @@ CHECKPOINT_PATHS=("$SESSION_LOG")
 [ -f "$HANDOFF" ] && CHECKPOINT_PATHS+=("$HANDOFF")
 # Append only exact owned paths written now: weekly/todos/lessons/decisions.
 "$CHECKPOINT" commit "${CHECKPOINT_PATHS[@]}"
-"$CHECKPOINT" verify "<title of the entry just written>"
+POLARIS_SID="${CLAUDE_SESSION_ID}" "$CHECKPOINT" verify "<title of the entry just written>"
 ```
 
 Before `commit`, append any archive, plan, or todo file this checkpoint changed to

@@ -36,7 +36,80 @@ resolve() {
   HANDOFF="$ROOT/team/$LOGIN/handoff/$(date +%F).md"
   cockpit
   WEEKLY="$ROOT/team/$LOGIN/weeks/$(date +%G-W%V).md"
-  SCRATCH="$(ls -t "$MAIN_ROOT/team/$LOGIN/sessions/scratch/"*.md "$MAIN_ROOT/sessions/scratch/$LOGIN/"*.md 2>/dev/null | head -1)"
+  scratch_for "${POLARIS_SID:-}"
+}
+
+# THIS session's scratch, never the login's newest (polaris-os#536). The stop hook writes
+# `<date>-<sid12>.md`, sid12 being the first twelve characters of the session uuid, one file per
+# session PER DAY and per lane: a session alive across midnight owns two, and the legacy lane can
+# hold a third. So the scratch is a LIST, oldest first, and every reader walks all of it.
+# With an id: the files named for it, or nothing. Without one: the files of the only session that
+# wrote today, or nothing — never a guess. Anything else in the lane is a note someone left
+# (`2026-09-30-distill-proposal-1.md`), not a hook file, and is never read, stamped or offered.
+scratch_for() {
+  local sid="${1:0:12}" f name
+  SCRATCH=""; SCRATCH_SID="$sid"; SCRATCH_FILES=(); SCRATCH_CANDIDATES=()
+  [ -n "$sid" ] || sid="$(scratch_today | cut -c12-23 | sort -u | awk 'NR == 1 { one = $0 } END { if (NR == 1) print one }')"
+  [ -n "$sid" ] && while IFS= read -r f; do
+    name="${f##*/}"; [ "${name:11:12}" = "$sid" ] && SCRATCH_FILES+=("$f")
+  done < <(scratch_hook_files)
+  if [ ${#SCRATCH_FILES[@]} -eq 0 ]; then
+    while IFS= read -r f; do [ -n "$f" ] && SCRATCH_CANDIDATES+=("$f"); done < <(scratch_today paths)
+    return 0
+  fi
+  scratch_sort
+}
+
+# Every hook-named file of both lanes, one path per line. Pure shell: a lane holds hundreds of
+# files and this runs on every command, so nothing here may fork per file.
+scratch_hook_files() {
+  local f name
+  for f in "$MAIN_ROOT/team/$LOGIN/sessions/scratch/"*.md "$MAIN_ROOT/sessions/scratch/$LOGIN/"*.md; do
+    name="${f##*/}"; name="${name%.md}"
+    [[ "$name" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9a-f]{8}-[0-9a-f]{3}$ ]] && [ -f "$f" ] && printf '%s\n' "$f"
+  done
+  return 0
+}
+
+# The hook files MODIFIED today: names by default, full paths with `paths`. The name's date can
+# be a day off the clock's (the hook stamps another zone), so only the last few days are stat-ed.
+scratch_today() {
+  local f name today floor; today="$(date +%F)"
+  floor="$(date -v-2d +%F 2>/dev/null || date -d '2 days ago' +%F)"
+  while IFS= read -r f; do
+    name="${f##*/}"
+    [[ "${name:0:10}" < "$floor" ]] && continue
+    [ "$(date -r "$f" +%F 2>/dev/null)" = "$today" ] || continue
+    if [ "${1:-}" = paths ]; then printf '%s\n' "$f"; else printf '%s\n' "$name"; fi
+  done < <(scratch_hook_files)
+  return 0
+}
+
+# Oldest first by FILE NAME (its date), not by mtime: the older file touched last is still older.
+# SCRATCH is the newest, the one `prepare` prints and `verify` wants stamped today.
+scratch_sort() {
+  local f sorted=()
+  while IFS= read -r f; do sorted+=("${f#*$'\t'}"); done < <(
+    for f in "${SCRATCH_FILES[@]}"; do printf '%s\t%s\n' "${f##*/}" "$f"; done | sort)
+  SCRATCH_FILES=("${sorted[@]}"); SCRATCH="${sorted[${#sorted[@]}-1]}"
+}
+
+# One line, said once, when no scratch could be chosen and there was something to choose from.
+scratch_unchosen() {
+  [ ${#SCRATCH_FILES[@]} -eq 0 ] && [ ${#SCRATCH_CANDIDATES[@]} -gt 0 ] || return 1
+  local f names="" why="pass this session's id (POLARIS_SID=<id>)"
+  [ -n "${SCRATCH_SID:-}" ] && why="no file is named for session ${SCRATCH_SID}"
+  for f in "${SCRATCH_CANDIDATES[@]}"; do names="$names ${f##*/}"; done
+  echo "checkpoint: no scratch chosen — $why; nothing read, nothing stamped; today's files:$names"
+}
+
+# A file still owes lines when something follows its last watermark that is not blank. A CRLF
+# blank line, spaces and tabs are not content: counting them made `verify` fail on nothing.
+# LC_ALL=C: under a UTF-8 locale awk aborts on a byte that is not UTF-8, and the abort read as
+# "nothing owed" — the lines after it were stamped unread.
+scratch_pending() {
+  LC_ALL=C awk -v from="$(harvest_from "$1")" '{ sub(/\r$/, "") } NR > from && NF { found = 1 } END { exit !found }' \
+    "$1" 2>/dev/null
 }
 
 # THE cockpit of this repo — one per repo, never one per worktree. The #212 resolver owns
@@ -51,11 +124,13 @@ cockpit() {
 
 # Watermark = byte offset of the last harvest. Reading the delta keeps the checkpoint
 # cheap; re-reading a 30KB scratch on every /update turns a checkpoint into a session eater.
-harvest_from() {
-  [ -n "${SCRATCH:-}" ] && [ -f "$SCRATCH" ] || { echo 0; return; }
-  local mark
-  mark=$(grep -n '<!-- harvested' "$SCRATCH" 2>/dev/null | tail -1 | cut -d: -f1)
-  [ -n "$mark" ] && echo "$mark" || echo 0
+harvest_from() {   # [file] — the newest of the session when none is named
+  local f="${1:-${SCRATCH:-}}" mark
+  [ -n "$f" ] && [ -f "$f" ] || { echo 0; return; }
+  # Anchored: a line that QUOTES the marker in prose is content, not a watermark.
+  # -a: with a stray binary byte grep answers "Binary file matches", not a line number.
+  mark=$(grep -a -n '^<!-- harvested: ' "$f" 2>/dev/null | tail -1 | cut -d: -f1)
+  echo "${mark:-0}"
 }
 
 cmd_prepare() {
@@ -78,6 +153,7 @@ CURRENT=$CURRENT
 WEEKLY=$([ -f "$WEEKLY" ] && echo "$WEEKLY" || echo none)
 SCRATCH=${SCRATCH:-none}
 HARVEST_FROM_LINE=$(harvest_from)
+SCRATCH_NOTE=$(scratch_unchosen || echo none)
 EOF
   # Hygiene: report, never fix silently. A sweep that moves files without saying so
   # is how a "cleanup" eats someone else's handoff.
@@ -169,27 +245,40 @@ cmd_open_prs() {
   return 0
 }
 
-# The first harvest of the day used to read the scratch from offset 0. On a multi-panel machine
-# that file is SHARED: measured 146 lines read, almost all of them another panel's flow
-# (polaris-os#89). The cap is on the FOREIGN prefix, never on position: every line carrying this
-# session's id is emitted wherever it sits, and the head is trimmed to fit what is left of the cap.
-# A cap applied by position would drop exactly the own-id line that arrived last.
+# The delta since each file's last watermark, whole, oldest file first. The files are this
+# session's own (see scratch_for), so there is no foreign flow left to cap: the cap of polaris-os#89
+# guarded a file every panel shared, and applied to a per-session file it dropped the NEWEST lines,
+# which harvest-done then marked read.
 cmd_harvest_slice() {
+  [ -n "${1:-}" ] && POLARIS_SID="$1"
   resolve
-  local sid="${1:-${POLARIS_SID:-}}" from cap
-  [ -n "${SCRATCH:-}" ] && [ -f "$SCRATCH" ] || { echo "checkpoint: no scratch, nothing to read"; return 0; }
-  from="$(harvest_from)"; cap="${HARVEST_CAP:-40}"
-  awk -v from="$from" -v sid="$sid" -v cap="$cap" '
-    NR > from { line[++n] = $0; if (sid != "" && index($0, sid)) { own[n] = 1; o++ } }
-    END { head = cap - o; if (head < 0) head = 0
-          for (i = 1; i <= n; i++) if (own[i] || i <= head) print line[i] }' "$SCRATCH"
+  scratch_unchosen && return 0
+  [ ${#SCRATCH_FILES[@]} -gt 0 ] || { echo "checkpoint: no scratch, nothing to read"; return 0; }
+  local f
+  for f in "${SCRATCH_FILES[@]}"; do
+    [ -r "$f" ] || { echo "checkpoint: cannot read $f"; continue; }
+    scratch_pending "$f" || continue      # only blank lines after the stamp: nothing owed
+    awk -v from="$(harvest_from "$f")" 'NR > from' "$f"
+  done
+  return 0
 }
 
+# The newest file is always stamped ("move the watermark, always"); an older one only while it
+# still owes lines. A stamp that could not be written is said so, never reported as moved.
 cmd_harvest_done() {
   resolve
-  [ -n "${SCRATCH:-}" ] && [ -f "$SCRATCH" ] || { echo "checkpoint: no scratch, nothing to mark"; return 0; }
-  printf '\n<!-- harvested: %s -->\n' "$(date '+%F %H:%M')" >> "$SCRATCH"
-  echo "checkpoint: watermark moved in $SCRATCH"
+  scratch_unchosen && return 0
+  [ ${#SCRATCH_FILES[@]} -gt 0 ] || { echo "checkpoint: no scratch, nothing to mark"; return 0; }
+  local f
+  for f in "${SCRATCH_FILES[@]}"; do
+    [ "$f" = "$SCRATCH" ] || scratch_pending "$f" || continue
+    if printf '\n<!-- harvested: %s -->\n' "$(date '+%F %H:%M')" >> "$f" 2>/dev/null; then
+      echo "checkpoint: watermark moved in $f"
+    else
+      echo "checkpoint: could NOT write the watermark in $f — nothing marked there"
+    fi
+  done
+  return 0
 }
 
 cmd_commit() {
@@ -263,8 +352,15 @@ cmd_verify() {
     verify_archive decisione Decision "$ROOT/decisions.md"
   fi
 
-  if [ -n "${SCRATCH:-}" ] && [ -f "$SCRATCH" ]; then
-    grep -q "harvested: $today" "$SCRATCH" || { echo "FAIL: scratch not harvested today (run harvest-done)"; fail=1; }
+  # The harvest gate reads this session's files only: today's stamp in the newest, and no older
+  # one still owing lines. Without an id it cannot know which are ours, and says so.
+  local f owed=0
+  if [ ${#SCRATCH_FILES[@]} -gt 0 ]; then
+    for f in "${SCRATCH_FILES[@]}"; do [ "$f" = "$SCRATCH" ] || ! scratch_pending "$f" || owed=1; done
+    grep -a -q "^<!-- harvested: $today" "$SCRATCH" && [ "$owed" -eq 0 ] \
+      || { echo "FAIL: scratch not harvested today (run harvest-done)"; fail=1; }
+  else
+    scratch_unchosen | sed 's/^checkpoint:/WARN: harvest not checked —/' || true
   fi
 
   # current.md is the open-items ledger (v0.8.1: nothing open is ever lost). A checkpoint
