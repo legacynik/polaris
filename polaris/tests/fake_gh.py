@@ -3,7 +3,8 @@
 Same shape as `fake_bundle.py` does for the memory bundle: the real binary is not this package's
 to ship, and a test that reaches GitHub proves the network, not the gate. The scenario arrives in
 `POLARIS_FAKE_GH` as JSON — `{"pr": {"<n>": {...}}, "issue": {"<n>": {...}}}` — and a number whose
-value is the string `"__error__"` fails the way a rate limit does: exit 1, nothing on stdout.
+value is the string `"__error__"` fails the way a rate limit does: exit 1, nothing on stdout;
+`"__missing__"` fails the way a number the repository does not have does.
 """
 import json
 import os
@@ -42,6 +43,11 @@ def main() -> int:
         return 1
     if facts == "__error__":
         print("API rate limit exceeded", file=sys.stderr)
+        return 1
+    if facts == "__missing__":  # verbatim from gh 2.x against a number the repository lacks
+        what = "a PullRequest" if argv[0] == "pr" else "an issue or pull request"
+        print(f"GraphQL: Could not resolve to {what} with the number of {argv[2]}. "
+              f"(repository.{'pullRequest' if argv[0] == 'pr' else 'issue'})", file=sys.stderr)
         return 1
     print(json.dumps({k: facts.get(k) for k in _fields(argv)} if _fields(argv) else facts))
     return 0
