@@ -5,6 +5,15 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
+- **A citation of another repository never decides a lane here** (`end` 1.23.0 → **1.23.1**,
+  package → **0.31.2**). The prune read `<other-repo>#123` as issue 123 of the current repository:
+  it got no answer, called it `BLOCKED`, and one `BLOCKED` stops the whole run, so a cockpit that
+  mentioned any other tracker was never pruned. A qualified citation is now compared with this
+  checkout's own names (directory and `origin`); a foreign one is `OPEN` and keeps its lane. A
+  bare number that is neither a PR nor an issue here is `OPEN` too, on the tracker's own
+  «could not resolve» answer; no `gh`, an error or a rate limit stay `BLOCKED`. Not covered: a
+  bare number of another tracker that also exists here.
+
 - **The contract test stops pinning sentences** (tests and CI only, no skill changed).
   `test_team_os_contract.py` asserted 169 times, mostly that a phrase existed in a SKILL.md: it
   went red when a skill was reworded and stayed green when a mechanism broke. It now asserts only
