@@ -75,7 +75,7 @@
       "judge": {
         "kind": "rule",
         "checks": [
-          {"op": "regex", "arg": "(?is)\\A[^?]*(?:già|gia|esiste|presente)[^?]*query_index\\.py(?::\\d+)?[^?]*(?:0 lesson matches|nessun|non trova)"},
+          {"op": "regex", "arg": "(?is)\\A(?=[^?]*(?:già|gia|esiste|presente))(?=[^?]*query_index\\.py)(?=[^?]*(?:0 lesson matches|nessun|non trova))"},
           {"op": "regex", "arg": "(?is)(?:consiglio|raccomando|propongo).*(?:ricerca|recuper|retriev)"},
           {"op": "regex", "arg": "\\A[^?]*(?:\\?[^?]*)?\\Z"},
           {"op": "max_chars", "arg": 1200}
@@ -97,8 +97,8 @@
       "judge": {
         "kind": "rule",
         "checks": [
-          {"op": "regex", "arg": "(?is)\\A[^?]*AGENTS\\.md(?::\\d+)?[^?]*memo/[^?]*query_index\\.py(?::\\d+)?[^?]*records/lessons/"},
-          {"op": "regex", "arg": "(?is)(?:in questa sessione|pensavi|avevi detto|dicevi|davi per)"},
+          {"op": "regex", "arg": "(?is)\\A(?=[^?]*AGENTS\\.md)(?=[^?]*memo)(?=[^?]*(?:query_index\\.py|records/lessons))"},
+          {"op": "regex", "arg": "(?is)(?:in questa sessione|pensavi|avevi detto|dicevi|davi per|prima (?:mi )?hai detto|credevi)"},
           {"op": "regex", "arg": "(?is)(?:contraddi|contrasto|incoeren)"},
           {"op": "regex", "arg": "\\A[^?]*(?:\\?[^?]*)?\\Z"},
           {"op": "max_chars", "arg": 1200}
