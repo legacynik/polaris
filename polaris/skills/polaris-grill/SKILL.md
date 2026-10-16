@@ -125,7 +125,8 @@ multiple gates into one question. Each question must include:
 
 - at most 3 short findings, only those that change the decision (premise already met, cause wrong,
   a contradiction); each says what it means for him, not which script does what;
-- at most one file name per finding, no line numbers, no commands, no script lists;
+- each finding names its file (two for a contradiction, one per side); line numbers, commands and
+  raw output stay in the evidence pack; no script lists;
 - translate repo jargon (lane, recall, manifest, STALE, seal, retrieval) into a plain phrase;
 - name a specialist skill only with what it does ("lo fissiamo col passaggio sui termini, `domain`");
 - no labels, emoji, headings, or formulas such as "un sì vale A": say "ti consiglio A";
