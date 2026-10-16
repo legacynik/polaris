@@ -93,17 +93,22 @@ Before the first question and whenever an answer changes the premise:
 1. Check whether the request is already satisfied and whether its stated cause holds. Search the
    evidence pack, code, backend/data contracts, and prior art; follow memory leads to live evidence.
    When a safe read-only command can demonstrate the behavior, RUN it, not just read its source.
-   State each finding in one plain-Italian line with `file:line`, command and observed result.
+   Tell the founder each finding in one plain-Italian line naming the file; keep `file:line`, the
+   command and its raw output in the evidence pack and handoff, not in the conversational turn.
    If execution is unavailable, name the missing access and keep the claim Unknown.
 2. Compare the request, code, applicable accepted decisions, docs, and earlier statements in this
    session. Name each contradiction and both claims with paths/lines (or quote the session statement).
    Separate intended rules from observed behavior; never silently pick a document to settle a conflict.
+   If the request contradicts an accepted decision, the question offers the real choice: respect it
+   (and meet the need another way) or reopen it through `architecture` and Decision admission.
 3. Check key terms against their uses in code and docs. If one word has multiple meanings, list
    them in plain Italian with evidence and route the naming question to `domain`.
-   Carry this handoff line: `domain: <term, competing meanings, evidence, unresolved choice>`.
+   In the turn, say it in one plain-Italian clause ("il significato di «X» va fissato con `domain`");
+   only the final handoff records `domain: <term, meanings, evidence, open choice>`.
 4. If the request moves a boundary, interface, schema/data contract, or dependency, route that
    commitment to `architecture`, which owns reversibility and Decision admission.
-   Carry this handoff line: `architecture: <changed boundary, consumers, evidence, unresolved choice>`.
+   In the turn, one plain-Italian clause; only the final handoff records
+   `architecture: <changed boundary, consumers, evidence, open choice>`. Never print these labels mid-interview.
    These doors compose with the interview; do not copy their procedures or write an ADR by reflex.
 
 Before each question, auto-answer from these sources and versioned dependency docs when relevant.
@@ -114,7 +119,8 @@ Ask only for intent, authority, risk tolerance, or tradeoffs that evidence canno
 Ask one question at a time. Each question resolves exactly one material decision; never bundle
 multiple gates into one question. Each question must include:
 
-- the recommended answer and default guess, worded so "sì" accepts it;
+- a real choice between named options (A or B), one marked as recommended and default so "sì"
+  accepts it; never a bare "Confermi?" or "È questo che vuoi?";
 - the short Evidence basis or the Unknown it resolves;
 - the decision that the answer unlocks.
 
