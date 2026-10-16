@@ -1,24 +1,21 @@
 ---
 name: polaris-grill
-description: Polaris skill — run a bounded, repo-grounded product and technical interview that resolves fuzzy intent against live code, backend and database contracts, durable decisions, lessons, repository memory, and version-aware Context7 docs, then produce a decision-complete handoff. Use for "grill this idea", "clarify this feature", "challenge this spec", architecture discovery, or before planning implementation. Do not use for status, session resume, implementation, or autonomous issue creation.
+description: Polaris skill — clarify product or technical intent. Use for "grill this idea", "clarify this feature", "challenge this spec", or ambiguous requirements before planning. Not for status, session resume, implementation, or autonomous issue creation.
 user-invocable: true
-version: 1.0.0
+version: 1.1.0
 ---
 
 # /polaris-grill — clarify before building
 
-Turn an ambiguous product or technical request into a decision-complete handoff grounded in the
-target repository. Ask one question at a time. Answer anything discoverable from code, data
-contracts, repository memory, or current documentation before asking the user.
+Turn an ambiguous request into a decision-complete, repo-grounded handoff.
+Answer discoverable facts yourself; ask one material question at a time.
 
 This is a read-only interview. Do not implement. It does not create issues, branches, pull requests
 or assignments, and it does not append decisions, lessons, journal entries, or session state.
 
 ## 1. Fix the scope
 
-Name one primary product repository and the change being clarified. For cross-repository work, keep
-one primary repository and list the others as explicit dependencies. Do not mix multiple product
-contracts or founder-vault state into one interview.
+Name one primary repository and change; list others as dependencies with separate contracts.
 
 Resolve the repository root, then its single committed Polaris contract at `_polaris/`. If the
 contract is absent, continue from repository evidence and report that durable Polaris context is
@@ -30,7 +27,7 @@ Read only what can change the interview:
 
 1. The repository's governing `AGENTS.md`, `CLAUDE.md`, or equivalent instructions.
 2. `_polaris/state/current.md` for open threads and blockers.
-3. The newest relevant sections of `_polaris/decisions.md` and `_polaris/lessons.md`.
+3. Applicable accepted decisions, supersession links, and lessons at the repository's declared paths.
 4. Any issue, request, design note, or canonical spec path explicitly named by the user.
 5. The implementation surface: manifests, lockfiles, entry points, tests, API routes, services,
    jobs, auth boundaries, and current code.
@@ -80,64 +77,74 @@ values in the interview or handoff.
 
 ## 4. Use Context7 only for a real dependency question
 
-Use Context7 when the answer depends on an external SDK, framework, library, database engine, or
-API:
-
-1. Identify the actual dependency and installed version from manifests and lockfiles.
-2. Query Context7 for official, version-aware documentation about the specific behavior in question.
-3. Record the relevant version and documentation conclusion as Evidence.
-4. If Context7 is unavailable, use official documentation through the available research surface and
-   disclose the fallback.
+For an external SDK, framework, library, database engine, or API question:
+1. Identify the dependency and installed version from manifests and lockfiles.
+2. Query Context7 for official, version-aware documentation about that behavior.
+3. Record version and conclusion as Evidence.
+4. If unavailable, use official docs through the available research surface and disclose the fallback.
 
 Do not query Context7 for repository behavior the code can answer. Never send proprietary code,
 secrets, customer data, private decisions, or private prompts to Context7 or another external tool.
 
-## 5. Auto-answer before asking
+## 5. Tear down the premise before asking
 
-For every potential interview question, run this loop first:
+Before the first question and whenever an answer changes the premise:
 
-1. Search the evidence pack and current code.
-2. Check active decisions and relevant lessons, including supersession links.
-3. Check targeted `polmem recall` results as leads, then verify them.
-4. Inspect backend and database contracts when the answer depends on data flow.
-5. Check version-aware Context7 or official docs when the answer depends on an external contract.
+1. Check whether the request is already satisfied and whether its stated cause holds. Search the
+   evidence pack, code, backend/data contracts, and prior art; follow memory leads to live evidence.
+   When a safe read-only command can demonstrate the behavior, RUN it, not just read its source.
+   State each finding in one plain-Italian line with `file:line`, command and observed result.
+   If execution is unavailable, name the missing access and keep the claim Unknown.
+2. Compare the request, code, applicable accepted decisions, docs, and earlier statements in this
+   session. Name each contradiction and both claims with paths/lines (or quote the session statement).
+   Separate intended rules from observed behavior; never silently pick a document to settle a conflict.
+3. Check key terms against their uses in code and docs. If one word has multiple meanings, list
+   them in plain Italian with evidence and route the naming question to `domain`.
+   Carry this handoff line: `domain: <term, competing meanings, evidence, unresolved choice>`.
+4. If the request moves a boundary, interface, schema/data contract, or dependency, route that
+   commitment to `architecture`, which owns reversibility and Decision admission.
+   Carry this handoff line: `architecture: <changed boundary, consumers, evidence, unresolved choice>`.
+   These doors compose with the interview; do not copy their procedures or write an ADR by reflex.
 
-If those sources resolve the question, record the answer as Evidence or Inference and do not ask the
-user. Ask only for product intent, authority, risk tolerance, or tradeoffs that evidence cannot
-determine.
+Before each question, auto-answer from these sources and versioned dependency docs when relevant.
+Ask only for intent, authority, risk tolerance, or tradeoffs that evidence cannot settle.
 
 ## 6. Run the grill
 
 Ask one question at a time. Each question resolves exactly one material decision; never bundle
 multiple gates into one question. Each question must include:
 
-- the recommended answer or default;
+- the recommended answer and default guess, worded so "sì" accepts it;
 - the short Evidence basis or the Unknown it resolves;
 - the decision that the answer unlocks.
 
-Cover these gates only when material:
+Use plain Italian for a non-developer; gloss necessary jargon in one short phrase. No English
+HYPOTHESIS/GUESS labels or emoji headings. Never batch even independent questions; wait for the answer.
 
-1. **Outcome and user** — who benefits, what changes, and which measurable result matters.
-2. **AS-IS** — current behavior, data flow, ownership, and the observed failure or opportunity.
-3. **Scope** — smallest useful slice, explicit out-of-scope, and compatibility boundary.
-4. **Constraints** — invariants, latency, cost, security, privacy, tenancy, and operational limits.
-5. **Backend and data** — API/service flow, schema facts, migrations, transactions, authorization,
-   retention, volume, and failure semantics.
-6. **Dependencies** — integrations, installed versions, contracts, failure modes, and fallbacks.
-7. **Acceptance** — observable examples, regression boundaries, and a real-test path.
-8. **Delivery** — rollout, migration, observability, rollback, and ownership after release.
-9. **Decisions** — conflicts with durable decisions, reversibility, and what remains unknown.
+Cover only material gaps: outcome/user, current behavior, scope/exclusions, constraints,
+backend/data and dependency contracts, observable acceptance, rollout/rollback, and decision conflicts.
 
 Challenge vague terms such as "fast", "scalable", "safe", "compatible", or "done" until they map
 to an observable threshold or an explicitly accepted tradeoff.
 
 ## 7. Stop at decision completeness
 
-End the interview when all material branches are resolved, acceptance is testable, out-of-scope is
-explicit, dependencies are version-grounded, and remaining risks are classified. Do not continue
-asking low-value questions merely to make the document longer.
+Converge when material branches are resolved, acceptance is testable, exclusions explicit,
+dependencies version-grounded, and risks classified. Stop low-value questions.
 
-Produce this handoff:
+### Offer verification before the final handoff
+
+Once questions converge, draft the handoff internally. ALWAYS offer the `critic` skill in a fresh
+context before emitting it: one plain-Italian line with a recommendation, then wait for consent.
+For example: "Consiglio un controllo con la skill `critic` in un contesto fresco, per cercare
+premesse sbagliate, contraddizioni, soluzioni esistenti ignorate e termini o confini irrisolti: lo facciamo?"
+Never start it automatically. Only an explicit yes authorizes a fresh-context run, never a fork of
+the current context. Give it the draft and bounded evidence pack to attack those four failure areas.
+Fold surviving findings into the handoff or list them as open questions before emitting it.
+If declined, emit the handoff and record `critic: offered, declined`. If accepted but unavailable,
+state the limitation and ask whether to emit without it; never claim the check ran.
+
+Produce this handoff after the offer is resolved:
 
 ```markdown
 # Polaris Grill — <change>
@@ -152,12 +159,13 @@ Produce this handoff:
 ## Rollout / rollback / observability
 ## Decision and lesson proposals
 ## Open questions
+## Specialist routes and critic status
 ## Execution boundary
 ## Recommended next workflow
 ```
 
-Decision and lesson entries are proposals only. Quote the proposed entry and route confirmation
-through the repository's existing Polaris lifecycle; do not write it from this skill.
+Decision and lesson entries are proposals only; route confirmation through the existing lifecycle.
+Include pending `domain` / `architecture` handoff lines; unsettled routes remain explicit open questions.
 
 Under **Execution boundary**, state: `Do not implement; do not create issues, branches, pull
 requests or assignments from this handoff.` Keep each interview turn under 1,200 characters and the
@@ -175,3 +183,18 @@ default final handoff under 5,000 characters unless the user explicitly asks for
   rules, tests, schema, backend contracts, and current code before declaring it done.
 
 Finish with the recommended next workflow and the evidence still required. Stop there.
+
+## Gotchas
+
+- A requested feature already exists → show the live result before asking what still needs changing.
+- Code, docs and prior statements disagree → name both sides; recency alone is not reconciliation.
+- One word hides several concepts → list the meanings and route to `domain`, not an invented glossary.
+- A boundary changes → route to `architecture`; no automatic Decision or ADR.
+- Convergence feels like permission to delegate → offer `critic`, then wait for an explicit yes.
+
+## Verification
+
+- [ ] Premises were checked live where safe; findings cite evidence and contradictions name both sides.
+- [ ] Each turn asks one material question with a recommendation, acceptable default and consequence.
+- [ ] Handoff separates Evidence / Inference / Unknown, preserves specialist routes and critic status.
+- [ ] No implementation, tracker mutation, document write, or unapproved critic run occurred.
