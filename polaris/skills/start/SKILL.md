@@ -134,8 +134,7 @@ Read these local files, in order:
    changed a brief). Never ask which area. Todos and `RECENT` go with the work,
    `SPOOL_LEGACY`/`DRIFT`/`SECTIONS_MISSING`/`PRIORITIES_STALE`/`COCKPIT_REWRITE` under
    `**Segnali**` — a stale order is named, never briefed as today's priorities.
-   `QUEUE:`/`QUEUE_MORE:`/`QUEUE_ASK:` (the cockpit's `## Coda founder`) go under
-   `**Da ricordare**`.
+   `QUEUE:`/`QUEUE_MORE:`/`QUEUE_ASK:` (from `## Coda founder`) go under `**Da ricordare**`.
    `COCKPIT_REWRITE` = the cockpit is due for a rewrite: name it, never rewrite here.
    The resolver is the host's, else the vault the repo declares (`git config polaris.vault`); a prose pack is a pack.
    See `reference/two-stage-brief.md`.
