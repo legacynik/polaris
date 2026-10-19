@@ -5,6 +5,14 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
+- **`/start` mette davanti la coda del founder e dice quando il cockpit va riscritto** (`start` 1.13.1 →
+  **1.14.0**). Nuovo `_cockpit_signal.py`: dalla sezione `## Coda founder` del cockpit stampa fino a 5
+  righe `QUEUE:` (sicurezza e scadenze entro 7 giorni sempre, anche oltre 5), un `QUEUE_MORE:` contato per
+  tipo (ok · decisioni · altro) e al massimo un `QUEUE_ASK: avanti o scarto?` sulla voce più vecchia oltre
+  30 giorni; `COCKPIT_REWRITE:` quando ci sono più righe `Updated:`, il file supera 8000 caratteri, manca
+  la coda o l'ordine è vecchio (stessa regola di `PRIORITIES_STALE`). Locale e in sola lettura: il file più
+  un `git log -1`; un repo senza commit da 60 giorni non stampa nulla. Nel brief, `**Da ricordare**`
+  viene prima di Pack e Segnali.
 - **`/update` legge e timbra solo gli appunti della propria sessione** (`update` 3.3.1 → **3.3.2**).
   Con più panel sullo stesso repo `checkpoint.sh` prendeva il file scratch più recente del login: il
   checkpoint riportava il testo di un altro panel e spostava il timbro nel suo file (polaris-os#536,

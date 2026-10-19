@@ -2,7 +2,7 @@
 name: start
 description: Polaris skill — resume the current objective from the latest local handoff. First use also provisions your own team path.
 user-invocable: true
-version: 1.13.1
+version: 1.14.0
 ---
 
 # /start — resume, do not survey
@@ -132,9 +132,11 @@ Read these local files, in order:
    NOT printed here — one `PACK: <n> rows held for lane entry` line counts it, because the
    pack loads when a lane is entered, never at `/start` (measured 2026-09-23: 0 of 131 rows
    changed a brief). Never ask which area. Todos and `RECENT` go with the work,
-   `SPOOL_LEGACY`/`DRIFT`/`SECTIONS_MISSING`/`PRIORITIES_STALE` under `**Segnali**` — a stale
-   order is named, never briefed as today's priorities. The resolver is the host's,
-   else the vault the repo declares (`git config polaris.vault`); a prose pack is a pack.
+   `SPOOL_LEGACY`/`DRIFT`/`SECTIONS_MISSING`/`PRIORITIES_STALE`/`COCKPIT_REWRITE` under
+   `**Segnali**` — a stale order is named, never briefed as today's priorities.
+   `QUEUE*` lines (the cockpit's `## Coda founder`) go under `**Da ricordare**`.
+   `COCKPIT_REWRITE` = the cockpit is due for a rewrite: name it, never rewrite here.
+   The resolver is the host's, else the vault the repo declares (`git config polaris.vault`); a prose pack is a pack.
    See `reference/two-stage-brief.md`.
 
 Do not read lessons, `.wiki/hot.md`, or unrelated files speculatively. Memory is not
@@ -205,9 +207,13 @@ Answer with the brief ONLY, as plain markdown, NEVER inside a code fence. Use th
 - Blocker: <one active blocker, if any>
 - Next action: <the concrete continuation step from the handoff, reconciled with the plan>
 
+**Da ricordare** — the Step 6 `QUEUE*` lines, verbatim, first.
+
 **Pack** — the `SESSION:` line of Step 5b when there is one, then the Step 6 resolver lines
 when there are any, verbatim: `UNKNOWN:`, `RECEIPT:`, `PACK: blocked …` and the one
 `PACK: <n> rows held for lane entry` count. No `layer:` row is printed at `/start`.
+
+**Segnali** — the Step 6 signal lines, verbatim.
 
 If the plan and handoff disagree, name the mismatch in `Blocker`; do not invent a reconciliation.
 If there is no handoff, derive `Next action` from the current plan and say that no checkpoint

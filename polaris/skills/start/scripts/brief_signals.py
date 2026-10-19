@@ -21,6 +21,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _brief_parts import (emit_drift, emit_pack, emit_priorities, emit_recent,  # noqa: E402
                           emit_sections, emit_spool, emit_todos)
+from _cockpit_signal import emit_cockpit  # noqa: E402
 
 
 def report(opts: argparse.Namespace) -> list[str]:
@@ -30,6 +31,7 @@ def report(opts: argparse.Namespace) -> list[str]:
     return (emit_todos(root, opts.now) + emit_recent(current)
             + emit_spool(main_wt) + emit_drift(main_wt, opts.login)
             + emit_sections(root, current) + emit_priorities(current, opts.now)
+            + emit_cockpit(current, main_wt, opts.now)
             + emit_pack(root, opts.login))
 
 
@@ -43,7 +45,11 @@ def cmd_selfcheck() -> int:
                                   main_wt=wt, now="2026-09-03")
 
     with tempfile.TemporaryDirectory() as d:
-        return score("brief_signals", check_brief(Path(d), report, options))
+        ok = check_brief(Path(d), report, options)
+        root = Path(d) / "_polaris"   # the template cockpit has no founder queue: say so
+        out = report(options(str(root), str(root / "state" / "current.md"), d))
+        ok.append(any(o.startswith("COCKPIT_REWRITE") and "no-queue" in o for o in out))
+        return score("brief_signals", ok)
 
 
 def main() -> int:
