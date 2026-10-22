@@ -1,7 +1,7 @@
 ---
 name: tdd-dev
 description: ◇ Use when implementing a feature or behaviour change test-first, when fixing a reproducible bug through a regression test, when a written fix needs proof its test catches the old defect, or when a passing test is accepted without an observed RED. Serves bugfix and approved feature workflows. Do NOT use for throwaway prototypes or configuration-only edits.
-version: 2.4.2
+version: 2.5.0
 user-invocable: true
 status: active
 job: drive one code change from an agreed public seam through proven RED, minimum implementation, GREEN receipt, and the repo-authoritative regression suite
@@ -56,8 +56,12 @@ patterns, their behavioural replacements and the executable frozen-test grader's
 1. **Admit the next TEST LIST item.** Name one public interface, one caller-visible
    result, the production mutation that should make the test fail, and the authoritative relevant
    suite command from the repo contract. If no narrower command is authoritative, use the full suite.
-2. **Write one tracer bullet.** Exercise real code through the admitted seam. Derive the expected value from the
-   contract, a worked example, or real data — never from the implementation or its helpers.
+2. **Write one tracer bullet — read [writing-tests.md](references/writing-tests.md) before every
+   test body.** Four rules hold on every test: **name the break** (the production change that must
+   make it fail — a bug, not a decision); **derive the oracle without the code under test** (a
+   literal, a worked example, or real data checked by hand — never the implementation or its
+   helpers); **mock only external or slow boundaries**, owned code stays real; **never assert on
+   the mock**, assert what the real code produced. Exercise real code through the admitted seam.
    **Two kinds of change invert what the test must be, and getting this wrong produces a clean
    chain around a defect**: a guard's test is the **bypass**, a recovery's test is the **disaster**.
    Read [red-proof.md](references/red-proof.md) for these branches and runner failures.
@@ -130,13 +134,8 @@ HANDOFF: review/deploy gate open
 ## Gotchas
 
 - Hash-bound RED proves history, not test value → admission first, refactor and behavioural mutants next.
-- Boundary fake asserts its own constants → observe what the external recipient actually gets.
 - Existing tests pin internals → match names/layout, not their defective assertions; say why.
-- Real input samples exist → run at least one, with independently hand-checked expectations.
 - Green break → rewrite the test, not the declared break; keep every green break in the receipt.
-
-Read [`references/anti-mirror.md`](references/anti-mirror.md) only for parsers, regexes, word lists,
-hand-built fixtures, or a passing test suspected of describing the implementation.
 
 | Excuse | Reality |
 |---|---|

@@ -1,7 +1,7 @@
 ---
 name: bugfix
 description: ◇ Close a bug in 4 gated phases — find without assuming, fix with TDD, prove the consequence not the SHA, rewrite the tests that lied. Use when a traceback, a bug issue, a red smoke, a log error, or "this doesn't work" arrives. Do NOT use for an urgent production incident (paying user down, corrupted data, blocked revenue) — that needs a hotfix, not an investigation.
-version: 1.2.2
+version: 1.2.3
 user-invocable: true
 auto: true
 status: active
@@ -9,7 +9,7 @@ job: take a bug from symptom to closed through stages that are passed with an ex
 when_not: urgent production incident (hotfix, not investigation) · sub-5-line single-file change with no behavior change · bug in a third-party dependency where the test cannot be written · "doesn't work" with no reproducible symptom
 lifecycle: the record lives in the GitHub issue (no local file to drain); rosso_log and mutation-log in .bugfix/evidence/ committed with the PR; lesson proposed to the repo ledger, never promoted from here
 invokes: [tdd-dev, real-testing, git-power]
-invoked-by: [human, cron-sweep]
+invoked-by: [human, issue-contract, cron-sweep]
 io: takes a bug identifier (issue, traceback, smoke, log) → produces fix + reproducing test + rewritten tests + mutation-log + staged record, all attached to the issue
 ---
 
@@ -127,7 +127,9 @@ write a new one. Every new branch the fix introduces must be exercised, or the g
 1. **Which tests should have caught it, and why did they pass?** Real causes from the corpus:
    mocks instead of real IO · trivial asserts · subset instead of equality · the test never
    touches the production path.
-2. **Rewrite them**, don't add one alongside.
+2. **Rewrite them**, don't add one alongside. The rewritten test follows `tdd-dev`'s
+   `writing-tests.md` reference — the same rules Phase ② wrote the reproducing test under; read
+   it before the first rewritten body. Done when each test named in 1 is replaced, not shadowed.
 3. **Prove it**: `scripts/mutation.py` re-inserts the bug and reruns — stage `mutazione` demands
    the log attributed to the **same** `fix_sha` with `tornato_rosso: true`.
 4. **The harvest** (stage `raccolto`): the new test must appear in the output of the CI's

@@ -1,26 +1,26 @@
 ---
-title: tdd-dev — i bypass-test
-description: Un caso per difetto. Ognuno dichiara fails_before e riporta l'output del PRIMA (il bypass riesce) e del DOPO (il bypass fallisce). Un gate senza il suo bypass rosso è una dichiarazione, non un gate.
+title: tdd-dev — bypass tests
+description: One case per defect. Each declares fails_before and records the output BEFORE (the bypass succeeds) and AFTER (the bypass fails). A gate without its red bypass is a claim, not a gate.
 status: active
 ---
 
-# Bypass-test di `tdd-dev`
+# Bypass tests for `tdd-dev`
 
-Regola: il caso si scrive **prima** del codice, e deve **riuscire**. Se non riesce, il difetto che
-stavi per curare non esiste — ci si ferma (SPEC-MADRE, Fase 2).
+Rule: the case is written **before** the code, and it must **succeed** against the old version.
+If it does not, the defect you were about to cure does not exist — stop. Output blocks are quoted
+exactly as the scripts print them.
 
 ---
 
-## B1 — la CLI `record` è inagibile: collisione argparse su `dest="cmd"`
+## B1 — the `record` CLI was unusable: argparse collision on `dest="cmd"`
 
-`fails_before:` `v0.1.0` — bug confermato 2 volte in run indipendenti dell'eval sul campo
-(R6): entrambi i bracci suite l'hanno
-aggirato importando il modulo, e un loop non presidiato si sarebbe fermato lì.
+`fails_before:` `v0.1.0` — confirmed twice in independent field-eval runs: both suite arms worked
+around it by importing the module, and an unattended loop would have stopped there.
 
-Il difetto: `add_subparsers(dest="cmd")` e l'opzione `--cmd` del subparser `record` scrivono sullo
-**stesso** attributo `a.cmd`. Il valore di `--cmd` sovrascrive il nome del subcomando, `main()` non
-riconosce più `record` e stampa l'help. Il selfcheck era verde perché chiama `cmd_record()` con un
-`Namespace` costruito a mano, bypassando `main()` — il ramo malato non era mai percorso.
+The defect: `add_subparsers(dest="cmd")` and the `--cmd` option of the `record` subparser wrote
+to the **same** attribute `a.cmd`. The value of `--cmd` overwrote the subcommand name, `main()` no
+longer recognised `record` and printed the help. The selfcheck was green because it called
+`cmd_record()` with a hand-built `Namespace`, bypassing `main()` — the broken branch was never run.
 
 Setup:
 
@@ -28,33 +28,25 @@ Setup:
 cd "$(mktemp -d)" && printf 'def test_x():\n    assert False\n' > t.py
 ```
 
-Comando:
+Command:
 
 ```bash
 python3 <suite>/tdd-dev/scripts/red_check.py record \
   --test t.py::test_x --cmd "/usr/bin/false" --out r.jsonl; echo "EXIT=$?"; ls r.jsonl
 ```
 
-**Atteso PRIMA** — il bypass RIESCE: nessun run registrato, la skill è inagibile da CLI.
+**Expected BEFORE** — the bypass SUCCEEDS: no run recorded, the skill is unusable from the CLI.
 
 ```
 usage: red_check.py [-h] [--selfcheck] {record,verify} ...
 ...
 EXIT=2
-nessun log scritto
+(no log written)
 ```
 
-Eseguito 2026-08-17 su v0.1.0: output identico a sopra (`print_help`, `EXIT=2`, `r.jsonl` assente).
+Run 2026-08-17 on v0.1.0: output identical to the above (`print_help`, `EXIT=2`, no `r.jsonl`).
 
-**Atteso DOPO** — lo stesso identico comando registra il run:
-
-```
-ROSSO exit=1 -> r.jsonl
-EXIT=0
-r.jsonl
-```
-
-**DOPO** — eseguito 2026-08-17 su v1.0.0:
+**Expected AFTER** — the same command records the run:
 
 ```
 ROSSO exit=1 -> r.jsonl
@@ -62,10 +54,12 @@ EXIT=0
 r.jsonl
 ```
 
-Detection permanente: il selfcheck ora esercita anche il path CLI (`main()` via subprocess), non
-solo le funzioni importate — la classe di bug «selfcheck che bypassa l'entry point» non può più
-nascondersi lì. Mutazione eseguita 2026-08-17: rimesso `dest="cmd"` → selfcheck esce **1** (il
-ramo B1 scatta) · ripristinato il fix → esce **0**.
+**AFTER** — run 2026-08-17 on v1.0.0: identical to the expected output.
+
+Permanent detection: the selfcheck now also drives the CLI path (`main()` through a subprocess),
+not only the imported functions, so the class "selfcheck that bypasses the entry point" cannot
+hide there again. Mutation run 2026-08-17: `dest="cmd"` restored → selfcheck exits **1** (the B1
+branch fires) · fix restored → exits **0**.
 
 ---
 

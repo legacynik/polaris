@@ -20,13 +20,9 @@ reading its Python source does not test serialization.
 
 ## Oracle and seam
 
-Good: `assert round_price("1.005") == "1.01"` where the price contract says half-up cents.
-Bad: `assert result == result`, or a local fake returning a constant that the test asserts.
-Good: submit a job through the real entry point, assert its recipient and payload at the
-external boundary. Bad: assert an owned collaborator was called instead of its effect.
-
-Mock only genuinely external or slow boundaries; keep owned code real. The interface is the test
-surface: a behaviour reachable only past it is a design finding, not a reason for a deeper mock.
+How to write the oracle and the doubles is `writing-tests.md` (§2 and §4). What stays here is the
+design side: the interface is the test surface, so a behaviour reachable only past it is a design
+finding, not a reason for a deeper mock.
 
 - **A port is earned by volatility.** Add one only for a dependency that genuinely churns (a vendor
   SDK, a framework whose major versions reshape its API). Use a stable dependency (standard-library
