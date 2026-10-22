@@ -6,7 +6,7 @@ user-invocable: true
 auto: true
 lifecycle: "produces .real-test/verdicts/<hash>.json (local, never committed — drained by verdict.py once the hash is unreachable) + tests left in CI (permanent, drained by the test suite itself); .real-test/bypass.log local, drained by hand"
 invokes: [git-power]
-invoked-by: [bugfix, polaris-sweep, human]
+invoked-by: [bugfix, polaris-sweep, pol-ship, pol-babysit, human]
 io: "diff/branch -> verdict MERGEABLE|MERGEABLE-CON-GAP|NOT-MERGEABLE naming the environment and the served SHA, with what held and what broke on every surface walked; consumed by the PreToolUse gate on `git commit` and by review/ship downstream"
 status: active
 ---
@@ -98,11 +98,11 @@ environment you cannot reach or a flag you cannot switch (**a block, not a degra
    `ambiente:`, `sha servito:` (the hex alone on its line), `osservato:`, `rami:`. The first word after
    `ambiente:`, on that same line, is the repo's `signing_env` (`local`, `staging`, or a host carrying it
    such as `api-staging.<host>`); free text may follow (`ambiente: local — this machine`). Any later
-   change to the head voids it. Then write the **facts** for the PR body (`pr`) in `.real-test/fatti/<branch>.md` (environment and
+   change to the head voids it. Then write the **facts** for the PR body (`pol-pr`) in `.real-test/fatti/<branch>.md` (environment and
    served SHA, the walk step by step with each screenshot and what it shows, the breaker's
    findings and what was fixed, the tests seen red, the gaps with owner and date, the release
    facts such as a migration and its order). This door returns a verdict and drives nothing: it
-   ends by naming the next step: `/pr` for the body, then the repository's own merge workflow.
+   ends by naming the next step: `pol-pr` for the body, then `pol-ship`'s proposal or the repository's own merge workflow.
 
 ## Rationalizations
 

@@ -9,7 +9,7 @@
     {
       "name": "polaris-team-os",
       "source": "./polaris",
-      "description": "Polaris Team OS — session commands, shared engineering doors, PR review bodies (/pr), session retrospectives (/retro) and a shared team operating model.",
+      "description": "Polaris Team OS — session commands, shared engineering doors, the PR chain (/pol-ship, /pol-pr, /pol-babysit), session retrospectives (/retro) and a shared team operating model.",
       "skills": [
         "./skills/ambitious-goal",
         "./skills/architecture",
@@ -25,11 +25,13 @@
         "./skills/init",
         "./skills/issue-contract",
         "./skills/plan-week",
+        "./skills/pol-babysit",
+        "./skills/pol-pr",
+        "./skills/pol-ship",
         "./skills/polaris-grill",
         "./skills/polaris-review",
         "./skills/polaris-status",
         "./skills/polaris-sweep",
-        "./skills/pr",
         "./skills/real-testing",
         "./skills/reference-capture",
         "./skills/report",

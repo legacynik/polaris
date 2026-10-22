@@ -11,7 +11,8 @@ fail=0
 doors=0
 for f in skills/*/SKILL.md; do
   name=$(basename "$(dirname "$f")")
-  desc=$(sed -n 's/^description: //p' "$f" | head -1)
+  # A quoted scalar is its content (YAML needs the quotes when the text holds ": ").
+  desc=$(sed -n 's/^description: //p' "$f" | head -1 | sed -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'$/\1/")
   case "$name" in
     start|polaris-status|polaris-grill|update|end|plan-week|report)
       [[ "$desc" == "Polaris skill — "* ]] || { echo "FAIL desc prefix: $name"; fail=1; };;

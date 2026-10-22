@@ -1,7 +1,7 @@
 {
   "name": "polaris-team-os",
   "version": "0.32.0",
-  "description": "Polaris Team OS: seven repository-first session commands, /pr for reviewable GitHub pull requests, /retro for session retrospectives, plus the shared engineering doors. Start with docs/TEAM-ONBOARDING.md.",
+  "description": "Polaris Team OS: seven repository-first session commands, /pol-ship, /pol-pr and /pol-babysit for pull requests, /retro for session retrospectives, plus the shared engineering doors. Start with docs/TEAM-ONBOARDING.md.",
   "author": {
     "name": "Niccolò Franzin",
     "url": "https://github.com/legacynik"

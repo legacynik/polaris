@@ -6,7 +6,7 @@ user-invocable: true
 auto: true
 lifecycle: ".review-gate/approvals/<hash>.json drained once by gate_hook.py at commit/merge time, gitignored, pruned by `finalize_review.py --prune-older-than N`; .review-gate/findings/<hash>-*.json kept as the audit trail for doc-truth/human review until the same prune."
 invokes: [critic, codex-review]
-invoked-by: [human]
+invoked-by: [human, pol-ship]
 io: "takes the staged diff (git tree hash) or a branch/PR named by hand -> produces the reviewer tier, .review-gate/approvals/<hash>.json consumed by a real PreToolUse hook, and two separate Standards/Spec findings files, never fused into one ranking"
 status: draft
 ---
@@ -199,6 +199,6 @@ Adversarial reproduction that must fail to bypass: `references/bypass-test.md`.
 
 ## What this job does NOT do
 
-Doesn't run the code (`real-testing`'s job), doesn't decide *when* to merge (the repository's merge workflow),
+Doesn't run the code (`real-testing`'s job), doesn't decide *when* to merge (`pol-ship`'s proposal and the owner's yes),
 doesn't scan production or the live server, doesn't touch remote branch protection settings. It produces one artifact — the approval — that those
 jobs read or that blocks a local commit/merge attempt directly.

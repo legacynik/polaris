@@ -17,7 +17,9 @@ relevant SKILL.md below and follow it exactly.
 | end | [polaris/skills/end/SKILL.md](polaris/skills/end/SKILL.md) | Close a session: handoff, decision/lesson proposals, optional pathspec-only commit |
 | plan-week | [polaris/skills/plan-week/SKILL.md](polaris/skills/plan-week/SKILL.md) | Your own weekly focus — yours to execute; only red work waits for a named approver |
 | report | [polaris/skills/report/SKILL.md](polaris/skills/report/SKILL.md) | Weekly report — planned versus actual, evidence from the tracker |
-| pr | [polaris/skills/pr/SKILL.md](polaris/skills/pr/SKILL.md) | Write a GitHub PR body with the smallest visual, before/after evidence and merge danger |
+| pol-ship | [polaris/skills/pol-ship/SKILL.md](polaris/skills/pol-ship/SKILL.md) | Work done: real-test, commit, PR, babysit to the owner's label, then one merge-and-deploy proposal |
+| pol-pr | [polaris/skills/pol-pr/SKILL.md](polaris/skills/pol-pr/SKILL.md) | Write a PR body the owner judges without reading code: verdict, criteria with proof, visual, risk |
+| pol-babysit | [polaris/skills/pol-babysit/SKILL.md](polaris/skills/pol-babysit/SKILL.md) | Drive an open PR to the owner's label on its current head, or hand off what only the owner decides |
 | retro | [polaris/skills/retro/SKILL.md](polaris/skills/retro/SKILL.md) | On request, inspect a session and propose evidence-backed improvements to the agent environment |
 
 ## Notes for non-Claude agents

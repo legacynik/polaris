@@ -34,9 +34,12 @@ npx skills add legacynik/polaris --skill '*' -a codex -a claude-code
 The marketplace manifest declares all shipped skill paths, so the plugin and Skills CLI consume
 the same `SKILL.md` files; there is no provider-specific duplicate.
 
-`/pr` writes the reviewable GitHub PR body (Summary, Evidence, Merge Danger). `/retro`
+`/pol-ship` is the one command once the work is done: real-test, commit hygiene, push, the PR body
+(`/pol-pr`), the babysit loop (`/pol-babysit`) to the owner's label, then one merge-and-deploy
+proposal it acts on only after the owner's yes. `/pol-pr` alone writes a PR body the owner judges
+without reading code. `/retro`
 reviews an agent session only when requested and proposes improvements; it does not silently
-change CI or shared instructions. Both ship in the same skills set as the session commands.
+change CI or shared instructions. All of them ship in the same skills set as the session commands.
 
 ## The seven commands
 
