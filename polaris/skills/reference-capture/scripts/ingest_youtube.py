@@ -21,7 +21,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-TIMESTAMP_RE = re.compile(r"^(\d{2}:\d{2}:\d{2})\.\d{3} --> ")
+# WebVTT allows the hours to be omitted (`00:01.000`), and hand-downloaded files often do.
+TIMESTAMP_RE = re.compile(r"^((?:\d{2,}:)?\d{2}:\d{2})\.\d{3} --> ")
 TAG_RE = re.compile(r"<[^>]+>")
 
 
@@ -32,17 +33,51 @@ def _require_ytdlp() -> str:
     return binary
 
 
-def _fetch(url: str, workdir: Path, lang: str) -> None:
-    """Pull subtitles, metadata and thumbnail without downloading the video itself."""
-    cmd = [
+YTDLP_SUB_ARGS = [
+    # YouTube rate-limits the subtitle endpoint per IP (HTTP 429, 2026-10-07: three tries, a minute
+    # apart, all refused while `--list-subs` showed the captions). Spacing the subtitle requests
+    # and asking through the android client got the file on the first try.
+    "--sleep-subtitles", "5", "--extractor-args", "youtube:player_client=android,web",
+]
+RETRY_WAIT_S = (15, 45, 90)
+
+
+def _fetch_cmd(url: str, workdir: Path, lang: str) -> list[str]:
+    return [
         _require_ytdlp(), "--skip-download",
         "--write-subs", "--write-auto-subs", "--sub-langs", lang, "--sub-format", "vtt",
+        *YTDLP_SUB_ARGS,
         "--write-info-json", "--write-thumbnail", "--convert-thumbnails", "jpg",
         "-o", str(workdir / "source"), url,
     ]
+
+
+def _fetch(url: str, workdir: Path, lang: str, waits: tuple[int, ...] = RETRY_WAIT_S) -> None:
+    """Pull subtitles, metadata and thumbnail without downloading the video itself.
+
+    A 429 on the subtitles is retried with a growing pause; anything else fails at once."""
+    import time
+    cmd = _fetch_cmd(url, workdir, lang)
+    for attempt, wait in enumerate((*waits, None)):
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode == 0:
+            return
+        # The status line, not any "429": a video id or a byte count carries those digits too.
+        if "HTTP Error 429" not in result.stderr or wait is None:
+            sys.exit(f"yt-dlp failed:\n{result.stderr[-2000:]}\n"
+                     "If the subtitles exist (yt-dlp --list-subs) but YouTube keeps answering 429, download the "
+                     ".vtt by hand or from another network and rerun with --vtt <file>.")
+        print(f"YouTube answered 429 on the subtitles (attempt {attempt + 1}); waiting {wait}s", file=sys.stderr)
+        time.sleep(wait)
+
+
+def _meta_only(url: str, workdir: Path) -> None:
+    """Metadata and thumbnail without subtitles, for a .vtt obtained elsewhere (--vtt)."""
+    cmd = [_require_ytdlp(), "--skip-download", "--write-info-json", "--write-thumbnail",
+           "--convert-thumbnails", "jpg", "-o", str(workdir / "source"), url]
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
-        sys.exit(f"yt-dlp failed:\n{result.stderr[-2000:]}")
+        sys.exit(f"yt-dlp failed on the metadata:\n{result.stderr[-2000:]}")
 
 
 def _cue_lines(vtt: str) -> list[tuple[str, str]]:
@@ -52,7 +87,7 @@ def _cue_lines(vtt: str) -> list[tuple[str, str]]:
     for raw in vtt.splitlines():
         match = TIMESTAMP_RE.match(raw.strip())
         if match:
-            stamp = match.group(1)
+            stamp = match.group(1) if match.group(1).count(":") == 2 else f"00:{match.group(1)}"
             continue
         line = TAG_RE.sub("", raw).strip()
         if stamp and line and not line.startswith(("WEBVTT", "Kind:", "Language:", "NOTE")):
@@ -147,12 +182,15 @@ def _collect(workdir: Path, out: Path) -> Path:
     vtt = next(workdir.glob("*.vtt"), None)
     if not vtt:
         sys.exit("No subtitles available for this video — captions are disabled upstream.")
+    body = _paragraphs(_dedupe(_cue_lines(vtt.read_text(encoding="utf-8", errors="replace"))))
+    if not body:
+        # A header-only transcript beside a cover and a meta.json reads as a finished capture.
+        sys.exit("No cue parsed from the subtitles — not a WebVTT file (an .srt?), or an empty one.")
     meta = _meta(workdir)
     source = out / "source"
     source.mkdir(parents=True, exist_ok=True)
     (out / "imgs").mkdir(exist_ok=True)
     transcript = source / "transcript.md"
-    body = _paragraphs(_dedupe(_cue_lines(vtt.read_text(encoding="utf-8", errors="replace"))))
     transcript.write_text(_render(meta, body), encoding="utf-8")
     (source / "meta.json").write_text(json.dumps(meta, indent=2, ensure_ascii=False), encoding="utf-8")
     thumb = next(workdir.glob("*.jpg"), None)
@@ -227,7 +265,40 @@ def selfcheck() -> int:
          "webpage_url": "https://example.test/v", "chapters": [], "description": "   "}, blocks
     ), "an empty description must not fabricate a section"
 
-    print("SELFCHECK OK — 17 assertions")
+    # A 429 is retried with the declared pauses, then surfaces the --vtt way out; a 403 is not.
+    calls: list[int] = []
+
+    class _R:
+        def __init__(self, code, err):
+            self.returncode, self.stderr = code, err
+
+    real_run, real_sleep, real_which = subprocess.run, __import__("time").sleep, shutil.which
+    try:
+        shutil.which = lambda name: name  # offline: the checks below never run the binary
+        # The fetch spaces the subtitle requests and goes through the android client: the plain web
+        # fetch was refused with HTTP 429 three times in a row on 2026-10-07 while the captions existed.
+        cmd = _fetch_cmd("https://example.test/v", Path("/tmp/x"), "en")
+        assert "--sleep-subtitles" in cmd and "youtube:player_client=android,web" in cmd, cmd
+        assert cmd.index("--sub-format") < cmd.index("--sleep-subtitles"), cmd
+        subprocess.run = lambda *a, **k: (calls.append(1), _R(1, "HTTP Error 429: Too Many Requests"))[1]
+        __import__("time").sleep = lambda s: None
+        try:
+            _fetch("https://example.test/v", Path("/tmp/x"), "en", waits=(0, 0))
+        except SystemExit as exc:
+            assert "--vtt" in str(exc) and len(calls) == 3, (calls, exc)
+        else:
+            raise AssertionError("a persistent 429 must exit")
+        calls.clear()
+        subprocess.run = lambda *a, **k: (calls.append(1), _R(1, "HTTP Error 403: Forbidden"))[1]
+        try:
+            _fetch("https://example.test/v", Path("/tmp/x"), "en", waits=(0, 0))
+        except SystemExit:
+            assert len(calls) == 1, calls
+        else:
+            raise AssertionError("a 403 must exit at once")
+    finally:
+        subprocess.run, __import__("time").sleep, shutil.which = real_run, real_sleep, real_which
+    print("SELFCHECK OK")
     return 0
 
 
@@ -236,6 +307,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("url", nargs="?")
     parser.add_argument("--out", help="dossier directory; source/ is created inside")
     parser.add_argument("--lang", default="en", help="subtitle language code (default: en)")
+    parser.add_argument("--vtt", help="a .vtt already downloaded (YouTube 429): metadata is still fetched from the url")
     parser.add_argument("--selfcheck", action="store_true", help="run offline assertions and exit")
     args = parser.parse_args(argv)
     if args.selfcheck:
@@ -243,10 +315,17 @@ def main(argv: list[str] | None = None) -> int:
     if not args.url or not args.out:
         parser.error("url and --out are required (or use --selfcheck)")
     out = Path(args.out).expanduser().resolve()
+    vtt = Path(args.vtt).expanduser().resolve() if args.vtt else None
+    if vtt and not vtt.is_file():
+        parser.error(f"--vtt: {vtt} is not a file")
     workdir = out / ".ytdlp"
     workdir.mkdir(parents=True, exist_ok=True)
     try:
-        _fetch(args.url, workdir, args.lang)
+        if vtt:
+            _meta_only(args.url, workdir)
+            shutil.copy(vtt, workdir / "source.vtt")
+        else:
+            _fetch(args.url, workdir, args.lang)
         transcript = _collect(workdir, out)
     finally:
         shutil.rmtree(workdir, ignore_errors=True)

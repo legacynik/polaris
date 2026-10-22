@@ -1,0 +1,6 @@
+
+running 1 test
+error: test failed, to rerun pass `--lib`
+
+Caused by:
+  process didn't exit successfully: `/lab/target/debug/deps/demo-3f1c2a9b` (signal: 11, SIGSEGV: invalid memory reference)

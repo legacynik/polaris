@@ -61,25 +61,29 @@ def _payload(finding: dict) -> dict:
              f"{fp} once more and the tracker must refuse the second issue — 0 new, exit 1")
     return {"ac": ac, "domain": str(finding.get("domain") or ""), "advs": [first, dedup],
             "afk": "yes" if repro else "no", "priority": str(finding.get("priority") or "p2"),
+            # #482: a crash is a bug; its weight is the finder's call, never guessed here,
+            # so a finding without it is refused by issue-contract's B18 gate.
+            "impact": str(finding.get("impact") or ""), "cost": str(finding.get("cost") or ""),
             "exec": (f"Il crasher ha trovato un problema su {route}: "
                      f"{finding.get('symptom')}").replace("`", ""),
             "dedup": f"Searched: tracker for '{fp}'. Found: none."}
 
 
 def issue_argv(finding: dict, slug: str) -> list[str]:
-    """The issue-contract invocation for one finding — never a raw `gh` call. The `--field`
-    pairs repeat the values under the ids the Polaris issue forms use; an id a template does
-    not have is ignored, and one it needs and lacks is named by `build_issue.py` itself."""
+    """The issue-contract invocation for one finding — never a raw `gh` call. The contract's
+    own fields (dedup, adversarial tests, domain, priority, afk) reach the template from their
+    flags; `--field` carries only what no flag does, and `build_issue.py` refuses an override
+    that disagrees with a flag. An id a template does not have is ignored."""
     p = _payload(finding)
     argv = ["python3", str(BUILD_ISSUE), "--repo-slug", slug,
             "--repo-path", str(finding.get("repo_path") or "."), "--type", "bug",
             "--title", title_of(finding), "--ac", p["ac"], "--exec", p["exec"],
             "--dedup", p["dedup"], "--domain", p["domain"],
-            "--priority", p["priority"], "--afk", p["afk"]]
+            "--priority", p["priority"], "--afk", p["afk"], "--category", "bug",
+            "--impact", p["impact"], "--cost", p["cost"]]
     argv += [a for adv in p["advs"] for a in ("--adv-test", adv)]
-    for key, value in (("not-a-duplicate", p["dedup"]), ("repro", p["ac"]),
-                       ("adversarial-verification", " · ".join(p["advs"])),
-                       ("domain", p["domain"]), ("priority", p["priority"]), ("afk", p["afk"])):
+    for key, value in (("repro", p["ac"]), ("category", "bug"), ("impact", p["impact"]),
+                       ("cost", p["cost"])):
         argv += ["--field", f"{key}={value}"]
     return argv
 

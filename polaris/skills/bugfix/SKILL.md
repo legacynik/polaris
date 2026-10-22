@@ -1,7 +1,7 @@
 ---
 name: bugfix
 description: ◇ Close a bug in 4 gated phases — find without assuming, fix with TDD, prove the consequence not the SHA, rewrite the tests that lied. Use when a traceback, a bug issue, a red smoke, a log error, or "this doesn't work" arrives. Do NOT use for an urgent production incident (paying user down, corrupted data, blocked revenue) — that needs a hotfix, not an investigation.
-version: 1.2.0
+version: 1.2.1
 user-invocable: true
 auto: true
 status: active
@@ -22,8 +22,7 @@ On a production repo, **79 bugs closed in 30 days and 7 caught by a gate** — 9
 So this skill does not end with the fix: it ends when the rewritten test **goes red with the bug
 re-inserted** and when that test is **collected by CI**, not merely committed.
 
-**The gate lives in the workflow** (single-door ADR, 2026-08-17: `fix-gate` is absorbed here):
-every stage is passed with
+**The gate lives in the workflow**: every stage is passed with
 
 ```bash
 python3 scripts/fix_gate.py check --stage <stage> --record <path> --repo <repo-path>
@@ -103,7 +102,7 @@ hypotheses with the evidence that killed them** · proven cause.
    Stage `rosso` calls its `red_check.py verify`: without that receipt, this gate blocks.
 2. **Blast radius before the fix, not after.** Callers from the graph are fix targets — and they
    are **proven, not listed**: stage `raggio` demands `chiamanti_cmd`, the command that produced
-   them (incident #107: primary site patched, callers never looked at, mute fix shipped).
+   them (a fix to the primary site whose callers nobody looked at ships mute).
 3. **Minimal fix.** No "while I'm here" refactors: the fix and the improvement are two commits.
    Simplification is welcome but OPTIONAL and post-green — and any simplify that touches code
    after `verde` re-opens the gates by construction (content-hashed receipts, SHA-bound
@@ -134,7 +133,7 @@ write a new one. Every new branch the fix introduces must be exercised, or the g
    **orphan**: it protects only whoever runs it by hand — it happened in this skill's own eval.
 5. If the hole is a **class** (*"every test in this module mocks the DB"*), the phase produces a
    ledger entry, not just a test.
-6. **Self-heal exit question** (from parallel-issue-flow Phase 7): was this bug one-off or
+6. **Self-heal exit question**: was this bug one-off or
    systemic? If a gate, skill, or hook let the pattern through, the answer patches THAT — the
    door corrects itself, or it stays a static list of past mistakes.
 7. **Commit boundary**: invoke `git-power commit-check` on the staged diff. Exit 3 means split

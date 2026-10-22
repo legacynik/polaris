@@ -1,0 +1,10 @@
+(node:39114) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS ./ok.test.js
+  ✓ adds (1 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       1 passed, 1 total
+Snapshots:   0 total
+Time:        0.129 s
+Ran all test suites matching ok.test.js.

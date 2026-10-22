@@ -1,0 +1,10 @@
+error[E0425]: cannot find value `x` in this scope
+ --> src/lib.rs:3:5
+  |
+3 |     x + 1
+  |     ^ not found in this scope
+
+error: aborting due to 1 previous error
+
+For more information about this error, try `rustc --explain E0425`.
+error: could not compile `demo` (lib test) due to 1 previous error

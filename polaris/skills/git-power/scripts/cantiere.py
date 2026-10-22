@@ -935,15 +935,16 @@ def _merge_gap_reason(pr: dict | None, local_tip: str) -> str | None:
         return "nessuna PR trovata per questo branch"
     if pr.get("state") != "MERGED":
         return f"PR {pr.get('state', 'UNKNOWN')}, non mergiata"
-    if pr.get("headRefOid") and local_tip != pr["headRefOid"]:
+    if not pr.get("headRefOid"):
+        return "PR senza headRefOid: il tip locale non è verificabile"
+    if local_tip != pr["headRefOid"]:
         return f"branch ha commit dopo il merge (tip={local_tip} head={pr['headRefOid']})"
     return None
 
 
 def _merge_target(repo: Path, base: str) -> str:
-    remote = f"origin/{base}"
-    return remote if git(repo, "show-ref", "--verify", f"refs/remotes/{remote}",
-                         check=False) else base
+    remote = f"refs/remotes/origin/{base}"  # qualified: a local branch `origin/<base>` wins the short name
+    return remote if git(repo, "show-ref", "--verify", remote, check=False) else f"refs/heads/{base}"
 
 
 def _merge_truth(repo: Path, branch: str, base: str) -> tuple[dict | None, str | None, bool]:

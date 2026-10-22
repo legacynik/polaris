@@ -10,7 +10,7 @@ printf 'actual artifact line\n' > /tmp/critic-artifact/a.md
 
 ## Il baseline che questi casi riproducono
 
-Tre run identiche di Opus nudo sullo stesso artefatto (una riga di censimento gstack), 2026-08-21,
+Tre run identiche di Opus nudo sullo stesso artefatto (una riga di censimento skill), 2026-08-21,
 prompt identico e nessun suggerimento di formato. Tutte e tre hanno trovato i difetti reali. Nessuna
 ha superato i casi qui sotto.
 
@@ -45,7 +45,7 @@ python3 scripts/critic_gate.py --validate /tmp/bypass-2.json   # atteso: exit 1,
 
 ## Caso 3 — finding non citato, declassato invece che scartato
 
-È il difetto **verificato nel donatore**: gstack forza un finding non citato a confidenza `4-5`
+È il difetto **verificato nel donatore**: la skill donatrice forza un finding non citato a confidenza `4-5`
 dichiarandolo soppresso, ma la sua tabella mostra `5-6` «con caveat», quindi un finding a 5 arriva
 comunque all'utente. Qui non esiste banda.
 
@@ -62,7 +62,7 @@ python3 scripts/critic_gate.py --validate /tmp/bypass-3.json   # atteso: exit 1,
 
 ## Caso 4 — zero finding taciuti
 
-«Sembra a posto» senza dirlo. È la scappatoia che gstack lascia aperta: tutti gli specialist possono
+«Sembra a posto» senza dirlo. È la scappatoia che la skill donatrice lascia aperta: tutti gli specialist possono
 tornare `NO FINDINGS` e il run prosegue a `clean` senza che nessuno lo dichiari.
 
 ```bash

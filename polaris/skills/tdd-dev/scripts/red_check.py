@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """red_check.py — prova che un test E' STATO rosso prima del fix.
 
-Un test mai fallito non e' un test: e' uno specchio dell'implementazione. Ogni run
-porta l'hash del FILE di test, cosi' un test riscritto fra il rosso e il verde non
-puo' spacciare il rosso di un altro per il proprio. Se un esito sia un rosso lo
-decide red_signatures.py (#373); senza la firma del runner non si scrive nulla.
+Un test mai fallito non e' un test: e' uno specchio dell'implementazione. Ogni run porta l'hash
+del FILE di test, cosi' un test riscritto fra il rosso e il verde non puo' spacciare il rosso di
+un altro per il proprio. Se un esito sia un rosso lo decide red_signatures.py (#373); senza la
+firma del runner non si scrive nulla. Che il test colga il guasto che protegge: red_break.py.
 
 Exit: 0 PASS · 1 FAIL · 2 errore d'uso. Fail-closed ovunque.
 """
@@ -19,6 +19,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import red_signatures  # noqa: E402  — file accanto a questo, non un pacchetto
+import red_break  # noqa: E402  — `break`: il BREAK dichiarato, applicato in una copia
 
 
 # AC3: `pushd` non esiste in dash, `cd -` senza OLDPWD fallisce in bash e passa in dash.
@@ -100,7 +101,7 @@ def cmd_verify(a) -> int:
     except json.JSONDecodeError:
         print(f"log corrotto: riga non JSON in {log}", file=sys.stderr)
         return 1
-    mine = [r for r in runs if r.get("test") == a.test and not r.get("suite")]
+    mine = [r for r in runs if r.get("test") == a.test and not r.get("suite") and not r.get("break")]
     rossi, verdi = [r for r in mine if r.get("rosso")], [r for r in mine if not r.get("rosso")]
     if not mine:
         print(f"nessun run registrato per {a.test}", file=sys.stderr)
@@ -126,6 +127,8 @@ def _verdetto_ciclo(a, ciclo, runs) -> int:
         return 1
     if ultimo_rosso.get("file_sha") == "assente":
         print(f"il file di test non esiste: {_test_file(a.test)}", file=sys.stderr)
+        return 1
+    if getattr(a, "rompi", False) and red_break.refused(runs, a.test, ultimo_verde):
         return 1
     suite_cmd = getattr(a, "suite_cmd", None)
     if not suite_cmd:
@@ -179,20 +182,18 @@ def main() -> int:
                         ("suite", "esegue e registra la suite rilevante per l'handoff")):
         p = sub.add_parser(nome, help=aiuto)
         p.add_argument("--test", required=True, help="node id, es. tests/test_x.py::test_y")
-        p.add_argument("--cmd", required=True)
-        p.add_argument("--out", required=True)
+        for flag in ("--cmd", "--out"):
+            p.add_argument(flag, required=True)
     v = sub.add_parser("verify", help="il test e' stato rosso, poi verde, senza essere riscritto?")
-    v.add_argument("--log", required=True)
-    v.add_argument("--test", required=True)
+    for flag in ("--log", "--test"):
+        v.add_argument(flag, required=True)
     v.add_argument("--suite-cmd", help="richiede una suite verde registrata dopo il GREEN")
+    rompi = red_break.add_parser(sub, v, (_run, _sha))
     a = ap.parse_args()
     if a.selfcheck:
         return _selfcheck()
-    azioni = {"record": cmd_record, "suite": cmd_suite, "verify": cmd_verify}
-    if a.azione in azioni:
-        return azioni[a.azione](a)
-    ap.print_help()
-    return 2
+    azioni = {"record": cmd_record, "suite": cmd_suite, "verify": cmd_verify, **rompi}
+    return azioni[a.azione](a) if a.azione in azioni else (ap.print_help() or 2)
 
 
 if __name__ == "__main__":

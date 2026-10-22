@@ -1,6 +1,6 @@
 ---
 title: polaris-sweep — perché ogni flag dell'invocazione Codex esiste
-description: La tabella why-per-flag della Phase 3c. Tutti e quattro i fallimenti osservati dal vivo il 2026-07-26 (PR #117/#138) — vedi BUG-HISTORY.md per il racconto completo. Da leggere PRIMA di cambiare qualunque flag.
+description: La tabella why-per-flag della Phase 3c. Tutti e quattro i fallimenti osservati dal vivo il 2026-07-26 — vedi BUG-HISTORY.md per il racconto completo. Da leggere PRIMA di cambiare qualunque flag.
 status: active
 ---
 

@@ -30,7 +30,7 @@ status: active
 ## Codex adversarial
 
 - 🔴 [Critical] ... | _(none)_
-- ⚠️ se Codex non-run: "Lens replaced by /code-review" + i suoi finding (vedi Phase 3c-fallback)
+- ⚠️ se Codex non-run: "Lens replaced by the Standards + Spec fallback" + i suoi finding (vedi Phase 3c-fallback)
 
 ## Verified clean (checked, not findings)
 

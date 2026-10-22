@@ -1,0 +1,4 @@
+# example
+add_test.go:7:1: expected operand, found '}'
+FAIL	example [setup failed]
+FAIL

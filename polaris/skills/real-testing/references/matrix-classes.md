@@ -28,6 +28,27 @@ sbagliato, dipendenza mai installata pulita, browser mai aperto davvero.
 | `docs` | link, comandi copiabili, residui | link/checker mirato; niente stack se non rilevante | no |
 | `test-only` | il test fallisce davvero sul difetto | prova negativa o mutation mirata | no |
 
+## Asse degli attacchi (`verdict_attack.py`)
+
+La classe dice **dove** atterra la modifica; l'attacco dice **come** è stata colpita. Ogni riga ha una
+lista `attack`: ogni voce nomina una classe, e o è `run` con `probe` e `result`, o è `n/a` con `reason`.
+Una riga `live` di classe `api-cli`, `llm-agent` o `frontend` senza almeno un attacco `run` è rifiutata.
+
+| Attacco | Cosa prova |
+|---|---|
+| `malformed-input` | JSON rotto, campi mancanti, stringhe enormi, Unicode strano, path tipo traversal |
+| `interruption` | continue/stop ripetuti, output tagliato a metà, retry dopo progresso parziale |
+| `prompt-injection` | testo che prova a scavalcare le regole, saltare la verifica, dichiarare successo |
+| `cancel-resume` | annullo a metà, poi ripresa o ripartenza da stato in corso rimasto |
+| `stale-state` | file di stato vecchi, sessioni che non combaciano, metadati di fase contraddittori |
+| `dirty-worktree` | modifiche e file non tracciati preesistenti restano intatti |
+| `hung-command` | un comando che non torna: timeout limitato, figlio ucciso, ripresa |
+| `flaky` | politica di rerun: un passaggio fortunato non è verde |
+| `misleading-success` | parole di successo con exit diverso da 0, test saltati, log parziali |
+
+Un harness costruito male (import sbagliato, interpolazione di shell, ambiente che trapela) non è un
+difetto del prodotto: si classifica come detrito, si ripara e si ripete la prova.
+
 ## Regole di evidenza (`verdict.py validate_evidence`)
 
 - `evidence: live` → richiede `evidence_artifact` che esista, non sia vuoto, e sia **piu' recente**
@@ -44,9 +65,8 @@ sbagliato, dipendenza mai installata pulita, browser mai aperto davvero.
 Dal piu' economico, fermati quando il contratto e' provato — non oltre:
 
 1. test mirati
-2. CLI/modulo reale — se il repo ha un manifest `flow-cli` (job separato della suite, convenzione
-   attesa `.flow-cli/manifest.json`, verificare quando quel job e' costruito), usa i suoi comandi
-   invece di improvvisare l'invocazione
+2. CLI/modulo reale — se il repo dichiara i comandi dei suoi flussi (un manifest o uno script
+   documentato), usa quelli invece di improvvisare l'invocazione
 3. stack locale reale con DB/queue/storage
 4. browser locale reale
 5. provider sandbox/staging

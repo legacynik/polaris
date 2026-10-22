@@ -3,8 +3,7 @@
 One criterion: **it passed before this door existed, and now it must fail.** Every case is one
 command. Run them from `crasher/`.
 
-The baseline is the crasher as it stood on the abandoned `feat/crasher-skill` branch (#113,
-closed): it drove the app and printed a transcript. Nothing in it refused a verdict, and nothing
+The baseline is the crasher as it stood on the abandoned `feat/crasher-skill` branch (closed): it drove the app and printed a transcript. Nothing in it refused a verdict, and nothing
 gave a finding a stable identity — so both of the failures below were legal.
 
 ```bash

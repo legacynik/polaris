@@ -6,6 +6,7 @@ input assente, vuoto o illeggibile non produce MAI 0.
 """
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
@@ -223,7 +224,7 @@ def stage_rosso(rec: dict, contract: dict) -> int:
     tr = contract.get("tdd_dev") or contract.get("tdd_red")  # compat: old product contracts
     if not tr:
         return _fail(["contratto senza 'tdd_dev': il verificatore del rosso non si improvvisa"])
-    checker = Path(str(tr)) / "scripts" / "red_check.py"
+    checker = Path(str(tr)).expanduser() / "scripts" / "red_check.py"
     if not checker.is_file():
         return _fail([f"tdd-dev non trovato in {tr} (atteso scripts/red_check.py)"])
     r = subprocess.run([sys.executable, str(checker), "verify",
@@ -293,8 +294,8 @@ def _thrashing(rec: dict) -> bool:
             e = json.loads(line)
         except json.JSONDecodeError:
             continue
-        if e.get("test") == rec.get("test") and e.get("rosso"):
-            reds += 1
+        if e.get("test") == rec.get("test") and e.get("rosso") and not e.get("break"):
+            reds += 1  # a red break is the test catching a planted defect, not a failed fix
     return reds >= 4
 
 
@@ -322,7 +323,7 @@ def stage_realtest(rec: dict, contract: dict) -> int:
     rt = contract.get("real_test")
     if not rt:
         return _fail(["contratto senza 'real_test': il perimetro del real-test non si improvvisa"])
-    verdict = Path(rt) / "scripts" / "verdict.py"
+    verdict = Path(str(rt)).expanduser() / "scripts" / "verdict.py"
     if not verdict.is_file():
         return _fail([f"real-test non trovato in {rt} (atteso scripts/verdict.py)"])
     if not _has(rec, "verdict_path"):
@@ -582,6 +583,20 @@ def _selfcheck() -> int:
             f'dominii: [auth, billing]\ntdd_dev: {tdd}\n', encoding="utf-8")
         check(st("rosso", "test: t.py::a\nrosso_log: /tmp/r.jsonl\n") == 0,
               "rosso: tdd-dev e' la porta canonica -> PASS")
+        old_home = os.environ.get("HOME")
+        os.environ["HOME"] = str(repo)
+        try:
+            (repo / ".fix" / "contract.yml").write_text(
+                'dominii: [auth, billing]\ntdd_dev: ~/tdd\n', encoding="utf-8")
+            check(st("rosso", "test: t.py::a\nrosso_log: /tmp/r.jsonl\n") == 0,
+                  "rosso: tdd_dev con ~ si espande (contratto committabile) -> PASS")
+        finally:
+            if old_home is None:
+                os.environ.pop("HOME", None)
+            else:
+                os.environ["HOME"] = old_home
+        (repo / ".fix" / "contract.yml").write_text(
+            f'dominii: [auth, billing]\ntdd_dev: {tdd}\n', encoding="utf-8")
 
         # --- raccolto: un test che la CI non raccoglie e' orfano (R5)
         check(st("raccolto") == 1, "raccolto: 'test' assente -> FAIL")

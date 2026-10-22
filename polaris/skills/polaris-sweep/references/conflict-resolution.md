@@ -210,7 +210,7 @@ Every step is idempotent:
 
 Multiple sweep ticks on the same conflicting PR converge to the same outcome — no thrashing, no double-rebase.
 
-## Concurrency with parallel-issue-flow
+## Concurrency with a live implementation session
 
 If a Hand session is currently mid-implementation on the same branch (Hand-owned worktree alive, session attached), polaris-sweep MUST NOT touch the branch. Check **before Step 0** (creating the sweep worktree is itself a write):
 

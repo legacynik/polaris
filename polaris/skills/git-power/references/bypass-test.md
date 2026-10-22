@@ -6,9 +6,8 @@ description: I test che devono fallire se qualcuno aggira il boundary del commit
 # Bypass-test
 
 Sei scenari: tre presi **verbatim** da una voce del registro (G7#2, G8#2) o dal near-miss
-misurato in `STATO-REPO.md`, tre aggiunti dopo l'attacco adversariale del 2026-08-09
-(`EVAL-cantiere-bypass.md`, verdetto DEBOLE — vie laterali L1/L3, e `EVAL-cantiere-copertura.md`,
-verdetto NON-COPRE su `reset --hard`/`.method`). Ognuno ha il comando eseguibile e cosa DEVE
+misurato sul repo, tre aggiunti dopo l'attacco adversariale del 2026-08-09
+(verdetto DEBOLE sulle vie laterali L1/L3, NON-COPRE su `reset --hard`/`.method`). Ognuno ha il comando eseguibile e cosa DEVE
 succedere. Se un comando qui sotto si comporta diversamente da quanto scritto, la skill non è
 blindata — non promuoverla.
 
@@ -71,7 +70,7 @@ git stash list | grep 'stash@{0}'    # DEVE esistere ancora
 stash stesso non c'entra nulla col merge (è "estraneo"): la regola è incondizionata finché il
 repo è mid-merge, perché è l'unico modo di non fidarsi di quale stash sia "innocuo".
 
-## 3 — Attività concorrente rilevata (near-miss reale, `STATO-REPO.md`)
+## 3 — Attività concorrente rilevata (near-miss reale)
 
 > *"L'agent che stava misurando acme-api ha beccato, durante la misura, un `git pull --rebase`
 > lanciato da un altro panel... per qualche secondo `git ls-files` ha restituito un albero
@@ -128,7 +127,7 @@ branch non mergiato, `reset --hard` su un tree sporco, e `stash clear` — tutti
 stessa primitiva, non da un wrapper che il chiamante può saltare. Selfcheck:
 `_selfcheck_direct_git_call_still_refuses`.
 
-## 5 — `.method/ledger.md` aperto (contratto `metodologia`, EVAL-copertura §4)
+## 5 — `.method/ledger.md` aperto
 
 > "`cantiere` drains/removes [ledger.md + .polaris-owner] when the worktree or branch closes" —
 > dichiarato da `metodologia/SKILL.md`, mai implementato prima di questo fix.

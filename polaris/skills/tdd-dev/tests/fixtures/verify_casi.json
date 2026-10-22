@@ -1,0 +1,276 @@
+[
+ {
+  "nome": "log assente",
+  "log": null,
+  "atteso": 1
+ },
+ {
+  "nome": "log vuoto",
+  "log": [],
+  "atteso": 1
+ },
+ {
+  "nome": "log corrotto: riga non JSON",
+  "raw": "non-json\n",
+  "atteso": 1
+ },
+ {
+  "nome": "solo verde: non ha mai fallito",
+  "log": [
+   {
+    "ts": "2026-01-01T00:00:00+00:00",
+    "test": "t.py::a",
+    "exit": 0,
+    "rosso": false,
+    "file_sha": "aaa"
+   }
+  ],
+  "atteso": 1
+ },
+ {
+  "nome": "solo rosso: il fix non c'e'",
+  "log": [
+   {
+    "ts": "2026-01-01T00:00:00+00:00",
+    "test": "t.py::a",
+    "exit": 1,
+    "rosso": true,
+    "file_sha": "aaa"
+   }
+  ],
+  "atteso": 1
+ },
+ {
+  "nome": "l'ultimo run e' rosso",
+  "log": [
+   {
+    "ts": "2026-01-02T00:00:00+00:00",
+    "test": "t.py::a",
+    "exit": 0,
+    "rosso": false,
+    "file_sha": "aaa"
+   },
+   {
+    "ts": "2026-01-03T00:00:00+00:00",
+    "test": "t.py::a",
+    "exit": 1,
+    "rosso": true,
+    "file_sha": "aaa"
+   }
+  ],
+  "atteso": 1
+ },
+ {
+  "nome": "test riscritto fra rosso e verde",
+  "log": [
+   {
+    "ts": "2026-01-01T00:00:00+00:00",
+    "test": "t.py::a",
+    "exit": 1,
+    "rosso": true,
+    "file_sha": "aaa"
+   },
+   {
+    "ts": "2026-01-02T00:00:00+00:00",
+    "test": "t.py::a",
+    "exit": 0,
+    "rosso": false,
+    "file_sha": "bbb"
+   }
+  ],
+  "atteso": 1
+ },
+ {
+  "nome": "il rosso e' di un ALTRO test",
+  "log": [
+   {
+    "ts": "2026-01-01T00:00:00+00:00",
+    "test": "altro.py::b",
+    "exit": 1,
+    "rosso": true,
+    "file_sha": "aaa"
+   },
+   {
+    "ts": "2026-01-02T00:00:00+00:00",
+    "test": "altro.py::b",
+    "exit": 0,
+    "rosso": false,
+    "file_sha": "aaa"
+   }
+  ],
+  "atteso": 1
+ },
+ {
+  "nome": "il file di test non esiste (sha assente)",
+  "log": [
+   {
+    "ts": "2026-01-01T00:00:00+00:00",
+    "test": "t.py::a",
+    "exit": 1,
+    "rosso": true,
+    "file_sha": "assente"
+   },
+   {
+    "ts": "2026-01-02T00:00:00+00:00",
+    "test": "t.py::a",
+    "exit": 0,
+    "rosso": false,
+    "file_sha": "assente"
+   }
+  ],
+  "atteso": 1
+ },
+ {
+  "nome": "rosso poi verde, stesso file",
+  "log": [
+   {
+    "ts": "2026-01-01T00:00:00+00:00",
+    "test": "t.py::a",
+    "exit": 1,
+    "rosso": true,
+    "file_sha": "aaa"
+   },
+   {
+    "ts": "2026-01-02T00:00:00+00:00",
+    "test": "t.py::a",
+    "exit": 0,
+    "rosso": false,
+    "file_sha": "aaa"
+   }
+  ],
+  "atteso": 0
+ },
+ {
+  "nome": "handoff senza suite registrata",
+  "log": [
+   {
+    "ts": "2026-01-01T00:00:00+00:00",
+    "test": "t.py::a",
+    "exit": 1,
+    "rosso": true,
+    "file_sha": "aaa"
+   },
+   {
+    "ts": "2026-01-02T00:00:00+00:00",
+    "test": "t.py::a",
+    "exit": 0,
+    "rosso": false,
+    "file_sha": "aaa"
+   }
+  ],
+  "suite_cmd": "python3 -m pytest",
+  "atteso": 1
+ },
+ {
+  "nome": "suite registrata ma rossa",
+  "log": [
+   {
+    "ts": "2026-01-01T00:00:00+00:00",
+    "test": "t.py::a",
+    "exit": 1,
+    "rosso": true,
+    "file_sha": "aaa"
+   },
+   {
+    "ts": "2026-01-02T00:00:00+00:00",
+    "test": "t.py::a",
+    "exit": 0,
+    "rosso": false,
+    "file_sha": "aaa"
+   },
+   {
+    "ts": "2026-01-03T00:00:00+00:00",
+    "test": "t.py::a",
+    "suite": true,
+    "cmd": "python3 -m pytest",
+    "exit": 1
+   }
+  ],
+  "suite_cmd": "python3 -m pytest",
+  "atteso": 1
+ },
+ {
+  "nome": "suite verde prima del GREEN mirato",
+  "log": [
+   {
+    "ts": "2026-01-01T00:00:00+00:00",
+    "test": "t.py::a",
+    "suite": true,
+    "cmd": "python3 -m pytest",
+    "exit": 0
+   },
+   {
+    "ts": "2026-01-02T00:00:00+00:00",
+    "test": "t.py::a",
+    "exit": 1,
+    "rosso": true,
+    "file_sha": "aaa"
+   },
+   {
+    "ts": "2026-01-03T00:00:00+00:00",
+    "test": "t.py::a",
+    "exit": 0,
+    "rosso": false,
+    "file_sha": "aaa"
+   }
+  ],
+  "suite_cmd": "python3 -m pytest",
+  "atteso": 1
+ },
+ {
+  "nome": "suite diversa da quella dichiarata",
+  "log": [
+   {
+    "ts": "2026-01-01T00:00:00+00:00",
+    "test": "t.py::a",
+    "exit": 1,
+    "rosso": true,
+    "file_sha": "aaa"
+   },
+   {
+    "ts": "2026-01-02T00:00:00+00:00",
+    "test": "t.py::a",
+    "exit": 0,
+    "rosso": false,
+    "file_sha": "aaa"
+   },
+   {
+    "ts": "2026-01-03T00:00:00+00:00",
+    "test": "t.py::a",
+    "suite": true,
+    "cmd": "python3 -m pytest",
+    "exit": 0
+   }
+  ],
+  "suite_cmd": "python3 -m unittest",
+  "atteso": 1
+ },
+ {
+  "nome": "rosso, verde e suite successiva",
+  "log": [
+   {
+    "ts": "2026-01-01T00:00:00+00:00",
+    "test": "t.py::a",
+    "exit": 1,
+    "rosso": true,
+    "file_sha": "aaa"
+   },
+   {
+    "ts": "2026-01-02T00:00:00+00:00",
+    "test": "t.py::a",
+    "exit": 0,
+    "rosso": false,
+    "file_sha": "aaa"
+   },
+   {
+    "ts": "2026-01-03T00:00:00+00:00",
+    "test": "t.py::a",
+    "suite": true,
+    "cmd": "python3 -m pytest",
+    "exit": 0
+   }
+  ],
+  "suite_cmd": "python3 -m pytest",
+  "atteso": 0
+ }
+]

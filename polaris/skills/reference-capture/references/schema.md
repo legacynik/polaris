@@ -37,7 +37,7 @@ reference_depth: deep
 reference_relevance: core
 reference_status: verified
 serves: [polaris]
-domains: [wiki, memoria]
+domains: [search, memory]
 aliases: [atono, document workflow]
 capabilities: [source lineage, item context, version restore]
 related:

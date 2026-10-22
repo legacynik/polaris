@@ -22,6 +22,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import perimeter  # noqa: E402
 import verdict_checks as vc  # noqa: E402
+from verdict_attack import check as check_attack  # noqa: E402
 
 def validate(verdict_path: Path, repo: Path, perim: dict) -> tuple[bool, list[str]]:
     """Valida un verdetto GIA' scritto contro un perimetro GIA' calcolato (3 param, non 4:
@@ -38,6 +39,7 @@ def validate(verdict_path: Path, repo: Path, perim: dict) -> tuple[bool, list[st
         + vc.validate_branches_covered(v, perim["new_branches"])
         + vc.validate_evidence(v, repo)
         + vc.validate_raccolto(v)
+        + check_attack(v)
     )
     return (not errs), errs
 
@@ -62,7 +64,7 @@ def _guess_class(path: str) -> str:
 def new_template(repo: Path, base_ref: str | None, head_ref: str) -> dict:
     perim = perimeter.build_perimeter(repo, base_ref, head_ref)
     matrix = [{"file": f, "class": _guess_class(f), "evidence": "assumed",
-               "evidence_artifact": None, "exception_ticket": None, "branches_exercised": []}
+               "evidence_artifact": None, "exception_ticket": None, "branches_exercised": [], "attack": []}
               for f in perim["files"]]
     return {
         "verdetto": "NOT-MERGEABLE",

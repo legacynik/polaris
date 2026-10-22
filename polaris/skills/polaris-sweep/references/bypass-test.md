@@ -18,7 +18,7 @@ python3 polaris-sweep/scripts/sweep_gate.py automerge ...
 
 **Nessuno script esisteva**: Phase 4.5 era prosa, quindi qualunque verdetto scritto bene
 autorizzava l'auto-merge. L'evidenza sul campo è il run-state REALE
-`_polaris/sweep/runs/acme-quotes/pr-59.md` (2026-05-01): dichiara `auto_mergeable: true`
+`_polaris/sweep/runs/acme-app/pr-59.md` (2026-05-01): dichiara `auto_mergeable: true`
 **senza** `head_sha`, senza `attestazione`, senza `risk` nel frontmatter.
 
 ---
@@ -64,7 +64,7 @@ un codice che non esiste più. PRIMA: il run-state non registrava nemmeno la SHA
 **DOPO** — eseguito 2026-08-17 su v1.0.0, contro il run-state reale pre-v1:
 
 ```bash
-python3 scripts/sweep_gate.py automerge --run _polaris/sweep/runs/acme-quotes/pr-59.md \
+python3 scripts/sweep_gate.py automerge --run _polaris/sweep/runs/acme-app/pr-59.md \
   --pr-head deadbeef123 --files files-59.txt
 NEGATO: campo 'head_sha' assente o vuoto nel run-state: senza, il verdetto non e' legato a niente
 NEGATO: campo 'attestazione' assente o vuoto nel run-state: senza, il verdetto non e' legato a niente

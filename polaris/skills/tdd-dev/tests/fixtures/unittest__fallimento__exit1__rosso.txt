@@ -1,0 +1,14 @@
+F
+======================================================================
+FAIL: test_add (ut_fail.T.test_add)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/lab/ut_fail.py", line 4, in test_add
+    self.assertEqual(1 + 1, 3)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^
+AssertionError: 2 != 3
+
+----------------------------------------------------------------------
+Ran 1 test in 0.000s
+
+FAILED (failures=1)

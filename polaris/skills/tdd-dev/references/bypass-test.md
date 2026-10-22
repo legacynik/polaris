@@ -13,8 +13,8 @@ stavi per curare non esiste — ci si ferma (SPEC-MADRE, Fase 2).
 
 ## B1 — la CLI `record` è inagibile: collisione argparse su `dest="cmd"`
 
-`fails_before:` `tdd-red v0.1.0` — bug confermato 2 volte in run indipendenti dell'eval sul campo
-(`docs/skill-refactor/2026-08-16-bugfix-eval/VERDICT.md`, R6): entrambi i bracci suite l'hanno
+`fails_before:` `v0.1.0` — bug confermato 2 volte in run indipendenti dell'eval sul campo
+(R6): entrambi i bracci suite l'hanno
 aggirato importando il modulo, e un loop non presidiato si sarebbe fermato lì.
 
 Il difetto: `add_subparsers(dest="cmd")` e l'opzione `--cmd` del subparser `record` scrivono sullo

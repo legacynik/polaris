@@ -4,7 +4,7 @@ Empirical bugs from real Sweep runs. Each links to a regression test in `evals/e
 
 ## 2026-04-28 — sweep-pending jq filter bug (cost ~$1.30/h waste)
 
-**Symptom**: Sweep cron fires every 15 min. After review of PR #50 + #52, Sweep kept re-reviewing the same PRs every subsequent tick. Each re-review costs ~$0.17 (token-equivalent). With 2 PRs open, ~$1.30/h waste until fixed.
+**Symptom**: Sweep cron fires every 15 min. After review of two PRs, Sweep kept re-reviewing the same PRs every subsequent tick. Each re-review costs ~$0.17 (token-equivalent). With 2 PRs open, ~$1.30/h waste until fixed.
 
 **Root cause**: `sweep-pending.sh` (cron entry-point script that lists pending PRs and dispatches `polaris-sweep.sh` per PR) had a buggy jq filter:
 ```bash
@@ -32,7 +32,7 @@ This bug is in the wrapper script, not in the skill. But it's a reminder: when a
 
 ## 2026-04-28 — auto-merge gate triggered too late (manual label-toggle workaround)
 
-**Symptom**: PR #50 had ✅ approve verdict from Sweep at 18:48 UTC. Auto-merge GHA didn't fire until 18:54 UTC, only after I manually toggled a label on the PR.
+**Symptom**: a PR had ✅ approve verdict from Sweep at 18:48 UTC. Auto-merge GHA didn't fire until 18:54 UTC, only after I manually toggled a label on the PR.
 
 **Root cause**: auto-merge GHA's trigger list was [pull_request_target.labeled, pull_request_review.submitted, check_suite.completed]. Sweep posts a *comment* (not a review), so none of those events fired. The gate sat waiting indefinitely.
 
@@ -54,7 +54,7 @@ The Sweep skill itself was robust during the dogfood; the bugs were in adjacent 
 
 ## 2026-07-26 — Phase 3c Codex invocation was broken in four independent ways (cost ~2h wall-clock, 2 runs, zero output)
 
-**Context**: first real Sweep run on `acme-api`, PRs #117 (2378+/325−, 65 files) and #138 (955+/411−, 26 files). Both reviews completed and posted; only the Codex lens failed, twice, for four different reasons stacked on each other.
+**Context**: first real Sweep run on `acme-api`, PR A (2378+/325−, 65 files) and PR B (955+/411−, 26 files). Both reviews completed and posted; only the Codex lens failed, twice, for four different reasons stacked on each other.
 
 **Symptoms, in the order they were hit**:
 1. `codex exec` from a non-repo cwd (a scratchpad dir) aborted immediately: `"Not inside a trusted directory and --skip-git-repo-check was not specified"`. Zero-byte output, exit 0 — indistinguishable from "found nothing".
@@ -64,7 +64,7 @@ The Sweep skill itself was robust during the dogfood; the bugs were in adjacent 
 
 **A fifth, self-inflicted**: the 4th run was launched via the `Bash` tool with `timeout: 960000`, which exceeds the tool's 600000 ms cap and is silently clamped — the harness SIGTERMed it at exactly 10:00, which reads exactly like a hang. Long Codex runs must be `nohup … &` detached and polled, never foreground.
 
-**Also wrong, independent of the hangs**: the prompt pasted `$(cat diff | head -500)` inline. On the #117 diff that is 500 of 3992 lines — 87% discarded — while still producing a confident-looking review. Write the diff to a file inside the repo and point Codex at the path; it can read it, and it can read the surrounding source too, which is what makes the findings verifiable.
+**Also wrong, independent of the hangs**: the prompt pasted `$(cat diff | head -500)` inline. On the PR A diff that is 500 of 3992 lines — 87% discarded — while still producing a confident-looking review. Write the diff to a file inside the repo and point Codex at the path; it can read it, and it can read the surrounding source too, which is what makes the findings verifiable.
 
 **Fix shipped** (this commit, SKILL.md Phase 3c rewritten): `nohup timeout 900 codex exec --sandbox read-only --skip-git-repo-check --output-schema … --output-last-message … "$(cat prompt.md)" < /dev/null > run.log 2>&1 &`, no `--full-auto`, diff passed by path, plus a HARD CONSTRAINTS block in the prompt forbidding test execution and network access and requiring the JSON as the final message. `--output-schema` added because `--output-last-message` is not guaranteed (Codex can end on a tool block and never write the file); `grep -a` documented as the log fallback. New Phase 3c-fallback: when a lens does not run, mark the section ⚠️ **Not run**, state the review is two lenses not three, and record `codex: not-run (<reason>)` in run state — never leave "will be filled in later" on a client-visible PR comment.
 
@@ -76,7 +76,7 @@ The Sweep skill itself was robust during the dogfood; the bugs were in adjacent 
 
 ## 2026-07-26 — "verified clean" retracted: checked the file that RENDERS the parent, not the file that OWNS the behaviour
 
-**Symptom**: Sweep revision 1 on PR #138 reported, under *Verified clean*, that two deleted frontend test files were "already dead — the seam was refactored away earlier on main". Wrong. The tests were live and passing on `main`, and the PR under review is what removed the behaviour they covered.
+**Symptom**: Sweep revision 1 on PR PR B reported, under *Verified clean*, that two deleted frontend test files were "already dead — the seam was refactored away earlier on main". Wrong. The tests were live and passing on `main`, and the PR under review is what removed the behaviour they covered.
 
 **Root cause**: the deleted assertions targeted `data-testid="inline-chat-panel-wrapper"` from inside `OnboardingTab.test.tsx`. I verified by diffing **`OnboardingTab.tsx`** (`git diff --stat origin/main FETCH_HEAD` → empty, 88 lines, no chat panel) and concluded the seam was gone before this PR. But `OnboardingTab` only renders `NewCaseForm`, and the panel lives at `NewCaseForm.tsx:772` on `main` — a file this PR changes by -93 lines. The right check was one `git grep` across the whole frontend tree on both refs:
 ```bash

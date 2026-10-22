@@ -4,10 +4,9 @@ description: Un caso per gate. Ognuno dichiara fails_before e riporta l'output d
 status: active
 ---
 
-# Bypass-test di `bugfix` (gate per-tappa, ex `fix-gate`)
+# Bypass-test di `bugfix` (gate per-tappa)
 
-B1–B4 sono nati sotto `fix-gate` v0.1.0, assorbita in `bugfix` il 2026-08-17 (ADR porta-unica:
-il gate del workflow vive NEL workflow). I comandi valgono invariati con
+B1–B4 sono nati col gate v0.1.0, che dal 2026-08-17 vive dentro `bugfix`. I comandi valgono invariati con
 `bugfix/scripts/fix_gate.py`.
 
 Regola: il caso si scrive **prima** del codice, e deve **riuscire**. Se non riesce, il difetto che
@@ -17,7 +16,7 @@ stavi per curare non esiste — ci si ferma (SPEC-MADRE, Fase 2).
 
 ## B1 — record senza dominio né classe
 
-`fails_before:` `fix-gate v0` (nessuno script esisteva)
+`fails_before:` gate `v0` (nessuno script esisteva)
 
 ```bash
 printf -- '---\nid: t\nrepo: r\nstato: aperto\n---\n' > /tmp/b1.md
@@ -30,7 +29,7 @@ python3 scripts/fix_gate.py check --stage ingresso --record /tmp/b1.md --repo . 
 zsh: command not found: fix_gate.py     → exit=127, il record passa
 ```
 
-**DOPO** — eseguito 2026-08-11 su `fix-gate v0.1.0`:
+**DOPO** — eseguito 2026-08-11 su gate `v0.1.0`:
 
 ```
 FAIL: campi mancanti o vuoti nel record: dominio, classe, cecita, sorgente
@@ -41,9 +40,9 @@ exit=1
 
 ## B2 — valore-placeholder che soddisfa il controllo di presenza
 
-`fails_before:` `fix-gate v0.1.0-pre` (prima variante, controllava solo che la chiave ci fosse)
+`fails_before:` gate `v0.1.0-pre` (prima variante, controllava solo che la chiave ci fosse)
 
-È il bypass che ha già colpito questa suite: `piano-spec` accettava `deadline: .` e `serves: .`
+È il bypass che ha già colpito questa suite: un validatore di piani accettava `deadline: .` e `serves: .`
 senza nemmeno stampare un warning.
 
 ```bash
@@ -67,7 +66,7 @@ I valori trattati come assenti: `` (vuoto) · `.` · `-` · `--` · `?` · `tbd`
 
 ## B3 — contratto assente, controllo disattivato in silenzio
 
-`fails_before:` `fix-gate v0.1.0-pre`
+`fails_before:` gate `v0.1.0-pre`
 
 Il caso peggiore, e il più facile da scrivere per sbaglio: se il contratto manca, `dominii` è
 `None`, e un controllo scritto come «se c'è la lista, verifica» **salta senza dire niente** — il
@@ -93,7 +92,7 @@ exit=1
 
 ## B4 — stage non implementato che passa
 
-`fails_before:` `fix-gate v0.1.0-pre`
+`fails_before:` gate `v0.1.0-pre`
 
 Chiedere una tappa che non esiste ancora non deve produrre un PASS: sarebbe un modo di saltare
 l'intero workflow scrivendo un nome sbagliato.
@@ -118,8 +117,8 @@ non esistono, non si passa da lì per sbaglio.
 
 `fails_before:` `bugfix v0.1.0` (nessuna tappa controllava il raccolto)
 
-È R5 dell'eval sul campo (`docs/skill-refactor/2026-08-16-bugfix-eval/VERDICT.md`): il braccio
-suite su Acme-quotes #876 ha committato un test nuovo che **nessun workflow CI referenzia** — la fase ④
+È R5 dell'eval sul campo: il braccio
+suite su un repo prodotto ha committato un test nuovo che **nessun workflow CI referenzia** — la fase ④
 si è chiusa su un test che protegge solo chi lo lancia a mano. Il legacy aveva il raccolto già nel
 subset di `ci.yml`.
 
@@ -164,8 +163,7 @@ inesistente, pytest exit 4): `FAIL: la raccolta CI fallisce (exit 4)` — mai PA
 
 ## B6 — thrashing: il quarto tentativo di fix invece di questionare l'architettura
 
-`fails_before:` `bugfix v1.0.0` — donatrice: superpowers `systematic-debugging` («3+ failed
-fixes → STOP, question the architecture»), censimento donatori 2026-08-17.
+`fails_before:` `bugfix v1.0.0` — regola: 3+ fix falliti → STOP, si riesamina l'architettura.
 
 Setup: `rosso_log` con **4 run rossi** dello stesso test e poi un verde; contratto con
 `test.suite: /usr/bin/true`.
@@ -185,8 +183,8 @@ Con `architettura_riesaminata:` dichiarato → PASS (escape esplicito, mai silen
 
 ## B7 — chiamanti elencati a memoria, mai prodotti da un comando
 
-`fails_before:` `bugfix v1.0.0` — donatrice: `bug-protocol` (incidente #107: fix al sito
-primario coi chiamanti mai guardati = fix muto, spedito silenzioso).
+`fails_before:` `bugfix v1.0.0` — un fix al sito primario coi chiamanti mai guardati è un fix
+muto, spedito silenzioso.
 
 Comando: `check --stage raggio` su record con `chiamanti: [f_a, f_b]` + assi issue dichiarati,
 **senza** `chiamanti_cmd`.
@@ -226,7 +224,7 @@ references/call_hierarchy.
 
 ## B10 — fail-open del `verde`: `cd x && suite` eseguiva `/usr/bin/cd`, exit 0, zero test
 
-`fails_before:` `bugfix v1.1.1` — trovato dal **validatore sul campo** (eval Acme-quotes #771,
+`fails_before:` `bugfix v1.1.1` — trovato dal **validatore sul campo** (eval su un repo prodotto,
 2026-08-17): il contratto reale diceva `cd backend && PYTHONPATH=... pytest`; `shlex.split`
 senza shell lo trasformava in argv `["cd","backend","&&",...]` → su macOS `/usr/bin/cd` esiste,
 ignora gli argomenti ed **esce 0**: la suite non girava MAI e `verde` passava. Il peggior
@@ -241,7 +239,7 @@ Comando: `fix_gate.py check --stage verde --record rec.md --repo .`
 Fix: i comandi del CONTRATTO girano con la shell (`_sh`, fiducia = Makefile del repo) su tutte
 le tappe che eseguono (`riproduzione`, `verde`, `raccolto`, `prod`) + guardia sul **127**: un
 comando non trovato non è mai né un rosso né una riproduzione — è errore, detto forte. Stesso
-fix in `red_check.py` di tdd-red (che registrava VERDE farlocco sullo stesso pattern), più il
+fix in `red_check.py` di tdd-dev (che registrava VERDE farlocco sullo stesso pattern), più il
 difetto C: `record` su file di test irrisolvibile ora è errore d'uso SUBITO, non un
 `file_sha: assente` silenzioso che affiora solo al verify.
 

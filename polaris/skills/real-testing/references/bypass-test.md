@@ -1,6 +1,6 @@
 ---
 title: real-test — bypass-test (deve fallire se qualcuno aggira il gate)
-description: 9 tentativi di aggiramento contro un repo git usa-e-getta (5 originali + 4 da EVAL-real-test-bypass.md). Ognuno DEVE essere bloccato tranne l'esenzione sul branch default e il bypass esplicito, che devono passare MA lasciare traccia in bypass.log — mai un aggiramento silenzioso (R8 del registro, 208 occorrenze misurate).
+description: 9 tentativi di aggiramento contro un repo git usa-e-getta (5 originali + 4 da un attacco adversariale). Ognuno DEVE essere bloccato tranne l'esenzione sul branch default e il bypass esplicito, che devono passare MA lasciare traccia in bypass.log — mai un aggiramento silenzioso (208 occorrenze misurate).
 status: active
 ---
 
@@ -8,7 +8,7 @@ status: active
 
 Materializza un repo git vero (non una directory finta), prova 9 modi di aggirare il gate:
 5 contro `gate.sh` (il fast-path Claude-Code), 4 contro l'ancora reale — il git hook installato
-da `install-hook.sh` — che sono le vie laterali trovate da EVAL-real-test-bypass.md quando la
+da `install-hook.sh` — che sono le vie laterali trovate dall'attacco adversariale quando la
 sola simulazione via payload JSON non basta piu' a fermare un `git commit` VERO.
 Se anche UNO di questi passa senza dover bloccare, il gate e' dichiarato, non blindato.
 

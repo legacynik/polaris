@@ -1,0 +1,42 @@
+[
+  {
+    "file": "candidates/good_1.py",
+    "verdict": "VALUABLE",
+    "reason": null
+  },
+  {
+    "file": "candidates/good_2.py",
+    "verdict": "VALUABLE",
+    "reason": null
+  },
+  {
+    "file": "candidates/weak_private.py",
+    "verdict": "WEAK",
+    "reason": "refactor_failed"
+  },
+  {
+    "file": "candidates/weak_source.py",
+    "verdict": "WEAK",
+    "reason": "refactor_failed"
+  },
+  {
+    "file": "candidates/weak_prose.py",
+    "verdict": "WEAK",
+    "reason": "base_passed"
+  },
+  {
+    "file": "candidates/weak_fixture.py",
+    "verdict": "WEAK",
+    "reason": "base_passed"
+  },
+  {
+    "file": "candidates/weak_argv.py",
+    "verdict": "WEAK",
+    "reason": "base_passed"
+  },
+  {
+    "file": "candidates/weak_tautology.py",
+    "verdict": "WEAK",
+    "reason": "base_passed"
+  }
+]

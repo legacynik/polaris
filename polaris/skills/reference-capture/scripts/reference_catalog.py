@@ -16,9 +16,11 @@ from urllib.parse import quote, unquote
 
 
 
-# The root list is part of the commit, not of whoever's shell ran the build:
-# an undeclared root cannot be told apart from a legitimately absent dossier.
-ROOTS_FILE = Path(__file__).resolve().parents[3] / "references" / "CATALOG.roots"
+# The root list is part of the commit, not of whoever's shell ran the build: an undeclared root
+# cannot be told apart from a legitimately absent dossier. It lives in the repository being built,
+# at `<top-level>/references/CATALOG.roots`, never beside this script.
+ROOTS_NAME = Path("references") / "CATALOG.roots"
+RAW_DIRS = {"source", "sources"}  # where an ingest keeps the raw material beside its dossier
 
 DEPTHS = {"note", "study", "deep"}
 RELEVANCE = {"core", "adjacent", "watch"}
@@ -287,6 +289,11 @@ def find_source_claims(roots: list[Path], source_url: str) -> list[tuple[Path, b
             meta = parse_frontmatter(path)
             if target in _source_urls(meta):
                 claims.append((path.resolve(), meta.get("catalog") is True))
+    homes = {path.parent for path, admitted in claims if admitted}
+    # A dossier's own raw material (`source/transcript.md`, written by the ingest with the same
+    # URL) is not a second claimant; the same URL in a note anywhere else still is.
+    claims = [(path, admitted) for path, admitted in claims
+              if admitted or not (path.parent.name in RAW_DIRS and path.parent.parent in homes)]
     return sorted(set(claims))
 
 
@@ -560,7 +567,11 @@ def _selfcheck_roots_file() -> int:
         prior = out.read_text()
         roots_file.write_text("# self\n..\n# typo\n../../Gone Repo\n", encoding="utf-8")
         assert main(argv) == 1 and out.read_text() == prior, "missing root must not rewrite"
-        return 7
+        roots_file.write_text("..\n", encoding="utf-8")
+        _git(index, "init", "-q")
+        assert main(["--output", str(out)]) == 0, "roots come from the output's own repository"
+        assert main(["--output", str(base / "nogit" / "CATALOG.md")]) == 1, "outside a repo: refuse"
+        return 9
 
 
 def _git(repo: Path, *args: str) -> None:
@@ -848,11 +859,29 @@ def selfcheck() -> int:
     return 0
 
 
+def _roots_file_for(start: Path) -> Path:
+    """The roots file of the repository that holds `start` (the --output, or the cwd).
+
+    The script's own location says nothing about the repository being built: it is installed
+    outside every repository. Outside a git repository there is nothing to build into.
+    """
+    start = start.resolve()
+    while not start.is_dir() and start != start.parent:
+        start = start.parent
+    top = subprocess.run(["git", "-C", str(start), "rev-parse", "--show-toplevel"],
+                         capture_output=True, text=True)
+    if top.returncode != 0 or not top.stdout.strip():
+        raise CatalogError(f"{start} is not inside a git repository: run from the repo that owns "
+                           "the catalog, or pass --roots-file")
+    return Path(top.stdout.strip()) / ROOTS_NAME
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", action="append", type=Path, default=[],
                         help="override the declared roots file (repeatable)")
-    parser.add_argument("--roots-file", type=Path, default=ROOTS_FILE)
+    parser.add_argument("--roots-file", type=Path, default=None,
+                        help="default: references/CATALOG.roots of the checkout that holds --output")
     parser.add_argument("--output", type=Path)
     parser.add_argument("--lookup")
     parser.add_argument("--selfcheck", action="store_true")
@@ -862,10 +891,11 @@ def main(argv: list[str] | None = None) -> int:
     if not args.lookup and not args.output:
         parser.error("--output is required (or --lookup <url>)")
     try:
-        roots = resolve_roots(args.root, args.roots_file)
+        roots_file = args.roots_file or _roots_file_for(args.output.parent if args.output else Path.cwd())
+        roots = resolve_roots(args.root, roots_file)
         if args.lookup:
             return lookup(roots, args.lookup)
-        return build(roots, args.output, args.roots_file.parent.parent.resolve())
+        return build(roots, args.output, roots_file.parent.parent.resolve())
     except CatalogError as exc:
         print(f"FAIL — {exc}", file=sys.stderr)
         return 1

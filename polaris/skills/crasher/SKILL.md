@@ -1,7 +1,7 @@
 ---
 name: crasher
 description: ◇ Drive a deployed app like a user, hunt failures unattended, file ONE reproducible issue per confirmed crash, and judge whether a crasher run's no-crash verdict stands or is about to file a duplicate. Triggers on does staging still work, smoke the deployment, hunt regressions on the live app, is this run record believable. NOT for judging a diff (real-testing), fixing what it finds (bugfix), or load-testing a shared production database.
-version: 0.2.0
+version: 0.2.2
 user-invocable: true
 auto: false
 lifecycle: "the run record lives in the host repository's validation area and is the whole basis of a 'no crash found' claim; a confirmed finding becomes a GitHub issue through issue-contract and nothing else — no local bug list, no second register"
@@ -93,8 +93,8 @@ The two claims it can make are the two it can fake, so both are mechanical:
    twin — because that is the one proof this door can guarantee for every finding. A finding
    carrying a reproducing command is filed `--afk yes` and is claimable by an unattended agent; a
    transcript-only finding is filed `--afk no` and says so in its acceptance criteria instead of
-   pretending to be reproducible. The invocation also repeats the values as `--field` pairs under
-   the ids the Polaris issue forms use; if the host repository's template asks for others,
+   pretending to be reproducible. The contract's own fields reach the template from their flags;
+   `--field` carries only the repro, category and weight. If the host repository's template asks for others,
    `build_issue.py` names them and you add them — it never guesses a domain, because B12 rejects a
    label the repository's glossary does not hold.
 
@@ -109,7 +109,7 @@ The two claims it can make are the two it can fake, so both are mechanical:
   "attempted": ["/", "/login", "/items"],
   "findings": [
     {"route": "/items/new", "klass": "gen_hang", "symptom": "no result after 421s",
-     "domain": "gates", "priority": "p2", "repo_path": ".",
+     "domain": "gates", "priority": "p2", "impact": "2", "cost": "M", "repo_path": ".",
      "evidence": "runs/2026-09-08/transcript.log",
      "repro": "curl -f -m 180 $TARGET/api/items/new returns status 200"}
   ]
@@ -136,7 +136,7 @@ and remember B15: any file path it names must exist in the repository the issue 
 A finding filed with `--afk yes` carries a command that exits non-zero on the failure, which is
 exactly the admission criterion the unattended loop reads. That is how this door is a *source* for
 that loop rather than a second copy of it: it produces `afk:eligible` issues and stops. Claiming,
-branching, fixing and shipping belong to `bugfix`, `tdd-dev`, `real-testing` and `ship`.
+branching, fixing and shipping belong to `bugfix`, `tdd-dev`, `real-testing` and the repository's merge workflow.
 
 ## What this door does not close — declared
 

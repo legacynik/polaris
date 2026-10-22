@@ -1,12 +1,12 @@
 ---
 name: critic
 description: ◇ Use when a non-mechanical artifact must be attacked from fresh context before promotion or action, especially a diff, spec, plan, claim, census row, or another skill's output. Requires materialized evidence and falsification; do NOT use for routine code review, merge decisions, mechanical edits, or broad repository sweeps.
-version: 0.2.2
+version: 0.2.3
 user-invocable: true
 auto: false
 lifecycle: one .critic/<artifact-hash>.json per pass → caller validates it with critic_gate.py and drains it at its own gate
 invokes: []
-invoked-by: [human, skill-meta, architecture, review, wayfinder]
+invoked-by: [human, architecture, review]
 io: receives a materialized ARTIFACT directory plus CONTRACT, never the author's claim/reasoning/transcript → emits a validated JSON ledger with only quoted, falsified findings
 status: active
 ---
