@@ -45,11 +45,11 @@ that finds no map writes nothing it cannot place.
 
 ### init
 
-- **Purpose:** bring an existing repository into the harness: audit it, ask one question per unprovable choice, then write a minimal typed `CONTEXT.md`, `ARCHITECTURE.md` and `DOMAIN.md`.
+- **Purpose:** bring an existing repository into Polaris: audit it, ask one question per unprovable choice, then write a minimal typed `CONTEXT.md`, `ARCHITECTURE.md` and `DOMAIN.md`.
 - **Triggers:** on request, the first time a repository has no typed backbone, or when the context pack emits nothing there.
-- **Invokes:** none.
-- **Config:** `outputs.audit`; the harness location from `git config polaris.vault`.
-- **Never:** refactors, moves files, touches CI, derives documentation areas without a signature, guesses the harness path, or runs on a repository already sealed `READY`.
+- **Invokes:** none; it runs its own scripts and the installed `architecture` skill's backbone checker.
+- **Config:** `outputs.audit`. No vault is needed; with one, `apply` also sets `git config polaris.vault` and the ContextPack check runs.
+- **Never:** refactors, moves files, touches CI, derives documentation areas without a signature, copies its scripts into the repository, or runs on a repository already sealed `READY`.
 
 ## Plan
 
