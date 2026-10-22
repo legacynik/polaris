@@ -45,6 +45,17 @@ Changed
   of crashing.
 - `polaris-sweep` and `polaris-review` no longer name private infrastructure or unshipped skills.
 - `start`'s `config.yml` template shows a placeholder login (`your-github-login`), not a real one.
+- **`init` 0.4.0 needs no vault.** It ships its own scripts and uses the installed `architecture`
+  skill's backbone checker. Without a vault it audits, proposes and applies, writes no
+  `polaris.vault`, and skips only the ContextPack check, with one line.
+- Skill bodies and references are in English throughout (`polaris-sweep`, `end`, `plan-week`,
+  `update` and the bypass-test references). Strings that scripts print or tests match stay
+  verbatim. `pol-ship` records a missing contract field as `mode: reduced`.
+- Attributions moved out of the skill bodies into `CREDITS.md` for `end`, `plan-week` and
+  `database-schema`.
+- `start`'s `config.yml` template marks `contributors` as an optional roster that no skill reads.
+- `AGENTS.md` is short: the skills CLI is the only install path, and the skill list lives in the
+  README and `docs/skills.md`.
 - Docs: the README is rebuilt around the skills CLI and a phase table; new
   [docs/skills.md](docs/skills.md) reference, [CONTRIBUTING.md](CONTRIBUTING.md) and a
   [CREDITS.md](CREDITS.md) index; onboarding no longer requires Superpowers.

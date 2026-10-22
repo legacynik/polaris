@@ -251,4 +251,4 @@ that finds no map writes nothing it cannot place.
 
 ---
 
-28 skills, generated against 1d9b5e4.
+28 skills, generated against 7b3c822.
