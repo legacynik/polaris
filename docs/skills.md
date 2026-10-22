@@ -89,6 +89,7 @@ that finds no map writes nothing it cannot place.
 
 ### base-workflow
 
+- **Status:** draft (`status: draft` in its frontmatter): shipped and usable, its contract may still change.
 - **Purpose:** the build method for any code change: fixes the order (understand, spec, test first, verify, ship), routes each gated step to the skill that owns it, checks the pinned version's documentation before calling a library API, and takes every threshold from the repository's own rules (`CONSTRAINTS.md` first).
 - **Triggers:** auto, before and while writing any change that touches code: "add X", "fix Y", a pasted stack trace.
 - **Invokes:** none directly; it names `tdd-dev`, `real-testing`, `critic` and `architecture` for their steps.
@@ -133,6 +134,7 @@ that finds no map writes nothing it cannot place.
 
 ### polaris-review
 
+- **Status:** draft (`status: draft` in its frontmatter): shipped and usable, its contract may still change.
 - **Purpose:** read the diff as a senior reviewer would, on two separate axes: Standards (the repository's documented conventions) and Specification (what the originating issue asked for). A tier script picks the reviewers from the diff's size and risk paths; tier 3 adds `codex-review`.
 - **Triggers:** auto, before a commit or a merge, or to get the blockers on a branch.
 - **Invokes:** `critic`, `codex-review`.
