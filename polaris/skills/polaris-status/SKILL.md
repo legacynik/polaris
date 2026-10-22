@@ -2,7 +2,7 @@
 name: polaris-status
 description: Polaris skill — render an explicit, comprehensive status across a portfolio or one product repository, including live Git/GitHub pulse, active outcomes, team collisions, freshness, memory health, and the highest-leverage next move. Use for "polaris status", "pol status", "status completo", cross-repo priorities, portfolio briefing, or an explicit request to see everything. Do not use for "start", "resume", "continue", session recovery, or a single implementation task — `/start` is a local resume-only workflow.
 user-invocable: true
-version: 1.3.3
+version: 1.3.4
 ---
 
 # /polaris-status — observe the whole system
@@ -87,23 +87,11 @@ When the repo carries `_polaris/config.yml`, also read:
 Treat tracker and git evidence as current truth. Plans and handoffs express intent; name any
 disagreement instead of reconciling it silently.
 
-## Step 4 — Check memory and health without making them gates
+## Step 4 — Read the repository's notes without making them a gate
 
-Run health once in explicit full-status scope:
-
-```bash
-polmem health
-```
-
-If the command is missing, the repo is not memory-wired, or process inspection is denied by the
-host sandbox, report `memory health: unavailable/degraded` with the exact reason and continue.
-
-Read only the first screen of `.wiki/hot.md` when present. Run targeted recall only when an active
-outcome, blocker, or user question provides a concrete query:
-
-```bash
-polmem recall "<active outcome or blocker>" --top 3
-```
+Only when an active outcome, blocker, or user question provides a concrete query, search the
+repository's decision log and lessons at the declared paths for it. If the repository keeps none,
+skip this step.
 
 Memory is assumed context, never proof of current state. Verify current-state claims against code,
 git, GitHub, or the authoritative external system.

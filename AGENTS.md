@@ -17,7 +17,6 @@ relevant SKILL.md below and follow it exactly.
 | end | [polaris/skills/end/SKILL.md](polaris/skills/end/SKILL.md) | Close a session: handoff, decision/lesson proposals, optional pathspec-only commit |
 | plan-week | [polaris/skills/plan-week/SKILL.md](polaris/skills/plan-week/SKILL.md) | Your own weekly focus — yours to execute; only red work waits for a named approver |
 | report | [polaris/skills/report/SKILL.md](polaris/skills/report/SKILL.md) | Weekly report — planned versus actual, evidence from the tracker |
-| polaris-memory | [polaris/skills/polaris-memory/SKILL.md](polaris/skills/polaris-memory/SKILL.md) | Search/record team memory via the `polmem` CLI — recall-first before building; recall ≠ current state |
 | pr | [polaris/skills/pr/SKILL.md](polaris/skills/pr/SKILL.md) | Write a GitHub PR body with the smallest visual, before/after evidence and merge danger |
 | retro | [polaris/skills/retro/SKILL.md](polaris/skills/retro/SKILL.md) | On request, inspect a session and propose evidence-backed improvements to the agent environment |
 
@@ -27,17 +26,9 @@ relevant SKILL.md below and follow it exactly.
   The plugin sets `$CLAUDE_PLUGIN_ROOT`; a skills-CLI install needs nothing, because the fallback is
   where the CLI puts them. Working from a bare checkout instead, set `CLAUDE_PLUGIN_ROOT` to its
   `polaris/` directory.
-- The skills CLI installs skill directories only. `polaris/bin/` and `polaris/scripts/` (the `polmem`
-  shim, the Serena launcher) do not travel with it: keep a clone of this repository on `main` for those.
+- The skills CLI installs skill directories only. `polaris/bin/` and `polaris/scripts/` (the Serena
+  launcher) do not travel with it: keep a clone of this repository on `main` for those.
 - Repo-contract templates live in [polaris/skills/start/templates/repo-contract/](polaris/skills/start/templates/repo-contract/).
-- The `polmem` memory CLI: with Claude Code, install once per machine with
-  `bash polaris/scripts/install-polmem-cli.sh` (adds `~/.local/bin/polmem`, resolved from the
-  plugin cache). **Without the plugin**, run the shim straight from a checkout — it finds the
-  target repo's committed bundle from your working directory:
-  `alias polmem='python3 /path/to/this-checkout/polaris/bin/polmem'`.
-- `polmem recall` reads the repository's committed memory; `polmem remember` **writes** one line to
-  the repo's committed journal — never put secrets, credentials, customer data or personal
-  information in it.
 - The contract root in every product repository is **`_polaris/`** — one root, never `polaris/`,
   never both. Your `team/<login>/` folder name is your exact GitHub login
   (`gh api user --jq .login`); never create another contributor's path.

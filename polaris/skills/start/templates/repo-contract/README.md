@@ -3,7 +3,7 @@
 Team-shared operating state for this repository: who owns which outcome, weekly plans and
 reports, session handoffs, durable decisions and lessons. Markdown + git, no extra tooling —
 written and read by the polaris-team-os commands (`/start`, `/update`, `/end`, `/plan-week`,
-`/report`) and recalled by `polmem`.
+`/report`).
 
 ## Structure (the contract)
 
@@ -36,7 +36,7 @@ written and read by the polaris-team-os commands (`/start`, `/update`, `/end`, `
   workflow charter (`profile.yml` → `workflow:`), that charter's boundaries win.
 - GitHub/Linear stays the source of execution truth. These files record ownership, proof and
   handoffs — they are not a second issue tracker.
-- `polmem recall` before assuming context; a recalled page is assumed context to verify,
+- Read the decisions and lessons before assuming context; a note is assumed context to verify,
   never proof of what is true now.
 
 ## Privacy boundaries

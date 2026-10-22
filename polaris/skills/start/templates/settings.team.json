@@ -1,10 +1,4 @@
 {
-  "permissions": {
-    "allow": [
-      "Bash(polmem *)",
-      "Bash(python3 scripts/polaris_memory_repo.py*)"
-    ]
-  },
   "hooks": {
     "SessionStart": [
       {

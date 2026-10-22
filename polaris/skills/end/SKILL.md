@@ -2,7 +2,7 @@
 name: end
 description: Polaris skill — close a repository-first team session with a handoff, decisions/lessons written to the ledgers, a plan tick and a pathspec-only commit. Trigger when stopping work, before a multi-day pause, or on "wrap up / end session / /end".
 user-invocable: true
-version: 1.23.3
+version: 1.23.4
 invokes: [git-power]
 ---
 
@@ -162,31 +162,6 @@ nessuna riga `Files` dichiara e `TREE_UNREADABLE` un albero che `git` non riesce
 committer per tree), `SESSION_UNKNOWN` un sid che non ha una `start.json`.
 Le lezioni escono come righe `LESSON_PROPOSAL` su stderr: sono **proposte**, e
 lo Step 3 decide quali qualificano e le scrive. Il gate non tocca `lessons.md` da solo.
-
-Then feed the repository memory with the same handoff, one machine-readable line — the offline
-distill decides later what is durable, so never skip this because the session felt routine.
-
-**Check the repo owns a journal BEFORE you call `remember` — the binary resolving is not the test:**
-
-```bash
-test -d .wiki/journal || echo "NOT memory-wired — skip the remember line"
-```
-
-This matters more than it looks. `polmem` may be installed **globally** yet wired to a different
-repository: run `remember` in a repo without its own `.wiki/journal/` and it does not fail — it
-silently lands in **someone else's** journal, carrying this session out of this repo (observed).
-`command -v polmem` passes in exactly that state, which is why the wiring test is the repo's
-directory, never the binary.
-
-```bash
-polmem remember "session YYYY-MM-DD @<login>" "<shipped/verified, one clause> — next: <first step>"
-```
-
-The line is **written to this repo's committed journal** — shared history. Same privacy boundary as
-the contract README: no secrets, credentials, customer data or personal information, ever. Failure
-branches: no `.wiki/journal/` → skip the line, say once that the repo is not memory-wired, continue
-the handoff (tell the repo owner; do **not** wire it yourself); `command not found: polmem` → run the
-plugin installer once, then re-check the wiring above. Never run `polmem init` yourself.
 
 ### Step 1b — Structured handoff → `$ROOT/team/<login>/handoff/YYYY-MM-DD.md`
 
@@ -505,12 +480,9 @@ commit non è un'eccezione: il primo handoff atterra come tutti gli altri.
 Un `/end` che rinvia invece di committare è un `/end` che non ha lavorato (decisione founder,
 2026-09-04). Terzo esito dichiarato, sempre exit 2: un path che git rifiuta (ignorato, o dentro un
 repo annidato) viene nominato con la sua ragione e gli altri path atterrano comunque — un handoff
-non muore perché il journal sta in una directory ignorata.
+non muore perché un file sta in una directory ignorata.
 Nelle eccezioni lo script esce 2 con una riga che dice quale: i file restano dove
 li hai scritti, non vengono copiati altrove, e tu lo dici in chiaro invece di riportare successo.
-The Step 1 `polmem remember` line lands in `.wiki/journal/`: it is committed shared history, so it
-belongs here or it never reaches the team.
-
 ```bash
 cd "$(git rev-parse --show-toplevel)"   # the panel's own worktree, never another one
 SC="${CLAUDE_PLUGIN_ROOT:-}/skills/update/scripts/session_commit.sh"          # plugin install
@@ -518,7 +490,7 @@ SC="${CLAUDE_PLUGIN_ROOT:-}/skills/update/scripts/session_commit.sh"          # 
 "$SC" --end "$ROOT/team/$LOGIN/sessions/$(date +%F)-@$LOGIN.md" \
             "$ROOT/team/$LOGIN/handoff/$(date +%F).md" \
             "$ROOT/team/$LOGIN/weeks/$(date +%G-W%V).md" \
-            "$ROOT/decisions.md" "$ROOT/lessons.md"   # add the journal file if Step 1 wrote one
+            "$ROOT/decisions.md" "$ROOT/lessons.md"
 ```
 
 `--end` is the mode that may commit `decisions.md` / `lessons.md` (they are this command's vetted

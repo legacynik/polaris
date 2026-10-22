@@ -68,40 +68,7 @@ They must show connected or carry an explicit reason. `codebase-memory` also nee
 Python manager (for example `pipx install codebase-memory-mcp`), then re-run `claude mcp list`. Never
 store keys or credentials in the repo.
 
-## 3. Put `polmem` on your PATH
-
-`polmem` is the repo's memory CLI: it runs `recall` over what the repo already knows (decisions,
-references, architecture, journal committed in `.wiki/`). **The CLI is the interface you use.** The
-MCP adapter is optional; the CLI is the reliable path.
-
-Install the launcher once per machine (a version-independent shim at `~/.local/bin/polmem`):
-
-```bash
-bash "$CLAUDE_PLUGIN_ROOT/polaris/scripts/install-polmem-cli.sh"
-```
-
-If it reports that `~/.local/bin` is not on your PATH, add to your shell profile:
-
-```bash
-export PATH="${HOME}/.local/bin:${PATH}"
-```
-
-Then, from inside a memory-wired product repository, verify:
-
-```bash
-polmem health
-polmem recall "confirmation gate"
-```
-
-`recall` returns ranked entries — score, source path, title, one-line summary. The three day-one
-commands are `polmem recall "<query>"`, `polmem health`, `polmem remember "<short note>"`. If
-`recall` says the repo is not memory-wired, `git pull` (the `.wiki` is committed and arrives with the
-code); if it is still missing, ask the repo owner to wire it — **do not run `polmem init` yourself**.
-`python3` must be installed. `recall` only reads the repo you run it in; `remember` **writes** one
-line to the repo’s committed journal — never put secrets, customer data or personal information in
-it. `recall` is assumed context to verify, not current state.
-
-## 4. Check the repo contract
+## 3. Check the repo contract
 
 The repository owns **one** Polaris root: `_polaris/`, committed with the code. The repository owner
 provides:
@@ -134,7 +101,7 @@ repository owner — do not create the contract yourself.
 > pre-created placeholder `team/` folders: the repo owner renames the root (`git mv polaris
 > _polaris`) and deletes the placeholders — real paths are recreated by each contributor's `/start`.
 
-## 5. First day
+## 4. First day
 
 1. Open Claude Code from the product repo.
 2. Run `/start`: read your authorized outcome, latest handoff/checkpoint, blocker, and next action.
@@ -146,7 +113,7 @@ repository owner — do not create the contract yourself.
 5. Run `/update` after real progress or a real blocker.
 6. Run `/end` when you stop: leave one concrete next action.
 
-## 6. The week
+## 5. The week
 
 - Each contributor runs `/plan-week` for **their own** week — a focus grounded in real issues/PRs
   and capacity. Commit it and let it travel into your PRs: a plan visible in the repo is reviewable

@@ -28,14 +28,14 @@
     {
       "id": "memory-is-not-current-state",
       "project": "polaris-team-os",
-      "intent": "Grill the change using polmem and decisions.",
+      "intent": "Grill the change using the repository notes and decisions.",
       "context_excerpt": "A recalled note names legacy_table, but the newest migration, ORM model and backend query use canonical_table. The response must resolve the conflict from current evidence and identify the memory entry as stale context.",
       "outcome": "success",
       "reference_kind": "rule",
       "judge": {
         "kind": "rule",
         "checks": [
-          {"op": "regex", "arg": "(?is)(?:memory|polmem).*(?:context|stale|obsolet).*(?:migration|orm|code|backend)"},
+          {"op": "regex", "arg": "(?is)(?:memory|note).*(?:context|stale|obsolet).*(?:migration|orm|code|backend)"},
           {"op": "regex", "arg": "(?is)(?:canonical_table).*(?:evidence|current|attual)"},
           {"op": "max_chars", "arg": 2200}
         ]

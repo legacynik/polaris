@@ -1,7 +1,7 @@
 ---
 name: reference-capture
 description: ◇ THE door for keeping an external source already read — a YouTube video or tutorial, a repo, a competitor, an article, paper, release or changelog. Fetches video transcripts via yt-dlp, writes ONE canonical dossier detailed enough to act on without reopening it, then rebuilds the cross-repo catalog and refuses duplicate source ownership. Triggers on "index this", "fammi il report di questo video", or a transcript with no dossier. Never for a source nobody has read yet — that is research.
-version: 0.3.0
+version: 0.3.1
 user-invocable: true
 auto: false
 lifecycle: "canonical dossier remains with its owning repo; generated references/CATALOG.md is rebuilt after capture and may be replaced at any time; adopted/rejected/stale status is drained by the next refresh or linked audit/ADR"
@@ -32,7 +32,7 @@ study again from scratch.
 
 It writes one canonical dossier per source and the catalog derived from the dossiers, and
 nothing else: researching an unread source, building a multi-page wiki, deciding an architecture,
-opening implementation issues and recalling prior decisions (`polaris-memory`) are other jobs.
+opening implementation issues and recalling prior decisions are other jobs.
 
 ## Integration with architecture and domain context
 

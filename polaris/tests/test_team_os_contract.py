@@ -33,7 +33,6 @@ SESSION_COMMANDS = {
     "end",
     "plan-week",
     "report",
-    "polaris-memory",
 }
 # A Polaris door marks itself in its own description, and the door set is READ from the
 # tree rather than repeated here. A door promoted upstream and forgotten in a hand list
@@ -148,6 +147,19 @@ def test_no_skill_reads_a_personal_vault() -> None:
     for skill in shipped():
         for banned in ("POLARIS_VAULT", "Desktop/All Vibe Proj"):
             assert banned not in body(skill), f"{skill}: {banned}"
+
+
+def test_no_shipped_skill_tells_the_user_to_run_the_memory_cli() -> None:
+    # The memory CLI is experimental and does not ship: `npx skills` installs skill folders only,
+    # so any step that runs it fails for every user of the package. Every file of every skill.
+    hits = []
+    for skill in sorted(shipped()):
+        for path in sorted((SKILLS / skill).rglob("*")):
+            if path.is_file() and "__pycache__" not in path.parts:
+                text = path.read_text(encoding="utf-8", errors="replace")
+                if "polmem" in text or "polaris-memory" in text or "polaris_memory_repo" in text:
+                    hits.append(str(path.relative_to(SKILLS)))
+    assert hits == [], hits
 
 
 def test_no_permission_language_survives_anywhere_in_the_shipped_surface() -> None:

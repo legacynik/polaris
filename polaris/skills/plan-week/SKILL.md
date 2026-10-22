@@ -2,7 +2,7 @@
 name: plan-week
 description: Polaris skill — build your own weekly focus from live GitHub/Linear issues and current team ownership. You author it and you execute it; the lead may reorder priorities, but only red work waits for a named approver. Trigger at the start of a week, when the lead asks what you are picking up, or on "plan my week / propose work / weekly plan".
 user-invocable: true
-version: 1.4.1
+version: 1.4.2
 ---
 
 # /plan-week — propose one week of useful work
@@ -108,13 +108,9 @@ never to quietly keep the plan thin.
 
 ## Step 5 — Recall prior context
 
-```bash
-polmem recall "<issue keywords>" --top 3
-```
-
-Use it to catch prior decisions and pitfalls for the chosen issues. If `polmem` is missing, skip
-recall and continue. If it reports the repo is not memory-wired, tell the repo owner — do **not**
-run `polmem init` yourself.
+Search the repository's own notes for the chosen issues' key words — its decision log and lessons
+at the paths the contract declares (for example `_polaris/decisions.md`, `_polaris/lessons.md`) —
+to catch prior decisions and pitfalls. If the repository keeps none, skip this step and continue.
 
 ## Step 6 — Write the plan file
 

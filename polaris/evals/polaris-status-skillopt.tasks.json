@@ -15,7 +15,7 @@
       "judge": {
         "kind": "rule",
         "checks": [
-          {"op": "regex", "arg": "(?is)^(?!.*(?:git fetch|gh pr list|polmem health)).*(?:checkpoint|handoff).*(?:next action|prossima azione)"},
+          {"op": "regex", "arg": "(?is)^(?!.*(?:git fetch|gh pr list)).*(?:checkpoint|handoff).*(?:next action|prossima azione)"},
           {"op": "max_chars", "arg": 900}
         ]
       },
@@ -44,26 +44,6 @@
       "tags": ["explicit-status", "decision-grade"],
       "source_sessions": ["2026-07-16-founder-start-status-correction"],
       "split": "train",
-      "origin": "real"
-    },
-    {
-      "id": "health-sandbox-degrades",
-      "project": "polaris-team-os",
-      "intent": "Polaris status. polmem health fallisce con PermissionError su ps.",
-      "context_excerpt": "The host sandbox denies process inspection. Continue the status and describe memory health as degraded or unavailable; do not crash or make it a gate.",
-      "outcome": "success",
-      "reference_kind": "rule",
-      "judge": {
-        "kind": "rule",
-        "checks": [
-          {"op": "regex", "arg": "(?is)(?:memory|memoria).*(?:degraded|unavailable|degradata|non disponibile)"},
-          {"op": "regex", "arg": "(?is)(?:continue|proced|status)"},
-          {"op": "max_chars", "arg": 1800}
-        ]
-      },
-      "tags": ["failure-mode", "polmem-health"],
-      "source_sessions": ["2026-07-16-polmem-permission-error"],
-      "split": "val",
       "origin": "real"
     },
     {

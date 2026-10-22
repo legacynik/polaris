@@ -2,8 +2,8 @@
 
 Polaris Team OS is a repository-first operating model for a product team working in Claude Code. It
 makes ownership, weekly outcomes, session handoffs and delivery evidence visible **from inside the
-product repository** — the same place the code lives. Nine slash commands (`/start`,
-`/polaris-status`, `/polaris-grill`, `/update`, `/end`, `/plan-week`, `/report`, `/polaris-memory`, `/pol-apex-curate`) plus a memory CLI (`polmem`). It is
+product repository** — the same place the code lives. Seven slash commands (`/start`,
+`/polaris-status`, `/polaris-grill`, `/update`, `/end`, `/plan-week`, `/report`). It is
 not a founder vault, an issue
 tracker, or a second project manager: GitHub or Linear stays the source of execution truth, and
 Polaris records who owns an outcome, why it matters, what proof closes it, and what is blocked.
@@ -38,7 +38,7 @@ the same `SKILL.md` files; there is no provider-specific duplicate.
 reviews an agent session only when requested and proposes improvements; it does not silently
 change CI or shared instructions. Both ship in the same skills set as the session commands.
 
-## The nine commands
+## The seven commands
 
 | Command | One-line purpose |
 |---|---|
@@ -49,7 +49,6 @@ change CI or shared instructions. Both ship in the same skills set as the sessio
 | `/end` | Close a session with a handoff, decision proposals, and an optional pathspec-only commit. |
 | `/plan-week` | Build **your own** weekly focus from live tracker issues and current ownership. |
 | `/report` | Compare your plan with real delivery evidence from the tracker — planned versus actual. |
-| `/polaris-memory` | Search and record team memory via the `polmem` CLI — recall-first before building; recall ≠ current state. |
 
 No bootstrap, generic development manifesto, or duplicate report command ships. `/polaris-grill`
 is the read-only clarification gate; it proposes durable entries but never implements or mutates the
@@ -89,44 +88,10 @@ Templates for every one of these files ship in
 [`polaris/skills/start/templates/repo-contract/`](polaris/skills/start/templates/repo-contract). Filenames are the ISO week
 (`date +%G-W%V`, e.g. `2026-W29`), so plan and report line up by construction.
 
-## polmem — the repository's memory (CLI-first)
-
-`polmem` is a small command-line tool that recalls what a repository already knows. It reads the
-repository's committed `.wiki/` (decisions, references, architecture, journal) and returns the most
-relevant entries for a query — no server, no account, no external call. **The CLI is the interface
-teammates use.** Polaris also ships an MCP adapter, but it is optional; the `polmem` command is the
-reliable path.
-
-One-time setup (adds a version-independent launcher to `~/.local/bin/polmem`):
-
-```bash
-bash "$CLAUDE_PLUGIN_ROOT/polaris/scripts/install-polmem-cli.sh"
-```
-
-The three commands that matter on day one, run from inside a memory-wired product repository:
-
-```bash
-polmem recall "confirmation gate"   # rank the repo's committed memory for a query
-polmem health                       # confirm the repo is wired (bundle + index + journal)
-polmem remember "short note"        # append a durable note to the repo journal
-```
-
-`recall` returns ranked entries — score, source path, title, one-line summary:
-
-```text
-$ polmem recall "confirmation gate" --top 3
-[70] _polaris/decisions.md#2026-05-07 — Production runtime = ECS Fargate + Terraform …
-[70] references/acme-gateway-integration — Acme Gateway Integration …
-[70] synthesis/orbit-adversarial-gate-framework — Orbit Producer/Validator/Gate Framework …
-```
-
-`recall` is repository memory, **not** current state — treat every entry as context to verify against
-the tracker or code, never as proof of what is true now.
-
 ## Requirements
 
 - **Claude Code** with plugin support.
-- **`python3`** (3.8+) on PATH — `polmem` and the `/report` week computation use it.
+- **`python3`** (3.8+) on PATH — the skills' scripts and the `/report` week computation use it.
 - **`gh`** (GitHub CLI), authenticated (`gh auth status`) — first `/start` resolves and caches the
   contributor login; `/plan-week` and `/report` read the tracker through it. Recurring `/start`
   remains local. Optionally the Linear tooling if `tracker.linear_team` is set.
@@ -138,8 +103,6 @@ the tracker or code, never as proof of what is true now.
 
 | Symptom | Fix |
 |---|---|
-| `command not found: polmem` | Run the one-time installer above; if `~/.local/bin` is not on PATH, add it to your shell profile. |
-| `polmem: … not memory-wired` | The repo does not carry the memory bundle yet — `git pull`; if still missing, ask the repo owner to wire it. **Do not run `polmem init` yourself.** |
 | `/report` filed under the wrong ISO week | Run it on the Friday of the week you are reporting, or set `WEEK` explicitly (e.g. `WEEK=2026-W28`) — a rolling "7 days ago" straddles two ISO weeks. |
 | `/report` finds no evidence for a teammate | The contributor's `github:` login must be the **exact** GitHub login (case-sensitive); the skill queries `gh` by that string. |
 | `/start` or `/plan-week` stops on a missing contract | The repo has no committed Polaris root — follow onboarding; do not bootstrap a personal vault. |
