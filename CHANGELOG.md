@@ -5,19 +5,59 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
-- **The PR chain ships, issue-contract is back, polaris-memory leaves.** New: `pol-ship` 2.1.0 (one
-  command once work is done: real-test, commit hygiene, push, PR body, babysit loop, then one
-  merge-and-deploy proposal acted on only after the owner's yes; a verification window decides
-  advance, hold or a proposed rollback), `pol-pr` 1.2.0 (replaces `pr`, whose visuals and evidence
-  rules it absorbs; English headings), `pol-babysit` 1.1.0, `issue-contract` 2.3.0 (checked AFK label
-  from `_polaris/config.yml` `tracker.afk_human`/`afk_agent`), `codex-review` 1.0.0 (an independent
-  Codex second opinion). `review` is renamed `polaris-review` 1.1.0 and picks its reviewer tier from
-  the diff. `crasher` 0.4.0 proposes findings and files only what a person picks. `tdd-dev` 2.5.0
-  ships `references/writing-tests.md`. `base-workflow` 0.4.0 checks the pinned version's docs.
-  `git-power` 0.6.0 finalizes in a plain checkout. `polaris-memory` no longer ships and no shipped
-  skill runs `polmem` (`end`, `plan-week`, `polaris-grill`, `polaris-status`, `report`,
-  `reference-capture`, `start` read the repository's decision log and lessons instead);
-  `polaris/bin/polmem`, its installer and its test remain in the repository, unused by any skill.
+### The PR chain, review tiers, and a package that stands alone
+
+**Upgrading:** `npx skills update -g -y` does not delete retired skills. Remove them once:
+
+```bash
+npx skills remove -g skill-meta pol-apex-curate pol-adr pr polaris-memory review
+```
+
+Added
+
+- **The PR chain.** `pol-ship` 2.1.0 is the single entry point once work is done: it loops locally
+  until the Definition of Done holds (tests, `polaris-review`, simplify, `real-testing`), pushes a
+  draft PR through `git-power`, signs the head on staging, writes the body with `pol-pr`, runs
+  `pol-babysit` to the owner's label, then sends one merge-and-deploy proposal with a rollback plan.
+  It merges once (a plain squash, never `gh pr merge --auto`) and deploys only on the owner's yes; a
+  verification window then reports advance, hold or a proposed rollback, never an automatic one.
+  `pol-pr` 1.2.0 writes the PR body the owner judges without reading code and absorbs the retired
+  `pr` (its visuals and evidence rules; English headings). `pol-babysit` 1.1.0 drives an open PR to
+  the owner's label on its current head.
+- **`codex-review` 1.0.0 ships standalone**: an independent, read-only Codex review whose findings
+  are checked against the source. It owns the Codex invocation for `polaris-review` and
+  `polaris-sweep`.
+- **`issue-contract` 2.3.0 is back** (it had left the package in the previous entry below), with a
+  checked AFK label: `tracker.afk_human` / `tracker.afk_agent` from `_polaris/config.yml`, else the
+  repository's own labels; work for a person with no label to carry it is not filed (exit 2).
+- **`tdd-dev` 2.5.0** ships `references/writing-tests.md`, with its four rules inline in the cycle;
+  `bugfix` Phase 4 points to it.
+- **`base-workflow` 0.4.0** checks the pinned version's documentation before calling a library API.
+
+Changed
+
+- **`review` is renamed `polaris-review`** (1.1.0) and picks its reviewer tier from the diff: size,
+  file count and risk paths (auth, money, schema, security, concurrency, plus the repository's
+  `review.risk_paths`). Tier 3 adds `codex-review`.
+- **`crasher` 0.4.0 proposes, a person picks.** It lists one deduplicated finding per confirmed
+  crash and files, through `issue-contract`, only the ones a person selects.
+- **`git-power` 0.6.0** finalizes in the repository's own checkout by returning to the base instead
+  of crashing.
+- `polaris-sweep` and `polaris-review` no longer name private infrastructure or unshipped skills.
+- `start`'s `config.yml` template shows a placeholder login (`your-github-login`), not a real one.
+- Docs: the README is rebuilt around the skills CLI and a phase table; new
+  [docs/skills.md](docs/skills.md) reference, [CONTRIBUTING.md](CONTRIBUTING.md) and a
+  [CREDITS.md](CREDITS.md) index; onboarding no longer requires Superpowers.
+
+Removed
+
+- **`polaris-memory`** no longer ships, and no shipped skill runs `polmem`: `end`, `plan-week`,
+  `polaris-grill`, `polaris-status`, `report`, `reference-capture` and `start` read the
+  repository's decision log and lessons instead.
+- `pr` (folded into `pol-pr`) and `review` (renamed `polaris-review`). `skill-meta`, `pol-apex-curate`
+  and `pol-adr` left in earlier releases; machines installed before then may still carry them.
+
+### Earlier unreleased changes
 
 - **Le porte installate da sole bastano a se stesse.** `architecture` 1.4.0 porta con sé il checker
   del backbone (`scripts/check_context_backbone.py`): `arch_doctor.py --which` stampa la copia della
