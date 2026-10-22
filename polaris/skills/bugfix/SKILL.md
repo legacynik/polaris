@@ -81,7 +81,8 @@ corpus (38% of corrections).
    30 commits stale).
 2. **Perimeter from the graph, never by grep.** With the harness's code-graph tool (an LSP or a
    symbol index), find the traceback symbol, then query its references or call hierarchy for the
-   callers (`find_referencing_symbols`, `references`, `call_hierarchy`, `trace_path`). Stage `raggio` demands both axes: `chiamanti` AND
+   callers (`find_referencing_symbols`, `references`, `call_hierarchy`, `trace_path`). Stage
+   `raggio` demands both axes: `chiamanti` AND
    `issue_prese`/`issue_lasciate` — zero callers is **declared**, not omitted.
 3. **Archive: has it happened before?** Search it actively (module + exception type) and declare
    the outcome in the record's `ricorrenza` field — stage `causa` blocks without it, even for

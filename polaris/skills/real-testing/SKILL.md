@@ -56,7 +56,8 @@ environment you cannot reach or a flag you cannot switch (**a block, not a degra
    SHA (health `commit`, page build marker) equals your HEAD; not equal, stop. Flag off: turn it on
    or declare a block. When done, give the environment back and re-check parity.
 2. **What the change touches, from the graph.** `python3 scripts/perimeter.py --repo . --head <sha>`
-   then the code graph (`find_referencing_symbols`) on every changed symbol: callers, readers of the
+   then the code graph (find references; `git grep` and reading where the harness has none) on
+   every changed symbol: callers, readers of the
    same record, documents built from it, jobs and logs that consume it. Write the list of user
    surfaces and consequences: that list is what you walk, not the files.
 3. **What the change was meant to do, from the spec.** The acceptance criteria of the issue and the
