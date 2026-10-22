@@ -2,7 +2,7 @@
 name: polaris-status
 description: Polaris skill — render an explicit, comprehensive status across a portfolio or one product repository, including live Git/GitHub pulse, active outcomes, team collisions, freshness, memory health, and the highest-leverage next move. Use for "polaris status", "pol status", "status completo", cross-repo priorities, portfolio briefing, or an explicit request to see everything. Do not use for "start", "resume", "continue", session recovery, or a single implementation task — `/start` is a local resume-only workflow.
 user-invocable: true
-version: 1.3.2
+version: 1.3.3
 ---
 
 # /polaris-status — observe the whole system
@@ -31,13 +31,18 @@ continue with the focused repo pulse when possible. Never hardcode a personal fi
 
 ## Step 2 — Read portfolio state with a bounded budget
 
-Use the semantic index before opening documents:
+Portfolio state exists only where a portfolio root does (Step 1); a focused repository pulse goes
+straight to Step 3. With a portfolio root, pick the documents to open before opening any. When
+the root carries its own index, query it:
 
 ```bash
-python3 "$POLARIS_HOME/scripts/polaris_query_index.py" "<status topic>" --top 5
+test -f "$POLARIS_HOME/scripts/polaris_query_index.py" \
+  && python3 "$POLARIS_HOME/scripts/polaris_query_index.py" "<status topic>" --top 5
 ```
 
-Read no more than the top three relevant results. Then read these control surfaces directly:
+Without that index, rank by recency instead: `git -C "$POLARIS_HOME" log -n 20 --name-only
+--format=` lists the documents touched last. Read no more than the top three relevant results
+either way. Then read these control surfaces directly:
 
 1. `POLARIS.md` — current phase, capacity, alerts, and live state.
 2. `POLARIS-BOARD.md` — only Active and Building plus the highest-priority blocked item.

@@ -1,11 +1,11 @@
 ---
 name: crasher
 description: ◇ Drive a deployed app like a user, hunt failures unattended, file ONE reproducible issue per confirmed crash, and judge whether a crasher run's no-crash verdict stands or is about to file a duplicate. Triggers on does staging still work, smoke the deployment, hunt regressions on the live app, is this run record believable. NOT for judging a diff (real-testing), fixing what it finds (bugfix), or load-testing a shared production database.
-version: 0.2.2
+version: 0.3.0
 user-invocable: true
 auto: false
-lifecycle: "the run record lives in the host repository's validation area and is the whole basis of a 'no crash found' claim; a confirmed finding becomes a GitHub issue through issue-contract and nothing else — no local bug list, no second register"
-invokes: [issue-contract]
+lifecycle: "the run record lives in the host repository's validation area and is the whole basis of a 'no crash found' claim; a confirmed finding becomes one GitHub issue, searched for its twin first, and nothing else — no local bug list, no second register"
+invokes: []
 invoked-by: [human, cron]
 io: "takes a deployed target URL, a flagged test account and a path budget -> produces a run record (surface, paths attempted, findings) and either ONE issue per confirmed finding, fingerprinted so the same crash never files twice, or an explicit no-crash verdict naming every path it visited; the issue is consumed by bugfix"
 status: active
@@ -23,7 +23,7 @@ it; a document that lands where the repository does not look was never written.
 sed -n '/^outputs:/,/^[^ ]/p' _polaris/config.yml 2>/dev/null || sed -n '/^outputs:/,/^[^ ]/p' config.yml
 ```
 
-This skill produces: **tasks (the issue, through issue-contract), validation (the run record)**.
+This skill produces: **tasks (the issue, filed with `gh`), validation (the run record)**.
 Kinds: `spec` `plan` `audit` `review` `validation` `diagram` `decision` `archive` — each maps to a
 documentation area `docs/modules/<area>/…` whose README is a generated map. Never invent a third
 location; if the repository declares no map, say once where you wrote and why.
@@ -31,8 +31,8 @@ location; if the repository declares no map, say once where you wrote and why.
 ## What this door is for
 
 It drives the **running** app and asks one question per screen and per flow: *does it still work?*
-When it does not, and the failure survives a verify pass, it opens **one** issue through
-`issue-contract` carrying the command that reproduces the symptom. That issue is the entry point of
+When it does not, and the failure survives a verify pass, it opens **one** issue
+carrying the command that reproduces the symptom. That issue is the entry point of
 `bugfix`. The crasher never fixes; it finds, proves, and files.
 
 The two claims it can make are the two it can fake, so both are mechanical:
@@ -40,8 +40,8 @@ The two claims it can make are the two it can fake, so both are mechanical:
 | claim | how it is faked | what refuses the fake |
 |---|---|---|
 | "no crash found" | run two screens, declare the app healthy | `crash_report.py` refuses a verdict whose `attempted` list is empty, whose `surface` is undeclared, or which went past its budget — and prints coverage `attempted/surface` beside every no-crash line |
-| "here is a crash" | file the same hang again next week with a different timing in the title | the finding's identity is a fingerprint over route + failure class + a symptom with its numbers collapsed; it rides in the title, so `issue-contract`'s own apply-time dedup finds the twin |
-| "and here is the issue" | print an invocation nobody ever ran, which the tracker door would have rejected | the printed argv carries the whole founder contract and is executed against `build_issue.py` in the test suite — grepping it for `build_issue.py` is what let a rejected invocation ship |
+| "here is a crash" | file the same hang again next week with a different timing in the title | the finding's identity is a fingerprint over route + failure class + a symptom with its numbers collapsed; it rides in the title, so the printed `gh issue list --search <fingerprint>` finds the twin before anything is filed |
+| "and here is the issue" | print an issue body that drops the contract | the printed `gh issue create` body carries the acceptance criterion, both adversarial tests, the afk routing and the weight; `--selfcheck` asserts each |
 
 ## When NOT to use
 
@@ -54,8 +54,8 @@ The two claims it can make are the two it can fake, so both are mechanical:
   triggering *is* the incident. That class needs real isolation and an explicit per-run go; it is
   not this door.
 - **A repository with no live deployment** — there is nothing to drive.
-- **Opening an issue you already know how to write** → `issue-contract` directly. The crasher is
-  the thing that *discovers*; going through it to file a known bug is ceremony.
+- **Opening an issue you already know how to write** → file it directly in the tracker. The
+  crasher is the thing that *discovers*; going through it to file a known bug is ceremony.
 
 ## Flow
 
@@ -86,17 +86,16 @@ The two claims it can make are the two it can fake, so both are mechanical:
    run may not be reported at all — fix the run, never the record. Note what it refuses: an empty
    `attempted`, a missing `surface` (coverage without a denominator is not coverage), more paths
    than the budget or than the surface, and a finding missing its route, symptom, class or domain.
-5. **File through `issue-contract`, never a raw `gh` call.** `crash_report.py` prints one
-   invocation per finding, already carrying the founder contract: an acceptance criterion and the
-   **two** adversarial tests B9 requires, each with the two measurable signals its gate counts. The
-   second adversarial test is always the dedup promise — re-run and the tracker must refuse the
-   twin — because that is the one proof this door can guarantee for every finding. A finding
-   carrying a reproducing command is filed `--afk yes` and is claimable by an unattended agent; a
-   transcript-only finding is filed `--afk no` and says so in its acceptance criteria instead of
-   pretending to be reproducible. The contract's own fields reach the template from their flags;
-   `--field` carries only the repro, category and weight. If the host repository's template asks for others,
-   `build_issue.py` names them and you add them — it never guesses a domain, because B12 rejects a
-   label the repository's glossary does not hold.
+5. **Search for the twin, then file.** `crash_report.py` prints two commands per finding: a
+   `gh issue list --search <fingerprint>` and a `gh issue create` whose body already carries the
+   contract — an acceptance criterion and **two** adversarial tests, each with a measurable signal.
+   Run the search first and file only when it returns nothing. The second adversarial test is
+   always the dedup promise — re-run and the tracker must hold one issue for the twin — because
+   that is the one proof this door can guarantee for every finding. A finding carrying a
+   reproducing command is marked `afk: yes` and is claimable by an unattended agent; a
+   transcript-only finding is marked `afk: no` and says so in its acceptance criteria instead of
+   pretending to be reproducible. The `domain` comes from the finding, never guessed: the
+   repository's glossary is the only source of a label.
 
 ## The run record
 
@@ -125,15 +124,15 @@ and remember B15: any file path it names must exist in the repository the issue 
 
 ## Global door, per-repository overlay
 
-- **This door owns** the method, the refusal gates, the fingerprint, and the `issue-contract`
-  wiring. It is repository-agnostic and carries no URL, account or route of any application.
+- **This door owns** the method, the refusal gates, the fingerprint, and the filing
+  commands. It is repository-agnostic and carries no URL, account or route of any application.
 - **A per-repository overlay owns** that application's target URL, its flagged test account, its
   route list, and the few judgements a generic smoke cannot infer (for example: two versions of one
   generated document must keep distinct totals). It lives with that repository, not here.
 
 ## Feeding the unattended loop
 
-A finding filed with `--afk yes` carries a command that exits non-zero on the failure, which is
+A finding filed with `afk: yes` carries a command that exits non-zero on the failure, which is
 exactly the admission criterion the unattended loop reads. That is how this door is a *source* for
 that loop rather than a second copy of it: it produces `afk:eligible` issues and stops. Claiming,
 branching, fixing and shipping belong to `bugfix`, `tdd-dev`, `real-testing` and the repository's merge workflow.
@@ -151,7 +150,7 @@ branching, fixing and shipping belong to `bugfix`, `tdd-dev`, `real-testing` and
   driver to emit the record itself.
 - **No driver ships with this door.** The abandoned branch's `drive.py` carried one application's
   selectors and login copy, so it was cut as a per-repository overlay. Until an overlay exists for
-  a given application, findings arrive with no `repro` and file as `--afk no`: honest, and not yet
+  a given application, findings arrive with no `repro` and file as `afk: no`: honest, and not yet
   the unattended loop's fuel. That gap is the door's, not the loop's.
 
 ## Selfcheck

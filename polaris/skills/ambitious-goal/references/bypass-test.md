@@ -12,8 +12,8 @@ behavioral review. No scripts or new runtime are introduced.
 | Every input rejected or unknown | Cannot satisfy a usable-product DoD. |
 | Vague AI feature without beneficiary or success | Ask one material question, wait for that answer, do not invent a committed direction. |
 | Clear feature with existing DoD | Reuse it; no compulsory interview or duplicate brief. |
-| Routine bug through issue-contract | Direct short ticket; no ambitious-goal detour. |
-| Feature needs refinement through issue-contract | Call ambitious-goal then return; caller owns publishing, no recursive call. |
+| Routine bug through the ticket workflow | Direct short ticket; no ambitious-goal detour. |
+| Feature needs refinement through the ticket workflow | Call ambitious-goal then return; caller owns publishing, no recursive call. |
 | Mention a runtime goal tool or compare skills | Explain comparison, never create/resume a runtime goal through this skill. |
 | External quote SAL, existing owner, excluded modules | Preserve owner/exclusions; integrated positive journey and error cases; no whole-epic research blockade. |
 | Missing baseline or accuracy threshold | Mark unknown and name first proof; never invent numbers. |
@@ -21,7 +21,7 @@ behavioral review. No scripts or new runtime are introduced.
 ## Baseline and receipts
 
 The pre-adoption local draft explicitly named a runtime goal tool as a handoff;
-this violated the clarified requirement. The prior issue-contract 2.1.0 had no
+this violated the clarified requirement. The prior ticket workflow had no
 feature-refinement route. Both are observable text-contract failures, not claims
 that a baseline model actually launched a runtime.
 

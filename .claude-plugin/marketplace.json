@@ -13,6 +13,7 @@
       "skills": [
         "./skills/ambitious-goal",
         "./skills/architecture",
+        "./skills/base-workflow",
         "./skills/bugfix",
         "./skills/crasher",
         "./skills/critic",
@@ -21,7 +22,6 @@
         "./skills/end",
         "./skills/git-power",
         "./skills/init",
-        "./skills/issue-contract",
         "./skills/plan-week",
         "./skills/polaris-grill",
         "./skills/polaris-memory",

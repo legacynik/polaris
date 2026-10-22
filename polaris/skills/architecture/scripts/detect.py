@@ -40,6 +40,9 @@ def waived(src: str) -> set[str] | None:
 def scan(root: Path, ignore_paths: tuple[str, ...] = ()) -> dict:
     """One pass: imports, statement count, abstract-base count, per module."""
     mods: dict[str, dict] = {}
+    # A root that is itself a package keeps its name: its modules import `app.x`, and
+    # naming them `x` matched no edge, so `detect.py app` read 0 cycles on a 15-module loop.
+    base = root.parent if (root / "__init__.py").is_file() else root
     for path in sorted(root.rglob("*.py")):
         rel = f"/{path.relative_to(root)}"
         if any(v in rel for v in VENDOR) or any(p in rel for p in ignore_paths):
@@ -49,17 +52,15 @@ def scan(root: Path, ignore_paths: tuple[str, ...] = ()) -> dict:
             tree = ast.parse(src)
         except SyntaxError:
             continue
-        name = module_name(path, root)
+        name = module_name(path, base)
         mods[name] = _walk(tree, name) | {"waived": waived(src)}
     for m in mods.values():  # keep only edges inside the tree — externals are not ours
         m["imports"] = {i for i in m["imports"] if i in mods} - {"__self__"}
     return mods
 
 
-# ponytail: duplicates tools/components_census.py (local main, a1b4ce6) — unify onto the
-# census module the day it lands on origin; until then this stays behavior-aligned with it
-# (relative imports RESOLVED, not skipped: a cycle hidden behind `from . import x` was
-# invisible here while visible to the census — the 9-vs-5-cycles divergence of PR #77).
+# Relative imports are RESOLVED, not skipped: a cycle hidden behind `from . import x` is
+# otherwise invisible here while visible to any other census of the same tree.
 def _walk(tree: ast.AST, modname: str) -> dict:
     """One pass, three accumulators: imports (absolute AND relative), statements, ABCs."""
     imports: set[str] = set()

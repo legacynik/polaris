@@ -5,9 +5,10 @@
 it was meant to cover, so a run with no attempted list, no declared surface, or more paths than
 its budget is refused rather than believed. "Here is a crash" is worth nothing if the same crash
 files again next week, so a finding's identity is a fingerprint over route + failure class + a
-symptom with its numbers collapsed: a 421s hang and a 388s hang are ONE finding. Filing stays at
-`issue-contract`, which dedups at apply time (`build_issue.py:apply_gate`), and the fingerprint
-rides in the title so that search finds the twin.
+symptom with its numbers collapsed: a 421s hang and a 388s hang are ONE finding. Filing goes
+through `issue-contract` when it is installed beside this skill (it dedups at apply time); on its
+own the skill prints a `gh issue list` search for the twin, then a `gh issue create` carrying the
+same contract in its body. Either way the fingerprint rides in the title so that search finds it.
 
     crash_report.py --run RUN.json      verdict on one run record
     crash_report.py --selfcheck         every refusal branch, offline
@@ -70,6 +71,28 @@ def _payload(finding: dict) -> dict:
 
 
 def issue_argv(finding: dict, slug: str) -> list[str]:
+    """How one finding is filed: through the issue contract when installed, else with `gh`."""
+    return contract_argv(finding, slug) if BUILD_ISSUE.is_file() else gh_argv(finding, slug)
+
+
+def gh_argv(finding: dict, slug: str) -> list[str]:
+    """`gh issue create` with the contract in the body: the same acceptance criterion, both
+    adversarial tests, the afk routing and the weight the issue contract would have carried."""
+    p = _payload(finding)
+    body = "\n".join([p["exec"], "", f"acceptance: {p['ac']}",
+                      *[f"- adversarial: {adv}" for adv in p["advs"]],
+                      f"domain: {p['domain']}", f"priority: {p['priority']}", f"afk: {p['afk']}",
+                      f"impact: {p['impact']}", f"cost: {p['cost']}", f"dedup: {p['dedup']}"])
+    return ["gh", "issue", "create", "--repo", slug, "--title", title_of(finding),
+            "--label", "bug", "--body", body]
+
+
+def twin_search(finding: dict, slug: str) -> list[str]:
+    """The search that must come back empty before `gh issue create` runs."""
+    return ["gh", "issue", "list", "--repo", slug, "--state", "all", "--search", fingerprint(finding)]
+
+
+def contract_argv(finding: dict, slug: str) -> list[str]:
     """The issue-contract invocation for one finding — never a raw `gh` call. The contract's
     own fields (dedup, adversarial tests, domain, priority, afk) reach the template from their
     flags; `--field` carries only what no flag does, and `build_issue.py` refuses an override
@@ -122,8 +145,13 @@ def verdict(run: dict) -> tuple[int, list[str]]:
     if not findings:
         return 0, head + ["NO CRASH FOUND — the list above is the whole basis of that claim."]
     slug = str(run.get("repo_slug") or "<owner>/<repo>")
-    return 3, head + [f"{len(findings)} finding(s) — file each through issue-contract:"] + [
-        "  " + " ".join(shlex.quote(a) for a in issue_argv(f, slug)) for f in findings]
+    if BUILD_ISSUE.is_file():
+        return 3, head + [f"{len(findings)} finding(s) — file each through issue-contract:"] + [
+            "  " + " ".join(shlex.quote(a) for a in issue_argv(f, slug)) for f in findings]
+    return 3, head + [f"{len(findings)} finding(s) — for each, run the search; file only if it "
+                      "returns nothing:"] + [
+        "  " + " ".join(shlex.quote(a) for a in cmd)
+        for f in findings for cmd in (twin_search(f, slug), gh_argv(f, slug))]
 
 
 def load_run(path: Path) -> tuple[dict | None, str]:
@@ -151,15 +179,18 @@ def _selfcheck_identity() -> None:
     assert title_of(HANG) not in (title_of(dict(HANG, route="/chat")),
                                   title_of(dict(HANG, klass="console"))), "route/class split"
     assert fingerprint(HANG) in title_of(HANG), "the tracker searches the title"
-    argv = issue_argv(HANG, "o/r")
-    claimable = issue_argv(dict(HANG, repro="cmd"), "o/r")
+    argv = contract_argv(HANG, "o/r")
+    claimable = contract_argv(dict(HANG, repro="cmd"), "o/r")
     assert argv[argv.index("--afk") + 1] == "no" and "no assertion" in " ".join(argv)
     assert claimable[claimable.index("--afk") + 1] == "yes", "a repro command is claimable"
     assert "gh" not in argv and Path(argv[1]).is_absolute(), "one door, addressed absolutely"
     assert sum(1 for a in argv if a == "--adv-test") == 2, "B9 refuses fewer than two"
     assert fingerprint(HANG) in argv[argv.index("--adv-test", argv.index("--adv-test") + 1) + 1]
-    bare = issue_argv({k: v for k, v in HANG.items() if k != "domain"}, "o/r")
+    bare = contract_argv({k: v for k, v in HANG.items() if k != "domain"}, "o/r")
     assert bare[bare.index("--domain") + 1] == "", "a domain is never guessed for the glossary"
+    body = gh_argv(HANG, "o/r")[-1]
+    assert body.count("- adversarial: ") == 2 and "afk: no" in body and fingerprint(HANG) in body
+    assert twin_search(HANG, "o/r")[-1] == fingerprint(HANG), "the twin is searched by fingerprint"
 
 
 def selfcheck() -> int:

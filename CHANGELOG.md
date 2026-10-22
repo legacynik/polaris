@@ -5,6 +5,20 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
+- **Le porte installate da sole bastano a se stesse.** `architecture` 1.4.0 porta con sé il checker
+  del backbone (`scripts/check_context_backbone.py`): `arch_doctor.py --which` stampa la copia della
+  skill; senza il resolver `contextpack.py` accanto, `--emit-context` esce 2 con
+  `CONTEXTPACK_UNAVAILABLE`. `architecture` e `domain` 0.4.0 allineate al vault: regole proprie in
+  `references/decision-rules/` per argomento, attribuzioni in `CREDITS.md`. Nuova porta
+  `base-workflow` 0.3.0 (draft): il metodo di build, soglie prese dal repository (`CONSTRAINTS.md`
+  prima). `issue-contract` esce dal pacchetto: `crasher` 0.3.0 stampa per ogni finding una ricerca
+  `gh issue list --search <fingerprint>` e un `gh issue create` col contratto nel corpo; i riferimenti
+  in `ambitious-goal`, `bugfix`, `git-power`, `polaris-sweep` seguono. `real-testing` 3.2.2:
+  `verdict.py` su un repository troppo giovane per la base esce 2 senza traceback. `tdd-dev` 2.4.2: i
+  due test con venv annidato si saltano, con il motivo, sotto `uv run --with pytest`. `polaris-status`
+  1.3.3 usa l'indice del portfolio solo se c'è, altrimenti ordina per recenza; `end` e `bugfix` parlano
+  di code-graph in generale, non di un fornitore. README: tolta la riga di `/pol-apex-curate`.
+
 - **`/start` mette davanti la coda del founder e dice quando il cockpit va riscritto** (`start` 1.13.1 →
   **1.14.0**). Nuovo `_cockpit_signal.py`: dalla sezione `## Coda founder` del cockpit stampa fino a 5
   righe `QUEUE:` (sicurezza e scadenze entro 7 giorni sempre, anche oltre 5), un `QUEUE_MORE:` contato per

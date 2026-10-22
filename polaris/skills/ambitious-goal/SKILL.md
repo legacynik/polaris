@@ -1,14 +1,14 @@
 ---
 name: ambitious-goal
 description: ◇ Refine a feature or epic into a clear outcome and verifiable Definition of Done. Use when ambition, scope or acceptance evidence needs sharpening before work is recorded or executed.
-version: 1.0.1
+version: 1.0.2
 user-invocable: true
 auto: true
 job: define the intended result and proof of completion for an epic or feature issue
 when_not: routine bugs, mechanical tickets, implementation or runtime goal management
-lifecycle: outcome and DoD returned to the caller; issue-contract records them in the existing tracker when authorized
+lifecycle: outcome and DoD returned to the caller, who records them in the existing tracker when authorized
 invokes: []
-invoked-by: [issue-contract, human]
+invoked-by: [human]
 io: idea or feature request plus existing evidence -> outcome, scope, DoD and regression checks
 status: active
 ---
@@ -107,12 +107,12 @@ evidence rather than silently lowering acceptance or persisting without a bound.
 
 ## Handoff and boundaries
 
-- `issue-contract` may call this skill for a feature or feature epic whose outcome,
-  scope or DoD needs refinement, then use the result in its normal short ticket.
+- The workflow that writes the ticket may call this skill for a feature or feature epic whose
+  outcome, scope or DoD needs refinement, then use the result in its normal short ticket.
   Already clear feature contracts need no extra interview. Bugs and mechanical
   tickets keep the existing direct path.
-- Return to the caller; this skill neither calls `issue-contract` back nor publishes
-  tickets. It does not invoke any goal runtime, create/resume goal
+- Return to the caller; this skill leaves ticket publishing to the caller and never calls it
+  back. It does not invoke any goal runtime, create/resume goal
   state, launch agents, implement features or deploy anything.
 - Use the existing issue/spec as the destination when persistence is requested.
   The owning workflow handles tracker writes under existing authorization. Do not

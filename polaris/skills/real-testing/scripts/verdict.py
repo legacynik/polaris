@@ -198,12 +198,19 @@ def main() -> int:
     a = ap.parse_args()
     if a.selfcheck:
         return _selfcheck()
-    if a.cmd == "new":
-        return _cmd_new(a)
-    if a.cmd == "validate":
-        return _cmd_validate(a)
-    ap.print_help()
-    return 1
+    commands = {"new": _cmd_new, "validate": _cmd_validate}
+    if a.cmd not in commands:
+        ap.print_help()
+        return 1
+    try:
+        return commands[a.cmd](a)
+    except subprocess.CalledProcessError as exc:
+        # A reference the history does not hold (HEAD~1 on one commit, HEAD on none): a usage
+        # error the caller fixes with --base, never a traceback.
+        print(f"verdict: git {' '.join(map(str, exc.cmd[3:]))} failed: "
+              f"{(exc.stderr or '').strip() or 'unknown reference'} — pass an existing --base",
+              file=sys.stderr)
+        return 2
 
 if __name__ == "__main__":
     sys.exit(main())

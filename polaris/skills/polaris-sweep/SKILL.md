@@ -1,7 +1,7 @@
 ---
 name: polaris-sweep
 description: ◇ Polaris Sweep — review a single PR end-to-end and post a durable comment. Used by autonomous trigger (cron polling new PRs), or invoked as `claude -p "/polaris-sweep <PR_N>"` in a fresh session.
-version: 1.5.0
+version: 1.5.1
 user-invocable: true
 status: active
 effort: medium
@@ -158,9 +158,8 @@ a clean, secure, well-tested PR that implements the wrong thing; without this le
 self-merges.
 
 1. Resolve the originating issue: `Closes #N`/`Fixes #N` in the PR body, issue refs in commit
-   messages, or the branch name. Loop PRs always carry one — `issue-contract` (B9) guarantees
-   every `afk:eligible` issue is born with a measurable DoD, so for the AFK class the spec
-   source ALWAYS exists.
+   messages, or the branch name. Loop PRs always carry one: every `afk:eligible` issue
+   is born with a measurable DoD, so for the AFK class the spec source ALWAYS exists.
 2. Read the issue's DoD checkboxes / acceptance criteria. Verify each against the diff and the
    evidence (receipts, run logs), and report per item: **met / partial / missing / creep**
    (behaviour nobody asked for), quoting the issue line.

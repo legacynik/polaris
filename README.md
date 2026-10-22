@@ -50,7 +50,6 @@ change CI or shared instructions. Both ship in the same skills set as the sessio
 | `/plan-week` | Build **your own** weekly focus from live tracker issues and current ownership. |
 | `/report` | Compare your plan with real delivery evidence from the tracker — planned versus actual. |
 | `/polaris-memory` | Search and record team memory via the `polmem` CLI — recall-first before building; recall ≠ current state. |
-| `/pol-apex-curate` | Curate a repo's `CLAUDE.md` (the always-loaded apex) — distill lessons/decisions into a ≤200-line, propose-only patch. |
 
 No bootstrap, generic development manifesto, or duplicate report command ships. `/polaris-grill`
 is the read-only clarification gate; it proposes durable entries but never implements or mutates the

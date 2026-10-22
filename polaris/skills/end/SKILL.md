@@ -2,7 +2,7 @@
 name: end
 description: Polaris skill — close a repository-first team session with a handoff, decisions/lessons written to the ledgers, a plan tick and a pathspec-only commit. Trigger when stopping work, before a multi-day pause, or on "wrap up / end session / /end".
 user-invocable: true
-version: 1.23.2
+version: 1.23.3
 invokes: [git-power]
 ---
 
@@ -93,7 +93,7 @@ due grammatiche nello stesso log costringono a leggere due volte e rendono il lo
 ```
 
 `Key context` e `Files` valgono qui più che altrove: la sessione finisce, e quello che non è scritto
-adesso non esiste più. `Files` come `path · simbolo · perché` è ciò che permette a Serena e a questo
+adesso non esiste più. `Files` come `path · simbolo · perché` è ciò che permette al code-graph e a questo
 log di incontrarsi sullo stesso simbolo mesi dopo. SHA e numeri si leggono da `git log`, non si
 ricordano.
 
@@ -282,16 +282,17 @@ One missing = a miss to repair NOW, and say so in the closing summary (the rule 
 name it so it doesn't become a habit). Scaffold the missing ADR exactly as the apex rule
 prescribes:
 
-1. Resolve every referenced file/symbol with **Serena** (`find_symbol`) — exact paths from the
-   tree, never inferred from prose (the 12-wrong-path lesson).
+1. Resolve every referenced file/symbol from the tree — with a code-graph tool when the harness
+   has one (find symbol), otherwise `git grep -n` plus reading the file. Exact paths from the
+   tree, never inferred from prose.
 2. Put them in `code_refs:` frontmatter — **symbols (qualified names) are the primary key**
    (`ClassName.method`, module-level names); file paths only as context; **line numbers never**
    (they drift on every edit — false-positive machine). The ADR file's frontmatter IS the store:
-   git-versioned, scanner-validated, CI-gated — no service, no separate index. Serena resolves
-   symbols live for drift checks (`find_symbol` still exists? signature changed?
-   `find_referencing_symbols` for impact).
+   git-versioned, scanner-validated, CI-gated — no service, no separate index. Drift checks
+   resolve the symbols live the same way (does the symbol still exist? did its signature change?
+   who references it, for impact).
 3. The decisions.md entry gets `→ ADR: <the declared house>/<record>` appended; the record states
-   decision, alternatives weighed, and consequences — content per domain-modeling.
+   decision, alternatives weighed, and consequences.
 4. Include the ADR file in the Step 5 commit pathspec.
 
 If nothing durable happened, say so. Do not log routine progress as either.

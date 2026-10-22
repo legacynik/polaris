@@ -7,7 +7,25 @@ shared assertion helper) that the junit reading called inconclusive.
 import subprocess
 import sys
 
+import pytest
+
 from test_red_break import CALC, REAL, RUN, brk, cli, record, repo, rows  # noqa: F401  (fixture)
+
+
+def _nested_venv(repo):
+    """A `--system-site-packages` venv inside the fixture repo; returns its purelib path. It sees
+    pytest only when the interpreter running this suite has pytest in its own site-packages —
+    not under `uv run --with pytest`, whose packages live in an overlay a child venv never
+    inherits. That is the environment, not the code under test: skip, saying so."""
+    subprocess.run([sys.executable, "-m", "venv", "--system-site-packages", "--without-pip", str(repo / ".venv")],
+                   check=True)
+    py = str(repo / ".venv/bin/python")
+    if subprocess.run([py, "-c", "import pytest"], capture_output=True).returncode != 0:
+        pytest.skip("environment: a --system-site-packages venv of this interpreter cannot import pytest "
+                    "(e.g. `uv run --with pytest`); run the suite with an interpreter that has pytest installed")
+    return subprocess.run([py, "-c", "import sysconfig;print(sysconfig.get_path('purelib'))"],
+                          capture_output=True, text=True, check=True).stdout.strip()
+
 
 MIRROR_FN = "import calc\n\n\ndef test_p():\n    assert calc.price(3) == 3 * calc.RATE\n"
 
@@ -55,10 +73,7 @@ def test_an_editable_install_runs_the_copy_and_writes_nothing_in_the_real_tree(r
     (repo / "tests").mkdir()
     (repo / "tests" / "test_p.py").write_text("from pkg import price\n\n\ndef test_p():\n    assert price(3) == 30\n")
     (repo / ".gitignore").write_text(".venv/\n__pycache__/\n*.jsonl\n")
-    subprocess.run([sys.executable, "-m", "venv", "--system-site-packages", "--without-pip", str(repo / ".venv")],
-                   check=True)
-    site = subprocess.run([str(repo / ".venv/bin/python"), "-c", "import sysconfig;print(sysconfig.get_path('purelib'))"],
-                          capture_output=True, text=True, check=True).stdout.strip()
+    site = _nested_venv(repo)
     (repo / ".venv" / site.split("/.venv/", 1)[1] / "pkg.pth").write_text(f"{repo / 'src'}\n")
     out = brk(repo, "tests/test_p.py::test_p", cmd=".venv/bin/python -m pytest -q -p no:cacheprovider tests",
               file="src/pkg/__init__.py")
@@ -137,10 +152,7 @@ def test_an_editable_install_of_the_repository_root_reaches_a_subprocess(repo):
         "    out = subprocess.run([sys.executable, '-c', 'import calc; print(calc.price(3))'],\n"
         "                         cwd=tmp_path, capture_output=True, text=True)\n    assert out.stdout.strip() == '30'\n")
     (repo / ".gitignore").write_text(".venv/\n__pycache__/\n*.jsonl\n")
-    subprocess.run([sys.executable, "-m", "venv", "--system-site-packages", "--without-pip", str(repo / ".venv")],
-                   check=True)
-    site = subprocess.run([str(repo / ".venv/bin/python"), "-c", "import sysconfig;print(sysconfig.get_path('purelib'))"],
-                          capture_output=True, text=True, check=True).stdout.strip()
+    site = _nested_venv(repo)
     (repo / ".venv" / site.split("/.venv/", 1)[1] / "__editable__.calc-0.1.pth").write_text(f"{repo}\n")
     out = brk(repo, "tests/test_cli.py", cmd=".venv/bin/python -m pytest -q -p no:cacheprovider tests")
     assert out.returncode == 0, out.stderr

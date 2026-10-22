@@ -1,7 +1,7 @@
 ---
 name: bugfix
 description: ◇ Close a bug in 4 gated phases — find without assuming, fix with TDD, prove the consequence not the SHA, rewrite the tests that lied. Use when a traceback, a bug issue, a red smoke, a log error, or "this doesn't work" arrives. Do NOT use for an urgent production incident (paying user down, corrupted data, blocked revenue) — that needs a hotfix, not an investigation.
-version: 1.2.1
+version: 1.2.2
 user-invocable: true
 auto: true
 status: active
@@ -9,7 +9,7 @@ job: take a bug from symptom to closed through stages that are passed with an ex
 when_not: urgent production incident (hotfix, not investigation) · sub-5-line single-file change with no behavior change · bug in a third-party dependency where the test cannot be written · "doesn't work" with no reproducible symptom
 lifecycle: the record lives in the GitHub issue (no local file to drain); rosso_log and mutation-log in .bugfix/evidence/ committed with the PR; lesson proposed to the repo ledger, never promoted from here
 invokes: [tdd-dev, real-testing, git-power]
-invoked-by: [human, issue-contract, cron-sweep]
+invoked-by: [human, cron-sweep]
 io: takes a bug identifier (issue, traceback, smoke, log) → produces fix + reproducing test + rewritten tests + mutation-log + staged record, all attached to the issue
 ---
 
@@ -79,8 +79,9 @@ corpus (38% of corrections).
    (DB, CloudWatch, files): read them **from there**, and verify **which code is actually
    running** (deployed commit, not the disk: a real-test has already been run against a worktree
    30 commits stale).
-2. **Perimeter from the graph, never by grep.** `find_symbol` on the traceback symbol, then
-   `find_referencing_symbols` for callers. Stage `raggio` demands both axes: `chiamanti` AND
+2. **Perimeter from the graph, never by grep.** With the harness's code-graph tool (an LSP or a
+   symbol index), find the traceback symbol, then query its references or call hierarchy for the
+   callers (`find_referencing_symbols`, `references`, `call_hierarchy`, `trace_path`). Stage `raggio` demands both axes: `chiamanti` AND
    `issue_prese`/`issue_lasciate` — zero callers is **declared**, not omitted.
 3. **Archive: has it happened before?** Search it actively (module + exception type) and declare
    the outcome in the record's `ricorrenza` field — stage `causa` blocks without it, even for

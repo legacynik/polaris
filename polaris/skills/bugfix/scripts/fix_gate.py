@@ -181,7 +181,7 @@ def stage_raggio(rec: dict, contract: dict) -> int:
     errs = []
     chiamanti = rec.get("chiamanti")
     if not _has(rec, "chiamanti"):
-        errs.append("'chiamanti' assente: si prendono da Serena, non a occhio. "
+        errs.append("'chiamanti' assente: si prendono dal code-graph, non a occhio. "
                     "Zero chiamanti si dichiara esplicitamente con 'chiamanti: [nessuno]'")
     elif chiamanti != ["nessuno"] and chiamanti != "nessuno":
         if not _has(rec, "chiamanti_cmd"):
@@ -189,7 +189,7 @@ def stage_raggio(rec: dict, contract: dict) -> int:
                         "prodotti (find_referencing_symbols/trace_path), non si elencano a memoria")
         elif not GRAPH_VERBS.search(str(rec["chiamanti_cmd"])):
             errs.append(f"'chiamanti_cmd' non e' un verbo del code-graph: {rec['chiamanti_cmd']!r}"
-                        " — il raggio si vede col graph (Serena), MAI a grep: grep trova testo, "
+                        " — il raggio si vede col code-graph, MAI a grep: grep trova testo, "
                         "non riferimenti")
     if "issue_prese" not in rec and "issue_lasciate" not in rec:
         errs.append("il raggio ha due assi: dichiara 'issue_prese' e 'issue_lasciate' "

@@ -1,7 +1,7 @@
 ---
 name: real-testing
 description: ◇ Merge-readiness verdict from the real product. Serve your commit on a real environment, walk the customer journey through the UI across every surface it reaches, let a fresh agent try to break it, leave the tests in CI. Use before merge or promotion, or when someone says it works. Not diff reading (review).
-version: 3.2.1
+version: 3.2.2
 user-invocable: true
 auto: true
 lifecycle: "produces .real-test/verdicts/<hash>.json (local, never committed — drained by verdict.py once the hash is unreachable) + tests left in CI (permanent, drained by the test suite itself); .real-test/bypass.log local, drained by hand"

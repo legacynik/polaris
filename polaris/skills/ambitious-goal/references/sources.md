@@ -32,5 +32,5 @@ already authorized nor removes existing boundaries.
 ## Ownership
 
 This skill refines a chosen outcome and the evidence of its completion, asking one material
-question at a time. `issue-contract` keeps tracker ownership and may call this skill for feature
+question at a time. The ticket workflow keeps tracker ownership and may call this skill for feature
 refinement.

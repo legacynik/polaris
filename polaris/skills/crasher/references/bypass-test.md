@@ -67,7 +67,7 @@ b = {"route": "/items/new", "klass": "gen_hang", "symptom": "no result after 388
 print(cr.title_of(a)); print(cr.title_of(b))
 sys.exit(0 if cr.title_of(a) == cr.title_of(b) else 1)
 PY
-# expected: two identical titles -> issue-contract's apply gate blocks the second
+# expected: two identical titles -> the twin search finds the first, the second is never filed
 ```
 
 ## Case 4 — two different failures collapsed into one issue
@@ -112,15 +112,15 @@ import json; print(json.dumps({"target":"https://staging.example.invalid","budge
  "surface":["/"],"attempted":["/"],"findings":[{"route":"/x","klass":"console","domain":"gates",
  "symptom":"twelve errors on load","evidence":"t.log"}]}))
 PY
-python3 scripts/crash_report.py --run /tmp/crasher-b6.json | grep -- "--afk no"
-# expected: exit 3 from the report, and the printed invocation carries --afk no
+python3 scripts/crash_report.py --run /tmp/crasher-b6.json | grep -- "afk: no"
+# expected: exit 3 from the report, and the printed issue body carries afk: no
 ```
 
-## Case 6b — an invocation the tracker door would have rejected
+## Case 6b — an issue body that drops the contract
 
-The one the first version of this door shipped, and the one a grep could never catch. The printed
-argv named `build_issue.py`, so the test passed; run it and the contract refused it, because B9
-requires **two** adversarial tests and only one was emitted. The finding never reached the tracker.
+The one the first version of this door shipped, and the one a grep could never catch: the printed
+command looked right, but only one adversarial test was emitted where the contract requires
+**two**, so the finding reached the tracker without its dedup promise.
 
 ```bash
 python3 - <<'PY'
@@ -129,12 +129,12 @@ s = importlib.util.spec_from_file_location("cr", "scripts/crash_report.py")
 cr = importlib.util.module_from_spec(s); s.loader.exec_module(cr)
 argv = cr.issue_argv({"route": "/x", "klass": "console", "symptom": "twelve errors on load",
                       "domain": "gates"}, "o/r")
-print("adversarial tests:", sum(1 for a in argv if a == "--adv-test"))
-print("domain:", repr(argv[argv.index("--domain") + 1]))
-sys.exit(0 if sum(1 for a in argv if a == "--adv-test") >= 2 else 1)
+body = argv[argv.index("--body") + 1]
+print("adversarial tests:", body.count("- adversarial: "))
+print("domain:", "domain: gates" in body)
+sys.exit(0 if body.count("- adversarial: ") >= 2 else 1)
 PY
-# expected: 2 adversarial tests. The executed proof is
-# tests/test_crash_report.py::TheInvocationIsAcceptedByIssueContract, which runs build_issue.py.
+# expected: 2 adversarial tests and the domain from the finding; `--selfcheck` asserts the same.
 ```
 
 ## Case 6c — a domain invented to satisfy the label
@@ -169,10 +169,9 @@ printf '[]'    > /tmp/crasher-b7.json && python3 scripts/crash_report.py --run /
 - **A fabricated run record.** `attempted` can list paths the browser never opened; the script
   checks the claim's shape, not the browsing. Closing that means having the driver emit the record
   itself, which is a change to the driver, not to this gate.
-- **A host template this door has never seen.** The invocation carries the founder contract and
-  the `--field` ids the Polaris issue forms use. A repository whose template asks for other
-  required fields is told which by `build_issue.py`, and the run adds them; nothing here reads
-  that template in advance.
+- **A host template this door has never seen.** The issue body carries the contract fields; a
+  repository whose issue template asks for other required fields gets them added by hand at
+  filing time. Nothing here reads that template in advance.
 - **A badly classified finding.** Flaky-versus-real is judgement. The gate refuses a nameless or
   unbudgeted run; it cannot refuse a wrong one.
 - **A finding invented outright.** Nothing here re-executes the reproducing command. `bugfix`'s own
