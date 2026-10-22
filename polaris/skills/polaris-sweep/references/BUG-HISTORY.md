@@ -22,7 +22,7 @@ This is in `sweep-pending.sh`, not in polaris-sweep skill itself. polaris-sweep 
 
 ## 2026-04-28 — `/usr/local/bin/claude` path missing
 
-**Symptom**: `polaris-sweep.sh` wrapper hardcoded `/usr/local/bin/claude` — a path that doesn't exist on the HolyClaude container. Cron Sweep would have failed at the first tick if it ever fired (caught before deployment by code review at 21:35 CEST).
+**Symptom**: `polaris-sweep.sh` wrapper hardcoded `/usr/local/bin/claude` — a path that doesn't exist on the unattended agent's container. Cron Sweep would have failed at the first tick if it ever fired (caught before deployment by code review at 21:35 CEST).
 
 **Root cause**: phase567 agent that wrote the wrapper assumed the binary path from a different convention. The container actually has claude at `~claude/.local/bin/claude`.
 
@@ -70,7 +70,7 @@ The Sweep skill itself was robust during the dogfood; the bugs were in adjacent 
 
 **Cross-checks that also failed in the same run** (fixed in the same edit):
 - Phase 2's `_polaris/sweep/repos/<slug>.md`: the whole `_polaris/sweep/` tree did not exist. Profile is optional → default `severity_threshold=high`, note it, continue.
-- Phase 5's `/usr/local/bin/sweep-comment-upsert.sh`: absent outside the HolyClaude container. Inline `gh api` upsert on the marker added as the fallback, with `-F body=@file` (a multi-KB markdown body inlined as a shell arg breaks on backticks and `$`).
+- Phase 5's `/usr/local/bin/sweep-comment-upsert.sh`: absent outside the unattended agent's container. Inline `gh api` upsert on the marker added as the fallback, with `-F body=@file` (a multi-KB markdown body inlined as a shell arg breaks on backticks and `$`).
 
 **Lesson beyond the flags**: the Codex lens was the *least* valuable of the three on these two PRs. It confirmed one finding the Claude pass already had and added three minor ones. The highest-value finding of the whole run — PII logged to CloudWatch against a decision ratified with the client — came from grepping `_polaris/decisions.md`, which no external tool can do. Hence the new Phase 3b-bis (decision-conformance check). Do not let a broken external lens block the sweep; the ledger lens is the one that pays.
 

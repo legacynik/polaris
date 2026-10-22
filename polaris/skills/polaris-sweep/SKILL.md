@@ -345,7 +345,7 @@ only diffs inside `deployabili` (or with no declared perimeter): there the PR st
 /usr/local/bin/sweep-comment-upsert.sh "$PR_N" "$BODY"
 ```
 
-**That script does not exist outside the HolyClaude container** (confirmed absent on
+**That script does not exist outside the unattended agent's container** (confirmed absent on
 the founder's Mac, 2026-07-26). Check for it, and fall back to `gh api` inline — the
 marker is what makes it idempotent, not the script:
 

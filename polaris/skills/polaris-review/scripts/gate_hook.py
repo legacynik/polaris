@@ -2,8 +2,8 @@
 """PreToolUse hook: blocks `git commit` / `gh pr merge` unless a matching,
 un-forged approval exists at `.review-gate/approvals/<staged-tree-hash>.json`.
 
-Fixes the bug this mechanism inherits from parallel-issue-flow's
-preCommitGate.sh/preMergeGate.sh: those parse the hook's JSON with
+Fixes the bug this mechanism inherited from the shell gates it replaced
+(preCommitGate.sh/preMergeGate.sh): those parse the hook's JSON with
 `sed -E ... \\s`, a GNU-only escape BSD sed (macOS) never matches, so
 `tool_name` always comes out empty and the gate allows everything, always,
 silently. This parses with the stdlib `json` module only — no sed, no regex

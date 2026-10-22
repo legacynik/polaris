@@ -4,7 +4,7 @@ description: ◇ Read the diff as a senior reviewer would — what would make yo
 version: 1.1.0
 user-invocable: true
 auto: true
-lifecycle: ".review-gate/approvals/<hash>.json drained once by gate_hook.py at commit/merge time, gitignored, pruned by `finalize_review.py --prune-older-than N`; .review-gate/findings/<hash>-*.json kept as the audit trail for doc-truth/human review until the same prune."
+lifecycle: ".review-gate/approvals/<hash>.json drained once by gate_hook.py at commit/merge time, gitignored, pruned by `finalize_review.py --prune-older-than N`; .review-gate/findings/<hash>-*.json kept as the audit trail for human review until the same prune."
 invokes: [critic, codex-review]
 invoked-by: [human, pol-ship]
 io: "takes the staged diff (git tree hash) or a branch/PR named by hand -> produces the reviewer tier, .review-gate/approvals/<hash>.json consumed by a real PreToolUse hook, and two separate Standards/Spec findings files, never fused into one ranking"
