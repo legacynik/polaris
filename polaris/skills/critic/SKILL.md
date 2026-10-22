@@ -1,12 +1,12 @@
 ---
 name: critic
 description: ◇ Use when a non-mechanical artifact must be attacked from fresh context before promotion or action, especially a diff, spec, plan, claim, census row, or another skill's output. Requires materialized evidence and falsification; do NOT use for routine code review, merge decisions, mechanical edits, or broad repository sweeps.
-version: 0.2.3
+version: 0.2.4
 user-invocable: true
 auto: false
 lifecycle: one .critic/<artifact-hash>.json per pass → caller validates it with critic_gate.py and drains it at its own gate
 invokes: []
-invoked-by: [human, architecture, review]
+invoked-by: [human, architecture, polaris-review]
 io: receives a materialized ARTIFACT directory plus CONTRACT, never the author's claim/reasoning/transcript → emits a validated JSON ledger with only quoted, falsified findings
 status: active
 ---
@@ -34,7 +34,7 @@ defined below; prose, commentary and Markdown fences are invalid.
 
 ## When not to use it
 
-- Merge/release verdicts (`real-testing`) or routine finished-PR review (`review`).
+- Merge/release verdicts (`real-testing`) or routine finished-PR review (`polaris-review`).
 - Mechanical edits whose correctness is visible directly in the diff.
 - Broad repository sweeps with their own finding schema (`polaris-sweep`).
 - A pass requested only to confirm a decision already made.

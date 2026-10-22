@@ -1,7 +1,7 @@
 ---
 name: polaris-sweep
 description: ◇ Polaris Sweep — review a single PR end-to-end and post a durable comment. Used by autonomous trigger (cron polling new PRs), or invoked as `claude -p "/polaris-sweep <PR_N>"` in a fresh session.
-version: 1.5.1
+version: 1.6.0
 user-invocable: true
 status: active
 effort: medium
@@ -9,7 +9,7 @@ job: revisionare una PR con tre lenti + ledger + attestazione runtime, e decider
 when_not: non usarla per issue (solo PR), per PR non Hand-authored (skip silenzioso), per deployare o mettere codice su staging, né per bocciare una PR perché non è su staging — «nessuno l'ha deployata» non è prova di regressione
 io: riceve un numero di PR aperto → produce un commento di review idempotente sulla PR + run-state in _polaris/sweep/runs/ + verdetto auto-merge via scripts/sweep_gate.py (exit code)
 lifecycle: il commento vive sulla PR (upsert per marker, mai duplicato); il run-state lo drena la sweep successiva sulla stessa PR; .tmp/sweep/ si pulisce a raccolta avvenuta
-invokes: [real-testing]
+invokes: [real-testing, codex-review]
 invoked-by: [cron, human]
 ---
 
@@ -20,9 +20,8 @@ invoked-by: [cron, human]
 | File | Purpose |
 |---|---|
 | `scripts/sweep_gate.py` | **The auto-merge decision** (Phase 4.5): exit 0 consente, 1 nega, 2 errore d'uso. Fail-closed. `--selfcheck`: 13 controlli |
-| `references/BUG-HISTORY.md` | **Read first when modifying this skill.** 3 bugs from 2026-04-28 (sweep-pending jq filter, claude binary path, auto-merge trigger gap) in adjacent layers, plus the 2026-07-26 entry — 4 stacked failures in Phase 3c's own Codex invocation, a clamped tool timeout mistaken for a hang, and a truncated-diff prompt. Phase 3c's flags all come from that entry; read it before touching them. |
+| `references/BUG-HISTORY.md` | **Read first when modifying this skill.** 3 bugs from 2026-04-28 (sweep-pending jq filter, claude binary path, auto-merge trigger gap) in adjacent layers, plus the 2026-07-26 entry — 4 stacked failures in Phase 3c's own Codex invocation, a clamped tool timeout mistaken for a hang, and a truncated-diff prompt. The flags that entry produced now live in the `codex-review` skill, which owns the invocation. |
 | `references/quality-review.md` | The Phase 3a checks and output shape — read before every quality review |
-| `references/codex-flags.md` | The why-per-flag table of the Phase 3c invocation — read before changing ANY flag |
 | `references/comment-template.md` | The exact Phase 4 comment template + Verified-clean rules (marker and Verdict line are load-bearing) |
 | `references/conflict-resolution.md` | **Load lazily** — only when Phase 1.5 reports `mergeable=CONFLICTING`. Decision tree for auto-rebase vs escalate. Keeps the default tick cheap (no extra context tokens) for the common case of mergeable PRs. |
 | `references/bypass-test.md` | B1–B3 (verdetto su codice mai eseguito · PR che tocca la pipeline · verdetto su SHA stale) con output prima/dopo |
@@ -158,8 +157,9 @@ a clean, secure, well-tested PR that implements the wrong thing; without this le
 self-merges.
 
 1. Resolve the originating issue: `Closes #N`/`Fixes #N` in the PR body, issue refs in commit
-   messages, or the branch name. Loop PRs always carry one: every `afk:eligible` issue
-   is born with a measurable DoD, so for the AFK class the spec source ALWAYS exists.
+   messages, or the branch name. Loop PRs always carry one — `issue-contract` (B9) guarantees
+   every `afk:eligible` issue is born with a measurable DoD, so for the AFK class the spec
+   source ALWAYS exists.
 2. Read the issue's DoD checkboxes / acceptance criteria. Verify each against the diff and the
    evidence (receipts, run logs), and report per item: **met / partial / missing / creep**
    (behaviour nobody asked for), quoting the issue line.
@@ -172,117 +172,25 @@ self-merges.
    fix's evidence without its own gate, and the honestly-open DoD item —
    findings no quality or security lens had a reason to see.
 
-For manual pre-PR use in a session, the `review` skill covers this same axis
+For manual pre-PR use in a session, the `polaris-review` skill covers this same axis
 (plus Standards) — this phase absorbs its Spec axis into the unattended pipeline; it does not
 replace the manual tool.
 
 ### Phase 3c — Codex adversarial review
 
-The invocation below needs only the `codex` CLI. Model truth: `gpt-5.6-sol` —
-every `-codex` id 400s on ChatGPT accounts.
+Run the `codex-review` skill on this PR (`ID=$PR_N`, the PR-diff branch of its step 1). It owns
+the hardened invocation, the model choice and the why-per-flag table; do not carry a copy of the
+flags here. Take back its output block (`CODEX: ran|not-run`, `TRACE`, verified findings).
 
-**The invocation below is load-bearing. The previous version of this phase failed
-every one of four separate ways in a single real run (2026-07-26 —
-see `references/BUG-HISTORY.md`, which stays here: it is this phase's incident history).
-Do not "simplify" it back.**
-
-Write the diff to a file **inside the repo** and point Codex at the path. Do NOT
-paste the diff into the prompt, and never `head -500` it — that silently discarded
-87% of a 4k-line diff while still reading like a completed review.
-
-```bash
-mkdir -p .tmp/sweep
-gh pr diff "$PR_N" > .tmp/sweep/pr-$PR_N.diff
-
-cat > .tmp/sweep/schema.json <<'EOF'
-{"type":"object","additionalProperties":false,
- "properties":{
-   "findings":{"type":"array","items":{"type":"object","additionalProperties":false,
-     "properties":{"severity":{"type":"string","enum":["critical","high","medium","low"]},
-       "title":{"type":"string"},"file":{"type":"string"},"line":{"type":"integer"},
-       "description":{"type":"string"},"suggestion":{"type":"string"}},
-     "required":["severity","title","file","line","description","suggestion"]}},
-   "summary":{"type":"string"},"approved":{"type":"boolean"}},
- "required":["findings","summary","approved"]}
-EOF
-```
-
-Prompt requirements — the last block is not optional:
-
-```
-Adversarial pre-merge review of PR #<N>. The diff is at .tmp/sweep/pr-<N>.diff.
-Read it, then read the source files it touches plus their direct callers/guards —
-the diff alone is not enough to judge correctness.
-CUSTOM RULES (OpenAI custom-code-review-rules pattern): read the repo's AGENTS.md
-files whose directory covers the touched files (root AGENTS.md + any nested one),
-apply every rule under their "Code Review Rules" sections, and CITE the rule
-verbatim in any finding it motivates. A rule violation is High minimum — these
-encode invariants reviewers repeatedly had to explain.
-Be skeptical: assume the code is wrong until proven otherwise. For each finding give
-the concrete failure scenario (inputs/state -> wrong outcome), not a generic concern.
-No style preferences. Set approved=false if any critical/high finding stands.
-
-HARD CONSTRAINTS — violating these wastes the run:
-- Do NOT run tests, pytest, vitest, npm, python, or any build/execution command.
-  This is READ-ONLY: read files, nothing else.
-- Do NOT attempt network access.
-- Read only the touched files and their direct callers, not the whole tree.
-- Emit the JSON result as your FINAL message and stop. Do not keep exploring
-  after you have findings.
-```
-
-Then run it **detached, with stdin closed, under a hard timeout**:
-
-```bash
-nohup timeout 900 codex exec \
-  --json \
-  --sandbox read-only \
-  --skip-git-repo-check \
-  --output-schema .tmp/sweep/schema.json \
-  --output-last-message .tmp/sweep/codex-$PR_N.json \
-  "$(cat .tmp/sweep/prompt-$PR_N.md)" \
-  < /dev/null > .tmp/sweep/run-$PR_N.log 2>&1 &
-```
-
-`--json` makes the run log a JSONL event trace (OpenAI eval-skills pattern): after collection,
-one deterministic process-check earns its keep — did Codex actually READ the touched files?
-
-```bash
-jq -rs '[.[] | select(.item.type=="command_execution") | .item.command] | join("\n")' \
-  .tmp/sweep/run-$PR_N.log | grep -cF -f <(gh pr diff "$PR_N" --name-only) \
-  || echo "⚠ Codex never opened the touched files — treat its findings as diff-only"
-```
-
-A review whose trace never opened the source is a diff-skim wearing a review's clothes — say so
-in the comment instead of trusting it. Token usage lives in the trace's `turn.completed` events.
-
-Each flag earns its place — the why-per-flag table (all four failures observed live) is in
-`references/codex-flags.md`: read it before changing ANY flag of this invocation.
-
-Then collect, with a log fallback:
-
-```bash
-# Preferred: the schema-validated file
-jq -r '.findings[] | "[\(.severity|ascii_upcase)] \(.title) (\(.file):\(.line))"' \
-  .tmp/sweep/codex-$PR_N.json 2>/dev/null
-
-# Fallback: findings sometimes exist only in the run log, which is ANSI-encoded —
-# plain grep matches nothing, `grep -a` does.
-grep -a -oE '"severity":\s*"[a-z]+"|\[(CRITICAL|HIGH|MEDIUM|LOW)\][^"]{0,160}' \
-  .tmp/sweep/run-$PR_N.log
-```
-
-If Codex finds Critical/High → override verdict to `request-changes`.
-**Verify each Codex finding against the source before reporting it** — it mixes real
-bugs with false alarms, and the value is in the reproduction, not the claim.
-
-Clean up `.tmp/sweep/` only after the run is collected (Codex reads from it).
+If it reports verified Critical/High findings → override the verdict to `request-changes`. A
+`TRACE: diff-only` result is said in the comment beside its findings instead of being trusted.
+`CODEX: not-run` (no CLI, timeout, zero output) goes to the fallback below.
 
 ### Phase 3c-fallback — when Codex does not run: a Standards + Spec pass takes the lens
 
 If Codex times out, is killed, or returns nothing, **do not stall the sweep, do not
 promise a later update, and do not degrade to two lenses**: run the two passes of the
-`review` skill (`review/references/protocol.md`) on the changes since the merge-base with
+`polaris-review` skill (`polaris-review/references/protocol.md`) on the changes since the merge-base with
 main as the replacement adversarial lens — Standards (repo's documented coding standards)
 and Spec (does the diff match the originating issue), each in its own fresh-context
 subagent if your harness supports one, otherwise one after the other, inline. That keeps

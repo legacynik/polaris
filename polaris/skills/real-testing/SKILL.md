@@ -1,7 +1,7 @@
 ---
 name: real-testing
 description: ◇ Merge-readiness verdict from the real product. Serve your commit on a real environment, walk the customer journey through the UI across every surface it reaches, let a fresh agent try to break it, leave the tests in CI. Use before merge or promotion, or when someone says it works. Not diff reading (review).
-version: 3.2.2
+version: 3.2.3
 user-invocable: true
 auto: true
 lifecycle: "produces .real-test/verdicts/<hash>.json (local, never committed — drained by verdict.py once the hash is unreachable) + tests left in CI (permanent, drained by the test suite itself); .real-test/bypass.log local, drained by hand"
@@ -45,7 +45,7 @@ evidence. The scripts (`perimeter.py`, `verdict.py`) bind the verdict to the git
 
 ### When NOT to use it
 
-Reading a diff for quality (`review`), attacking an artifact (`critic`), hunting bugs
+Reading a diff for quality (`polaris-review`), attacking an artifact (`critic`), hunting bugs
 (a cross-model `codex review`), a docs-only change (say so, stop), a repo without git (manual review), an
 environment you cannot reach or a flag you cannot switch (**a block, not a degraded gate**).
 
