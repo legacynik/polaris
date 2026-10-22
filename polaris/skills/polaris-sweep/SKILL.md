@@ -21,6 +21,7 @@ invoked-by: [cron, human]
 |---|---|
 | `scripts/sweep_gate.py` | **The auto-merge decision** (Phase 4.5): exit 0 consente, 1 nega, 2 errore d'uso. Fail-closed. `--selfcheck`: 13 controlli |
 | `references/BUG-HISTORY.md` | **Read first when modifying this skill.** 3 bugs from 2026-04-28 (sweep-pending jq filter, claude binary path, auto-merge trigger gap) in adjacent layers, plus the 2026-07-26 entry — 4 stacked failures in Phase 3c's own Codex invocation, a clamped tool timeout mistaken for a hang, and a truncated-diff prompt. Phase 3c's flags all come from that entry; read it before touching them. |
+| `references/quality-review.md` | The Phase 3a checks and output shape — read before every quality review |
 | `references/codex-flags.md` | The why-per-flag table of the Phase 3c invocation — read before changing ANY flag |
 | `references/comment-template.md` | The exact Phase 4 comment template + Verified-clean rules (marker and Verdict line are load-bearing) |
 | `references/conflict-resolution.md` | **Load lazily** — only when Phase 1.5 reports `mergeable=CONFLICTING`. Decision tree for auto-rebase vs escalate. Keeps the default tick cheap (no extra context tokens) for the common case of mergeable PRs. |

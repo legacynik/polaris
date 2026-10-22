@@ -84,7 +84,8 @@ replication/consistency trade-offs. Those are commitments: go to `architecture`.
 5. **If the schema changes:** a new migration (never edit an applied one) · regenerate the types ·
    update the schema reference in the same PR. If other services read the table, the change needs
    data backfill, or a column is dropped or renamed, stop and go to `architecture` first
-   (expand/contract). RLS or Supabase auth: read Supabase's row-level-security documentation before writing the policy.
+   (expand/contract). RLS or Supabase auth: write the policy for every command the code runs (an UPDATE also needs
+   a SELECT policy, see Gotchas) and test the affected row count, not only the absence of an error.
 
 ## Gotchas
 
