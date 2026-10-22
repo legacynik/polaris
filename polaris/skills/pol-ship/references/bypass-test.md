@@ -1,8 +1,8 @@
 # Bypass-test — the test that must FAIL if a gate is worked around
 
 Each block: the adversarial input, the exact command, and the outcome that
-proves the gate held. "Without this, the skill is declared, not blindproofed"
-— `SKILL-STANDARD.md`. Every command below runs from `pol-ship/`.
+proves the gate held: without it, the skill is declared, not proofed. Every command below runs
+from `pol-ship/`.
 
 ## 1. Redaction — a live-looking secret must block, a placeholder must not
 
