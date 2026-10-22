@@ -68,7 +68,7 @@ The two claims it can make are the two it can fake, so both are mechanical:
    authorised, and `crash_report.py` refuses a record without it. The budget is a field of the
    run, not a flag of the report — the report reads what the drive was allowed to do.
 2. **Drive it.** Delegate to the `browser-pilot` agent, which owns the dedicated headless Chrome
-   (CDP) — never the founder's everyday browser, never a Playwright script written here. Per path:
+   (CDP) — never the human's everyday browser, never a Playwright script written here. Per path:
    navigate, assert the page rendered, assert zero console errors, assert bound endpoints answer
    2xx or 401. For an asynchronous money-path, wait for the real result and measure the wait; never
    hardcode a timing from a previous run.

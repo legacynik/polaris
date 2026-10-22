@@ -26,7 +26,7 @@ is a mechanical rename or move.
    in `costo per opzione`) · **noise** (correct under context the reviewer lacked — note which
    context would have prevented it).
 5. **Stop** when a cycle returns only trivial or already-considered findings, or after three
-   cycles — then hand the open findings to the founder. Two cycles in a row with substantive
+   cycles — then hand the open findings to the repo owner. Two cycles in a row with substantive
    findings and none classified actionable means the reviewer is being validated, not heard:
    stop and escalate.
 

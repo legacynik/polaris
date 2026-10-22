@@ -54,7 +54,7 @@ log may carry one line of the verdict.
       `body` among the blockers → `pol-pr`, then back here.
 3. **Re-verify behaviour-changing fixes** with `real-testing` before the push, not after.
 4. **Push, then reply** on each thread citing the commit, and resolve the ones fixed or disproved.
-5. Snapshot again; on WAITING wait (Monitor or `/loop`, never a hand-written sleep loop) and repeat.
+5. Snapshot again; on WAITING wait (a recurring runner, e.g. Claude Code `/loop` or cron; never a hand-written sleep loop) and repeat.
    After 30 minutes of WAITING on the same check, hand off to the owner instead of waiting.
 6. **READY:** `gh pr edit <pr> --add-label <l>`, then one comment `<!-- owner-label sha=<head> -->`
    with a one-line summary, then snapshot again: a head that moved means remove the label and loop.

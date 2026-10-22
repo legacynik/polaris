@@ -175,7 +175,7 @@ is even fundable — and `5` refuses the question outright until the components 
 interfaces, does not pick the seam. It ends on the question — *which of these do you want to
 explore?* — and waits. The stop is the point: a run that designs the remedy for eight
 candidates has spent seven candidates' worth of thinking on work nobody chose, and it anchors
-the founder on whichever one was written up most fluently.
+the repo owner on whichever one was written up most fluently.
 
 **Phase 2 takes the picked candidate into the decision ceremony of this same door** — the
 `architectural decision` arm, with its reversibility gate, its MECE options, its cost per
@@ -184,7 +184,7 @@ option and its closure check. The audit hands over; it does not decide.
 Each candidate in phase 1 is a card with a fixed shape — `Files` · `Problem` · `Solution` in
 plain language · `Benefits` · `Before / After` · **recommendation strength**, one of
 `Strong` · `Worth exploring` · `Speculative`. The badge is not decoration: it is the companion
-to `gravità`, and it is what lets a founder skip nine cards and read one. End with the single
+to `gravità`, and it is what lets the repo owner skip nine cards and read one. End with the single
 candidate you would take first, and why.
 
 **Conflicts with a standing record.** Surface a candidate that contradicts a standing Decision **only when the friction

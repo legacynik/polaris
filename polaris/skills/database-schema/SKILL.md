@@ -23,9 +23,8 @@ exit code. The truth is the migrations (and the live database when you can read 
 `schema-reference.md` is a map that is usually behind.
 
 Measured 2026-10-17: in three product repositories the schema reference was older than
-the newest migration (by 2 days, 15 days and 43 days). Reading the reference alone, as the donor
-skill told you to, was wrong in 3 of 3 repos. And 5 of 201 documented columns exist in no
-migration at all: they were added to the database by hand, so the migrations are not complete either.
+the newest migration (by 2 days, 15 days and 43 days). Reading the reference alone was wrong
+in 3 of 3 repos. And 5 of 201 documented columns exist in no migration at all: they were added to the database by hand, so the migrations are not complete either.
 
 ## Where this goes (host repository decides)
 

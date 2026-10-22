@@ -2,8 +2,8 @@
 
 Three ways the old pre-commit/pre-merge gate this replaces was proven bypassable, each reproduced here and closed, **plus 7 more
 found by an adversarial audit of this skill itself** (cases 3a-3g —
-findings vuoti via il percorso ufficiale, import diretto invece della CLI, e 5 varianti che
-aggirano `targets_gate` per testo letterale). Run the whole block; every `echo exit=$?` MUST
+empty findings via the official path, a direct import instead of the CLI, and 5 variants that
+bypass `targets_gate` by literal text). Run the whole block; every `echo exit=$?` MUST
 print `2` (blocked) except the ones marked `exit=0`.
 
 ```bash

@@ -7,7 +7,7 @@ auto: false
 status: active
 lifecycle: the phase router emits no durable artifact; census JSON is regenerated live; destructive receipts live under the shared Git common dir at polaris-cantiere/removed-log.jsonl so cleanup never dirties main
 invokes: []
-invoked-by: [update, issue-contract, bugfix, pol-ship, start, end, human esplicito, real-testing]
+invoked-by: [update, issue-contract, bugfix, pol-ship, start, end, human, real-testing]
 io: phase + live git/gh state -> one deterministic verdict or guarded action; no transcript and no full-workflow context
 ---
 

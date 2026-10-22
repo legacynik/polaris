@@ -141,11 +141,11 @@ one-confirm approval — you never mark or delete by hand.
    branch, which is free:
 
    ```bash
-   # La riconciliazione automatica dei thread superati è parcheggiata su
-   # `task/T6-prune-parked`: dipende da una verità di merge che
-   # sopravviva a un branch cancellato al merge, non ancora provata. Fino ad allora
-   # si legge il cockpit e si chiude a mano, con la PR mergiata come prova.
-   echo "NOTA: riconciliazione dei thread parcheggiata — chiusura manuale"
+   # Automatic reconciliation of superseded threads is parked on
+   # `task/T6-prune-parked`: it depends on a merge truth that survives a
+   # branch deleted at merge, which is not yet proven. Until then
+   # read the cockpit and close by hand, with the merged PR as proof.
+   echo "NOTE: thread reconciliation parked — manual close"
    ```
 
    It flags threads whose branch is **merged into origin/main** (superseded, proven) vs active vs
@@ -202,8 +202,7 @@ one-confirm approval — you never mark or delete by hand.
 
 4. **Propose the cleanup as ONE confirm loop, with the proof.** List the superseded threads + the
    mergeable branches + the `[archive?]` wiki docs, each with its evidence (merge SHA / PR / both-stale
-   ages), and ask a single yes/no. Only on yes: chiusura manuale dei thread confermati (riconciliazione automatica parcheggiata) to remove the confirmed
-   threads, delete the named merged branches, and set `lifecycle: archived` on the confirmed candidates.
+   ages), and ask a single yes/no. Only on yes: close the confirmed threads by hand (automatic reconciliation is parked) to remove them, delete the named merged branches, and set `lifecycle: archived` on the confirmed candidates.
    Never auto-delete, never archive a `[metadata-lag]` or front-door item, never touch
    active/unverified/other-panel threads.
 

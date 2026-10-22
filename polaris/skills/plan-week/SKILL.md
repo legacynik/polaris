@@ -131,41 +131,41 @@ outcome that matters), `## Not starting` (what is deliberately deferred, visible
 `## Evidence` (proof of done with its date). Keep them identical to the template so the plan reads the
 same across the team.
 
-## Step 6b — Riconcilia `state/todos.md`, la vista viva della settimana
+## Step 6b — Reconcile `state/todos.md`, the live view of the week
 
-Il piano committato (`team/<login>/weeks/YYYY-Www.md`) è **storia**: possiede l'impegno e non si
-riscrive mai. `state/todos.md` è **stato**: la fetta di quel piano che è viva adesso, riconciliata
-ogni lunedì. Stesso taglio append/overwrite che il repo ha già fra session log e `current.md`, un
-piano sopra. Se la repo ospite non ha `state/todos.md`, copialo da
-`${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/start/templates/repo-contract/state/todos.md` e riempilo dal piano — vuoto, se il
-piano non esiste: una vista onesta di un piano che non c'è è vuota, non inventata.
+The committed plan (`team/<login>/weeks/YYYY-Www.md`) is **history**: it owns the commitment and is
+never rewritten. `state/todos.md` is **state**: the slice of that plan that is alive right now,
+reconciled every Monday. Same append/overwrite split the repo already has between the session log
+and `current.md`, one level up. If the host repo has no `state/todos.md`, copy it from
+`${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/start/templates/repo-contract/state/todos.md` and fill it from the plan — empty, if the
+plan does not exist: an honest view of a plan that is not there is empty, not invented.
 
-Il file è nella forma donor a **tabelle** (`| Task | Added | Context |`) e la seconda cella di
-`## Active` è `Added`: la settimana in cui il lavoro è **comparso**, non quella in cui è stato
-ritoccato. Un item portato avanti che si ri-timbra fa sembrare nuovo del lavoro fermo da tre
-settimane, ed è esattamente il segnale che serve per accorgersene.
+The file is in **table** form (`| Task | Added | Context |`) and the second cell of
+`## Active` is `Added`: the week in which the work **appeared**, not the one in which it was last
+touched. A carried-over item that gets re-stamped makes work that has been stuck for three weeks
+look new, and that is exactly the signal needed to notice it.
 
-**Tre comandi toccano questo file e ognuno possiede una mossa sola** (la tabella nel template lo
-dichiara, ed è la stessa frase): `plan-week` **riconcilia** `Active` e rolla `Completed`; `/update`
-aggiorna il **testo** di una riga che il thread cita, e non ne aggiunge (`--no-add`); `/end` sposta
-in `Completed` una riga atterrata. Nessuno dei tre ri-timbra `Added`, nessuno azzera `Active`.
+**Three commands touch this file and each owns a single move** (the table in the template says so,
+and it is the same sentence): `plan-week` **reconciles** `Active` and rolls `Completed`; `/update`
+updates the **text** of a row that the thread cites, and adds none (`--no-add`); `/end` moves a
+landed row to `Completed`. None of the three re-stamps `Added`, none zeroes `Active`.
 
 ```bash
 eval "$("${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/start/scripts/resume_paths.sh")"
 WEEKLY="$ROOT/team/$LOGIN/weeks/$(date +%G-W%V).md"   # the committed plan: the SOURCE of the view
 TODOS="$ROOT/state/todos.md"                          # the live view: what this step reconciles
 UP="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/update/scripts/state_upsert.py"
-[ -f "$UP" ] || { echo "STOP: state_upsert non risolto — non mergiare Active a mano"; exit 1; }
-printf '%s\n' "| #<issue> — <risultato in una riga> | | <context> |" \
+[ -f "$UP" ] || { echo "STOP: state_upsert not resolved — do not merge Active by hand"; exit 1; }
+printf '%s\n' "| #<issue> — <outcome in one line> | | <context> |" \
   | python3 "$UP" week "$TODOS" --week "W$(date +%V)"
 ```
 
-Sostituisce la riga con la stessa chiave portandosi dietro il suo `Added:` originale, e timbra con
-la settimana corrente **solo** ciò che non c'era. Gli altri item tornano byte-identici.
+It replaces the row with the same key, carrying over its original `Added:`, and stamps with the
+current week **only** what was not there. The other items come back byte-identical.
 
-**`Active` non si azzera mai** — azzerarla mangerebbe il lavoro in volo. Una riga esce per un solo
-motivo: il suo lavoro è atterrato davvero, e a toglierla è `/end`, non questo passo. Quello che
-questo passo pota è `## Completed`, che vale **solo per la settimana corrente**:
+**`Active` is never zeroed** — zeroing it would eat work in flight. A row leaves for one reason
+only: its work really landed, and it is `/end` that removes it, not this step. What this step
+prunes is `## Completed`, which holds **only the current week**:
 
 ```bash
 TODOS="$ROOT/state/todos.md"
@@ -173,12 +173,12 @@ python3 "${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/update/scripts/todos_roll.p
   "$TODOS" --now "$(date +%F)"
 ```
 
-Lo stesso comando fa la **promozione** che dà senso a `## Follow-ups`, l'unica sezione che attraversa
-le settimane: quando la sua `Review Date` è arrivata, la riga **torna in `Active`** — timbrata con la
-settimana in cui è scaduta, non con quella corrente, perché `Added` porta l'età dell'item e non la
-data dell'ultimo tocco. È la ragione per cui questo file sta accanto a GitHub invece di duplicarlo:
-una issue può essere aperta, non può essere *dormiente fino a una data*. `/start` mostra le righe
-scadute il giorno stesso (`FOLLOWUP_DUE=`), e il roll le sposta al prossimo `plan-week`.
+The same command does the **promotion** that gives `## Follow-ups` its meaning, the only section
+that crosses weeks: when its `Review Date` has arrived, the row **goes back to `Active`** — stamped
+with the week in which it expired, not the current one, because `Added` carries the item's age and
+not the date of the last touch. That is why this file sits next to GitHub instead of duplicating
+it: an issue can be open, but it cannot be *dormant until a date*. `/start` shows the expired rows
+the same day (`FOLLOWUP_DUE=`), and the roll moves them at the next `plan-week`.
 
 ## Step 7 — Ownership boundary (the plan does not wait for permission)
 

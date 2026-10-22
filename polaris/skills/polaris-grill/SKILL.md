@@ -111,8 +111,8 @@ Ask only for intent, authority, risk tolerance, or tradeoffs that evidence canno
 Ask one question at a time. Each question resolves exactly one material decision; never bundle
 multiple gates into one question. Each question must include:
 
-- a real choice between named options (A or B), one marked as recommended and default so "sì"
-  accepts it; never a bare "Confermi?" or "È questo che vuoi?";
+- a real choice between named options (A or B), one marked as recommended and default so "yes"
+  accepts it; never a bare "Do you confirm?" or "Is this what you want?";
 - the short Evidence basis or the Unknown it resolves;
 - the decision that the answer unlocks.
 

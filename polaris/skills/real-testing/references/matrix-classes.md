@@ -1,78 +1,78 @@
 ---
-title: real-test — le 10 classi della matrice per-hunk
-description: Dettaglio per classe — cosa cercare, prova minima, e se e' "a prova live obbligatoria" (LIVE_REQUIRED in verdict.py).
+title: real-test — the 10 classes of the per-hunk matrix
+description: Per-class detail — what to look for, minimum proof, and whether it is "live proof required" (LIVE_REQUIRED in verdict.py).
 status: active
 ---
 
-# Le 10 classi
+# The 10 classes
 
-Ogni file/hunk del diff appartiene a una di queste classi (`verdict.py new` la indovina
-dall'estensione/percorso, correggila a mano se sbaglia — e' un aiuto, non oracolo).
+Every file/hunk of the diff belongs to one of these classes (`verdict.py new` guesses it
+from the extension/path, correct it by hand if it gets it wrong — it is an aid, not an oracle).
 
-Le classi in **grassetto** sono `LIVE_REQUIRED`: `verdict.py` rifiuta `evidence: not-applicable`
-su di loro (devono essere `live` con artefatto, o `assumed` con `exception_ticket` — mai silenzio).
-Nascono da G2.1 (34 osservazioni: "il test verde certifica il mock, non il comportamento reale") —
-sono esattamente le classi dove le fonti misurano il pattern: DB mockato, LLM mockato, endpoint
-sbagliato, dipendenza mai installata pulita, browser mai aperto davvero.
+The classes in **bold** are `LIVE_REQUIRED`: `verdict.py` rejects `evidence: not-applicable`
+on them (they must be `live` with an artifact, or `assumed` with an `exception_ticket` — never silence).
+They come from G2.1 (34 observations: "the green test certifies the mock, not the real behavior") —
+they are exactly the classes where the sources measure the pattern: mocked DB, mocked LLM, wrong
+endpoint, dependency never cleanly installed, browser never really opened.
 
-| Classe | Cosa cercare | Prova minima | Live-required |
+| Class | What to look for | Minimum proof | Live-required |
 |---|---|---|---|
-| `symbol` | chiamanti, fallback, tipi, errori | percorso reale di ogni chiamante | no |
-| **`api-cli`** | contratto pubblico e consumatori | invocazione reale + forma output + errore | **si'** |
-| `config-ci` | parsing, precedenza, deny/allow | carica config + caso positivo e negativo | no |
-| **`dependency`** | fresh install, import, packaging | ambiente pulito + build/import | **si'** |
-| **`db-migration`** | fresh install, upgrade, vincoli, dati | DB reale + schema/dati prima/dopo | **si'** |
-| **`frontend`** | build, routing, rete, console, stati UI | browser vero + network + console | **si'** |
-| **`llm-agent`** | provider, tool call, output, fallback | chiamata provider-backed + trace | **si'** |
-| `deletion` | riferimenti attivi, config, sostituto | vecchio percorso assente + sostituto funzionante | no |
-| `docs` | link, comandi copiabili, residui | link/checker mirato; niente stack se non rilevante | no |
-| `test-only` | il test fallisce davvero sul difetto | prova negativa o mutation mirata | no |
+| `symbol` | callers, fallbacks, types, errors | real path of every caller | no |
+| **`api-cli`** | public contract and consumers | real invocation + output shape + error | **yes** |
+| `config-ci` | parsing, precedence, deny/allow | load config + positive and negative case | no |
+| **`dependency`** | fresh install, import, packaging | clean environment + build/import | **yes** |
+| **`db-migration`** | fresh install, upgrade, constraints, data | real DB + schema/data before/after | **yes** |
+| **`frontend`** | build, routing, network, console, UI states | real browser + network + console | **yes** |
+| **`llm-agent`** | provider, tool call, output, fallback | provider-backed call + trace | **yes** |
+| `deletion` | active references, config, replacement | old path absent + replacement working | no |
+| `docs` | links, copyable commands, leftovers | targeted link/checker; no stack if not relevant | no |
+| `test-only` | the test really fails on the defect | negative proof or targeted mutation | no |
 
-## Asse degli attacchi (`verdict_attack.py`)
+## Attack axis (`verdict_attack.py`)
 
-La classe dice **dove** atterra la modifica; l'attacco dice **come** è stata colpita. Ogni riga ha una
-lista `attack`: ogni voce nomina una classe, e o è `run` con `probe` e `result`, o è `n/a` con `reason`.
-Una riga `live` di classe `api-cli`, `llm-agent` o `frontend` senza almeno un attacco `run` è rifiutata.
+The class says **where** the change lands; the attack says **how** it was hit. Each row has an
+`attack` list: each entry names a class, and is either `run` with `probe` and `result`, or `n/a` with `reason`.
+A `live` row of class `api-cli`, `llm-agent` or `frontend` without at least one `run` attack is rejected.
 
-| Attacco | Cosa prova |
+| Attack | What it proves |
 |---|---|
-| `malformed-input` | JSON rotto, campi mancanti, stringhe enormi, Unicode strano, path tipo traversal |
-| `interruption` | continue/stop ripetuti, output tagliato a metà, retry dopo progresso parziale |
-| `prompt-injection` | testo che prova a scavalcare le regole, saltare la verifica, dichiarare successo |
-| `cancel-resume` | annullo a metà, poi ripresa o ripartenza da stato in corso rimasto |
-| `stale-state` | file di stato vecchi, sessioni che non combaciano, metadati di fase contraddittori |
-| `dirty-worktree` | modifiche e file non tracciati preesistenti restano intatti |
-| `hung-command` | un comando che non torna: timeout limitato, figlio ucciso, ripresa |
-| `flaky` | politica di rerun: un passaggio fortunato non è verde |
-| `misleading-success` | parole di successo con exit diverso da 0, test saltati, log parziali |
+| `malformed-input` | broken JSON, missing fields, huge strings, odd Unicode, traversal-style paths |
+| `interruption` | repeated continue/stop, output cut in half, retry after partial progress |
+| `prompt-injection` | text that tries to override the rules, skip verification, declare success |
+| `cancel-resume` | cancel midway, then resume or restart from leftover in-progress state |
+| `stale-state` | old state files, mismatched sessions, contradictory phase metadata |
+| `dirty-worktree` | pre-existing modifications and untracked files stay intact |
+| `hung-command` | a command that does not return: bounded timeout, child killed, resume |
+| `flaky` | rerun policy: a lucky pass is not green |
+| `misleading-success` | success words with a non-zero exit, skipped tests, partial logs |
 
-Un harness costruito male (import sbagliato, interpolazione di shell, ambiente che trapela) non è un
-difetto del prodotto: si classifica come detrito, si ripara e si ripete la prova.
+A badly built harness (wrong import, shell interpolation, leaking environment) is not a
+product defect: classify it as debris, repair it and repeat the proof.
 
-## Regole di evidenza (`verdict.py validate_evidence`)
+## Evidence rules (`verdict.py validate_evidence`)
 
-- `evidence: live` → richiede `evidence_artifact` che esista, non sia vuoto, e sia **piu' recente**
-  del file sorgente sul disco (altrimenti e' G2.6: prova raccolta prima dell'ultima modifica, come
-  nel caso reale del newline-collapse validato sulla funzione vecchia).
-- `evidence: assumed` → richiede `exception_ticket` non vuoto. E' l'unica via legittima per una
-  classe LIVE_REQUIRED senza prova live (es. niente credenziali provider disponibili in questa
-  sessione) — un rischio **scritto e tracciato**, non taciuto.
-- `evidence: not-applicable` → vietato su LIVE_REQUIRED. Consentito solo su classi che non lo sono
-  (es. un file `docs` che non tocca boot/build/runtime).
+- `evidence: live` → requires an `evidence_artifact` that exists, is not empty, and is **newer**
+  than the source file on disk (otherwise it is G2.6: proof gathered before the last change, as in
+  the real case of the newline-collapse validated on the old function).
+- `evidence: assumed` → requires a non-empty `exception_ticket`. It is the only legitimate way for a
+  LIVE_REQUIRED class without live proof (e.g. no provider credentials available in this
+  session) — a risk that is **written and tracked**, not hushed.
+- `evidence: not-applicable` → forbidden on LIVE_REQUIRED. Allowed only on classes that are not
+  (e.g. a `docs` file that does not touch boot/build/runtime).
 
-## Scala del "livello piu' reale pertinente"
+## Scale of the "most real relevant level"
 
-Dal piu' economico, fermati quando il contratto e' provato — non oltre:
+From the cheapest, stop when the contract is proven — no further:
 
-1. test mirati
-2. CLI/modulo reale — se il repo dichiara i comandi dei suoi flussi (un manifest o uno script
-   documentato), usa quelli invece di improvvisare l'invocazione
-3. stack locale reale con DB/queue/storage
-4. browser locale reale
-5. provider sandbox/staging
-6. staging deployato con browser, DB e trace
+1. targeted tests
+2. real CLI/module — if the repo declares the commands of its flows (a manifest or a documented
+   script), use those instead of improvising the invocation
+3. real local stack with DB/queue/storage
+4. real local browser
+5. sandbox/staging provider
+6. deployed staging with browser, DB and trace
 
-Frontend: browser obbligatorio se cambiano UI/build/routing/wiring. DB: DB reale obbligatorio se
-cambiano query/schema/migrazioni/transazioni. LLM: chiamata provider-backed obbligatoria se cambia
-modello/prompt/toolset/routing — se mancano credenziali il verdetto e' `NOT-MERGEABLE` salvo che il
-repo dichiari esplicitamente quel controllo come gate post-merge (allora e' `MERGEABLE-CON-GAP`).
+Frontend: browser mandatory if UI/build/routing/wiring change. DB: real DB mandatory if
+queries/schema/migrations/transactions change. LLM: provider-backed call mandatory if
+model/prompt/toolset/routing change — if credentials are missing the verdict is `NOT-MERGEABLE` unless the
+repo explicitly declares that check as a post-merge gate (then it is `MERGEABLE-CON-GAP`).

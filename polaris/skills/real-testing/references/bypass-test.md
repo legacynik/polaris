@@ -1,16 +1,16 @@
 ---
-title: real-test — bypass-test (deve fallire se qualcuno aggira il gate)
-description: 9 tentativi di aggiramento contro un repo git usa-e-getta (5 originali + 4 da un attacco adversariale). Ognuno DEVE essere bloccato tranne l'esenzione sul branch default e il bypass esplicito, che devono passare MA lasciare traccia in bypass.log — mai un aggiramento silenzioso (208 occorrenze misurate).
+title: real-test — bypass-test (must fail if someone bypasses the gate)
+description: 9 bypass attempts against a throwaway git repo (5 original + 4 from an adversarial attack). Each MUST be blocked except the exemption on the default branch and the explicit bypass, which must pass BUT leave a trace in bypass.log — never a silent bypass (208 occurrences measured).
 status: active
 ---
 
 # Bypass-test
 
-Materializza un repo git vero (non una directory finta), prova 9 modi di aggirare il gate:
-5 contro `gate.sh` (il fast-path Claude-Code), 4 contro l'ancora reale — il git hook installato
-da `install-hook.sh` — che sono le vie laterali trovate dall'attacco adversariale quando la
-sola simulazione via payload JSON non basta piu' a fermare un `git commit` VERO.
-Se anche UNO di questi passa senza dover bloccare, il gate e' dichiarato, non blindato.
+Materializes a real git repo (not a fake directory) and tries 9 ways to bypass the gate:
+5 against `gate.sh` (the Claude Code fast path), 4 against the real anchor — the git hook installed
+by `install-hook.sh` — which are the side paths found by the adversarial attack when the
+JSON-payload simulation alone is no longer enough to stop a REAL `git commit`.
+If even ONE of these passes when it should block, the gate is declared, not hardened.
 
 ```bash
 #!/usr/bin/env bash
@@ -107,40 +107,40 @@ rm -rf "$REPO"
 echo "BYPASS-TEST OK — 5/5 tentativi si comportano come devono"
 ```
 
-**Se un giorno uno di questi 5 passa senza dover bloccare (tranne il 5, che deve bloccare
-`rc=0` ma con log non vuoto), il gate e' regredito a dichiarazione — non spedire, fixalo prima.**
+**If one day any of these 5 passes when it should block (except 5, which must exit
+`rc=0` but with a non-empty log), the gate has regressed to a declaration — do not ship, fix it first.**
 
-## Perché questi 5 e non altri
+## Why these 5 and not others
 
-Ognuno riproduce un caso reale del registro, non un caso di fantasia:
+Each one reproduces a real registry case, not an invented one:
 
-| # | Riproduce | Voce |
+| # | Reproduces | Entry |
 |---|---|---|
-| 1 | verdetto self-reported che ignora il ramo nuovo introdotto dal fix | G1.6 / F6 |
-| 2 | evidenza copiata/rinominata invece che ricalcolata | G2.6 (evidenza slegata dal digest runtime corrente) |
-| 3 | mock/artefatto vuoto spacciato per IO reale | G2.1 (34 osservazioni, "il verde certifica il mock") |
-| 4 | verdetto valido al momento T, codice cambiato dopo, nessuno se ne accorge | G2.6 (caso reale: newline-collapse validato sulla funzione vecchia, 3 giorni in prod) |
-| 5 | bypass esistente ma silenzioso | R8 (208 bypass espliciti misurati in MISURE.md, nessuno tracciato) |
+| 1 | self-reported verdict that ignores the new branch introduced by the fix | G1.6 / F6 |
+| 2 | evidence copied/renamed instead of recomputed | G2.6 (evidence detached from the current runtime digest) |
+| 3 | mock/empty artifact passed off as real IO | G2.1 (34 observations, "green certifies the mock") |
+| 4 | valid verdict at time T, code changed afterwards, nobody notices | G2.6 (real case: newline-collapse validated on the old function, 3 days in prod) |
+| 5 | bypass exists but is silent | R8 (208 explicit bypasses measured in MISURE.md, none traced) |
 
 
-## R1 — un branch `main` stale non deve mai diventare la base in silenzio (fusione 2026-08-16)
+## R1 — a stale `main` branch must never silently become the base (merge 2026-08-16)
 
-fails_before: real-test v0.1.0 (`resolve_base` provava il nome letterale `main` dopo il default
-branch — contro la dottrina §0 del plugin: «Non assumere main»).
+fails_before: real-test v0.1.0 (`resolve_base` tried the literal name `main` after the default
+branch — against the plugin's doctrine §0: «Do not assume main»).
 
-Setup: repo `-b develop`, branch `main` creato al primo commit e mai avanzato, 3 commit.
-Comando: `perimeter.py --repo . --head HEAD` senza `--base`.
-**PRIMA (v0.1.0)**: base = sha di `main` (stale), in silenzio — perimetro sbagliato = falso verde. Osservato 2026-08-16.
-**DOPO (v2.0.0)**: base = HEAD~1 col ripiego DICHIARATO su stderr; il nome `main` non viene mai
-provato. Repo a un solo commit: ripiega su HEAD (dichiarato). Selfcheck: asserzione R1 dedicata.
+Setup: repo `-b develop`, branch `main` created at the first commit and never advanced, 3 commits.
+Command: `perimeter.py --repo . --head HEAD` without `--base`.
+**BEFORE (v0.1.0)**: base = sha of `main` (stale), silently — wrong perimeter = false green. Observed 2026-08-16.
+**AFTER (v2.0.0)**: base = HEAD~1 with the fallback DECLARED on stderr; the name `main` is never
+tried. Repo with a single commit: falls back to HEAD (declared). Selfcheck: dedicated R1 assertion.
 
-## R2 — un comando che CITA `git commit` non deve far scattare il gate (fusione 2026-08-16)
+## R2 — a command that MENTIONS `git commit` must not trigger the gate (merge 2026-08-16)
 
-fails_before: real-test v0.1.0 (`gate.sh` matchava la sottostringa `*"git commit"*`).
+fails_before: real-test v0.1.0 (`gate.sh` matched the substring `*"git commit"*`).
 
-Comando: payload PreToolUse con `command: echo "do not git commit yet"` su repo con marker attivo.
-**PRIMA (v0.1.0)**: exit 2 — bloccava un echo innocuo (falso positivo: un guard che scatta sulla
-prosa insegna a ignorarlo). Osservato 2026-08-16.
-**DOPO (v2.0.0)**: exit 0; `git commit -m x` vero senza verdetto → exit 2 (controprova).
-Nota di fusione: il fix ha scovato un secondo difetto reale — `grep -q` sotto `pipefail` uccide
-`printf` con SIGPIPE proprio sui match veri; risolto con grep senza `-q`.
+Command: PreToolUse payload with `command: echo "do not git commit yet"` on a repo with an active marker.
+**BEFORE (v0.1.0)**: exit 2 — it blocked a harmless echo (false positive: a guard that fires on
+prose teaches people to ignore it). Observed 2026-08-16.
+**AFTER (v2.0.0)**: exit 0; a real `git commit -m x` without a verdict → exit 2 (control test).
+Merge note: the fix uncovered a second real defect — `grep -q` under `pipefail` kills
+`printf` with SIGPIPE precisely on the true matches; fixed with grep without `-q`.

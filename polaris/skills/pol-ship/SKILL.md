@@ -23,7 +23,7 @@ Read the repository's contract once (`_polaris/config.yml`, else `config.yml`): 
 workflows, environments, `rollback`, `owner_label`, `checks_not_gating`, `inert_paths`,
 `signing_env`, optional `version_file`, `changelog`, `flags`, `slo`, extra review) and `real_test:`
 (`deploy_staging_workflow`, `deploy_prod_workflow`, `health`, `smoke`, `rollback`). Never invent a
-command the contract does not name; a missing field is written as `modalita: ridotta` plus the field,
+command the contract does not name; a missing field is written as `mode: reduced` plus the field,
 never skipped in silence. Every script runs from the repository root as
 `python3 <skill-dir>/scripts/<script>.py`, so `gh` and `git` read that repository.
 

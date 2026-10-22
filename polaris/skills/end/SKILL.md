@@ -19,11 +19,11 @@ git status --short                 # what actually changed this session
 
 ## One home (write-target for ALL session-state)
 
-Il log vive e si committa dove gira il pannello; il cockpit vive nel worktree principale. Session
-log, handoff file, plan tick e append a decisions/lessons stanno sotto `$ROOT`, che è il contratto
-di QUESTO worktree, e atterrano sul branch su cui la sessione è davvero avvenuta. Solo `$CURRENT`
-— il cockpit, gitignored — resta a casa unica nel worktree principale, perché una copia per
-worktree è una copia che nessun merge riporta indietro. La provenienza sta nell'header del blocco
+The log lives and is committed where the panel runs; the cockpit lives in the main worktree. The
+session log, handoff file, plan tick and appends to decisions/lessons sit under `$ROOT`, which is
+the contract of THIS worktree, and they land on the branch where the session actually happened.
+Only `$CURRENT` — the cockpit, gitignored — keeps a single home in the main worktree, because a
+per-worktree copy is a copy that no merge ever brings back. Provenance lives in the block header
 (`wt:`/`branch:`).
 
 ```bash
@@ -76,92 +76,92 @@ Skip silently when the repo is already clean. Never delete anything in steps 1�
 
 Append to `team/<login>/sessions/YYYY-MM-DD-@<github-login>.md`:
 
-**Stesso formato di `/update`** — è lo stesso file, letto dalla stessa persona tre settimane dopo:
-due grammatiche nello stesso log costringono a leggere due volte e rendono il log non contabile.
-`/end` cambia solo la parola dopo l'orario (`session end`) e chiude con `Next session`.
+**Same format as `/update`** — it is the same file, read by the same person three weeks later:
+two grammars in one log force a double read and make the log impossible to count. `/end` changes
+only the word after the time (`session end`) and closes with `Next session`.
 
 ```md
-## HH:MM — session end · <titolo: cosa lascia questa sessione> · wt: <worktree> · branch: <branch>
-- Done: <risultato verificato, con la prova>
-- In progress: <cosa resta a metà, e dove sta>
-- Next session: <primo comando da eseguire>
-- Blocker: <esatto, oppure none>
-- Key context: <decisione e perché · scelta architetturale · scoperta che ribalta una conclusione ·
-  errore e regola che ne segue · decisione superata e cosa la supera>
+## HH:MM — session end · <title: what this session leaves behind> · wt: <worktree> · branch: <branch>
+- Done: <verified result, with the proof>
+- In progress: <what is left half-done, and where it sits>
+- Next session: <first command to run>
+- Blocker: <exact, or none>
+- Key context: <decision and why · architectural choice · discovery that overturns a conclusion ·
+  error and the rule that follows from it · superseded decision and what supersedes it>
   — tag: #decisione #architettura #scoperta #errore #superata #incidente
-- Files: <path · simbolo toccato · perché>
+- Files: <path · symbol touched · why>
 ```
 
-`Key context` e `Files` valgono qui più che altrove: la sessione finisce, e quello che non è scritto
-adesso non esiste più. `Files` come `path · simbolo · perché` è ciò che permette al code-graph e a questo
-log di incontrarsi sullo stesso simbolo mesi dopo. SHA e numeri si leggono da `git log`, non si
-ricordano.
+`Key context` and `Files` matter more here than anywhere else: the session ends, and what is not
+written now no longer exists. `Files` as `path · symbol · why` is what lets the code-graph and this
+log meet on the same symbol months later. SHAs and numbers are read from `git log`, not
+remembered.
 
-### I sei campi sono i cinque elementi del confine — nessuno è opzionale
+### The six fields are the five elements of the boundary — none is optional
 
-Le sei righe non sono un formato gradito: sono i **cinque elementi** che rendono la sessione
-ripartibile, e la sessione dopo apre da qui. Un campo senza contenuto si scrive `none`, esplicito;
-un campo **assente** è il confine rotto, e `/end` non chiude.
+The six lines are not a preferred format: they are the **five elements** that make the session
+resumable, and the next session opens from here. A field with no content is written `none`,
+explicitly; a field that is **absent** is a broken boundary, and `/end` does not close.
 
-| elemento | campo |
+| element | field |
 |---|---|
-| scope e decisioni | `Key context` |
-| stato dei task e prossimo task | `In progress` + `Next session` |
-| file cambiati e stato del working tree | `Files` |
-| comandi di verifica lanciati ed esito | `Done` |
-| domande, rischi e approvazioni aperte | `Blocker` |
+| scope and decisions | `Key context` |
+| task state and next task | `In progress` + `Next session` |
+| changed files and working-tree state | `Files` |
+| verification commands run and their outcome | `Done` |
+| open questions, risks and approvals | `Blocker` |
 
-**Fail-closed su una decisione presa e non scritta.** Una clausola di `Key context` taggata
-`#decisione` o `#superata` deve **nominare la casa che la porta**, in una di queste tre forme:
+**Fail-closed on a decision made and not written.** A `Key context` clause tagged `#decisione` or
+`#superata` must **name the home that carries it**, in one of these three forms:
 
-- l'id del record — `DEC-…` o `ADR-…` — e il record deve esistere sotto `decisions/`;
-- il titolo della voce di `decisions.md` (Step 3), che la clausola ripete per esteso;
-- l'issue nella forma **qualificata**: `issue:<repo>#<numero>`, per esempio `issue:acme-api#407`.
-  Il numero nudo (`#407`, «vedi PR #424») **non** conta: è la cosa più comune che finisca in una
-  riga `Key context`, e prenderlo per una casa assolveva ogni decisione non scritta.
+- the record id — `DEC-…` or `ADR-…` — and the record must exist under `decisions/`;
+- the title of the `decisions.md` entry (Step 3), which the clause repeats in full;
+- the issue in **qualified** form: `issue:<repo>#<number>`, for example `issue:acme-api#407`.
+  The bare number (`#407`, «see PR #424») does **not** count: it is the most common thing to end up
+  in a `Key context` line, and taking it for a home used to absolve every unwritten decision.
 
-Una ritrattazione è una decisione come le altre — un numero ritirato si scrive **accanto al
-numero**, non solo qui. Se la clausola non nomina nulla, si scrive prima (Step 3) e solo dopo si
-chiude: una decisione che vive solo in questo log è la decisione che la sessione dopo prende di
-nuovo, o rovescia senza sapere che esisteva.
+A retraction is a decision like any other — a withdrawn number is written **next to the number**,
+not only here. If the clause names nothing, write it first (Step 3) and only then close: a
+decision that lives only in this log is the decision the next session makes again, or overturns
+without knowing it existed.
 
-Dove il repo porta il gate del backbone, la stessa cosa è una verifica eseguibile e non un
-promemoria — altrimenti le sei righe sopra restano la checklist:
+Where the repo carries the backbone gate, the same thing is an executable check and not a
+reminder — otherwise the six lines above remain a checklist:
 
 ```bash
 python3 "${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/start/scripts/session_gate.py" close \
   --root "$ROOT" --handoff "$ROOT/team/$LOGIN/sessions/$(date +%F)-@$LOGIN.md" || exit 1
 ```
 
-Chiude **la sessione che `/start` ha aperto in questo checkout**: il sid non si passa e non si
-inventa — è checkout + giorno + login, ricalcolato qui. Il motore è quello del
-repo, se lo porta, altrimenti quello del vault dichiarato (`git config polaris.vault`), la stessa
-ricerca che fa il pack del brief.
+It closes **the session that `/start` opened in this checkout**: the sid is not passed and not
+invented — it is checkout + day + login, recomputed here. The engine is the repo's own, if it
+carries one, otherwise the declared vault's (`git config polaris.vault`), the same lookup the brief
+pack does.
 
-Chiude **la sessione aperta**, non il sid di oggi: a mezzanotte la derivazione cambia mentre la
-sessione è ancora aperta, e un pannello può non aver mai fatto `/start`. `SESSION: none open —
-nothing to close` esce 0 e `/end` prosegue: la cosa durevole è il commit dell'handoff, e una
-ricevuta già scritta non viene mai riscritta.
+It closes **the open session**, not today's sid: at midnight the derivation changes while the
+session is still open, and a panel may never have run `/start`. `SESSION: none open — nothing to
+close` exits 0 and `/end` proceeds: the durable thing is the handoff commit, and a receipt already
+written is never rewritten.
 
-**Il `|| exit 1` vale solo per i rifiuti.** Prima questo blocco era un `if [ -f "$GATE" ]` su un
-path solo-host, e con una catena `&&` … `||` OGNI rifiuto — anche `ID_COLLISION` — cadeva nel ramo
-`||` stampando «nessun gate» con `$?` a `0`: la skill proseguiva al commit dello Step 5 proprio nei
-casi che il gate esiste per fermare. Ora l'assenza del motore esce 0 stampando la nota, e il
-`|| exit 1` intercetta soltanto i rifiuti veri.
+**The `|| exit 1` applies to refusals only.** This block used to be an `if [ -f "$GATE" ]` on a
+host-only path, and with an `&&` … `||` chain EVERY refusal — even `ID_COLLISION` — fell into the
+`||` branch printing «no gate» with `$?` at `0`: the skill went on to the Step 5 commit in
+exactly the cases the gate exists to stop. Now a missing engine exits 0 printing the note, and the
+`|| exit 1` catches only real refusals.
 
-Sette rifiuti, tutti prima della ricevuta — ma solo **con una sessione aperta**: senza, il motore
-non gira e restano i due che il log si guadagna da solo, che la porta controlla per prima
-(`HANDOFF_MISSING`, `HANDOFF_UNREADABLE`, exit 1). Gli altri cinque — decisione non scritta, id già
-speso, albero altrui — non hanno una sessione contro cui girare: valgono comunque come regola, e
-quello che scoprono va in una issue, non in un rifiuto che non esiste.
-I sette: `HANDOFF_MISSING` se non gli si passa il log e
-`HANDOFF_UNREADABLE` se il path non è leggibile (i cinque elementi si leggono, non si inventano),
-`HANDOFF_INCOMPLETE` nomina l'elemento mancante, `DECISION_UNWRITTEN` la clausola che non nomina la
-sua casa, `ID_COLLISION` un id di Decision già speso altrove, `TREE_NOT_OURS` un path sporco che
-nessuna riga `Files` dichiara e `TREE_UNREADABLE` un albero che `git` non riesce a leggere (un
-committer per tree), `SESSION_UNKNOWN` un sid che non ha una `start.json`.
-Le lezioni escono come righe `LESSON_PROPOSAL` su stderr: sono **proposte**, e
-lo Step 3 decide quali qualificano e le scrive. Il gate non tocca `lessons.md` da solo.
+Seven refusals, all before the receipt — but only **with an open session**: without one the engine
+does not run and only the two that the log earns by itself remain, which the door checks first
+(`HANDOFF_MISSING`, `HANDOFF_UNREADABLE`, exit 1). The other five — unwritten decision, id already
+spent, someone else's tree — have no session to run against: they still hold as a rule, and what
+they uncover goes into an issue, not into a refusal that does not exist.
+The seven: `HANDOFF_MISSING` if the log is not passed to it and
+`HANDOFF_UNREADABLE` if the path is not readable (the five elements are read, not invented),
+`HANDOFF_INCOMPLETE` names the missing element, `DECISION_UNWRITTEN` the clause that does not name
+its home, `ID_COLLISION` a Decision id already spent elsewhere, `TREE_NOT_OURS` a dirty path that
+no `Files` line declares and `TREE_UNREADABLE` a tree that `git` cannot read (one committer per
+tree), `SESSION_UNKNOWN` a sid that has no `start.json`.
+Lessons come out as `LESSON_PROPOSAL` lines on stderr: they are **proposals**, and Step 3 decides
+which ones qualify and writes them. The gate does not touch `lessons.md` on its own.
 
 ### Step 1b — Structured handoff → `$ROOT/team/<login>/handoff/YYYY-MM-DD.md`
 
@@ -184,12 +184,12 @@ the capped summary; THIS is the structured one a teammate (or you in 3 days) res
 
 The repo has ONE cockpit, `$CURRENT`, and inside it ONE place for session summaries. `/end` is the
 only writer of that section — `/update` never touches it — and it is a ring: five entries, newest
-first, exactly the donor's cap. There is no second per-repo cockpit to append to: a dense file that
+first. There is no second per-repo cockpit to append to: a dense file that
 only grows is the surface that died at 188 KB while everyone kept reading `current.md`.
 
 ```bash
 RC="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/update/scripts/recent_context.py"
-python3 "$RC" "$CURRENT" --entry "### $(date +%F) — <cosa lascia questa sessione, una riga>"
+python3 "$RC" "$CURRENT" --entry "### $(date +%F) — <what this session leaves behind, one line>"
 ```
 
 Three surfaces, three jobs: `Updated:` carries date and owner, THIS section carries the summary,
@@ -210,7 +210,7 @@ VAULT="$(python3 "${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/start/scripts/sess
 ```bash
 RC="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/update/scripts/recent_context.py"
 [ -n "$VAULT" ] && python3 "$RC" "$VAULT/state/current.md" \
-  --entry "### $(date +%F) — <repo>: <cosa lascia questa sessione> · branch <branch>"
+  --entry "### $(date +%F) — <repo>: <what this session leaves behind> · branch <branch>"
 ```
 
 No declaration, or a declared path that is not there → no copy, and this repo's cockpit is the only
@@ -280,13 +280,13 @@ by branch, nothing open lost, other panels' threads and `Next` lines untouched) 
 difference. **`/end` is the only Team OS command with closing authority**, and it spends it against
 ground truth rather than impression.
 
-La potatura è **automatica e provata**, non più a mano. Il rimotore chiede due fonti e pretende che
-concordino: il **tracker** (`gh pr view N` dice `MERGED`, oppure `gh issue view N` dice `CLOSED` per
-`COMPLETED`) e il **repo** (la head di quella PR, o il suo merge commit, è antenata del default
-branch QUI). Prima si guarda, in sola lettura:
+Pruning is **automatic and proven**, no longer by hand. The pruner asks two sources and requires
+them to agree: the **tracker** (`gh pr view N` says `MERGED`, or `gh issue view N` says `CLOSED`
+for `COMPLETED`) and the **repo** (the head of that PR, or its merge commit, is an ancestor of the
+default branch HERE). First look, read-only:
 
 ```bash
-# read-only: nessuna riga esce da `## Open`, si guardano i verdetti
+# read-only: no line leaves `## Open`, only the verdicts are looked at
 PT="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/end/scripts/prune_threads.py"
 [ -f "$PT" ] || PT="$HOME/.agents/skills/end/scripts/prune_threads.py"
 python3 "$PT" "$CURRENT" --owner "$LOGIN" --now "$(date +%F)"
@@ -311,14 +311,14 @@ python3 "$PT" "$CURRENT" --apply --owner "$LOGIN" --now "$(date +%F)" \
   --todos "$ROOT/state/todos.md"
 ```
 
-Ogni `PROVEN` esce da `## Open`, la sua riga di `state/todos.md` passa da `## Active` a `##
-Completed` con la data di oggi, `Updated:` si riduce a **data e owner**, e il thread **con il suo
-verdetto** viene appeso al session log: il thread non sparisce, si sposta, e il log resta
-append-only. `Active` non si azzera mai e `Added:` non si ri-timbra: le altre righe tornano
-byte-identiche. `state/todos.md` **non è obbligatorio** nel contratto: se non c'è, il passo funziona
-lo stesso e lo dice (`"todo": "skipped"`). Chiudere significa togliere la **lane intera** — la riga e
-ciò che le sta sotto, figli indentati e blocco fence compresi: una riga orfana sotto `## Open` è
-lavoro che la sessione dopo deve riconciliare.
+Every `PROVEN` leaves `## Open`, its `state/todos.md` row moves from `## Active` to `##
+Completed` with today's date, `Updated:` shrinks to **date and owner**, and the thread **with its
+verdict** is appended to the session log: the thread does not vanish, it moves, and the log stays
+append-only. `Active` is never zeroed and `Added:` is not re-stamped: the other rows come back
+byte-identical. `state/todos.md` is **not mandatory** in the contract: if it is missing, the step
+works anyway and says so (`"todo": "skipped"`). Closing means removing the **whole lane** — the
+line and what sits under it, indented children and fence block included: an orphan line under
+`## Open` is work the next session has to reconcile.
 
 The run also prints `STALE=` for every lane that cites nothing and is older than 14 days: no
 verdict can close it, so **each one is resolved in this `/end`** — open an issue for it (then it has
@@ -332,28 +332,27 @@ python3 "$CL" close "$CURRENT" --key "<branch>" --todos "$ROOT/state/todos.md" \
   --owner "$LOGIN" --now "$(date +%F)"
 ```
 
-Una chiave che non nomina un thread solo esce `2` e non tocca niente — meglio un rerun che la lane
-sbagliata cancellata.
+A key that does not name exactly one thread exits `2` and touches nothing — better a rerun than the
+wrong lane deleted.
 
 **Closing means REMOVING, not annotating.** A thread proven landed comes **out** of the file; a
-`~~struck~~` line that stays is still tokens the next session reads and reconciles. Donor: marvin
-`end.md` step 5, `Update State (MANDATORY)` — *«Mark completed items as done or remove them»*,
-*«Ensure open threads reflect reality (remove resolved, add new)»*. Same pass:
+`~~struck~~` line that stays is still tokens the next session reads and reconciles; the open
+threads that remain must reflect reality. Same pass:
 collapse the state line to **one** `Updated:` — date and login, nothing else: the clause on what
 changed belongs to `## Recent Context`, and the full story to the session log. Target after pruning: under 2,000 tokens; `checkpoint.sh verify`
 fails on a second `Updated:` line and warns above the size.
 
-### Il censimento del cantiere entra nell'handoff
+### The worksite census goes into the handoff
 
 ```bash
 CT="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/git-power/scripts/cantiere.py"
 [ -f "$CT" ] || CT="$HOME/.agents/skills/git-power/scripts/cantiere.py"
 if [ ! -f "$CT" ]; then
-  echo "NOTA: git-power non installato — handoff senza censimento del cantiere"
+  echo "NOTE: git-power not installed — handoff without the worksite census"
 else
   OUT="$(python3 "$CT" census --tsv --repo "$MAIN_WT" 2>&1)"; CENSUS_RC=$?
-  if [ "$CENSUS_RC" = "2" ]; then   # solo "unknown flag": exit 1 significa "c'è da agire"
-    echo "NOTA: git-power precede il contratto TSV — censimento in prosa"
+  if [ "$CENSUS_RC" = "2" ]; then   # only "unknown flag": exit 1 means "something to act on"
+    echo "NOTE: git-power predates the TSV contract — census in prose"
     python3 "$CT" census --repo "$MAIN_WT"
   else
     printf '%s\n' "$OUT"
@@ -361,28 +360,27 @@ else
 fi
 ```
 
-Righe TSV `VERDETTO\tbranch\tpath\tnote`, exit 0 pulito / 1 c'è da agire / 2 errore (contratto
-di `cantiere.py`). Copia nell'handoff, verbatim, sotto una riga `**Cantiere**`, ogni riga il
-cui verdetto non è MAIN — CLOSABLE è ciò che si può chiudere, DIRTY ciò che ha lavoro non
-committato o file ignorati non vuoti. Sono le due cose che chi riprende deve sapere senza rileggere
-il grafo. `/end` **non chiude nulla** — elenca, e la chiusura resta un atto esplicito.
+TSV rows `VERDICT\tbranch\tpath\tnote`, exit 0 clean / 1 something to act on / 2 error (the
+`cantiere.py` contract). Copy into the handoff, verbatim, under a `**Cantiere**` line, every row
+whose verdict is not MAIN — CLOSABLE is what can be closed, DIRTY is what has uncommitted work or
+non-empty ignored files. These are the two things whoever resumes must know without re-reading the
+graph. `/end` **closes nothing** — it lists, and closing remains an explicit act.
 
-`git-power` non viaggia in questo pacchetto, e i **tre** siti che lo chiamano lo risolvono allo
-stesso modo: catena `$CLAUDE_PLUGIN_ROOT` → `$HOME/.agents`, `[ -f ]`, e una riga di degrado
-dichiarata. Senza quel guard un `/end` a metà si spezzava con un errore Python grezzo su una
-macchina senza `git-power`. Il fallback scatta **solo su exit 2**, che è «flag sconosciuto»: exit 1
-vuol dire «c'è da agire» ed è un risultato valido, non un errore da ripetere in prosa. Una copia
-più vecchia del contratto rifiuta `--tsv` e il fallback stampa la stessa
-cosa in prosa italiana, un elemento per riga col verdetto fra parentesi quadre. In entrambi i casi
-vale la stessa regola: **leggi i verdetti che il comando stampa**, non quelli che questa riga
-ricorda. Il vocabolario è del tool, e questa prosa invecchia prima di lui.
+`git-power` does not travel in this package, and the **three** sites that call it resolve it the
+same way: `$CLAUDE_PLUGIN_ROOT` → `$HOME/.agents` chain, `[ -f ]`, and a declared degradation line.
+Without that guard a half-run `/end` broke with a raw Python error on a machine without
+`git-power`. The fallback fires **only on exit 2**, which means «unknown flag»: exit 1 means
+«something to act on» and is a valid result, not an error to repeat in prose. An older copy of the
+contract rejects `--tsv` and the fallback prints the same thing as Italian prose, one item per
+line with the verdict in square brackets. In both cases the same rule holds: **read the verdicts
+the command prints**, not the ones this line remembers. The vocabulary belongs to the tool, and
+this prose ages faster than it does.
 
-### Le PR aperte del pannello — una riga di ragione ciascuna
+### The panel's open PRs — one line of reason each
 
-Chi apre una PR la porta al merge. Una PR lasciata aperta a fine sessione non è neutra: va in
-conflitto con la lane dopo, e diverse PR aperte insieme sullo stesso manifest fanno pagare il conto
-tutto in una volta. Quindi `/end` le **elenca** e dice quali portano già la loro ragione nel
-cockpit:
+Whoever opens a PR carries it to merge. A PR left open at session end is not neutral: it conflicts
+with the next lane, and several PRs open together on the same manifest make you pay the bill all
+at once. So `/end` **lists** them and says which ones already carry their reason in the cockpit:
 
 ```bash
 CK="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/update/scripts/checkpoint.sh"
@@ -390,16 +388,17 @@ CK="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/update/scripts/checkpoint.sh"
 bash "$CK" open-prs
 ```
 
-`OPEN_PR=#N <branch> — ragione: MANCA` è la riga che ti riguarda: scrivi **una riga** in `$CURRENT`
-che dica perché quella PR resta aperta — un atto del founder, una credenziale che non hai, una CI
-ancora da leggere — e citala col suo `#N`, che è la chiave con cui il giro dopo la ritrova.
-`PRESENTE` significa che il cockpit la nomina già e non c'è niente da scrivere. `OPEN_PRS=unknown`
-è `gh` che non ha risposto: elencale a mano e vai avanti lo stesso.
+`OPEN_PR=#N <branch> — ragione: MANCA` (the script's output line; «ragione» = reason, «MANCA» =
+missing) is the line that concerns you: write **one line** in `$CURRENT` saying why that PR stays
+open — an act of the repo owner, a credential you do not have, a CI run still to be read — and cite
+it with its `#N`, which is the key the next round uses to find it again. `PRESENTE` (present)
+means the cockpit already names it and there is nothing to write. `OPEN_PRS=unknown` is `gh` not
+having answered: list them by hand and carry on anyway.
 
-**Questo passo non rifiuta mai** (decisione founder, 2026-09-06): è un promemoria, non un muro. Un
-gate che blocca la chiusura di sessione è un gate che si aggira, e una sessione chiusa male perde
-l'handoff, non solo la lista delle PR. Il comando esce `0` in ogni ramo, PR aperte senza ragione
-comprese.
+**This step never refuses** (repo owner decision, 2026-09-06): it is a reminder, not a wall. A gate
+that blocks session close is a gate that gets bypassed, and a badly closed session loses the
+handoff, not just the PR list. The command exits `0` in every branch, open PRs without a reason
+included.
 
 **`state/goals.md` is NOT touched here.** Goals change by explicit decision, never by session
 inertia. If it is empty or untouched for more than 30 days, say so in the closing summary and ask
@@ -441,7 +440,7 @@ not here.
 
 ## Step 4b — Reconcile `## Active Priorities` (the only writer of the order)
 
-The cockpit is the one view the founder reads, and `/start` reads only it — so the order of the
+The cockpit is the one view the repo owner reads, and `/start` reads only it — so the order of the
 work lives here and **this step is its only writer**. Every `/end`, after Step 4, rebuild the
 ordered list from four inputs: `state/goals.md` (where we are going), the `## Active` rows of
 `state/todos.md`, the `## Open` threads that survived Step 4, and what this session changed.
@@ -474,15 +473,17 @@ ORDER
 
 Land what you wrote through **the same script `/update` uses** — pathspec-only, never `git add -A`,
 and never a push. Il log di sessione si committa sul branch corrente, sempre; due eccezioni
-dichiarate (HEAD staccato, policy `no-direct-default` sul default branch). Un repo senza alcun
-commit non è un'eccezione: il primo handoff atterra come tutti gli altri.
+dichiarate (HEAD staccato, policy `no-direct-default` sul default branch). (In English: the session
+log is committed on the current branch, always, with two declared exceptions — detached HEAD, and
+the `no-direct-default` policy on the default branch; the Italian sentence is matched by a test.)
+A repo with no commit at all is not an exception: the first handoff lands like any other.
 
-Un `/end` che rinvia invece di committare è un `/end` che non ha lavorato (decisione founder,
-2026-09-04). Terzo esito dichiarato, sempre exit 2: un path che git rifiuta (ignorato, o dentro un
-repo annidato) viene nominato con la sua ragione e gli altri path atterrano comunque — un handoff
-non muore perché un file sta in una directory ignorata.
-Nelle eccezioni lo script esce 2 con una riga che dice quale: i file restano dove
-li hai scritti, non vengono copiati altrove, e tu lo dici in chiaro invece di riportare successo.
+An `/end` that postpones instead of committing is an `/end` that did not do its work (repo owner
+decision, 2026-09-04). Third declared outcome, always exit 2: a path that git refuses (ignored, or
+inside a nested repo) is named with its reason and the other paths land anyway — a handoff does
+not die because one file sits in an ignored directory.
+On the exceptions the script exits 2 with a line saying which one: the files stay where you wrote
+them, are not copied elsewhere, and you say so plainly instead of reporting success.
 ```bash
 cd "$(git rev-parse --show-toplevel)"   # the panel's own worktree, never another one
 SC="${CLAUDE_PLUGIN_ROOT:-}/skills/update/scripts/session_commit.sh"          # plugin install
@@ -500,17 +501,17 @@ working tree, uncommitted — never report a clean close. **Both resolver candid
 (say which you tried): `git add --` those exact paths and
 `git commit -m "chore(polaris): session handoff $(date +%F) @$LOGIN"` — never `git add -A`.
 
-I path si nominano tutti: quelli che non esistono vengono **scartati prima** dell'`add`, perché
-`git add -- esistente assente` non stage NIENTE ed esce 128 — un piano settimanale mai aperto
-faceva atterrare l'intero handoff da nessuna parte. E se un hook rifiuta il commit lo script esce 1,
-riporta la riga dell'hook e ripulisce l'indice dei soli path Polaris: lasciarli staged significa che
-il commit dopo, senza pathspec, si porta via l'handoff. Mai `--no-verify`.
+All the paths are named: those that do not exist are **discarded before** the `add`, because
+`git add -- existing missing` stages NOTHING and exits 128 — a weekly plan never opened made the
+whole handoff land nowhere. And if a hook rejects the commit the script exits 1, reports the hook's
+line and cleans the index of the Polaris paths only: leaving them staged means the next commit,
+without a pathspec, carries the handoff away. Never `--no-verify`.
 
 Then read the ground truth back, because a skill that reports success on a dirty tree is the failure
 this step exists to close:
 
 ```bash
-git status --short   # 0 righe sui path Polaris, o dì esattamente quale è rimasta e perché
+git status --short   # 0 lines on the Polaris paths, or say exactly which one is left and why
 ```
 
 Never commit or push without an explicit request. After committing, if the branch is ahead of its

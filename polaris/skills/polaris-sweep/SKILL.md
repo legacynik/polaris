@@ -5,10 +5,10 @@ version: 1.6.0
 user-invocable: true
 status: active
 effort: medium
-job: revisionare una PR con tre lenti + ledger + attestazione runtime, e decidere con un exit code se può fondersi da sola
-when_not: non usarla per issue (solo PR), per PR non Hand-authored (skip silenzioso), per deployare o mettere codice su staging, né per bocciare una PR perché non è su staging — «nessuno l'ha deployata» non è prova di regressione
-io: riceve un numero di PR aperto → produce un commento di review idempotente sulla PR + run-state in _polaris/sweep/runs/ + verdetto auto-merge via scripts/sweep_gate.py (exit code)
-lifecycle: il commento vive sulla PR (upsert per marker, mai duplicato); il run-state lo drena la sweep successiva sulla stessa PR; .tmp/sweep/ si pulisce a raccolta avvenuta
+job: review a PR through three lenses + the decision ledger + a runtime attestation, and decide by exit code whether it may merge on its own
+when_not: not for issues (PRs only), not for PRs that are not Hand-authored (silent skip), not to deploy or put code on staging, and not to reject a PR because it is not on staging — "nobody deployed it" is not evidence of a regression
+io: receives an open PR number → emits an idempotent review comment on the PR + run state in _polaris/sweep/runs/ + an auto-merge verdict via scripts/sweep_gate.py (exit code)
+lifecycle: the comment lives on the PR (upserted by marker, never duplicated); the next sweep on the same PR drains the run state; .tmp/sweep/ is cleaned once collected
 invokes: [real-testing, codex-review]
 invoked-by: [cron, human]
 ---
@@ -19,12 +19,12 @@ invoked-by: [cron, human]
 
 | File | Purpose |
 |---|---|
-| `scripts/sweep_gate.py` | **The auto-merge decision** (Phase 4.5): exit 0 consente, 1 nega, 2 errore d'uso. Fail-closed. `--selfcheck`: 13 controlli |
+| `scripts/sweep_gate.py` | **The auto-merge decision** (Phase 4.5): exit 0 allows, 1 denies, 2 usage error. Fail-closed. `--selfcheck`: 13 checks |
 | `references/BUG-HISTORY.md` | **Read first when modifying this skill.** 3 bugs from 2026-04-28 (sweep-pending jq filter, claude binary path, auto-merge trigger gap) in adjacent layers, plus the 2026-07-26 entry — 4 stacked failures in Phase 3c's own Codex invocation, a clamped tool timeout mistaken for a hang, and a truncated-diff prompt. The flags that entry produced now live in the `codex-review` skill, which owns the invocation. |
 | `references/quality-review.md` | The Phase 3a checks and output shape — read before every quality review |
 | `references/comment-template.md` | The exact Phase 4 comment template + Verified-clean rules (marker and Verdict line are load-bearing) |
 | `references/conflict-resolution.md` | **Load lazily** — only when Phase 1.5 reports `mergeable=CONFLICTING`. Decision tree for auto-rebase vs escalate. Keeps the default tick cheap (no extra context tokens) for the common case of mergeable PRs. |
-| `references/bypass-test.md` | B1–B3 (verdetto su codice mai eseguito · PR che tocca la pipeline · verdetto su SHA stale) con output prima/dopo |
+| `references/bypass-test.md` | B1–B3 (verdict on code never executed · PR touching the pipeline · verdict on a stale SHA) with before/after output |
 
 The verdict-format eval is load-bearing: auto-merge GHA's gate regex (`Verdict.*✅[[:space:]]+approve`) depends on it. Don't change the verdict format without updating the gate regex (lives in `.github/workflows/auto-merge-trivial.yml` of each repo using Sweep).
 
@@ -67,13 +67,13 @@ If the repo opted in to the real-testing gate (`.real-test/enabled` exists in th
 checkout), check whether a verdict exists for THIS PR's head:
 
 ```bash
-HASH=$(python3 "<polaris>/real-testing/scripts/perimeter.py" --repo <checkout> --head <pr-head-sha> --hash-only)
+HASH=$(python3 "${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/real-testing/scripts/perimeter.py" --repo <checkout> --head <pr-head-sha> --hash-only)
 test -f "<checkout>/.real-test/verdicts/$HASH.json" || echo "no receipt"
 ```
 
 No receipt (or a verdict that fails `verdict.py validate`) → add ONE line to the review
-comment: *"⚠ Nessuna ricevuta real-test per l'hash di questa PR (`<hash8>`) — il diff non
-risulta provato dal gate."* This is a NAG by design (lessons 2026-08-13: mandatory CI gates
+comment: *"⚠ No real-test receipt for this PR's hash (`<hash8>`) — the gate has no proof
+this diff was exercised."* This is a NAG by design (lessons 2026-08-13: mandatory CI gates
 on existing repos kill adoption): it makes the missing receipt visible on the PR, it never
 blocks. Repos without the marker: skip silently — they never opted in.
 
@@ -213,52 +213,53 @@ therefore two lenses, not three. Treat the finding list as unverified-complete, 
 exhaustive"* — a degraded review that says so is useful; one that silently looks
 complete is worse than none.
 
-### Phase 3e — Attestazione runtime (l'unica lente che ESEGUE il codice)
+### Phase 3e — Runtime attestation (the only lens that RUNS the code)
 
-3a, 3b, 3b-bis e 3c **leggono**. Nessuna di loro fa girare una riga. Una PR può uscire da qui con
-`approve` senza che nessuno abbia visto il codice funzionare — ed è la ragione per cui esistono PR
-dichiarate real-testate che non lo sono: la revisione era ottima, e riguardava un testo.
+3a, 3b, 3b-bis and 3c **read**. None of them runs a single line. A PR can leave this point with
+`approve` while nobody has seen the code work — which is why PRs declared real-tested exist that
+are not: the review was excellent, and it was about a text.
 
-Questa fase non prova che il codice sia bello: prova che **è successo qualcosa nel mondo**.
+This phase does not prove the code is good: it proves **something happened in the world**.
 
-**Non deploya e non confronta SHA.** Chi fa il real test lo dice: **cerca il suo commento sulla PR.**
-Inseguire lo SHA servito da staging è fragile e non serve — staging cambia sotto i piedi, e un
-commit che coincide non prova che qualcuno abbia guardato qualcosa.
+**It does not deploy and does not compare SHAs.** Whoever ran the real test says so: **look for
+their comment on the PR.** Chasing the SHA staging serves is fragile and useless — staging moves
+under your feet, and a matching commit does not prove anyone looked at anything.
 
 ```bash
 gh pr view "$PR_N" --json comments -q '.comments[] | select(.body | test("(?i)real.?test|attestazione")) | .body' | head -c 3000
 ```
 
-Due domande, in quest'ordine:
+Two questions, in this order:
 
-**1. Questa PR va deployata?** Il repo lo dichiara già, e la lista **non si scrive qui**: sta nel
-`paths:` del suo workflow di post-deploy, oppure in `deployabili:` del suo `.fix/contract.yml`. Ogni
-repo ha i suoi. Se il diff non tocca nessuno di quei path — doc, spec, contratto di sessione,
-githooks — **l'attestazione non serve**: dillo e chiudi la fase.
+**1. Does this PR get deployed?** The repo already declares it, and the list **is not written
+here**: it sits in the `paths:` of its post-deploy workflow, or in `deployabili:` of its
+`.fix/contract.yml` (the key keeps its original name; `sweep_gate.py` reads it). Every repo has its
+own. If the diff touches none of those paths — docs, specs, session contract, githooks — **no
+attestation is needed**: say so and close the phase.
 
-Se il repo non dichiara né l'uno né l'altro, non indovinare: scrivi che il perimetro deployabile non
-è dichiarato, e trattala come da attestare. Un elenco di path inventato qui varrebbe per una repo
-sola e mentirebbe su tutte le altre.
+If the repo declares neither, do not guess: write that the deployable perimeter is not declared,
+and treat the PR as needing attestation. A path list invented here would hold for one repo and
+lie about every other.
 
-**2. Esiste il commento del real test?** Cioè un commento che dichiara **cosa è stato provato e
-dove**, non «testato ok».
+**2. Is there a real-test comment?** That is, a comment stating **what was tried and where**, not
+"tested ok".
 
-| | Cosa scrivi |
+| | What you write (run-state value of `attestazione`) |
 |---|---|
-| non serve | **non deployabile** — nessun path di runtime toccato |
-| c'è | **attestata** — riporta in una riga cosa dice: dove è girata, cosa si è osservato, cosa è caduto |
-| non c'è | **non attestata** — questo codice non è mai stato eseguito da nessuna parte |
+| not needed | **not deployable** (`non-deployabile`) — no runtime path touched |
+| present | **attested** (`attestata`) — one line on what it says: where it ran, what was observed, what failed |
+| absent | **not attested** (`non-attestata`) — this code has never run anywhere |
 
-**Il verdetto della sweep non cambia per questa fase.** Non essere attestata non è un difetto del
-codice: è un lavoro che manca. Cambia solo l'auto-merge, in Phase 4.5.
+**The sweep verdict does not change in this phase.** Being unattested is not a defect of the
+code: it is missing work. Only auto-merge changes, in Phase 4.5.
 
 ### Phase 3d — Merge all verdicts
 
 Final verdict = worst-of(3a quality, 3s spec-conformance, 3b security, 3c Codex adversarial).
 Priority: security Critical/High > Codex Critical/High > quality.
 
-3e **non entra nel verdetto** — non essere su staging non è un difetto del codice. Entra nella
-Phase 4.5, dove decide se la PR può fondersi da sola.
+3e **does not enter the verdict** — not being on staging is not a defect of the code. It enters
+Phase 4.5, where it decides whether the PR may merge on its own.
 
 All findings appear in their own sections in the comment (see Phase 4).
 
@@ -277,7 +278,7 @@ read it now if you haven't. Two things are load-bearing:
   diff hunks; library source cited `file:line`; `file:symbol` over drifting line numbers)
   are in the template file, with the precedents.
 
-## Phase 4.5 — Auto-mergeable check (exit code, non prosa)
+## Phase 4.5 — Auto-mergeable check (exit code, not prose)
 
 **The review text does not make the decision: `scripts/sweep_gate.py` does.** Judgment stays
 with the model; auto-merge is a fail-closed script — a verdict without a SHA, on a stale SHA,
@@ -296,37 +297,36 @@ Exit `0` → append the Auto-mergeable block · `1` → omit the block and repor
 stderr) in the comment · `2` → usage error, the sweep fails loudly. The Phase 6 run state MUST
 therefore carry `head_sha`, `attestazione` and `risk`, or the gate denies on its own.
 
-**The policy is perimeter-based** (founder 2026-08-17, B4): a PR **outside the repo's declared
+**The policy is perimeter-based** (B4, 2026-08-17): a PR **outside the repo's declared
 prod perimeter** (`deployabili:` in `.fix/contract.yml` — the same declaration Phase 3e uses)
 merges **always**, with just approve + a fresh SHA: docs, tests, tooling wait for no one. The
 strict path (`risk:trivial` + attestation) applies only to diffs touching `deployabili`, or when
 the perimeter is **not declared** — the gate does not guess what prod is. Pipeline beats
 everything: whoever touches it never self-merges.
 
-**Dentro il perimetro `deployabili`, l'auto-merge richiede anche l'attestazione runtime della
-Phase 3e.** Una PR che mette in prod codice mai visto girare è esattamente il difetto che questo
-sistema esiste per chiudere: la revisione statica è passata, e riguardava un testo. `risk:trivial`
-dice che il rischio è basso, non che il codice funziona. Fuori dal perimetro non c'è runtime da
-provare — lì l'attestazione non è richiesta, per costruzione.
+**Inside the `deployabili` perimeter, auto-merge also requires Phase 3e's runtime
+attestation.** A PR that puts code nobody has seen run into prod is exactly the defect this system
+exists to close: the static review passed, and it was about a text. `risk:trivial` says the risk
+is low, not that the code works. Outside the perimeter there is no runtime to prove — there the
+attestation is not required, by construction.
 
-Se 3e ha dato **non attestata** (il gate esce 1), ometti il blocco di auto-merge e scrivi al suo posto:
+If 3e gave **not attested** (the gate exits 1), omit the auto-merge block and write instead:
 
 ```
 ---
 
-⏸️ **Non auto-mergeable** — la revisione è pulita, ma questo codice non è mai stato eseguito da
-nessuna parte. Fai il real test, commenta qui cosa hai provato e dove, e rilancia la sweep.
+⏸️ **Not auto-mergeable** — the review is clean, but this code has never run anywhere.
+Run the real test, comment here what you tried and where, and re-run the sweep.
 ```
 
-Se 3e ha dato **non deployabile**, l'attestazione non è richiesta: l'auto-merge segue le regole
-normali.
+If 3e gave **not deployable**, no attestation is required: auto-merge follows the normal rules.
 
-Non è una bocciatura della PR: è la differenza fra «il codice sembra giusto» e «il codice ha
-funzionato». Solo la seconda giustifica un merge che nessun umano guarda.
+This is not a rejection of the PR: it is the difference between "the code looks right" and "the
+code worked". Only the second justifies a merge no human looks at.
 
 If `sweep_gate.py automerge` exits `0` (approve/approve-with-minor · head_sha == PR HEAD ·
-nessun file di pipeline · e, SOLO dentro il perimetro `deployabili` o senza perimetro dichiarato,
-`risk:trivial` + attestazione), append the following block to the rendered body (just above the
+no pipeline file · and, ONLY inside the `deployabili` perimeter or with no declared perimeter,
+`risk:trivial` + attestation), append the following block to the rendered body (just above the
 `---` footer):
 
 ```
@@ -346,7 +346,7 @@ only diffs inside `deployabili` (or with no declared perimeter): there the PR st
 ```
 
 **That script does not exist outside the unattended agent's container** (confirmed absent on
-the founder's Mac, 2026-07-26). Check for it, and fall back to `gh api` inline — the
+a developer machine, 2026-07-26). Check for it, and fall back to `gh api` inline — the
 marker is what makes it idempotent, not the script:
 
 ```bash
@@ -376,13 +376,13 @@ ones) gets denied by the gate, it does not slip past it.
 - Diff too large (>50k lines): summarize files-changed only, mark "diff too large for full review".
 - Hand-non-authored PR: skip silently (not Sweep's territory).
 
-## Quando NON usarla — what this skill does NOT do
+## When not to use it — what this skill does NOT do
 - Approve/merge PRs (apply lane is GitHub Action / human).
 - Close PRs.
 - Comment on issues (only PRs).
-- **Deploy anything.** La Phase 3e osserva se qualcuno ha messo la PR su staging; non ce la mette.
-  Staging è condiviso e cambia solo quando lo dice un umano — automatizzare quel passo qui
-  significherebbe cambiare la versione sotto i piedi di chi ci sta testando sopra.
-- **Bocciare una PR perché non è su staging.** «Nessuno l'ha deployata» non è prova di una
-  regressione: trattarla come tale ha già aperto tre PR di revert contro codice sano. Blocca solo
-  l'auto-merge, che è un'altra cosa.
+- **Deploy anything.** Phase 3e observes whether someone put the PR on staging; it does not put
+  it there. Staging is shared and changes only when a human says so — automating that step here
+  would change the version under whoever is testing on it.
+- **Reject a PR because it is not on staging.** "Nobody deployed it" is not evidence of a
+  regression: treating it as one has already opened three revert PRs against healthy code. It
+  blocks only auto-merge, which is a different thing.

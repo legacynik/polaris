@@ -20,8 +20,8 @@ rules, and the whole system rests on the difference:
 | `team/<login>/sessions/<date>.md` | append, always — the ledger, it grows |
 | `state/current.md` (the cockpit) | overwrite — your lane's line is rewritten, never duplicated |
 
-Founder, 2026-09-03: *«Non è che dentro current fa un'altra riga, ma va semplicemente ad
-aggiornare l'update precedente. Invece all'interno della session mette sempre un'altra riga.»*
+Repo owner, 2026-09-03: *«It doesn't add another line inside current, it simply goes and updates
+the previous update. Whereas inside the session it always adds another line.»*
 
 ## When to Use
 

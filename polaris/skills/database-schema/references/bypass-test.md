@@ -51,12 +51,12 @@ executed there) is OPAQUE for that column, a table dropped, renamed or moved the
 and dynamic DDL (`format('alter table %I …')`) makes every table named in its literals OPAQUE.
 Every round-2 fixture (31) was re-run: none prints FOUND for an absent column.
 
-## Round 3 critic (BLOCK, run on real PostgreSQL 17 and Alembic) and the founder's call
+## Round 3 critic (BLOCK, run on real PostgreSQL 17 and Alembic) and the repo owner's call
 
 Four plausible inputs still printed FOUND for a column PostgreSQL no longer had:
 `ALTER SCHEMA … RENAME TO`, `DROP SCHEMA` inside a DO block, `SET search_path` before an
 unqualified `ALTER TABLE`, an Alembic helper function called from `upgrade()`, and Alembic files
-whose name order is not their `down_revision` order. Past the two-round cap the founder chose one
+whose name order is not their `down_revision` order. Past the two-round cap the repo owner chose one
 more fix round (2026-10-17). Each is modelled, not pattern-matched: schema renames move their
 tables and schema DDL inside a body makes the schema's tables OPAQUE; `SET search_path` /
 `RESET` drive unqualified resolution inside a file, and a path left non-public at the end of a
@@ -81,7 +81,7 @@ On real PostgreSQL 17 and Alembic again: `DROP TYPE … CASCADE` removed a colum
 held, and an Alembic `if` branch reaching `op.execute` or a helper was counted as always run; five
 mutants survived (RESET search_path, `exec_driver_sql`, computed `execute`, an imported helper,
 catalog-driven dynamic DDL). Four rounds, four new ways PostgreSQL removes a column indirectly:
-evidence that a static replay can refute a column but never prove one. The founder did not answer
+evidence that a static replay can refute a column but never prove one. The repo owner did not answer
 within 30 minutes; the recommended option was applied. **A static FOUND is now exit 3 (CONCERNS),
 never PASS; exit 0 needs `--db`**, a read-only query of the live `information_schema.columns`
 (`PGOPTIONS=-c default_transaction_read_only=on`); an unreachable database is exit 1. The round-4

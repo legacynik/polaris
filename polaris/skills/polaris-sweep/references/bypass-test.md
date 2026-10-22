@@ -1,67 +1,67 @@
 ---
-title: polaris-sweep — i bypass-test
-description: Un caso per difetto, con fails_before e output del PRIMA (il bypass riesce) e del DOPO (il bypass fallisce). Il revisore su cui poggia l'auto-merge non può essere l'unico pezzo del loop senza casi rossi.
+title: polaris-sweep — bypass tests
+description: One case per defect, with fails_before and the output from BEFORE (the bypass succeeds) and AFTER (the bypass fails). The reviewer that auto-merge relies on cannot be the only part of the loop without red cases.
 status: active
 ---
 
 # Bypass-test di `polaris-sweep`
 
-Regola: il caso si scrive **prima** del codice, e deve **riuscire** (SPEC-MADRE, Fase 2).
+Rule: the case is written **before** the code, and it must **succeed** (SPEC-MADRE, Phase 2).
 
-Il PRIMA dei tre casi è lo stesso ed è stato eseguito il 2026-08-17 su polaris-sweep
-senza versione (407r di prosa):
+The BEFORE of the three cases is the same and was run on 2026-08-17 on unversioned polaris-sweep
+(407 lines of prose):
 
 ```bash
 python3 polaris-sweep/scripts/sweep_gate.py automerge ... 
 # can't open file '.../scripts/sweep_gate.py': [Errno 2] No such file or directory → exit 2
 ```
 
-**Nessuno script esisteva**: Phase 4.5 era prosa, quindi qualunque verdetto scritto bene
-autorizzava l'auto-merge. L'evidenza sul campo è il run-state REALE
-`_polaris/sweep/runs/acme-app/pr-59.md` (2026-05-01): dichiara `auto_mergeable: true`
-**senza** `head_sha`, senza `attestazione`, senza `risk` nel frontmatter.
+**No script existed**: Phase 4.5 was prose, so any well-written verdict
+authorized auto-merge. The field evidence is the REAL run-state
+`_polaris/sweep/runs/acme-app/pr-59.md` (2026-05-01): it declares `auto_mergeable: true`
+**without** `head_sha`, without `attestazione`, without `risk` in the frontmatter.
 
 ---
 
-## B1 — verdetto approve su codice mai eseguito (test che non provano nulla)
+## B1 — approve verdict on code that never ran (tests that prove nothing)
 
-`fails_before:` `polaris-sweep` senza versione (pre-1.0.0)
+`fails_before:` `polaris-sweep` unversioned (pre-1.0.0)
 
-Una review statica eccellente su una PR mai fatta girare da nessuna parte: le tre lenti leggono,
-nessuna esegue. PRIMA: il blocco Auto-mergeable dipendeva solo dalla prosa della Phase 4.5.
+An excellent static review of a PR never run anywhere: the three lenses read,
+none executes. BEFORE: the Auto-mergeable block depended only on the prose of Phase 4.5.
 
-**DOPO** — eseguito 2026-08-17 su v1.0.0 (dal selfcheck, ramo B1):
+**AFTER** — run 2026-08-17 on v1.0.0 (from the selfcheck, branch B1):
 
 ```
 NEGATO: attestazione 'non-attestata': questo codice non e' mai stato eseguito da nessuna parte — real test prima del merge
 exit=1
 ```
 
-`attestazione: non-deployabile` (doc-only) resta PASS: l'attestazione non è richiesta dove non
-c'è runtime da provare.
+`attestazione: non-deployabile` (doc-only) stays PASS: the attestation is not required where there
+is no runtime to prove.
 
-## B2 — la PR tocca la pipeline e si approva da sola
+## B2 — the PR touches the pipeline and approves itself
 
-`fails_before:` `polaris-sweep` senza versione (pre-1.0.0)
+`fails_before:` `polaris-sweep` unversioned (pre-1.0.0)
 
-Una PR che modifica `.github/workflows/`, i gate della suite o il contratto `.fix/contract.yml`
-può alterare esattamente i controlli che dovrebbero fermarla. PRIMA: nessun controllo sui path.
+A PR that modifies `.github/workflows/`, the suite gates or the `.fix/contract.yml` contract
+can alter exactly the checks that should stop it. BEFORE: no check on paths.
 
-**DOPO** — eseguito 2026-08-17 su v1.0.0 (selfcheck, ramo B2):
+**AFTER** — run 2026-08-17 on v1.0.0 (selfcheck, branch B2):
 
 ```
 NEGATO: la PR tocca la pipeline (.github/workflows/ci.yml): il gate non approva chi modifica il gate — merge umano
 exit=1
 ```
 
-## B3 — verdetto emesso su una SHA diversa da HEAD
+## B3 — verdict issued on a SHA different from HEAD
 
-`fails_before:` `polaris-sweep` senza versione (pre-1.0.0)
+`fails_before:` `polaris-sweep` unversioned (pre-1.0.0)
 
-La sweep approva, poi la PR riceve altri commit: il commento resta, il verdetto pure — e vale per
-un codice che non esiste più. PRIMA: il run-state non registrava nemmeno la SHA (vedi `pr-59.md`).
+The sweep approves, then the PR receives more commits: the comment stays, and so does the verdict, and it holds for
+code that no longer exists. BEFORE: the run-state did not even record the SHA (see `pr-59.md`).
 
-**DOPO** — eseguito 2026-08-17 su v1.0.0, contro il run-state reale pre-v1:
+**AFTER** — run 2026-08-17 on v1.0.0, against the real pre-v1 run-state:
 
 ```bash
 python3 scripts/sweep_gate.py automerge --run _polaris/sweep/runs/acme-app/pr-59.md \
@@ -72,7 +72,7 @@ NEGATO: campo 'risk' assente o vuoto nel run-state: senza, il verdetto non e' le
 exit=1
 ```
 
-E col campo presente ma stale (selfcheck, ramo B3):
+And with the field present but stale (selfcheck, branch B3):
 
 ```
 NEGATO: verdetto emesso su aaa111 ma la PR e' a bbb222: STALE — la revisione ha letto un codice che non esiste piu'
@@ -81,18 +81,18 @@ exit=1
 
 ---
 
-## B4 — PR fuori dal perimetro prod bloccata dal requisito risk:trivial
+## B4 — PR outside the prod perimeter blocked by the risk:trivial requirement
 
-`fails_before:` `polaris-sweep v1.0.0` — difetto INVERSO ai primi tre: over-blocking.
-Decisione founder 2026-08-17: *«PR che non toccano pipeline o prod vengono SEMPRE auto-mergiate»*.
-La v1.0.0 chiedeva `risk:trivial` + attestazione a TUTTE le PR — anche una doc-only restava in
-coda al founder, che è esattamente il collo di bottiglia che il loop esiste per togliere.
+`fails_before:` `polaris-sweep v1.0.0` — the INVERSE defect of the first three: over-blocking.
+Repo owner decision 2026-08-17: *"PRs that do not touch pipeline or prod are ALWAYS auto-merged"*.
+v1.0.0 required `risk:trivial` + attestation on ALL PRs — even a doc-only one stayed in
+the human's queue, which is exactly the bottleneck the loop exists to remove.
 
 Setup: run-state `verdict: approve · head_sha: aaa111 · attestazione: non-attestata ·
-risk: medium` · diff = `docs/README.md, tests/test_x.py` · contratto con
+risk: medium` · diff = `docs/README.md, tests/test_x.py` · contract with
 `deployabili: [src/*, app/*]`.
 
-**PRIMA** — eseguito 2026-08-17 su v1.0.0 (script da `git show`):
+**BEFORE** — run 2026-08-17 on v1.0.0 (script from `git show`):
 
 ```
 NEGATO: risk 'medium': solo risk:trivial si fonde da solo
@@ -100,11 +100,11 @@ NEGATO: attestazione 'non-attestata': questo codice non e' mai stato eseguito da
 exit=1
 ```
 
-**DOPO** — stesso comando su v1.1.0 (con `--repo` che dichiara il perimetro): `exit=0`.
+**AFTER** — same command on v1.1.0 (with `--repo` declaring the perimeter): `exit=0`.
 
-I contro-rami che restano NEGATI (selfcheck 18/18): stesso diff ma dentro `deployabili` →
-via stretta · perimetro **non dichiarato** → via stretta (non si indovina cosa è prod) ·
-pipeline nel diff → NEGATO sempre, il perimetro non lo salva.
+The counter-branches that stay DENIED (selfcheck 18/18): same diff but inside `deployabili` →
+strict path · perimeter **not declared** → strict path (we do not guess what is prod) ·
+pipeline in the diff → always DENIED, the perimeter does not save it.
 
 ---
 
@@ -114,6 +114,6 @@ pipeline nel diff → NEGATO sempre, il perimetro non lo salva.
 python3 scripts/sweep_gate.py --selfcheck ; echo "exit=$?"
 ```
 
-18 controlli, tutti `ok`, `exit=0` — eseguito 2026-08-17 (13 di v1.0.0 + 5 del perimetro prod).
-Rami dell'ignoranza inclusi: run-state assente/vuoto → 2, file-list assente/vuota → NEGATO,
-placeholder `.` → NEGATO, perimetro non dichiarato → via stretta. Mai PASS al buio.
+18 checks, all `ok`, `exit=0` — run 2026-08-17 (13 from v1.0.0 + 5 for the prod perimeter).
+Ignorance branches included: run-state missing/empty → 2, file-list missing/empty → DENIED,
+placeholder `.` → DENIED, perimeter not declared → strict path. Never PASS in the dark.
