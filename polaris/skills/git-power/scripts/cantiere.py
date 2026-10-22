@@ -1027,8 +1027,17 @@ def _finalize_apply(target: Path, branch: str, base: str) -> int:
         print("RIFIUTATO: il worktree corrente contiene lavoro o un'operazione aperta.")
         return 2
     primary = _primary_worktree(target)
-    main_state = _align_primary(primary, base)
     branch_sha = git(target, "rev-parse", f"refs/heads/{branch}", check=False)
+    if Path(primary).resolve() == target.resolve():
+        # The repository's own checkout is not a worktree to remove: return it to the base
+        # (the tree is clean, proven above), then delete the merged branch.
+        git(target, "switch", "-q", base)
+        main_state = _align_primary(primary, base)
+        git(primary, "update-ref", "-d", f"refs/heads/{branch}", branch_sha)
+        _snapshot(primary, branch_sha, "branch-delete-pr-merged", branch, branch_sha)
+        print(f"FINALIZED: checkout={target} branch={branch} back on {base} {main_state}")
+        return 0
+    main_state = _align_primary(primary, base)
     git(primary, "worktree", "remove", str(target))
     _snapshot(primary, branch_sha, "worktree-remove-pr-merged", str(target), branch_sha)
     git(primary, "update-ref", "-d", f"refs/heads/{branch}", branch_sha)

@@ -1,7 +1,7 @@
 ---
 name: git-power
 description: ◇ Use before any Git commit or PR boundary and before any destructive Git action. MUST invoke for every `reset --hard` and every pre-PR comparison of a branch against origin/main; never substitute raw Git. Also censuses and safely closes worktrees, branches, stashes and PRs. Triggers on commit hygiene, PR too large, stale branches.
-version: 0.5.4
+version: 0.6.0
 user-invocable: true
 auto: false
 status: active
@@ -38,7 +38,9 @@ python3 "$GP" phase finalize --repo <current-worktree> --confirm <same-absolute-
 `finalize` runs from the worktree it closes and requires exact path confirmation. It acts only
 when `gh pr view` says `MERGED`, the PR head equals the current branch, and GitHub's merge commit
 is contained in `origin/<base>` after a fresh fetch. This supports merge commits, rebase merges,
-and squash merges without trusting a stale local `main`.
+and squash merges without trusting a stale local `main`. Run from the repository's own checkout
+(no linked worktree), it switches that clean checkout back to the base, aligns it and deletes the
+merged branch; there is no worktree to remove.
 
 The primary worktree is always handled explicitly:
 
