@@ -1,6 +1,6 @@
 {
   "name": "polaris-team-os",
-  "version": "0.31.2",
+  "version": "0.32.0",
   "description": "Polaris Team OS: nine repository-first session commands, /pr for reviewable GitHub pull requests, /retro for session retrospectives, plus the shared engineering doors and polmem memory CLI. Start with docs/TEAM-ONBOARDING.md.",
   "author": {
     "name": "Niccolò Franzin",

@@ -1,14 +1,14 @@
 ---
 name: issue-contract
-description: ◇ The ONE door to the GitHub tracker, for creating, updating, deduping or grouping issues and epics. Triggers on apri una issue, file an issue or a bug, track this, triage this, accorpa sotto epic, or a handoff from wayfinder. Searches first, then enforces the founder contract on the repo's own template — never a freeform gh issue create. Not for decomposing nebulous efforts.
-version: 2.0.2
+description: ◇ The ONE door to the GitHub tracker, for creating, updating, deduping or grouping issues and epics. Triggers on apri una issue, file an issue or a bug, track this, triage this, accorpa sotto epic, or a handoff of an already-decomposed plan. Searches first, then enforces the founder contract on the repo's own template — never a freeform gh issue create. Not for decomposing nebulous efforts.
+version: 2.0.3
 user-invocable: true
 auto: true
 job: route any tracker request (new / extend / group) and enforce the full issue contract on whichever arm wins
-when_not: nebulous efforts not yet decomposed (wayfinder); question/discussion items (repo's light form, no full contract); non-GitHub trackers (Linear); 2-minute micro-fixes nobody wants tracked; backlog surveillance on a schedule (routine lane, polaris-os#62); judging code on an approved PR (review)
+when_not: nebulous efforts not yet decomposed (decompose them first); question/discussion items (repo's light form, no full contract); non-GitHub trackers (Linear); 2-minute micro-fixes nobody wants tracked; backlog surveillance on a schedule (routine lane); judging code on an approved PR (review)
 lifecycle: issue GitHub reale o label di stato via gh (drenate da `ship`) o brief locale in `<repo>/.issue-contract/` o `_polaris/issues/` (drenato al primo template reale) — adapter cache in `~/.cache/issue-contract/` auto-invalidante · redundancy/dedup artifacts drenati da transition_gate.py alla scrittura · `.out-of-scope/<concept>.md` si auto-drena a ogni passata.
 invokes: [bugfix, git-power]
-invoked-by: [wayfinder, start, cron-sweep, spec-driven-development, crasher, human]
+invoked-by: [start, crasher, ambitious-goal, human]
 io: riceve una richiesta tracker (nuovo item, update di #N, accorpamento) + repo-path -> dopo ricerca obbligatoria produce UNA di - issue nuova contract-complete con numero - transizione di stato gated su issue esistente - epic con figlie collegate - o un rifiuto con il pezzo mancante nominato.
 status: active
 ---
@@ -95,12 +95,13 @@ and dispatches `bugfix`. Prior rejections live in `.out-of-scope/`
 
 ## When NOT to use
 
-- **Nebulous efforts** not yet decomposed ("sistemare l'auth") → `wayfinder` first.
+- **Nebulous efforts** not yet decomposed ("sistemare l'auth") → decompose first: name the
+  outcome (`ambitious-goal`), split it into issues that each carry a measurable DoD, then return here.
 - **Question/discussion items** (grilling) → the repo's light form; the full contract would
   push people back to freeform.
 - **Non-GitHub trackers** (Linear) → that tracker's native tool.
 - **2-minute micro-fixes** nobody wants tracked — process for its own sake is the opposite defect.
-- **Scheduled backlog surveillance** (alarms, stale scans) → routine lane (polaris-os#62), not
+- **Scheduled backlog surveillance** (alarms, stale scans) → routine lane, not
   this skill's lifecycle.
 - **Judging code on an approved PR** → `review`.
 

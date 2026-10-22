@@ -2,7 +2,7 @@
 name: end
 description: Polaris skill — close a repository-first team session with a handoff, decisions/lessons written to the ledgers, a plan tick and a pathspec-only commit. Trigger when stopping work, before a multi-day pause, or on "wrap up / end session / /end".
 user-invocable: true
-version: 1.23.1
+version: 1.23.2
 invokes: [git-power]
 ---
 
@@ -134,7 +134,7 @@ python3 "${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/start/scripts/session_gate.
 ```
 
 Chiude **la sessione che `/start` ha aperto in questo checkout**: il sid non si passa e non si
-inventa — è checkout + giorno + login, ricalcolato qui (polaris-os#155). Il motore è quello del
+inventa — è checkout + giorno + login, ricalcolato qui. Il motore è quello del
 repo, se lo porta, altrimenti quello del vault dichiarato (`git config polaris.vault`), la stessa
 ricerca che fa il pack del brief.
 
@@ -386,7 +386,7 @@ fi
 ```
 
 Righe TSV `VERDETTO\tbranch\tpath\tnote`, exit 0 pulito / 1 c'è da agire / 2 errore (contratto
-T13, `polaris-os#254`). Copia nell'handoff, verbatim, sotto una riga `**Cantiere**`, ogni riga il
+di `cantiere.py`). Copia nell'handoff, verbatim, sotto una riga `**Cantiere**`, ogni riga il
 cui verdetto non è MAIN — CLOSABLE è ciò che si può chiudere, DIRTY ciò che ha lavoro non
 committato o file ignorati non vuoti. Sono le due cose che chi riprende deve sapere senza rileggere
 il grafo. `/end` **non chiude nulla** — elenca, e la chiusura resta un atto esplicito.

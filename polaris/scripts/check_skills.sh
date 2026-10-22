@@ -18,7 +18,7 @@ for f in skills/*/SKILL.md; do
     # Neither is a session command: apex curation is founder-only OS work and the memory
     # skill writes its description as a YAML block scalar, so the prefix rule never applied
     # to either. They were failing this gate silently before it was read again (#343).
-    pol-apex-curate|polaris-memory) ;;
+    polaris-memory) ;;
     *)
       if [[ "$desc" == "◇ "* ]]; then doors=$((doors + 1))
       else echo "FAIL unknown skill (no command, no door marker): $name"; fail=1; fi;;

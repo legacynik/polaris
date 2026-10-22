@@ -2,7 +2,7 @@
 name: polaris-status
 description: Polaris skill — render an explicit, comprehensive status across a portfolio or one product repository, including live Git/GitHub pulse, active outcomes, team collisions, freshness, memory health, and the highest-leverage next move. Use for "polaris status", "pol status", "status completo", cross-repo priorities, portfolio briefing, or an explicit request to see everything. Do not use for "start", "resume", "continue", session recovery, or a single implementation task — `/start` is a local resume-only workflow.
 user-invocable: true
-version: 1.3.1
+version: 1.3.2
 ---
 
 # /polaris-status — observe the whole system
@@ -149,7 +149,7 @@ one-confirm approval — you never mark or delete by hand.
 
    ```bash
    # La riconciliazione automatica dei thread superati è parcheggiata su
-   # `task/T6-prune-parked` (polaris-os#202): dipende da una verità di merge che
+   # `task/T6-prune-parked`: dipende da una verità di merge che
    # sopravviva a un branch cancellato al merge, non ancora provata. Fino ad allora
    # si legge il cockpit e si chiude a mano, con la PR mergiata come prova.
    echo "NOTA: riconciliazione dei thread parcheggiata — chiusura manuale"

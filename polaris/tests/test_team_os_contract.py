@@ -33,7 +33,6 @@ SESSION_COMMANDS = {
     "end",
     "plan-week",
     "report",
-    "pol-apex-curate",
     "polaris-memory",
 }
 # A Polaris door marks itself in its own description, and the door set is READ from the

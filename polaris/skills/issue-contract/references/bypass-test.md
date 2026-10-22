@@ -91,7 +91,7 @@ se noi non lo applichiamo qui, nessuno lo applica mai.
 
 ## Test 4 — `--field` vuoto/solo-spazi su un campo required non deve passare
 
-Il Test 2 copre solo "campo non passato". Trovato reale in EVAL-issue-contract-copertura.md §3.2
+Il Test 2 copre solo "campo non passato". Trovato reale in un audit adversariale
 (Bypass B): un `--field id=` presente ma vuoto veniva accettato come "compilato" perché il
 controllo era "la chiave c'è nel dict", non "il valore ha contenuto".
 
@@ -125,7 +125,7 @@ solo con un input leggermente diverso (vuoto invece di assente).
 
 ## Test 5 — un singolo segnale cosmetico nell'AC non deve bastare
 
-Trovato reale in EVAL-issue-contract-copertura.md §3.2 (Bypass A): il regex originale accettava
+Trovato reale in un audit adversariale (Bypass A): il regex originale accettava
 qualunque cifra/backtick/keyword isolata, anche dentro prosa vaga identica a "va bene, ci penso"
 (Test 1, che blocca).
 
@@ -144,7 +144,7 @@ done
 
 ## Test 6 — `--field` non deve poter sovrascrivere il campo Acceptance Criteria già validato
 
-Trovato reale in EVAL-issue-contract-bypass.md Laterale A (gravità alta): se l'id del campo AC
+Trovato reale in un audit adversariale Laterale A (gravità alta): se l'id del campo AC
 del template combacia anche con un `--field`, il valore scritto nell'issue era quello di
 `--field`, mai passato da `validate_acs()` — un `--ac` misurabile passava il gate, ma il corpo
 finale conteneva un altro testo, mai validato.
@@ -163,7 +163,7 @@ valore spedito sono due cose diverse, il gate protegge un dato che non è quello
 
 ## Test 7 — la chiamata diretta alla funzione deve essere gated quanto la CLI
 
-Trovato nel corpus (buco generale, EVAL-issue-contract-bypass.md Laterale C): uno script con
+Trovato nel corpus (buco generale, un audit adversariale Laterale C): uno script con
 `main()`/`build()` gated ma funzioni di modulo pubbliche senza guardia lascia un import diretto
 libero di produrre lo stesso output vietato, senza mai passare da `validate_acs()`.
 

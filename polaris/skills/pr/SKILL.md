@@ -1,15 +1,8 @@
 ---
 name: pr
 description: ◇ Use when writing or improving a GitHub pull request body so the reviewer can see the change, before/after evidence and merge risk directly on GitHub. Not for deciding whether a PR may merge.
-version: 1.0.0
+version: 1.0.1
 user-invocable: true
-source: "mattpocock/skills@49dd158d1076134a641b33efb035946536778336/skills/engineering/pr"
-metadata:
-  credits:
-    skill: show-me
-    author: Dex Horthy
-    organisation: Humanlayer
-    url: "https://github.com/humanlayer/skills/blob/main/plugins/show-me/skills/show-me/SKILL.md"
 ---
 
 Use this template for writing the PR body:

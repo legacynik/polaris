@@ -29,8 +29,7 @@ python3 scripts/transition_gate.py --to ready-for-agent --issue-json "$T/issue.j
   --redundancy-file "$T/toothin.md"
 [ "$?" -eq 0 ] && fail "bypass #2b (1-char Searched:) succeeded"
 
-# 3) Free-pick collision: issue already assigned, try to promote anyway (the
-#    exact shape of daily-triage's cited incident #441).
+# 3) Free-pick collision: issue already assigned, try to promote anyway.
 printf 'Searched: codebase + open issues\nFound: no\n' > "$T/red.md"
 printf '{"assignee": "someone-else", "linked_active_workstream": false}' > "$T/taken.json"
 python3 scripts/transition_gate.py --to ready-for-agent --issue-json "$T/taken.json" \

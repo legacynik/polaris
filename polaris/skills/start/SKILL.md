@@ -2,7 +2,7 @@
 name: start
 description: Polaris skill — resume the current objective from the latest local handoff. First use also provisions your own team path.
 user-invocable: true
-version: 1.14.0
+version: 1.14.1
 ---
 
 # /start — resume, do not survey
@@ -165,7 +165,7 @@ receipt both live. Asking for `$ROOT` (`<repo>/_polaris`) answered `NO_OPEN_SESS
 product repository, on the one path that runs by itself.
 
 No output at all: no reinserter here and none in the declared vault, so there is nothing to
-put back (contract #155). Otherwise read what it prints:
+put back. Otherwise read what it prints:
 
 - `REINSERT: HEAD unchanged … — 0 tracker calls` followed by `PACK:` and the rows — the same
   pack, reprinted from the receipt. Nothing was recomputed and nothing was fetched.
@@ -176,7 +176,7 @@ put back (contract #155). Otherwise read what it prints:
   was resolved instead of reused. All are costs, not failures; the command still exits 0, and
   nothing on disk is overwritten. Report the line: it says something about the session.
 - `NO_OPEN_SESSION:` — no session receipt is open, so there is no pack to put back. Since
-  polaris-os#155 Step 5b opens one, so this now means the session was closed by `/end`, or
+  Step 5b opens one, this now means the session was closed by `/end`, or
   this repository carries no engine at all.
 
 `CHAIN_UNANCHORED:` may appear beside any of these. It is a report, not a refusal: every
