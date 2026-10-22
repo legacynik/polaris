@@ -68,6 +68,19 @@ Removed
 - `pr` (folded into `pol-pr`) and `review` (renamed `polaris-review`). `skill-meta`, `pol-apex-curate`
   and `pol-adr` left in earlier releases; machines installed before then may still carry them.
 
+Fixed
+
+- **The vault sync no longer deletes package files.** It carries every file a skill folder holds
+  (CREDITS.md, LICENSE, `agents/`), reports a file only the package has instead of removing it, and
+  rewrites `skills-suite/` only in real paths: `polaris-sweep`'s pipeline regex keeps its last
+  alternative instead of matching every path.
+- **`init`'s Decision probe works on a skills-CLI install**: it finds the architecture skill's
+  checker under `~/.agents/skills` (or `.claude`, `.codex`) when no vault is declared.
+- **The ContextPack resolver ships whole.** `polaris/scripts/` gains the modules `contextpack.py`
+  and its siblings import (`contextpack_labels`, `contextpack_plans`, the receipt, flight, seal and
+  lesson-consolidation modules, `token_count`) with the tests that build their own fixtures; the
+  resolver and empty-repo test follow the no-stored-seals contract.
+
 ### Earlier unreleased changes
 
 - **Le porte installate da sole bastano a se stesse.** `architecture` 1.4.0 porta con sé il checker

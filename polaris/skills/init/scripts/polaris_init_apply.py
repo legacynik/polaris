@@ -25,11 +25,14 @@ from polaris_init_docs import (  # noqa: E402
     declare_derived, domain_body, header, split, write)
 
 TRIAD = sorted(backbone.LIVE_DOCS)
-# The gate lives in the vault, never in the host repository, so the probe RESOLVES it
-# the way everything else here does and holds no absolute path of its own — one would
-# read past the shadow tree the probe is falsified in.
-PROBE = ('V="${POLARIS_VAULT:-$(git config --get polaris.vault)}" && '
-         'python3 -I "$V/scripts/check_context_backbone.py" --check .')
+# The gate lives outside the host repository — in the vault, or in the architecture skill a
+# skills-CLI install put under $HOME — so the probe RESOLVES it the way the shim does and holds
+# no absolute path of its own: one would read past the shadow tree the probe is falsified in.
+PROBE = ('V="${POLARIS_VAULT:-$(git config --get polaris.vault)}"; C=; '
+         'for D in ${V:+"$V/scripts"} "$HOME/.agents/skills/architecture/scripts" '
+         '"$HOME/.claude/skills/architecture/scripts" "$HOME/.codex/skills/architecture/scripts"; '
+         'do [ -f "$D/check_context_backbone.py" ] && C="$D/check_context_backbone.py" && break; '
+         'done; [ -n "$C" ] && python3 -I "$C" --check .')
 CODE_DIRS = ("src", "app", "lib", "backend", "frontend", "packages", "api")
 
 

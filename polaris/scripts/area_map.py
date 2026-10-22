@@ -6,7 +6,7 @@ An agent reads the map, picks by title/status, opens only what it needs. Every .
 listed, whatever folder it sits in; `archive/` rows are struck through so history stays visible.
 """
 from __future__ import annotations
-import json, re, sys
+import argparse, json, re, sys
 from pathlib import Path
 
 BEGIN, END = "<!-- area-map:begin -->", "<!-- area-map:end -->"
@@ -74,7 +74,12 @@ def render(area: Path) -> str:
 
 
 def main(argv: list[str]) -> int:
-    area = Path(argv[1]).resolve()
+    parser = argparse.ArgumentParser(prog="area_map.py", description=__doc__.splitlines()[0])
+    parser.add_argument("area", type=Path, help="the area folder, e.g. docs/modules/<area>")
+    args = parser.parse_args(argv[1:])
+    if not args.area.is_dir():
+        parser.error(f"not a directory: {args.area} — nothing written")
+    area = args.area.resolve()
     readme = area / "README.md"
     body = readme.read_text(encoding="utf-8") if readme.exists() else f"# {area.name}\n\n"
     block = render(area)
