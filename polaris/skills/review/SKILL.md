@@ -6,7 +6,7 @@ user-invocable: true
 auto: true
 lifecycle: ".review-gate/approvals/<hash>.json drained once by gate_hook.py at commit/merge time, gitignored, pruned by `finalize_review.py --prune-older-than N`; .review-gate/findings/<hash>-*.json kept as the audit trail for doc-truth/human review until the same prune."
 invokes: [critic]
-invoked-by: [human, polaris-sweep]
+invoked-by: [human]
 io: "riceve: diff staged (git tree hash) o branch/PR indicati a mano. produce: .review-gate/approvals/<hash>.json consumato da un hook PreToolUse reale; due file di findings Standards/Spec separati, mai fusi in un ranking unico."
 status: draft
 ---
