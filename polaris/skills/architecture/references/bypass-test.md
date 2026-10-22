@@ -2,8 +2,8 @@
 
 Two things live here, because they are the same evidence read in two directions: what a capable
 agent does **without** this skill (`fails_before`), and the runs that must fail **with** it when
-someone routes around a gate. Measurement history and run logs live in `eval/` and
-`EVAL-REPORT.md`; this file keeps only what a reviewer needs to replay the tests.
+someone routes around a gate. This file keeps only what a reviewer needs to replay the tests;
+the measurement history and run logs stay with the skill's source, outside the installed copy.
 
 ## The baseline — `fails_before`
 

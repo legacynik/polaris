@@ -195,7 +195,7 @@ admitted**; one that misses a requirement is still answered, it just binds no la
 `BACKBONE=$(python3 scripts/arch_doctor.py --which check_context_backbone.py --root .)`, which
 prints this skill's own copy. A nonzero exit means the skill's `scripts/` is incomplete: the rows
 it would measure are `UNKNOWN`, and `doc` checks every `snapshot_scope` path by hand and records
-that in `modalità`. `--emit-context` also needs the ContextPack resolver (`scripts/contextpack.py`),
+that in `modalità`. `--emit-context` also needs the Polaris ContextPack resolver (`contextpack.py`),
 which only a full Polaris installation carries; without it the checker exits 2 with
 `CONTEXTPACK_UNAVAILABLE`. For `init`, `check` and `emit-context`, the **first** access to the checker is the
 exact command above: reading, grepping or hashing it first invalidates the run. `land` is the

@@ -1682,23 +1682,32 @@ def self_check() -> None:
         "MODULE_DEFAULT_CONTEXT_BEYOND_MAP", module_default_context_beyond_map
     )
 
-    with tempfile.TemporaryDirectory() as tmp:
-        root = Path(tmp)
-        _fixture(root)
-        first = emit_context(root)
-        second = emit_context(root)
-        assert first == second
-        assert first["work_item"] != "issue:polaris-os#99"
-        assert first["context_pack_id"].startswith("CTX-polaris-")
-        scoped = emit_context(root, "issue:fixture#1")
-        assert scoped["work_item"] == "issue:fixture#1"
-        assert scoped["context_pack_id"] != first["context_pack_id"]
+    if _contextpack_dir() is None:
+        # Installed alone: no resolver beside the checker, so emit-context refuses by name.
         try:
-            emit_context(root, "issue:foreign#1")
+            emit_context(Path(tempfile.gettempdir()))
         except ContractError as exc:
-            assert exc.code == "WORK_ITEM_UNVERIFIED"
+            assert exc.code == "CONTEXTPACK_UNAVAILABLE", exc.code
         else:
-            raise AssertionError("undeclared work item: expected WORK_ITEM_UNVERIFIED")
+            raise AssertionError("standalone emit-context: expected CONTEXTPACK_UNAVAILABLE")
+    else:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            _fixture(root)
+            first = emit_context(root)
+            second = emit_context(root)
+            assert first == second
+            assert first["work_item"] != "issue:polaris-os#99"
+            assert first["context_pack_id"].startswith("CTX-polaris-")
+            scoped = emit_context(root, "issue:fixture#1")
+            assert scoped["work_item"] == "issue:fixture#1"
+            assert scoped["context_pack_id"] != first["context_pack_id"]
+            try:
+                emit_context(root, "issue:foreign#1")
+            except ContractError as exc:
+                assert exc.code == "WORK_ITEM_UNVERIFIED"
+            else:
+                raise AssertionError("undeclared work item: expected WORK_ITEM_UNVERIFIED")
 
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
