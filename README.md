@@ -70,7 +70,7 @@ each skill invokes, the config keys it reads and what it never does, is
 | `ambitious-goal` | Turns a feature or epic into one outcome, a scope and a verifiable Definition of Done. | Auto, when scope or acceptance evidence needs sharpening |
 | `domain` | Settles one question of domain language or boundary: canonical term, subdomain type, integration pattern, context map. | Auto, on an overloaded term or two contexts that must integrate |
 | `issue-contract` | Opens or updates a GitHub issue with a Definition of Done, regression checks and a checked AFK label. | Auto, "open an issue", "track this bug", handing work to another lane |
-| `init` | Audits an existing repository and writes its first `CONTEXT.md`, `ARCHITECTURE.md` and `DOMAIN.md`. | On request, the first time a repository has no typed backbone |
+| `init` | Audits an existing repository and writes its first `CONTEXT.md`, `ARCHITECTURE.md` and `DOMAIN.md`; needs no vault (only the ContextPack check is skipped without one). | On request, the first time a repository has no typed backbone |
 
 ### Plan
 

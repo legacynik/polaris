@@ -57,6 +57,18 @@ def test_it_runs_from_its_own_folder_and_needs_no_vault() -> None:
     assert "ContextPack check skipped" in body, "the vault-only step says it was skipped"
 
 
+def test_it_ships_its_scripts_as_real_files() -> None:
+    """The vault door links its scripts; the package must carry their bytes, never a link."""
+    scripts = ROOT / "skills" / "init" / "scripts"
+    for name in ("polaris_init.py", "polaris_init_apply.py", "polaris_init_docs.py",
+                 "polaris_init_plan.py", "polaris_init_probe.py", "polaris_init_tx.py",
+                 "check_context_backbone.py"):
+        path = scripts / name
+        assert path.is_file() and not path.is_symlink(), f"{name} must ship as a real file"
+    assert (ROOT / "skills" / "architecture" / "scripts" / "check_context_backbone.py").is_file(), \
+        "the shim resolves the checker from the sibling architecture skill"
+
+
 def test_the_installed_copy_proves_itself_without_a_vault() -> None:
     """The skills CLI installs `init/` next to `architecture/`: that layout must run."""
     done = subprocess.run(

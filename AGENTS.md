@@ -1,33 +1,60 @@
-# Polaris skills package — agent instructions
+# AGENTS.md
 
-This repository is the Polaris skills package: every skill lives under `polaris/skills/<skill>/`,
-and each `SKILL.md` is the instruction to follow, exactly.
+## Project overview
 
-## Install and update
+This repository is the Polaris skills package: each skill is a folder under `polaris/skills/<skill>/`
+whose `SKILL.md` an agent follows. Users install and update it only through the skills CLI.
 
-Only through the skills CLI:
+The skill list and the `_polaris/config.yml` keys each skill reads live in [README.md](README.md)
+and [docs/skills.md](docs/skills.md); do not copy them here. The session commands are
+[start](polaris/skills/start/SKILL.md), [update](polaris/skills/update/SKILL.md),
+[end](polaris/skills/end/SKILL.md), [plan-week](polaris/skills/plan-week/SKILL.md),
+[report](polaris/skills/report/SKILL.md), [polaris-status](polaris/skills/polaris-status/SKILL.md)
+and [polaris-grill](polaris/skills/polaris-grill/SKILL.md).
+
+## Setup
 
 ```bash
-npx skills add legacynik/polaris -g --skill '*'   # install
-npx skills update -g -y                           # update after a merge to main
+git clone https://github.com/legacynik/polaris && cd polaris
+H="$(mktemp -d)"   # a clean install never touches your real HOME
+HOME="$H" npx skills add "$PWD" -g --skill '*' -y
+ls "$H/.agents/skills"   # one folder per skill under polaris/skills
 ```
 
-The CLI installs skill folders only. A skill finds its own scripts and templates through
-`${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/<skill>/`, so an installed skill needs nothing else.
+## Test commands
 
-## Where things are
+Run all of them from the repository root; every one must pass before a PR.
 
-- The skill list, what each skill does and the `_polaris/config.yml` keys it reads:
-  [README.md](README.md) and [docs/skills.md](docs/skills.md). Do not copy that list here.
-- The session commands, for an agent that does not load skills by itself:
-  [start](polaris/skills/start/SKILL.md), [update](polaris/skills/update/SKILL.md),
-  [end](polaris/skills/end/SKILL.md), [plan-week](polaris/skills/plan-week/SKILL.md),
-  [report](polaris/skills/report/SKILL.md), [polaris-status](polaris/skills/polaris-status/SKILL.md),
-  [polaris-grill](polaris/skills/polaris-grill/SKILL.md).
-- The contract root in every product repository is `_polaris/`, never `polaris/`. Your
-  `team/<login>/` folder name is your exact GitHub login; never create another person's path.
+```bash
+bash polaris/scripts/check_skills.sh
+python3 polaris/scripts/check_skill_versions.py origin/main
+uvx --with pyyaml pytest polaris/tests -q
+# every selfcheck of the clean install above (tdd-dev's need pytest on the path)
+for f in "$H"/.agents/skills/*/scripts/*.py; do
+  grep -q -- --selfcheck "$f" && { HOME="$H" uv run --no-project --with pytest python "$f" --selfcheck >/dev/null || echo "FAIL $f"; }
+done
+```
 
-## Changing a skill
+## Conventions
 
-Follow [CONTRIBUTING.md](CONTRIBUTING.md): the branch and PR flow, the version bump, the changelog
-entry and the gates a change must pass.
+- Skill bodies (`SKILL.md`, `references/`) are English.
+- Each skill is self-contained: it runs with its own folder and the other skills in
+  `polaris/skills/`, and never calls a skill, script or path outside the package.
+- Credits go only in the skill's own `CREDITS.md`, indexed from [CREDITS.md](CREDITS.md); the body
+  cites no donor.
+- No README inside a skill folder.
+- Any change to a skill's files bumps its `version:`.
+- No customer, person or infrastructure names anywhere in a skill.
+
+## PR instructions
+
+One PR per batch of changes, opened only after every test command above is green. The full flow,
+including the CHANGELOG entry and the docs to update, is in [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Security
+
+- Never commit secrets, tokens or keys; the perimeter scan refuses key-shaped strings.
+- Files under `polaris/bin` and `polaris/scripts` never reach users (the CLI installs skill folders
+  only), so no skill may depend on them.
+- The contract root in a product repository is `_polaris/`; a `team/<login>/` folder is its owner's
+  exact GitHub login, and no agent creates another person's path.
