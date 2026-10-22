@@ -5,6 +5,20 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
+- **The PR chain ships, issue-contract is back, polaris-memory leaves.** New: `pol-ship` 2.1.0 (one
+  command once work is done: real-test, commit hygiene, push, PR body, babysit loop, then one
+  merge-and-deploy proposal acted on only after the owner's yes; a verification window decides
+  advance, hold or a proposed rollback), `pol-pr` 1.2.0 (replaces `pr`, whose visuals and evidence
+  rules it absorbs; English headings), `pol-babysit` 1.1.0, `issue-contract` 2.3.0 (checked AFK label
+  from `_polaris/config.yml` `tracker.afk_human`/`afk_agent`), `codex-review` 1.0.0 (an independent
+  Codex second opinion). `review` is renamed `polaris-review` 1.1.0 and picks its reviewer tier from
+  the diff. `crasher` 0.4.0 proposes findings and files only what a person picks. `tdd-dev` 2.5.0
+  ships `references/writing-tests.md`. `base-workflow` 0.4.0 checks the pinned version's docs.
+  `git-power` 0.6.0 finalizes in a plain checkout. `polaris-memory` no longer ships and no shipped
+  skill runs `polmem` (`end`, `plan-week`, `polaris-grill`, `polaris-status`, `report`,
+  `reference-capture`, `start` read the repository's decision log and lessons instead);
+  `polaris/bin/polmem`, its installer and its test remain in the repository, unused by any skill.
+
 - **Le porte installate da sole bastano a se stesse.** `architecture` 1.4.0 porta con sé il checker
   del backbone (`scripts/check_context_backbone.py`): `arch_doctor.py --which` stampa la copia della
   skill; senza il resolver `contextpack.py` accanto, `--emit-context` esce 2 con
