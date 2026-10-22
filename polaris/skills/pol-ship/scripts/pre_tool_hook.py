@@ -66,7 +66,7 @@ def body_check(call: tuple[str, list[str]], root: Path) -> tuple[bool, str]:
     cp, ref = checker(), pr_ref(args) if verb != "pr create" else []
     path = flag_value(args, "--body-file", "-F")
     if path is None and (flag_value(args, "--body", "-b") is not None or "--fill" in args or verb == "pr create"):
-        return False, "write the body with /pr into a file and pass --body-file (a draft needs none)"
+        return False, "write the body with /pol-pr into a file and pass --body-file (a draft needs none)"
     if path is None and verb == "pr ready":
         r = subprocess.run(["gh", "pr", "view", *ref, "--json", "body"], capture_output=True, text=True)
         corpo = json.loads(r.stdout)["body"] if r.returncode == 0 else None
@@ -80,7 +80,7 @@ def body_check(call: tuple[str, list[str]], root: Path) -> tuple[bool, str]:
     except (subprocess.CalledProcessError, json.JSONDecodeError, FileNotFoundError, KeyError) as e:
         return False, f"issue unreadable ({e}): a body is not judged without its criteria"
     errors = cp.controlla(corpo, issues, visible(cp, ref, root))
-    return (not errors), "PR body (/pr): " + "; ".join(errors)
+    return (not errors), "PR body (/pol-pr): " + "; ".join(errors)
 
 
 def visible(cp, ref: list[str], root: Path):
