@@ -100,7 +100,7 @@ def gh_merge(pr: str, repo: str | None, run: Callable[..., Any],
         raise RuntimeError(
             f"gh_merge refused: verdict={verdict['verdict']!r}, not READY — "
             "call execute() (decide-first) instead of gh_merge() directly")
-    args = ["gh", "pr", "merge", pr, "--auto", "--squash"]
+    args = ["gh", "pr", "merge", pr, "--squash"]  # never --auto: native auto-merge re-checks nothing
     if repo:
         args += ["--repo", repo]
     return run(args)
