@@ -1,13 +1,13 @@
 ---
 name: git-power
 description: ◇ Use before any Git commit or PR boundary and before any destructive Git action. MUST invoke for every `reset --hard` and every pre-PR comparison of a branch against origin/main; never substitute raw Git. Also censuses and safely closes worktrees, branches, stashes and PRs. Triggers on commit hygiene, PR too large, stale branches.
-version: 0.5.3
+version: 0.5.4
 user-invocable: true
 auto: false
 status: active
 lifecycle: the phase router emits no durable artifact; census JSON is regenerated live; destructive receipts live under the shared Git common dir at polaris-cantiere/removed-log.jsonl so cleanup never dirties main
 invokes: []
-invoked-by: [update, bugfix, start, end, human esplicito, real-testing]
+invoked-by: [update, issue-contract, bugfix, start, end, human esplicito, real-testing]
 io: phase + live git/gh state -> one deterministic verdict or guarded action; no transcript and no full-workflow context
 ---
 
