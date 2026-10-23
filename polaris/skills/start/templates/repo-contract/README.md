@@ -3,13 +3,13 @@
 Team-shared operating state for this repository: who owns which outcome, weekly plans and
 reports, session handoffs, durable decisions and lessons. Markdown + git, no extra tooling —
 written and read by the polaris-team-os commands (`/start`, `/update`, `/end`, `/plan-week`,
-`/report`) and recalled by `polmem`.
+`/report`).
 
 ## Structure (the contract)
 
 | Path | What it is | Who writes it |
 |---|---|---|
-| `config.yml` | tracker + contributor roster (exact GitHub logins) | repo owner |
+| `config.yml` | tracker, plus an optional contributor roster that no skill reads | repo owner |
 | `decisions.md` | durable decisions — append-only, newest on top | anyone, via `/end` proposal + human confirm |
 | `lessons.md` | durable lessons — a real mistake + the rule that prevents it | anyone, via `/end` proposal + human confirm |
 | `team/<login>/` | **your space** — created by your own first `/start` | only you |
@@ -23,7 +23,7 @@ written and read by the polaris-team-os commands (`/start`, `/update`, `/end`, `
 ## Rules
 
 - **One root: `_polaris/`.** Never `polaris/`, never both.
-- Your folder name and the `github:` field are your **exact GitHub login**
+- Your folder name and the `github:` field of your `profile.yml` are your **exact GitHub login**
   (`gh api user --jq .login`, case-sensitive). A nickname silently breaks every `gh` evidence query.
 - **Never create another contributor's path** — everyone's own `/start` creates theirs.
 - **Never write in someone else's `team/` space** — their path, their plan, their session log.
@@ -36,7 +36,7 @@ written and read by the polaris-team-os commands (`/start`, `/update`, `/end`, `
   workflow charter (`profile.yml` → `workflow:`), that charter's boundaries win.
 - GitHub/Linear stays the source of execution truth. These files record ownership, proof and
   handoffs — they are not a second issue tracker.
-- `polmem recall` before assuming context; a recalled page is assumed context to verify,
+- Read the decisions and lessons before assuming context; a note is assumed context to verify,
   never proof of what is true now.
 
 ## Privacy boundaries

@@ -34,26 +34,26 @@ changes to it, so attention goes where change actually lands.
 2. **Otherwise, let the hot spots pull.** Walk back a good stretch of `git log --oneline
    --name-only` and let the files that keep coming up take attention first. Scattered history
    with no hot spot → widen the net, and say that you did.
-3. **Read `docs/architecture/ARCHITECTURE.md` first when it exists.** Its `snapshot_ref` is the
+3. **Read the repository-root `ARCHITECTURE.md` first when it exists.** Its last commit is the
    last state anyone audited; **everything that moved since is the first place to look, and the
    drift itself is usually finding number one.** Its `review_trigger` list tells you which
    changes were supposed to force an update — one that fired without an update is a finding
    about the document as much as about the code. When the file is **absent**, say so and
    recommend the **doc arm** before or alongside the audit: auditing a system nobody has
    described means re-deriving the description inside every future audit.
-4. Read the domain glossary (`CONTEXT.md`) and the ADRs covering the area before forming a
-   single candidate. `git log` says where the heat is; the ADRs say what was already settled.
+4. Read the domain glossary (`CONTEXT.md`) and the Decisions or ADRs covering the area before
+   forming a single candidate. `git log` says where the heat is; the records say what was already
+   settled.
 
 **Vocabulary, and it is a hard rule.** The system is described in **its own domain language**
 — the words in `CONTEXT.md`. The design vocabulary (module, seam, depth, adapter, leverage,
-locality) is scaffolding for the conversation and **never becomes an artifact**: do not drift
-into "component", "service", "API" or "boundary" when naming a finding, because each of those
-smuggles in a solution shape before the candidate has been picked.
+locality) is scaffolding for the conversation and **never becomes an artifact**: name a finding
+in the domain's words, because "component", "service", "API" or "boundary" each smuggle in a
+solution shape before the candidate has been picked.
 
 ## 1. The four costs — the lens every finding is priced in
 
-Rewritten, not quoted: the source of this frame is Martin's chapter on what an architecture is
-*for*, and its text is not reproducible here. A structure is not good or bad in the abstract —
+A structure is not good or bad in the abstract —
 it is expensive or cheap at four separate jobs, and a finding that does not name which one it
 inflates is an aesthetic complaint.
 
@@ -76,7 +76,7 @@ Two rules fall straight out of it, and they do most of the arm's work:
 
 ## 2. Where to start
 
-`ford-parsons-evolutionary-architectures` `where-to-start` gives two defensible first targets
+Governance `where-to-start` gives two defensible first targets
 and they are chosen by **what you need to prove**, not by what is worst: *low-hanging fruit*
 when the approach itself is still doubted, *highest value first* when it is already committed
 and the question is whether the techniques survive contact with this ecosystem. Either way the
@@ -86,7 +86,8 @@ worked.
 Its own stop condition outranks the audit: if deployment is intractable, that is the finding,
 and every structural finding under it is academic until it moves.
 
-Before any of that, `four-reasons-not-to-build-an-evolutionary-architecture` is a live exit.
+Before any of that, governance `four-reasons-not-to-build-an-evolutionary-architecture` is a
+live exit.
 A big ball of mud where rework costs more than rewrite, a system deliberately sacrificial, a
 dominant conflicting characteristic — each is a legitimate reason for the audit to conclude
 **do nothing structural**, and saying so is a result, not a failure to find one.
@@ -109,7 +110,7 @@ python3 scripts/detect.py <import-root> --json     # <import-root>, not the pack
 
 It emits four rules and nothing else: `cycle` (Tarjan SCC over the import graph),
 `package-size` (statements per package, outliers past mean + 2σ — statements, because
-`ford-richards-hard-parts` 19 rejects file count as a size metric), `instability` (Ce, Ca and
+decomposition 19 rejects file count as a size metric), `instability` (Ce, Ca and
 `I` for the modules pinned at 0 or 1), and `abstractness`, **which usually refuses**: with too
 few explicit `ABC`/`Protocol` declarations, `A` collapses to ~0 and `D = |A+I−1|` merely
 restates `I`, so it reports `ASSUMED` with the instrument instead of a number. That refusal is
@@ -138,7 +139,7 @@ Short list, each mapped to what settles it. A tell is a hypothesis (`102`), neve
 | a `services/`- or `utils/`-shaped package that is a layer name holding many unrelated domains | `detect.py package-size`, then the `leftover-naming-test` on the proposed residue |
 | a cycle that runs out through the API or transport layer and back | `detect.py cycle` — a cycle of N is one deployable unit of N, whatever the tree says |
 | an adapter, port or interface with exactly one implementation | judgment: the two-adapter rule in `SKILL.md`, and it is only a defect under `OWNED` |
-| ports that mirror the database tables one-for-one | judgment: `khononov-learning-ddd` 17 plus the model-fit read — the seam was cut on storage, not on behaviour |
+| ports that mirror the database tables one-for-one | judgment: domain-strategy 17 plus the model-fit read — the seam was cut on storage, not on behaviour |
 | a module pinned at `I = 1.0` that everything else avoids | `detect.py instability`, then `abstractness` to tell **stable** from **rigid** — and it usually cannot, which is the honest answer |
 | a config flag or parameter no live caller ever sets | judgment: census the call sites, then close on the graph |
 
@@ -149,16 +150,16 @@ Short list, each mapped to what settles it. A tell is a hypothesis (`102`), neve
 | dependency cycles between components | `archunit-governable-relationships` (1) | the auto-import affordance creates these silently; a cycle of N is one deployable unit of N, whatever the directory tree says |
 | cyclomatic complexity | `cc-threshold` | a gate, and its stop matters more than its number: if the whole codebase fails the threshold, **do not lower the threshold** |
 | cohesion of a class two units both want | `lcom-before-splitting-a-shared-class` | high LCOM → it was never one class, split it. Low LCOM and no appetite for sharing or replicating → **the boundary is in the wrong place**, move the boundary |
-| component size | `ford-richards-hard-parts` 19 `size-by-statements-not-classes` | statements and exposed operations. **File count is not a size metric** — and its stop is the anti-overengineering guard in rule form: a large outlier with **no clear sub-domains is left alone**. Splitting on size alone is not licensed |
-| what a split would leave behind | `ford-richards-hard-parts` 20 `leftover-naming-test` | if the remainder cannot be given a self-descriptive name, the split is wrong. The same test read forward: a top-level listing that names frameworks and layers instead of what the system *does* is a finding about the layout, not about the frameworks |
-| call frequency between units | `khononov-learning-ddd` 17 `chatty-contexts-signal-a-wrong-model` | a **model defect**, never a performance problem. Caching, batching or co-locating hide the signal; the endpoint of ignoring it is a distributed monolith |
+| component size | decomposition 19 `size-by-statements-not-classes` | statements and exposed operations. **File count is not a size metric** — and its stop is the anti-overengineering guard in rule form: a large outlier with **no clear sub-domains is left alone**. Splitting on size alone is not licensed |
+| what a split would leave behind | decomposition 20 `leftover-naming-test` | if the remainder cannot be given a self-descriptive name, the split is wrong. The same test read forward: a top-level listing that names frameworks and layers instead of what the system *does* is a finding about the layout, not about the frameworks |
+| call frequency between units | domain-strategy 17 `chatty-contexts-signal-a-wrong-model` | a **model defect**, never a performance problem. Caching, batching or co-locating hide the signal; the endpoint of ignoring it is a distributed monolith |
 | how it is actually wired, operations included | `static-quantum-diagram-for-legacy` | what a change will break — the source tree alone does not show it |
 
-The eleven `Detectors` are read over the same evidence and answer a different question — *why
+The eleven governance detectors are read over the same evidence and answer a different question — *why
 is it like this* — and two of them, `detector-resume-driven-development` and
 `detector-vendor-king`, are the ones that explain a finding the metrics cannot.
 
-The adjudication is `ford-richards-hard-parts` §J: `86 least-worst-not-best`,
+The adjudication is decomposition §J: `86 least-worst-not-best`,
 `87 three-step-tradeoff-process`, `90 mece-the-comparison-set`, `91 find-the-narrow-context`,
 `92 model-the-hard-scenario`, `102 hypothesis-based-analysis`. **`91` is what stops the sweep
 turning into a survey**: narrow the context before comparing, or every finding gets the same
@@ -174,7 +175,7 @@ is even fundable — and `5` refuses the question outright until the components 
 interfaces, does not pick the seam. It ends on the question — *which of these do you want to
 explore?* — and waits. The stop is the point: a run that designs the remedy for eight
 candidates has spent seven candidates' worth of thinking on work nobody chose, and it anchors
-the founder on whichever one was written up most fluently.
+the repo owner on whichever one was written up most fluently.
 
 **Phase 2 takes the picked candidate into the decision ceremony of this same door** — the
 `architectural decision` arm, with its reversibility gate, its MECE options, its cost per
@@ -183,22 +184,21 @@ option and its closure check. The audit hands over; it does not decide.
 Each candidate in phase 1 is a card with a fixed shape — `Files` · `Problem` · `Solution` in
 plain language · `Benefits` · `Before / After` · **recommendation strength**, one of
 `Strong` · `Worth exploring` · `Speculative`. The badge is not decoration: it is the companion
-to `gravità`, and it is what lets a founder skip nine cards and read one. End with the single
+to `gravità`, and it is what lets the repo owner skip nine cards and read one. End with the single
 candidate you would take first, and why.
 
-**ADR conflicts.** Surface a candidate that contradicts a standing ADR **only when the friction
-is real enough to justify reopening it**, and mark it as what it is — *contradicts ADR-XXXX,
-worth reopening because…*. Do not enumerate every refactor an ADR forbids: that is a list of
-things already decided, dressed as findings.
+**Conflicts with a standing record.** Surface a candidate that contradicts a standing Decision **only when the friction
+is real enough to justify reopening it**, and mark it as what it is — *contradicts DEC-…,
+worth reopening because…*. Leave out the refactors a standing record already forbids: listing
+them re-presents things already decided as findings.
 
 The report below is the durable artifact of both phases. Fixed fields, exactly like a decision
-record: a report missing one is incomplete output, not a draft. Italian names, for the same
-reason the decision record's are — these land in the vault.
+record: a report missing one is incomplete output, not a draft. The field names are Italian,
+for the same reason the decision record's are: `eval/checks.json` greps them.
 
-**Scope mode, chosen before anything is read** (founder decision 2026-08-18, from the live
-A/B verdict — `audit/2026-08-18-eval-braccio-audit/VERDICT.md`: the disciplined perimeter won
-6/7 criteria and still missed real candidates the undisciplined sweep caught outside it; the
-cure is a mode, not a redesign):
+**Scope mode, chosen before anything is read.** A disciplined perimeter finds the deep findings
+and misses real candidates outside it; a sweep finds those and verifies nothing. The mode decides
+which one this run is:
 
 **Budget gate, before discovery:** `mono` is the default. `full` is `BLOCK` when the current
 work item or request already identifies at least three unlanded architecture findings; do not
@@ -222,7 +222,7 @@ the remainder stays unpromoted evidence.
 | `scope` | `mono` or `full`, and — under `full` — the surface list the sweep produced, each with its one-line signal |
 | `perimetro` | the directories read, and the commit SHA they were read at. What is outside is **unexamined**, not fine — say which |
 | `strumentazione` | which signals in §3 could actually be measured here and which could not, listed before any finding, so the reader knows what the silence covers |
-| `modalità` | `piena`, or `ridotta` naming every input that was missing — the rule library, typed `decisions/`, a domain glossary, the graph verify leg — same field, same rule, as the decision record's (#78): a degraded audit that does not say so is a defect, not a draft. Same structured first line as the decision record's: `modalità: piena` or `modalità: ridotta — missing: <tag>[, <tag>...]` (`rule-library` · `decisions` · `glossary` · `graph-verify`), prose below it |
+| `modalità` | `piena`, or `ridotta` naming every input that was missing — the rule library, typed `decisions/`, a domain glossary, the graph verify leg — same field, same rule, as the decision record's: a degraded audit that does not say so is a defect, not a draft. Same structured first line as the decision record's: `modalità: piena` or `modalità: ridotta — missing: <tag>[, <tag>...]` (`rule-library` · `decisions` · `glossary` · `graph-verify`), prose below it |
 
 **Per finding, repeated:**
 
@@ -278,48 +278,45 @@ Five places where the loaded rules give **opposite answers depending on which on
 happens to reach first**. Each is composed here, once, so the answer does not depend on reading
 order. A finding that lands on one of these says which composition it used.
 
-**A. Independent deploy stacks vs the largest valid monolith.** `just-enough-governance-three-stacks`
-presumes decoupled services; `khononov-learning-ddd` 16 says keep the largest monolith that is
-still valid. For a modular monolith they pull opposite ways. **Composition:** the single-stack
-tax only counts when a business driver names it (`ford-richards-hard-parts` §A
-`business-driver-gate`), and per-context dependency tiers enforced inside one repo buy most of
+**A. Independent deploy stacks vs the largest valid monolith.** Governance
+`just-enough-governance-three-stacks` presumes decoupled services; domain-strategy 16 says keep
+the largest monolith that is still valid. For a modular monolith they pull opposite ways.
+**Composition:** the single-stack tax only counts when a business driver names it
+(decomposition §A `business-driver-gate`), and per-context dependency tiers enforced inside one repo buy most of
 the three-stack benefit without separate deploys — a partial boundary, which is cheap and
 reversible.
 
-**B. Deferring a decision vs enforcing structure now — the dangerous one.** `last-responsible-moment`
-reads as a licence to postpone the import contract, and that reading is exactly how a
+**B. Deferring a decision vs enforcing structure now — the dangerous one.** Governance
+`last-responsible-moment` reads as a licence to postpone the import contract, and that reading is exactly how a
 `services → api` drift happens: nobody ever decided it, everybody deferred it.
 **State it at full strength: you defer the CONTENT of a choice, never the DIRECTION of its
 dependencies.** The mechanical rules are what *keeps* the other decisions deferrable — the
 database stays "a detail" only for as long as the domain does not import it. An audit finding
 that cites LRM to postpone a direction rule has inverted the rule.
 
-**C. The thresholds in this file are themselves estimates.** `D > 0.1`, `CC < 5`, a shared-code
-percentage — the same file that says `derive-thresholds-from-production-not-estimates` hands you
-book numbers. **Composition:** book thresholds are **seeds for the first pass only**, replaced
+**C. The thresholds in the rule files are themselves estimates.** `D > 0.1`, `CC < 5`, a
+shared-code percentage — the same rules that say `derive-thresholds-from-production-not-estimates`
+hand you fixed numbers. **Composition:** fixed thresholds are **seeds for the first pass only**, replaced
 by the repo's own population distribution the moment one exists. Prefer the population-based
 forms (one standard deviation, a z-score) over the absolute ones, because those are already
 derived rather than borrowed. `detect.py`'s size rule is written this way on purpose: mean + 2σ
 over *this* repo, never a fixed statement count.
 
-**D. "Generic subdomain → buy" against the house's own absorb-and-eliminate call.** Not a
-contradiction, and worth keeping as the worked example: the classification fork has two axes,
-and something generic on the capability axis can still be a declared competitive advantage —
-which is what makes the skill factory core rather than bought. **Run the advantage test before
-writing "buy".** It is the inoculation against outsourcing the thing you actually compete on.
+**D. "Generic subdomain → buy" against a capability the business competes on.** Not a
+contradiction: the classification fork has two axes, and something generic on the capability
+axis can still be a declared competitive advantage, which makes it core rather than bought.
+**Run the advantage test before writing "buy"**, and hand the classification itself to `domain`. It is the inoculation against outsourcing the thing you actually compete on.
 
-**E. Weeks of evidence vs act at the first friction.** `business-driver-gate` wants a driver
-proven before code moves; the inflection-point rule says build the boundary at the first real
-friction. Unresolved, this produces paralysis or impulsiveness — and the forensic record says
-the failure here is paralysis, with a large share of identified root causes parked.
+**E. Weeks of evidence vs act at the first friction.** Decomposition `business-driver-gate`
+wants a driver proven before code moves; component-boundary 1 (the inflection point) says build
+the boundary at the first real friction. Unresolved, this produces paralysis or impulsiveness,
+and paralysis is the common failure: identified root causes get parked indefinitely.
 **Composition: two bars for two classes of move.** The business-driver gate governs
 **decompositions** — expensive, slow, hard to reverse. The inflection point governs
 **incremental boundaries** — partial boundaries, a moved import, a deleted shim, all cheap and
 reversible. **Every finding must say which class its remedy belongs to**, because that is what
 selects its bar.
 
-**One scale caveat, carried rather than hidden.** The capacity-ceiling rules from
-`skelton-pais-team-topologies` are `scale-bound: partial`. Applied to agent units rather than
-people, **keep the ordering and drop the human head counts** — the numbers were measured on
-teams. The unit's attention budget is declared per run and recorded with the finding, not
-inherited from the book.
+**One scale caveat, carried rather than hidden.** The capacity-ceiling ownership rules were
+measured on human teams. Applied to agent units, **keep the ordering and drop the human head
+counts**; the unit's attention budget is declared per run and recorded with the finding.

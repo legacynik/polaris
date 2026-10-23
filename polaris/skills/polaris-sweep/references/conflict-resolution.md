@@ -170,7 +170,7 @@ Three recovery paths:
 3. **Drop**: close the PR, revisit later."
 
 # Telegram alert via the lib helper
-. /usr/local/lib/holyclaude/notify.sh 2>/dev/null
+. /usr/local/lib/agent/notify.sh 2>/dev/null
 notify_telegram "PR needs human rebase" "#$PR_N: real conflict on $CONFLICT_FILES"
 ```
 
@@ -187,7 +187,7 @@ cd "$REPO_ROOT"
 git worktree remove --force "$SWEEP_WT" 2>/dev/null || rm -rf "$SWEEP_WT"
 git worktree prune 2>/dev/null
 
-# Audit log (host-mounted path on the holyclaude container)
+# Audit log (host-mounted path on the unattended agent's container)
 echo "$(date -Iseconds) sweep PR=$PR_N classify=$classify" >> /var/log/sweep-conflicts.log
 ```
 
@@ -210,7 +210,7 @@ Every step is idempotent:
 
 Multiple sweep ticks on the same conflicting PR converge to the same outcome — no thrashing, no double-rebase.
 
-## Concurrency with parallel-issue-flow
+## Concurrency with a live implementation session
 
 If a Hand session is currently mid-implementation on the same branch (Hand-owned worktree alive, session attached), polaris-sweep MUST NOT touch the branch. Check **before Step 0** (creating the sweep worktree is itself a write):
 

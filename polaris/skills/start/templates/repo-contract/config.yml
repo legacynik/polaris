@@ -3,7 +3,6 @@ tracker:
   github_repo: owner/repository
   linear_team: null   # Optional; leave null when GitHub is the only tracker.
 contributors:
-  # `github` is the exact GitHub login (case-sensitive), verbatim — e.g. JeanpierreMiccoli17,
-  # not a nickname. Skills use it directly in `gh --assignee` / `author:` queries; a wrong value
-  # silently returns no evidence. Add only real repository members.
+  # Optional roster for humans reading this file: no skill reads it. Each person's identity lives
+  # in their own team/<login>/profile.yml. If you keep it, use exact GitHub logins.
   - github: octocat

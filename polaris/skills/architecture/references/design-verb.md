@@ -3,15 +3,11 @@
 Fires **before** Step 0 has anything to answer: there is no existing interface and no caller
 set to judge as `OWNED` or `PUBLISHED` — the module doesn't exist yet. Generate several
 genuinely different shapes for it, compare them on the vocabulary in
-[`interface-and-seam.md`](interface-and-seam.md), and recommend one. Absorbed from
-`codebase-design/DESIGN-IT-TWICE.md` (the vocabulary-linked version) plus the four literal
-sub-agent prompt templates from `design-an-interface` (duplicate technique, same source book,
-archived — see `CHANGELOG.md`).
+[interface-and-seam.md](interface-and-seam.md), and recommend one.
 
-Based on "Design It Twice" (Ousterhout, *A Philosophy of Software Design*): the first shape a
-designer reaches for is rarely the best one, and the fix is never to think harder about that
-first shape — it is to generate a second, third, and fourth shape that are actually different,
-then compare.
+The premise: the first shape a designer reaches for is rarely the best one, and the fix is never
+to think harder about that first shape — it is to generate a second, third and fourth shape that
+are actually different, then compare.
 
 ## Contents
 
@@ -51,8 +47,7 @@ sub-agents work in parallel.
 Spawn at least 3 in parallel. Each must produce a **radically different** interface for the
 same module — not a paraphrase of another's answer. Give each a separate technical brief (file
 paths, coupling details, dependency category, what sits behind the seam), independent of the
-user-facing framing from Step 1, plus a single divergent constraint. The four literal templates,
-carried over unchanged because they are what made the source skill's output usable:
+user-facing framing from Step 1, plus a single divergent constraint, one of these four:
 
 1. **Minimize the interface** — aim for 1 to 3 entry points maximum; maximise leverage per
    entry point.

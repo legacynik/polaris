@@ -46,6 +46,14 @@ class ASkillChangedWithoutABump(unittest.TestCase):
         root, base = repo_with("cambiata davvero", bump=True)
         self.assertEqual(0, run(root, base).returncode)
 
+    def test_a_removed_skill_needs_no_version(self):
+        root, base = repo_with("x", bump=True)
+        subprocess.run(["git", "rm", "-rq", "polaris/skills/start"], cwd=root, check=True)
+        subprocess.run(["git", "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "rm"],
+                       cwd=root, check=True)
+        done = run(root, base)
+        self.assertEqual(0, done.returncode, done.stdout)
+
     def test_a_bad_ref_is_unusable_not_a_pass(self):
         root, _ = repo_with("x", bump=True)
         self.assertEqual(2, run(root, "non-esiste").returncode)

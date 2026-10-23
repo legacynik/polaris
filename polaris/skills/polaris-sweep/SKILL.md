@@ -1,15 +1,15 @@
 ---
 name: polaris-sweep
 description: ◇ Polaris Sweep — review a single PR end-to-end and post a durable comment. Used by autonomous trigger (cron polling new PRs), or invoked as `claude -p "/polaris-sweep <PR_N>"` in a fresh session.
-version: 1.4.2
+version: 1.6.0
 user-invocable: true
 status: active
 effort: medium
-job: revisionare una PR con tre lenti + ledger + attestazione runtime, e decidere con un exit code se può fondersi da sola
-when_not: non usarla per issue (solo PR), per PR non Hand-authored (skip silenzioso), per deployare o mettere codice su staging, né per bocciare una PR perché non è su staging — «nessuno l'ha deployata» non è prova di regressione
-io: riceve un numero di PR aperto → produce un commento di review idempotente sulla PR + run-state in _polaris/sweep/runs/ + verdetto auto-merge via scripts/sweep_gate.py (exit code)
-lifecycle: il commento vive sulla PR (upsert per marker, mai duplicato); il run-state lo drena la sweep successiva sulla stessa PR; .tmp/sweep/ si pulisce a raccolta avvenuta
-invokes: [real-testing]
+job: review a PR through three lenses + the decision ledger + a runtime attestation, and decide by exit code whether it may merge on its own
+when_not: not for issues (PRs only), not for PRs that are not Hand-authored (silent skip), not to deploy or put code on staging, and not to reject a PR because it is not on staging — "nobody deployed it" is not evidence of a regression
+io: receives an open PR number → emits an idempotent review comment on the PR + run state in _polaris/sweep/runs/ + an auto-merge verdict via scripts/sweep_gate.py (exit code)
+lifecycle: the comment lives on the PR (upserted by marker, never duplicated); the next sweep on the same PR drains the run state; .tmp/sweep/ is cleaned once collected
+invokes: [real-testing, codex-review]
 invoked-by: [cron, human]
 ---
 
@@ -19,13 +19,12 @@ invoked-by: [cron, human]
 
 | File | Purpose |
 |---|---|
-| `scripts/sweep_gate.py` | **The auto-merge decision** (Phase 4.5): exit 0 consente, 1 nega, 2 errore d'uso. Fail-closed. `--selfcheck`: 13 controlli |
-| `references/BUG-HISTORY.md` | **Read first when modifying this skill.** 3 bugs from 2026-04-28 (sweep-pending jq filter, claude binary path, auto-merge trigger gap) in adjacent layers, plus the 2026-07-26 entry — 4 stacked failures in Phase 3c's own Codex invocation, a clamped tool timeout mistaken for a hang, and a truncated-diff prompt. Phase 3c's flags all come from that entry; read it before touching them. |
-| `references/codex-flags.md` | The why-per-flag table of the Phase 3c invocation — read before changing ANY flag |
+| `scripts/sweep_gate.py` | **The auto-merge decision** (Phase 4.5): exit 0 allows, 1 denies, 2 usage error. Fail-closed. `--selfcheck`: 13 checks |
+| `references/BUG-HISTORY.md` | **Read first when modifying this skill.** 3 bugs from 2026-04-28 (sweep-pending jq filter, claude binary path, auto-merge trigger gap) in adjacent layers, plus the 2026-07-26 entry — 4 stacked failures in Phase 3c's own Codex invocation, a clamped tool timeout mistaken for a hang, and a truncated-diff prompt. The flags that entry produced now live in the `codex-review` skill, which owns the invocation. |
+| `references/quality-review.md` | The Phase 3a checks and output shape — read before every quality review |
 | `references/comment-template.md` | The exact Phase 4 comment template + Verified-clean rules (marker and Verdict line are load-bearing) |
 | `references/conflict-resolution.md` | **Load lazily** — only when Phase 1.5 reports `mergeable=CONFLICTING`. Decision tree for auto-rebase vs escalate. Keeps the default tick cheap (no extra context tokens) for the common case of mergeable PRs. |
-| `references/bypass-test.md` | B1–B3 (verdetto su codice mai eseguito · PR che tocca la pipeline · verdetto su SHA stale) con output prima/dopo |
-| `evals/evals.json` | 6 behavioral tests: verdict-format-with-emoji, idempotent comment upsert, auto-mergeable block on risk:trivial, no auto-merge on risk:medium, diff-too-large summary, codex-fallback→/code-review. Run via skill-creator before pushing skill changes. |
+| `references/bypass-test.md` | B1–B3 (verdict on code never executed · PR touching the pipeline · verdict on a stale SHA) with before/after output |
 
 The verdict-format eval is load-bearing: auto-merge GHA's gate regex (`Verdict.*✅[[:space:]]+approve`) depends on it. Don't change the verdict format without updating the gate regex (lives in `.github/workflows/auto-merge-trivial.yml` of each repo using Sweep).
 
@@ -68,13 +67,13 @@ If the repo opted in to the real-testing gate (`.real-test/enabled` exists in th
 checkout), check whether a verdict exists for THIS PR's head:
 
 ```bash
-HASH=$(python3 "<polaris>/real-testing/scripts/perimeter.py" --repo <checkout> --head <pr-head-sha> --hash-only)
+HASH=$(python3 "${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/real-testing/scripts/perimeter.py" --repo <checkout> --head <pr-head-sha> --hash-only)
 test -f "<checkout>/.real-test/verdicts/$HASH.json" || echo "no receipt"
 ```
 
 No receipt (or a verdict that fails `verdict.py validate`) → add ONE line to the review
-comment: *"⚠ Nessuna ricevuta real-test per l'hash di questa PR (`<hash8>`) — il diff non
-risulta provato dal gate."* This is a NAG by design (lessons 2026-08-13: mandatory CI gates
+comment: *"⚠ No real-test receipt for this PR's hash (`<hash8>`) — the gate has no proof
+this diff was exercised."* This is a NAG by design (lessons 2026-08-13: mandatory CI gates
 on existing repos kill adoption): it makes the missing receipt visible on the PR, it never
 blocks. Repos without the marker: skip silently — they never opted in.
 
@@ -86,7 +85,7 @@ PROFILE_FILE="_polaris/sweep/repos/<repo-slug>.md"
 ```
 
 The profile is **optional**. Most repos have never been onboarded to Sweep —
-`_polaris/sweep/` did not exist at all in `acme-api` on 2026-07-26. A missing
+`_polaris/sweep/` is often absent. A missing
 profile means `severity_threshold=high` and nothing else; note it in one line and
 continue. Never create a profile implicitly, and never stall waiting for one.
 
@@ -94,14 +93,17 @@ continue. Never create a profile implicitly, and never stall waiting for one.
 
 ### Phase 3a — Quality review
 
-Invoke `superpowers:requesting-code-review` with the diff as input. The skill returns approve / approve-with-minor / request-changes plus findings.
+Review `git diff <merge-base>..<head>` against the PR's stated intent, in a fresh-context
+subagent if your harness supports one, otherwise inline, read-only on the checkout. Apply every
+check in `references/quality-review.md` and return its output: strengths, findings by severity
+(each with `file:line`, what is wrong, why it matters) and approve / approve-with-minor /
+request-changes. Done when every check has a verdict and the verdict line is written.
 
 ### Phase 3a-bis — Over-engineering lens (threshold-gated, NEVER blocking alone)
 
 Only when the diff is large enough for over-engineering to hide in — **additions > 100 lines**
-(from Phase 1's `additions`) — run the `ponytail-review` lens on the diff (or `simplify` when
-the session may apply fixes): reinvented stdlib, speculative abstraction, duplicated shapes,
-oversized functions. Field precedent (2026-08-17, eval #771): three real findings of exactly
+(from Phase 1's `additions`) — read the diff once for over-engineering only: reinvented stdlib, speculative abstraction, duplicated shapes,
+oversized functions. Field precedent (2026-08-17): three real findings of exactly
 this class — duplicated helper, 26-line function, 4 params — that the correctness lenses had
 no reason to catch.
 
@@ -113,7 +115,7 @@ SHA — green and mutation re-run, mechanically, not by discipline.
 
 ### Phase 3b — Security review
 
-Invoke `security` skill on the diff. Check explicitly for:
+Review the diff for security. Check each of:
 1. Secrets/credentials hardcoded or logged
 2. Input validation missing at API boundaries
 3. SQL/command injection vectors
@@ -136,7 +138,7 @@ A diff can be clean code and still be a **regression against a ratified decision
 which no generic quality or security lens will catch, because the rule lives in the
 ledger, not the code. This is the single highest-value finding class Sweep produces.
 
-Concrete precedent (2026-07-26, PR #117): the code was well-written and well-tested,
+Concrete precedent (2026-07-26): the code was well-written and well-tested,
 but logged merchant legal names, UBO names and screening outcomes to CloudWatch, against
 `decisions.md` 2026-07-14 §3 *"no personal data in operational logs by design"* — a rule
 agreed with the client and load-bearing for a GDPR-erasure claim. Both external lenses
@@ -166,133 +168,33 @@ self-merges.
    `MERGEABLE-CON-GAP`) → High finding, blocks auto-merge, human decides · scope creep →
    judgement call, never blocking alone. No issue found and the PR is not a chore/docs class →
    say so in the comment: an unattended PR without an originating issue is itself a finding.
-4. Field precedent (2026-08-17, review of the #1324 fix): the spec lens is what caught
-   "#1060 closed riding #1324's evidence without its own gate" and the honestly-open DoD item —
+4. Field precedent (2026-08-17): the spec lens is what caught an issue closed riding another
+   fix's evidence without its own gate, and the honestly-open DoD item —
    findings no quality or security lens had a reason to see.
 
-For manual pre-PR use in a session, the standalone `/code-review` skill covers this same axis
+For manual pre-PR use in a session, the `polaris-review` skill covers this same axis
 (plus Standards) — this phase absorbs its Spec axis into the unattended pipeline; it does not
 replace the manual tool.
 
 ### Phase 3c — Codex adversarial review
 
-**Single source of the invocation knowledge: the `codex-review` skill** (global via symlink;
-canonical at `<repo>/.claude/skills/codex-review`, versioned since PR #1475). This phase
-originally invoked that skill; when it was archived by a cleanup (2026-08-10) the invocation
-was inlined here to survive. The skill is back: consult it for the model truth (`gpt-5.6-sol` —
-every `-codex` id 400s on ChatGPT accounts) and the operational gotchas; if this page and the
-skill ever disagree, **the skill wins** and this page gets fixed.
+Run the `codex-review` skill on this PR (`ID=$PR_N`, the PR-diff branch of its step 1). It owns
+the hardened invocation, the model choice and the why-per-flag table; do not carry a copy of the
+flags here. Take back its output block (`CODEX: ran|not-run`, `TRACE`, verified findings).
 
-**The invocation below is load-bearing. The previous version of this phase failed
-every one of four separate ways in a single real run (2026-07-26, PRs #117/#138 —
-see `references/BUG-HISTORY.md`, which stays here: it is this phase's incident history).
-Do not "simplify" it back.**
+If it reports verified Critical/High findings → override the verdict to `request-changes`. A
+`TRACE: diff-only` result is said in the comment beside its findings instead of being trusted.
+`CODEX: not-run` (no CLI, timeout, zero output) goes to the fallback below.
 
-Write the diff to a file **inside the repo** and point Codex at the path. Do NOT
-paste the diff into the prompt, and never `head -500` it — that silently discarded
-87% of a 4k-line diff while still reading like a completed review.
-
-```bash
-mkdir -p .tmp/sweep
-gh pr diff "$PR_N" > .tmp/sweep/pr-$PR_N.diff
-
-cat > .tmp/sweep/schema.json <<'EOF'
-{"type":"object","additionalProperties":false,
- "properties":{
-   "findings":{"type":"array","items":{"type":"object","additionalProperties":false,
-     "properties":{"severity":{"type":"string","enum":["critical","high","medium","low"]},
-       "title":{"type":"string"},"file":{"type":"string"},"line":{"type":"integer"},
-       "description":{"type":"string"},"suggestion":{"type":"string"}},
-     "required":["severity","title","file","line","description","suggestion"]}},
-   "summary":{"type":"string"},"approved":{"type":"boolean"}},
- "required":["findings","summary","approved"]}
-EOF
-```
-
-Prompt requirements — the last block is not optional:
-
-```
-Adversarial pre-merge review of PR #<N>. The diff is at .tmp/sweep/pr-<N>.diff.
-Read it, then read the source files it touches plus their direct callers/guards —
-the diff alone is not enough to judge correctness.
-CUSTOM RULES (OpenAI custom-code-review-rules pattern): read the repo's AGENTS.md
-files whose directory covers the touched files (root AGENTS.md + any nested one),
-apply every rule under their "Code Review Rules" sections, and CITE the rule
-verbatim in any finding it motivates. A rule violation is High minimum — these
-encode invariants reviewers repeatedly had to explain.
-Be skeptical: assume the code is wrong until proven otherwise. For each finding give
-the concrete failure scenario (inputs/state -> wrong outcome), not a generic concern.
-No style preferences. Set approved=false if any critical/high finding stands.
-
-HARD CONSTRAINTS — violating these wastes the run:
-- Do NOT run tests, pytest, vitest, npm, python, or any build/execution command.
-  This is READ-ONLY: read files, nothing else.
-- Do NOT attempt network access.
-- Read only the touched files and their direct callers, not the whole tree.
-- Emit the JSON result as your FINAL message and stop. Do not keep exploring
-  after you have findings.
-```
-
-Then run it **detached, with stdin closed, under a hard timeout**:
-
-```bash
-nohup timeout 900 codex exec \
-  --json \
-  --sandbox read-only \
-  --skip-git-repo-check \
-  --output-schema .tmp/sweep/schema.json \
-  --output-last-message .tmp/sweep/codex-$PR_N.json \
-  "$(cat .tmp/sweep/prompt-$PR_N.md)" \
-  < /dev/null > .tmp/sweep/run-$PR_N.log 2>&1 &
-```
-
-`--json` makes the run log a JSONL event trace (OpenAI eval-skills pattern): after collection,
-one deterministic process-check earns its keep — did Codex actually READ the touched files?
-
-```bash
-jq -rs '[.[] | select(.item.type=="command_execution") | .item.command] | join("\n")' \
-  .tmp/sweep/run-$PR_N.log | grep -cF -f <(gh pr diff "$PR_N" --name-only) \
-  || echo "⚠ Codex never opened the touched files — treat its findings as diff-only"
-```
-
-A review whose trace never opened the source is a diff-skim wearing a review's clothes — say so
-in the comment instead of trusting it. Token usage lives in the trace's `turn.completed` events.
-
-Each flag earns its place — the why-per-flag table (all four failures observed live) is in
-`references/codex-flags.md`: read it before changing ANY flag of this invocation.
-
-Then collect, with a log fallback:
-
-```bash
-# Preferred: the schema-validated file
-jq -r '.findings[] | "[\(.severity|ascii_upcase)] \(.title) (\(.file):\(.line))"' \
-  .tmp/sweep/codex-$PR_N.json 2>/dev/null
-
-# Fallback: findings sometimes exist only in the run log, which is ANSI-encoded —
-# plain grep matches nothing, `grep -a` does.
-grep -a -oE '"severity":\s*"[a-z]+"|\[(CRITICAL|HIGH|MEDIUM|LOW)\][^"]{0,160}' \
-  .tmp/sweep/run-$PR_N.log
-```
-
-If Codex finds Critical/High → override verdict to `request-changes`.
-**Verify each Codex finding against the source before reporting it** — it mixes real
-bugs with false alarms, and the value is in the reproduction, not the claim.
-
-Clean up `.tmp/sweep/` only after the run is collected (Codex reads from it).
-
-### Phase 3c-fallback — when Codex does not run: `/code-review` takes the lens
+### Phase 3c-fallback — when Codex does not run: a Standards + Spec pass takes the lens
 
 If Codex times out, is killed, or returns nothing, **do not stall the sweep, do not
-promise a later update, and do not degrade to two lenses**: invoke the `code-review`
-skill (Skill tool, `~/.claude/skills/code-review`) on the PR as the replacement
-adversarial lens. It reviews the changes since the merge-base along two axes —
-Standards (repo's documented coding standards) and Spec (does the diff match the
-originating issue) — in parallel sub-agents, which is exactly the cross-model
-independence Codex was providing: a reviewer that did not write the code.
-
-```
-Skill: code-review · args: <PR_N or head branch> — review since merge-base with main
-```
+promise a later update, and do not degrade to two lenses**: run the two passes of the
+`polaris-review` skill (`polaris-review/references/protocol.md`) on the changes since the merge-base with
+main as the replacement adversarial lens — Standards (repo's documented coding standards)
+and Spec (does the diff match the originating issue), each in its own fresh-context
+subagent if your harness supports one, otherwise one after the other, inline. That keeps
+the independence Codex was providing: a reviewer that did not write the code.
 
 Map its findings into the same severity buckets, verify them against source like any
 Codex finding, and mark provenance in the comment:
@@ -301,62 +203,63 @@ Codex finding, and mark provenance in the comment:
 ## Codex adversarial
 
 - ⚠️ **Codex not-run** — <one line: timed out after N min / zero output / CLI unavailable>.
-  Lens replaced by `/code-review` (Standards + Spec, parallel sub-agents):
-- 🔴 [High] <finding from code-review> …
+  Lens replaced by the Standards + Spec fallback:
+- 🔴 [High] <finding from the fallback> …
 ```
 
-Record `codex: not-run (<reason>) · fallback: code-review` in the Phase 6 run state.
-Only if `code-review` ALSO fails, post the two-lenses banner: *"This review is
+Record `codex: not-run (<reason>) · fallback: standards-spec` in the Phase 6 run state.
+Only if the fallback ALSO fails, post the two-lenses banner: *"This review is
 therefore two lenses, not three. Treat the finding list as unverified-complete, not
 exhaustive"* — a degraded review that says so is useful; one that silently looks
 complete is worse than none.
 
-### Phase 3e — Attestazione runtime (l'unica lente che ESEGUE il codice)
+### Phase 3e — Runtime attestation (the only lens that RUNS the code)
 
-3a, 3b, 3b-bis e 3c **leggono**. Nessuna di loro fa girare una riga. Una PR può uscire da qui con
-`approve` senza che nessuno abbia visto il codice funzionare — ed è la ragione per cui esistono PR
-dichiarate real-testate che non lo sono: la revisione era ottima, e riguardava un testo.
+3a, 3b, 3b-bis and 3c **read**. None of them runs a single line. A PR can leave this point with
+`approve` while nobody has seen the code work — which is why PRs declared real-tested exist that
+are not: the review was excellent, and it was about a text.
 
-Questa fase non prova che il codice sia bello: prova che **è successo qualcosa nel mondo**.
+This phase does not prove the code is good: it proves **something happened in the world**.
 
-**Non deploya e non confronta SHA.** Chi fa il real test lo dice: **cerca il suo commento sulla PR.**
-Inseguire lo SHA servito da staging è fragile e non serve — staging cambia sotto i piedi, e un
-commit che coincide non prova che qualcuno abbia guardato qualcosa.
+**It does not deploy and does not compare SHAs.** Whoever ran the real test says so: **look for
+their comment on the PR.** Chasing the SHA staging serves is fragile and useless — staging moves
+under your feet, and a matching commit does not prove anyone looked at anything.
 
 ```bash
 gh pr view "$PR_N" --json comments -q '.comments[] | select(.body | test("(?i)real.?test|attestazione")) | .body' | head -c 3000
 ```
 
-Due domande, in quest'ordine:
+Two questions, in this order:
 
-**1. Questa PR va deployata?** Il repo lo dichiara già, e la lista **non si scrive qui**: sta nel
-`paths:` del suo workflow di post-deploy, oppure in `deployabili:` del suo `.fix/contract.yml`. Ogni
-repo ha i suoi. Se il diff non tocca nessuno di quei path — doc, spec, contratto di sessione,
-githooks — **l'attestazione non serve**: dillo e chiudi la fase.
+**1. Does this PR get deployed?** The repo already declares it, and the list **is not written
+here**: it sits in the `paths:` of its post-deploy workflow, or in `deployabili:` of its
+`.fix/contract.yml` (the key keeps its original name; `sweep_gate.py` reads it). Every repo has its
+own. If the diff touches none of those paths — docs, specs, session contract, githooks — **no
+attestation is needed**: say so and close the phase.
 
-Se il repo non dichiara né l'uno né l'altro, non indovinare: scrivi che il perimetro deployabile non
-è dichiarato, e trattala come da attestare. Un elenco di path inventato qui varrebbe per una repo
-sola e mentirebbe su tutte le altre.
+If the repo declares neither, do not guess: write that the deployable perimeter is not declared,
+and treat the PR as needing attestation. A path list invented here would hold for one repo and
+lie about every other.
 
-**2. Esiste il commento del real test?** Cioè un commento che dichiara **cosa è stato provato e
-dove**, non «testato ok».
+**2. Is there a real-test comment?** That is, a comment stating **what was tried and where**, not
+"tested ok".
 
-| | Cosa scrivi |
+| | What you write (run-state value of `attestazione`) |
 |---|---|
-| non serve | **non deployabile** — nessun path di runtime toccato |
-| c'è | **attestata** — riporta in una riga cosa dice: dove è girata, cosa si è osservato, cosa è caduto |
-| non c'è | **non attestata** — questo codice non è mai stato eseguito da nessuna parte |
+| not needed | **not deployable** (`non-deployabile`) — no runtime path touched |
+| present | **attested** (`attestata`) — one line on what it says: where it ran, what was observed, what failed |
+| absent | **not attested** (`non-attestata`) — this code has never run anywhere |
 
-**Il verdetto della sweep non cambia per questa fase.** Non essere attestata non è un difetto del
-codice: è un lavoro che manca. Cambia solo l'auto-merge, in Phase 4.5.
+**The sweep verdict does not change in this phase.** Being unattested is not a defect of the
+code: it is missing work. Only auto-merge changes, in Phase 4.5.
 
 ### Phase 3d — Merge all verdicts
 
 Final verdict = worst-of(3a quality, 3s spec-conformance, 3b security, 3c Codex adversarial).
 Priority: security Critical/High > Codex Critical/High > quality.
 
-3e **non entra nel verdetto** — non essere su staging non è un difetto del codice. Entra nella
-Phase 4.5, dove decide se la PR può fondersi da sola.
+3e **does not enter the verdict** — not being on staging is not a defect of the code. It enters
+Phase 4.5, where it decides whether the PR may merge on its own.
 
 All findings appear in their own sections in the comment (see Phase 4).
 
@@ -375,7 +278,7 @@ read it now if you haven't. Two things are load-bearing:
   diff hunks; library source cited `file:line`; `file:symbol` over drifting line numbers)
   are in the template file, with the precedents.
 
-## Phase 4.5 — Auto-mergeable check (exit code, non prosa)
+## Phase 4.5 — Auto-mergeable check (exit code, not prose)
 
 **The review text does not make the decision: `scripts/sweep_gate.py` does.** Judgment stays
 with the model; auto-merge is a fail-closed script — a verdict without a SHA, on a stale SHA,
@@ -394,37 +297,36 @@ Exit `0` → append the Auto-mergeable block · `1` → omit the block and repor
 stderr) in the comment · `2` → usage error, the sweep fails loudly. The Phase 6 run state MUST
 therefore carry `head_sha`, `attestazione` and `risk`, or the gate denies on its own.
 
-**The policy is perimeter-based** (founder 2026-08-17, B4): a PR **outside the repo's declared
+**The policy is perimeter-based** (B4, 2026-08-17): a PR **outside the repo's declared
 prod perimeter** (`deployabili:` in `.fix/contract.yml` — the same declaration Phase 3e uses)
 merges **always**, with just approve + a fresh SHA: docs, tests, tooling wait for no one. The
 strict path (`risk:trivial` + attestation) applies only to diffs touching `deployabili`, or when
 the perimeter is **not declared** — the gate does not guess what prod is. Pipeline beats
 everything: whoever touches it never self-merges.
 
-**Dentro il perimetro `deployabili`, l'auto-merge richiede anche l'attestazione runtime della
-Phase 3e.** Una PR che mette in prod codice mai visto girare è esattamente il difetto che questo
-sistema esiste per chiudere: la revisione statica è passata, e riguardava un testo. `risk:trivial`
-dice che il rischio è basso, non che il codice funziona. Fuori dal perimetro non c'è runtime da
-provare — lì l'attestazione non è richiesta, per costruzione.
+**Inside the `deployabili` perimeter, auto-merge also requires Phase 3e's runtime
+attestation.** A PR that puts code nobody has seen run into prod is exactly the defect this system
+exists to close: the static review passed, and it was about a text. `risk:trivial` says the risk
+is low, not that the code works. Outside the perimeter there is no runtime to prove — there the
+attestation is not required, by construction.
 
-Se 3e ha dato **non attestata** (il gate esce 1), ometti il blocco di auto-merge e scrivi al suo posto:
+If 3e gave **not attested** (the gate exits 1), omit the auto-merge block and write instead:
 
 ```
 ---
 
-⏸️ **Non auto-mergeable** — la revisione è pulita, ma questo codice non è mai stato eseguito da
-nessuna parte. Fai il real test, commenta qui cosa hai provato e dove, e rilancia la sweep.
+⏸️ **Not auto-mergeable** — the review is clean, but this code has never run anywhere.
+Run the real test, comment here what you tried and where, and re-run the sweep.
 ```
 
-Se 3e ha dato **non deployabile**, l'attestazione non è richiesta: l'auto-merge segue le regole
-normali.
+If 3e gave **not deployable**, no attestation is required: auto-merge follows the normal rules.
 
-Non è una bocciatura della PR: è la differenza fra «il codice sembra giusto» e «il codice ha
-funzionato». Solo la seconda giustifica un merge che nessun umano guarda.
+This is not a rejection of the PR: it is the difference between "the code looks right" and "the
+code worked". Only the second justifies a merge no human looks at.
 
 If `sweep_gate.py automerge` exits `0` (approve/approve-with-minor · head_sha == PR HEAD ·
-nessun file di pipeline · e, SOLO dentro il perimetro `deployabili` o senza perimetro dichiarato,
-`risk:trivial` + attestazione), append the following block to the rendered body (just above the
+no pipeline file · and, ONLY inside the `deployabili` perimeter or with no declared perimeter,
+`risk:trivial` + attestation), append the following block to the rendered body (just above the
 `---` footer):
 
 ```
@@ -443,8 +345,8 @@ only diffs inside `deployabili` (or with no declared perimeter): there the PR st
 /usr/local/bin/sweep-comment-upsert.sh "$PR_N" "$BODY"
 ```
 
-**That script does not exist outside the HolyClaude container** (confirmed absent on
-the founder's Mac, 2026-07-26). Check for it, and fall back to `gh api` inline — the
+**That script does not exist outside the unattended agent's container** (confirmed absent on
+a developer machine, 2026-07-26). Check for it, and fall back to `gh api` inline — the
 marker is what makes it idempotent, not the script:
 
 ```bash
@@ -465,7 +367,7 @@ markdown body as a shell argument — quoting breaks on backticks and `$` in cod
 
 Write `_polaris/sweep/runs/<repo>/pr-<PR_N>.md` with frontmatter:
 `verdict, severity, head_sha, risk, attestazione, comment_id, ran_at` (+ `codex: not-run (<reason>)
-· fallback: code-review` when Phase 3c degraded). `head_sha`, `risk` and `attestazione` are not
+· fallback: standards-spec` when Phase 3c degraded). `head_sha`, `risk` and `attestazione` are not
 optional: they are what `sweep_gate.py` decides on — a run state without them (like the pre-v1
 ones) gets denied by the gate, it does not slip past it.
 
@@ -474,13 +376,13 @@ ones) gets denied by the gate, it does not slip past it.
 - Diff too large (>50k lines): summarize files-changed only, mark "diff too large for full review".
 - Hand-non-authored PR: skip silently (not Sweep's territory).
 
-## Quando NON usarla — what this skill does NOT do
+## When not to use it — what this skill does NOT do
 - Approve/merge PRs (apply lane is GitHub Action / human).
 - Close PRs.
 - Comment on issues (only PRs).
-- **Deploy anything.** La Phase 3e osserva se qualcuno ha messo la PR su staging; non ce la mette.
-  Staging è condiviso e cambia solo quando lo dice un umano — automatizzare quel passo qui
-  significherebbe cambiare la versione sotto i piedi di chi ci sta testando sopra.
-- **Bocciare una PR perché non è su staging.** «Nessuno l'ha deployata» non è prova di una
-  regressione: trattarla come tale ha già aperto tre PR di revert contro codice sano. Blocca solo
-  l'auto-merge, che è un'altra cosa.
+- **Deploy anything.** Phase 3e observes whether someone put the PR on staging; it does not put
+  it there. Staging is shared and changes only when a human says so — automating that step here
+  would change the version under whoever is testing on it.
+- **Reject a PR because it is not on staging.** "Nobody deployed it" is not evidence of a
+  regression: treating it as one has already opened three revert PRs against healthy code. It
+  blocks only auto-merge, which is a different thing.

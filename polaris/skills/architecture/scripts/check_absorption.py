@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Reconciles `references/absorption-checklist.md` against the files it claims to land in.
 
-Issue polaris-os#87 AC1: 26 survival items from the censimento (§2.0 interfaces, §2.3 Martin),
-each claiming a file and a heading. A claim nobody checks is a claim that silently goes stale
-the next time someone edits a reference file — this script is the check. Red names the row
-that broke, never a bare exit code.
+26 load-bearing items (interface and contract, component boundaries), each claiming a file
+and a heading. A claim nobody checks is a claim that silently goes stale the next time someone
+edits a reference file — this script is the check. Red names the row that broke, never a bare
+exit code.
 
     check_absorption.py [--checklist PATH] [--refs-dir DIR]
     check_absorption.py --selfcheck

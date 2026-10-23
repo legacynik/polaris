@@ -1,6 +1,8 @@
-"""The `init` door ships as a door, and never carries the harness it calls."""
+"""The `init` door ships as a door, with its own scripts, and needs no vault."""
 
 import re
+import subprocess
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -48,17 +50,32 @@ def test_it_walks_the_four_founder_steps_in_order() -> None:
     assert "wait" in body.casefold(), "the plan is signed before apply runs"
 
 
-def test_it_resolves_the_harness_and_stays_silent_without_one() -> None:
+def test_it_runs_from_its_own_folder_and_needs_no_vault() -> None:
     body = SKILL.read_text()
-    assert "git config --get polaris.vault" in body
-    assert "no harness declared here" in body
-    assert "exit 0" in body, "a repository with no vault is not an error"
+    assert '"$INIT/polaris_init.py" audit' in body
+    assert "no harness declared here" not in body, "a collaborator has no vault to declare"
+    assert "ContextPack check skipped" in body, "the vault-only step says it was skipped"
 
 
-def test_it_ships_no_copy_of_the_harness() -> None:
-    shipped = [path.name for path in (ROOT / "skills" / "init").rglob("*")]
-    assert "polaris_init.py" not in shipped, "the package must not vendor the harness"
-    assert "check_context_backbone.py" not in shipped
+def test_it_ships_its_scripts_as_real_files() -> None:
+    """The vault door links its scripts; the package must carry their bytes, never a link."""
+    scripts = ROOT / "skills" / "init" / "scripts"
+    for name in ("polaris_init.py", "polaris_init_apply.py", "polaris_init_docs.py",
+                 "polaris_init_plan.py", "polaris_init_probe.py", "polaris_init_tx.py",
+                 "check_context_backbone.py"):
+        path = scripts / name
+        assert path.is_file() and not path.is_symlink(), f"{name} must ship as a real file"
+    assert (ROOT / "skills" / "architecture" / "scripts" / "check_context_backbone.py").is_file(), \
+        "the shim resolves the checker from the sibling architecture skill"
+
+
+def test_the_installed_copy_proves_itself_without_a_vault() -> None:
+    """The skills CLI installs `init/` next to `architecture/`: that layout must run."""
+    done = subprocess.run(
+        [sys.executable, "-I", str(ROOT / "skills" / "init" / "scripts" / "polaris_init.py"),
+         "--selfcheck"], capture_output=True, text=True, timeout=120)
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert "no-pointer=ok" in done.stdout
 
 
 def test_it_refuses_to_create_areas() -> None:

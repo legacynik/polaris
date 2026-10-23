@@ -37,7 +37,7 @@ reference_depth: deep
 reference_relevance: core
 reference_status: verified
 serves: [polaris]
-domains: [wiki, memoria]
+domains: [search, memory]
 aliases: [atono, document workflow]
 capabilities: [source lineage, item context, version restore]
 related:
@@ -178,7 +178,7 @@ the source has been faithfully rendered, not instead of it.
 ### Empty sections
 
 A required section with nothing to say is written with one line stating that, and why — for example
-`Nessun dato quantitativo: la fonte non misura nulla, tutte le affermazioni sono argomentate.`
+`No quantitative data: the source measures nothing, all claims are argued.`
 Silence and absence look identical to a reader; a declared absence is information.
 
 ## Fail-closed summary

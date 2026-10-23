@@ -46,6 +46,7 @@ prod:
   osserva: ""
 
 # Path della porta tdd-dev, per la tappa 4 (ciclo test-first con rosso registrato).
-tdd_dev: ""
-# Path della foglia real-test, per la tappa 7.
-real_test: ""
+# `~` si espande: con `npx skills add ... -g` le skill stanno in ~/.agents/skills/.
+tdd_dev: "~/.agents/skills/tdd-dev"
+# Path della foglia real-testing, per la tappa 7.
+real_test: "~/.agents/skills/real-testing"

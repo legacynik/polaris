@@ -3,8 +3,7 @@
 One criterion: **it passed before this door existed, and now it must fail.** Every case is one
 command. Run them from `crasher/`.
 
-The baseline is the crasher as it stood on the abandoned `feat/crasher-skill` branch (#113,
-closed): it drove the app and printed a transcript. Nothing in it refused a verdict, and nothing
+The baseline is the crasher as it stood on the abandoned `feat/crasher-skill` branch (closed): it drove the app and printed a transcript. Nothing in it refused a verdict, and nothing
 gave a finding a stable identity — so both of the failures below were legal.
 
 ```bash
@@ -68,7 +67,7 @@ b = {"route": "/items/new", "klass": "gen_hang", "symptom": "no result after 388
 print(cr.title_of(a)); print(cr.title_of(b))
 sys.exit(0 if cr.title_of(a) == cr.title_of(b) else 1)
 PY
-# expected: two identical titles -> issue-contract's apply gate blocks the second
+# expected: two identical titles -> one proposal entry, and the open twin is named
 ```
 
 ## Case 4 — two different failures collapsed into one issue
@@ -113,36 +112,49 @@ import json; print(json.dumps({"target":"https://staging.example.invalid","budge
  "surface":["/"],"attempted":["/"],"findings":[{"route":"/x","klass":"console","domain":"gates",
  "symptom":"twelve errors on load","evidence":"t.log"}]}))
 PY
-python3 scripts/crash_report.py --run /tmp/crasher-b6.json | grep -- "--afk no"
-# expected: exit 3 from the report, and the printed invocation carries --afk no
+python3 scripts/crash_report.py --run /tmp/crasher-b6.json | grep -- "afk human: yes"
+# expected: exit 3 from the report, and the entry is proposed for a person
 ```
 
-## Case 6b — an invocation the tracker door would have rejected
+## Case 6b — a run that files by itself
 
-The one the first version of this door shipped, and the one a grep could never catch. The printed
-argv named `build_issue.py`, so the test passed; run it and the contract refused it, because B9
-requires **two** adversarial tests and only one was emitted. The finding never reached the tracker.
+The failure the owner named: every run filed every finding, and the tracker filled with a
+thousand issues nobody chose. The previous version printed one `build_issue.py` or
+`gh issue create` command per finding, ready to execute. Now the report prints a proposal and no
+filing command; an unattended run writes the proposal into its record.
 
 ```bash
-python3 - <<'PY'
-import importlib.util, sys, pathlib
+python3 scripts/crash_report.py --run /tmp/crasher-b6.json | grep -cE "gh issue create|build_issue"
+# expected: 0
+cp /tmp/crasher-b6.json /tmp/crasher-b6u.json
+python3 scripts/crash_report.py --run /tmp/crasher-b6u.json --unattended
+python3 -c "import json;d=json.load(open('/tmp/crasher-b6u.json'));print(len(d['proposal']))"
+# expected: exit 3, "nothing filed", and 1 entry under proposal
+```
+
+The executed proof is `tests/test_crash_report.py::TheRunProposesTheHumanFiles`.
+
+## Case 6b-2 — the twin already open
+
+The crash was filed last week; this week's run must not propose it as new.
+
+```bash
+python3 - <<'PY' > /tmp/crasher-open.json
+import importlib.util, json
 s = importlib.util.spec_from_file_location("cr", "scripts/crash_report.py")
 cr = importlib.util.module_from_spec(s); s.loader.exec_module(cr)
-argv = cr.issue_argv({"route": "/x", "klass": "console", "symptom": "twelve errors on load",
-                      "domain": "gates"}, "o/r")
-print("adversarial tests:", sum(1 for a in argv if a == "--adv-test"))
-print("domain:", repr(argv[argv.index("--domain") + 1]))
-sys.exit(0 if sum(1 for a in argv if a == "--adv-test") >= 2 else 1)
+f = {"route":"/x","klass":"console","symptom":"twelve errors on load"}
+print(json.dumps([{"number": 42, "state": "OPEN", "title": cr.title_of(f)}]))
 PY
-# expected: 2 adversarial tests. The executed proof is
-# tests/test_crash_report.py::TheInvocationIsAcceptedByIssueContract, which runs build_issue.py.
+python3 scripts/crash_report.py --run /tmp/crasher-b6.json --open-issues /tmp/crasher-open.json | grep "#42"
+# expected: "twin: #42 (open) — already open, do not file"
 ```
 
 ## Case 6c — a domain invented to satisfy the label
 
-`frontend` is not in every repository's glossary, and B12 refuses a label the glossary does not
-hold. The first version defaulted to it, so an API finding filed as frontend wherever the label
-happened to exist, and was rejected wherever it did not.
+`frontend` is not an area label in every repository. The first version defaulted to it, so an API
+finding was proposed as frontend wherever the label happened to exist, and was rejected wherever
+it did not.
 
 ```bash
 python3 - <<'PY' > /tmp/crasher-b6c.json
@@ -170,15 +182,14 @@ printf '[]'    > /tmp/crasher-b7.json && python3 scripts/crash_report.py --run /
 - **A fabricated run record.** `attempted` can list paths the browser never opened; the script
   checks the claim's shape, not the browsing. Closing that means having the driver emit the record
   itself, which is a change to the driver, not to this gate.
-- **A host template this door has never seen.** The invocation carries the founder contract and
-  the `--field` ids the Polaris issue forms use. A repository whose template asks for other
-  required fields is told which by `build_issue.py`, and the run adds them; nothing here reads
-  that template in advance.
+- **A host template this door has never seen.** The proposal carries title, description, DoD,
+  regression check and AFK decision; `issue-contract` fits them to the repository's own template
+  when a person picks the entry. Nothing here reads that template in advance.
 - **A badly classified finding.** Flaky-versus-real is judgement. The gate refuses a nameless or
   unbudgeted run; it cannot refuse a wrong one.
 - **A finding invented outright.** Nothing here re-executes the reproducing command. `bugfix`'s own
   gate does that at the other end of the handover, and that is where it belongs.
 
 ```bash
-python3 scripts/crash_report.py --selfcheck   # 13 branches, offline
+python3 scripts/crash_report.py --selfcheck   # 16 branches, offline
 ```

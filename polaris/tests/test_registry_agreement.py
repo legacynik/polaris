@@ -92,8 +92,12 @@ class FourScriptsOneRegistry(unittest.TestCase):
         self.assertNotIn("feat/lane", seen.stdout, "prune_threads read a section the writer cannot")
 
     def test_no_script_compiles_a_heading_of_its_own(self):
+        # The registry governs the state files. pol-pr's checker parses GitHub issue and PR
+        # bodies, a document no state script reads; it is named here, not skipped by a pattern.
+        other_documents = {"pol-pr/scripts/controlla_pr.py"}
         owners = [p for p in sorted((PKG / "skills").glob("*/scripts/*.py"))
-                  if re.search(r'''re\.compile\(r?["']\^#''', p.read_text())]
+                  if re.search(r'''re\.compile\(r?["']\^#''', p.read_text())
+                  and str(p.relative_to(PKG / "skills")) not in other_documents]
         self.assertEqual([p.name for p in owners], ["state_sections.py"], owners)
 
 

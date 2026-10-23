@@ -1,18 +1,22 @@
 #!/usr/bin/env python3
-"""crash_report — the two things a crasher run can lie about, made mechanical.
+"""crash_report — the two things a crasher run can lie about, made mechanical, and a proposal.
 
 "No crash found" is worth nothing unless the run names the paths it visited against the surface
 it was meant to cover, so a run with no attempted list, no declared surface, or more paths than
 its budget is refused rather than believed. "Here is a crash" is worth nothing if the same crash
-files again next week, so a finding's identity is a fingerprint over route + failure class + a
-symptom with its numbers collapsed: a 421s hang and a 388s hang are ONE finding. Filing stays at
-`issue-contract`, which dedups at apply time (`build_issue.py:apply_gate`), and the fingerprint
-rides in the title so that search finds the twin.
+is proposed again next week, so a finding's identity is a fingerprint over route + failure class
++ a symptom with its numbers collapsed: a 421s hang and a 388s hang are ONE finding.
 
-    crash_report.py --run RUN.json      verdict on one run record
-    crash_report.py --selfcheck         every refusal branch, offline
+This script files nothing. It prints a PROPOSAL — one entry per distinct fingerprint, with its
+title, reproducing command and any already-open twin — and a person picks which to file through
+issue-contract. `--unattended` writes the same proposal into the run record and prints nothing
+to file.
 
-Exit: 0 no crash (accepted) · 1 run refused · 2 unusable input · 3 finding(s) to file. Stdlib
+    crash_report.py --run RUN.json [--open-issues OPEN.json] [--unattended]
+    crash_report.py --selfcheck
+
+OPEN.json is `gh issue list --state all --search crasher --json number,title,state`.
+Exit: 0 no crash (accepted) · 1 run refused · 2 unusable input · 3 finding(s) proposed. Stdlib
 only, no network, no browser — the run record is produced by the drive, not here.
 """
 from __future__ import annotations
@@ -21,7 +25,6 @@ import argparse
 import hashlib
 import json
 import re
-import shlex
 import sys
 from pathlib import Path
 
@@ -30,10 +33,6 @@ IDENTITY = ("route", "klass", "symptom")     # what makes a failure THIS failure
 # `domain` labels the issue rather than naming the failure, so it is required for filing but kept
 # out of the fingerprint. B12 rejects a label outside the host glossary: never guess one.
 REQUIRED_FINDING = IDENTITY + ("domain",)
-# Addressed absolutely: the invocation is printed to be run from wherever the reader is.
-BUILD_ISSUE = Path(__file__).resolve().parents[2] / "issue-contract" / "scripts" / "build_issue.py"
-
-
 def fingerprint(finding: dict) -> str:
     """Stable identity of a failure: route + class + de-numbered symptom."""
     seed = [DIGITS.sub("#", " ".join(str(finding.get(k, "")).lower().split())) for k in IDENTITY]
@@ -45,43 +44,40 @@ def title_of(finding: dict) -> str:
     return f"crasher: {finding.get('klass', 'unknown')} on {finding.get('route', '?')} [{fingerprint(finding)}]"
 
 
-def _payload(finding: dict) -> dict:
-    """The founder contract (B9-B16). The second adversarial test is always the dedup promise."""
-    repro, route = str(finding.get("repro") or "").strip(), finding.get("route")
-    fp = fingerprint(finding)
-    if repro:
-        ac = f"{repro} — exit 1 on the current deployment, exit 0 once fixed"
-        first = f"{repro} — re-run cold from a clean session, exit 1 reproduces the finding"
-    else:
-        ac = (f"no assertion exists for class {finding.get('klass')!r} yet: the fix is accepted "
-              f"when a cold re-drive of {route} returns status 200 with 0 console errors")
-        first = (f"re-drive {route} cold: the same symptom must appear, exit 0 means the "
-                 "finding was flaky and the issue is void")
-    dedup = (f"run the crasher again on the same target: the finding must print fingerprint "
-             f"{fp} once more and the tracker must refuse the second issue — 0 new, exit 1")
-    return {"ac": ac, "domain": str(finding.get("domain") or ""), "advs": [first, dedup],
-            "afk": "yes" if repro else "no", "priority": str(finding.get("priority") or "p2"),
-            "exec": (f"Il crasher ha trovato un problema su {route}: "
-                     f"{finding.get('symptom')}").replace("`", ""),
-            "dedup": f"Searched: tracker for '{fp}'. Found: none."}
+def proposal(findings: list[dict], open_issues: list[dict]) -> list[dict]:
+    """One entry per distinct fingerprint, in run order, with the open twin when the tracker
+    already holds one. The draft fields are what issue-contract writes into the ticket."""
+    out, seen = [], set()
+    for f in findings:
+        fp = fingerprint(f)
+        if fp in seen:
+            continue
+        seen.add(fp)
+        repro, route = str(f.get("repro") or "").strip(), f.get("route")
+        twin = next((i for i in open_issues if fp in str(i.get("title", ""))), None)
+        out.append({
+            "fingerprint": fp, "title": title_of(f), "repro": repro or None,
+            "twin": f"#{twin.get('number')} ({str(twin.get('state', '')).lower()})" if twin else None,
+            # a transcript-only finding cannot be claimed by an unattended agent
+            "afk_human": "no" if repro else "yes",
+            "description": f"The crasher found a failure on {route}: {f.get('symptom')}",
+            "dod": (f"`{repro}` exits 0 on the deployment" if repro else
+                    f"a cold re-drive of {route} renders with 0 console errors and 2xx/401 endpoints"),
+            "regression": f"the next crasher run on the same target no longer reports fingerprint {fp}",
+            "domain": f.get("domain"), "evidence": f.get("evidence"),
+        })
+    return out
 
 
-def issue_argv(finding: dict, slug: str) -> list[str]:
-    """The issue-contract invocation for one finding — never a raw `gh` call. The `--field`
-    pairs repeat the values under the ids the Polaris issue forms use; an id a template does
-    not have is ignored, and one it needs and lacks is named by `build_issue.py` itself."""
-    p = _payload(finding)
-    argv = ["python3", str(BUILD_ISSUE), "--repo-slug", slug,
-            "--repo-path", str(finding.get("repo_path") or "."), "--type", "bug",
-            "--title", title_of(finding), "--ac", p["ac"], "--exec", p["exec"],
-            "--dedup", p["dedup"], "--domain", p["domain"],
-            "--priority", p["priority"], "--afk", p["afk"]]
-    argv += [a for adv in p["advs"] for a in ("--adv-test", adv)]
-    for key, value in (("not-a-duplicate", p["dedup"]), ("repro", p["ac"]),
-                       ("adversarial-verification", " · ".join(p["advs"])),
-                       ("domain", p["domain"]), ("priority", p["priority"]), ("afk", p["afk"])):
-        argv += ["--field", f"{key}={value}"]
-    return argv
+def proposal_lines(entries: list[dict]) -> list[str]:
+    lines = [f"PROPOSAL — {len(entries)} confirmed finding(s). Nothing was filed: the owner picks "
+             "which to file, and each picked one goes through issue-contract."]
+    for n, e in enumerate(entries, 1):
+        lines += [f"  {n}. [{e['fingerprint']}] {e['title']}",
+                  f"     repro: {e['repro'] or 'none — transcript only, for a person to confirm'}",
+                  f"     twin: {e['twin'] + ' — already open, do not file' if e['twin'] else 'none open'}",
+                  f"     afk human: {e['afk_human']} · evidence: {e['evidence'] or '-'}"]
+    return lines
 
 
 def _refusals(run: dict) -> list[str]:
@@ -105,7 +101,7 @@ def _refusals(run: dict) -> list[str]:
                               for f in run.get("findings") or []) if gap]
 
 
-def verdict(run: dict) -> tuple[int, list[str]]:
+def verdict(run: dict, open_issues: list[dict] | None = None) -> tuple[int, list[str]]:
     """(exit code, report lines) for one run record."""
     bad = _refusals(run)
     if bad:
@@ -114,12 +110,10 @@ def verdict(run: dict) -> tuple[int, list[str]]:
     attempted, surface = run["attempted"], run["surface"]
     head = [f"target: {run.get('target', '<undeclared>')} · coverage "
             f"{len(attempted)}/{len(surface)}", "paths attempted: " + ", ".join(map(str, attempted))]
-    findings = run.get("findings") or []
+    findings, open_issues = run.get("findings") or [], open_issues or []
     if not findings:
         return 0, head + ["NO CRASH FOUND — the list above is the whole basis of that claim."]
-    slug = str(run.get("repo_slug") or "<owner>/<repo>")
-    return 3, head + [f"{len(findings)} finding(s) — file each through issue-contract:"] + [
-        "  " + " ".join(shlex.quote(a) for a in issue_argv(f, slug)) for f in findings]
+    return 3, head + proposal_lines(proposal(findings, open_issues))
 
 
 def load_run(path: Path) -> tuple[dict | None, str]:
@@ -147,15 +141,13 @@ def _selfcheck_identity() -> None:
     assert title_of(HANG) not in (title_of(dict(HANG, route="/chat")),
                                   title_of(dict(HANG, klass="console"))), "route/class split"
     assert fingerprint(HANG) in title_of(HANG), "the tracker searches the title"
-    argv = issue_argv(HANG, "o/r")
-    claimable = issue_argv(dict(HANG, repro="cmd"), "o/r")
-    assert argv[argv.index("--afk") + 1] == "no" and "no assertion" in " ".join(argv)
-    assert claimable[claimable.index("--afk") + 1] == "yes", "a repro command is claimable"
-    assert "gh" not in argv and Path(argv[1]).is_absolute(), "one door, addressed absolutely"
-    assert sum(1 for a in argv if a == "--adv-test") == 2, "B9 refuses fewer than two"
-    assert fingerprint(HANG) in argv[argv.index("--adv-test", argv.index("--adv-test") + 1) + 1]
-    bare = issue_argv({k: v for k, v in HANG.items() if k != "domain"}, "o/r")
-    assert bare[bare.index("--domain") + 1] == "", "a domain is never guessed for the glossary"
+    twin = [{"number": 9, "state": "OPEN", "title": title_of(HANG)}]
+    entries = proposal([HANG, dict(HANG, symptom="no result after 388s"),
+                        dict(HANG, route="/chat", repro="cmd")], twin)
+    assert [e["fingerprint"] for e in entries] == [fingerprint(HANG), fingerprint(dict(HANG, route="/chat"))]
+    assert entries[0]["twin"] == "#9 (open)" and entries[1]["twin"] is None, "the open twin is named"
+    assert (entries[0]["afk_human"], entries[1]["afk_human"]) == ("yes", "no"), "repro is claimable"
+    assert not any("gh issue create" in ln for ln in proposal_lines(entries)), "nothing is filed"
 
 
 def selfcheck() -> int:
@@ -173,14 +165,18 @@ def selfcheck() -> int:
     assert verdict(dict(ok, findings=[{k: v for k, v in HANG.items() if k != "domain"}]))[0] == 1
     assert verdict(dict(ok, findings=[HANG, dict(HANG, route="/chat")]))[0] == 3
     assert load_run(Path("/nonexistent/x.json"))[0] is None, "absent is exit 2, never green"
-    print("SELFCHECK OK — 18 branches: identity, afk routing, one absolute door, two adversarial "
-          "tests, dedup promise, no guessed domain, coverage, seven refusals")
+    print("SELFCHECK OK — 16 branches: identity, in-run dedup, open twin, afk routing, no filing "
+          "command, coverage, seven refusals, unusable input")
     return 0
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="verdict on one crasher run record")
     parser.add_argument("--run", type=Path, help="record: target budget surface attempted findings")
+    parser.add_argument("--open-issues", type=Path,
+                        help="gh issue list --state all --json number,title,state output")
+    parser.add_argument("--unattended", action="store_true",
+                        help="write the proposal into the run record; print nothing to file")
     parser.add_argument("--selfcheck", action="store_true")
     args = parser.parse_args(argv)
     if args.selfcheck:
@@ -191,7 +187,22 @@ def main(argv: list[str] | None = None) -> int:
     if data is None:   # branch on the record, never on the message: pyright, and the truth
         print(err or f"run record unusable: {args.run}", file=sys.stderr)
         return 2
-    code, lines = verdict(data)
+    open_issues: list[dict] = []
+    if args.open_issues:
+        try:
+            open_issues = json.loads(args.open_issues.read_text())
+            if not isinstance(open_issues, list):
+                raise ValueError("not a JSON list")
+        except (OSError, ValueError):
+            print(f"open-issue list unusable: {args.open_issues} — a twin search that cannot read "
+                  "never reports 'none open'", file=sys.stderr)
+            return 2
+    code, lines = verdict(data, open_issues)
+    if code == 3 and args.unattended:
+        data["proposal"] = proposal(data.get("findings") or [], open_issues)
+        args.run.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
+        lines = lines[:2] + [f"UNATTENDED — {len(data['proposal'])} finding(s) proposed in "
+                             f"{args.run} under 'proposal'; nothing filed, a person picks later."]
     print("\n".join(lines))
     return code
 

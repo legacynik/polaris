@@ -2,15 +2,14 @@
 
 The resolver shipped in the package is only worth shipping if a repository that installs
 it can run it. So this builds a repository from nothing, writes the smallest contract the
-backbone validator accepts, seals it with the shipped commands, and asserts a `CTX-` id
+backbone validator accepts, checks it with the shipped commands, and asserts a `CTX-` id
 comes out. It is the acceptance of the issue, executable, and it is also the contract's
 only documentation: what is written below IS what an adopting repository must have.
 
 Five things, and no more. The three live authorities at the root, one accepted Decision
-under `decisions/`, and a commit for them to point at — `snapshot_ref` and `source_ref`
-name a commit in THIS repository, so the first commit has to exist before they are
-written. `decisions/manifest.json` and every seal are computed by `--reseal`, never by
-hand. `_polaris/config.yml` is the harness contract and the resolver never reads it: a
+under `decisions/`, and a commit for them to point at — `source_ref` names a commit in
+THIS repository, so the first commit has to exist before it is written. Nothing is
+stored to be kept in sync: no seal, no manifest. `_polaris/config.yml` is the harness contract and the resolver never reads it: a
 repository can emit a pack without one, and this test proves that by not writing it.
 
 The assertions are tied to the validator's own required-field sets, so a contract that
@@ -50,9 +49,9 @@ def write(path: Path, record: dict) -> None:
 
 
 def authorities(root: Path, sha: str) -> None:
-    """The three live documents, each declaring the commit and the scope it describes."""
+    """The three live documents, each declaring the paths it cites."""
     base = {"schema_version": 1, "status": "active", "owner": "role:cto",
-            "workspace": "acme", "repo": "acme-api", "snapshot_ref": f"git:{sha}",
+            "workspace": "acme", "repo": "acme-api",
             "snapshot_scope": [GOVERNED], "review_trigger": ["the governed source changes"]}
     for name, kind in AUTHORITIES:
         record = dict(base, document_type=kind)
@@ -75,12 +74,11 @@ def decision(root: Path, sha: str) -> None:
         "evidence": ["issue:acme-api#1"], "enforcement": [GOVERNED],
         "call_sites": [GOVERNED], "prerequisites": [],
         "closure_check": "every route carries /v1", "review_trigger": ["a route is added"],
-        "scope_ref": "scope-sha256:" + "0" * 64,
         "legacy_review": {"scope": ["svc"], "sources": []}})
 
 
 def adopt(root: Path) -> None:
-    """A repository with one file, taken to a sealed backbone by the shipped commands."""
+    """A repository with one file, given a typed backbone."""
     (root / GOVERNED).write_text("the source this repo governs\n", encoding="utf-8")
     git(root, "init", "-q")
     git(root, "add", "-A")
@@ -100,13 +98,10 @@ class EmptyRepoEmitsAPack(unittest.TestCase):
         adopt(self.root)
 
     def seal(self) -> None:
-        for step in ("--reseal", "--init"):
-            done = cli("check_context_backbone.py", self.root, step, ".")
-            self.assertEqual(done.returncode, 0, done.stdout + done.stderr)
-            self.assertEqual(json.loads(done.stdout)["verdict"], "READY", done.stdout)
-            git(self.root, "add", "-A")
-            if git(self.root, "status", "--porcelain"):
-                git(self.root, "commit", "-qm", f"backbone {step}")
+        done = cli("check_context_backbone.py", self.root, "--init", ".")
+        self.assertEqual(done.returncode, 0, done.stdout + done.stderr)
+        self.assertEqual(json.loads(done.stdout)["verdict"], "READY", done.stdout)
+        self.assertEqual(git(self.root, "status", "--porcelain"), "", "--init wrote a file")
 
     def test_a_repository_with_no_history_emits_a_context_pack(self) -> None:
         self.seal()
@@ -135,12 +130,6 @@ class EmptyRepoEmitsAPack(unittest.TestCase):
         dec = json.loads((self.root / "decisions" / "DEC-1.md").read_text()
                          .split("\n---\n")[0][4:])
         self.assertEqual(cbb.DECISION_REQUIRED - set(dec), set())
-
-    def test_an_unsealed_backbone_refuses_to_emit(self) -> None:
-        """The seal is the contract, not a formality: no manifest, no pack."""
-        done = cli("contextpack.py", self.root, "resolve", "--root", ".")
-        self.assertEqual(done.returncode, 2, done.stdout)
-        self.assertIn(":", done.stderr.strip().splitlines()[-1])
 
 
 if __name__ == "__main__":

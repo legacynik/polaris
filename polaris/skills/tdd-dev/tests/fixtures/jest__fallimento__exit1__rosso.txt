@@ -1,0 +1,23 @@
+(node:39065) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+FAIL ./sum.test.js
+  ✕ adds (1 ms)
+
+  ● adds
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 3
+    Received: 2
+
+    > 1 | test('adds', () => { expect(1 + 1).toBe(3); });
+        |                                    ^
+      2 |
+
+      at Object.toBe (sum.test.js:1:36)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 1 total
+Snapshots:   0 total
+Time:        0.2 s
+Ran all test suites matching sum.test.js.

@@ -3,7 +3,7 @@ name: update
 description: Polaris skill — record a short repository-first checkpoint during an active session. Trigger after meaningful progress, a blocker, a context switch, or on "checkpoint / save progress / /update".
 user-invocable: true
 model: sonnet
-version: 3.3.2
+version: 3.3.3
 invokes: [git-power]
 ---
 
@@ -20,8 +20,8 @@ rules, and the whole system rests on the difference:
 | `team/<login>/sessions/<date>.md` | append, always — the ledger, it grows |
 | `state/current.md` (the cockpit) | overwrite — your lane's line is rewritten, never duplicated |
 
-Founder, 2026-09-03: *«Non è che dentro current fa un'altra riga, ma va semplicemente ad
-aggiornare l'update precedente. Invece all'interno della session mette sempre un'altra riga.»*
+Repo owner, 2026-09-03: *«It doesn't add another line inside current, it simply goes and updates
+the previous update. Whereas inside the session it always adds another line.»*
 
 ## When to Use
 
@@ -167,8 +167,8 @@ One line: `Checkpointed: <what>`. No summary, no next-action list — they are i
 ## Lessons and decisions
 
 Use the append-only archives for qualifying records, not for routine progress. Never promote a
-lesson or decision only in prose or only at `/end`; never write it to the apex (`CLAUDE.md`,
-`rules/*.md`) — that goes through `pol-apex-curate`.
+lesson or decision only in prose or only at `/end`; never write it to the apex (`AGENTS.md`/`CLAUDE.md`,
+`rules/*.md`) — the apex changes only by a human-reviewed edit.
 
 ## Common Rationalizations
 

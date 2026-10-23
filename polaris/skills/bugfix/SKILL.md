@@ -1,7 +1,7 @@
 ---
 name: bugfix
 description: ◇ Close a bug in 4 gated phases — find without assuming, fix with TDD, prove the consequence not the SHA, rewrite the tests that lied. Use when a traceback, a bug issue, a red smoke, a log error, or "this doesn't work" arrives. Do NOT use for an urgent production incident (paying user down, corrupted data, blocked revenue) — that needs a hotfix, not an investigation.
-version: 1.2.0
+version: 1.2.3
 user-invocable: true
 auto: true
 status: active
@@ -22,8 +22,7 @@ On a production repo, **79 bugs closed in 30 days and 7 caught by a gate** — 9
 So this skill does not end with the fix: it ends when the rewritten test **goes red with the bug
 re-inserted** and when that test is **collected by CI**, not merely committed.
 
-**The gate lives in the workflow** (single-door ADR, 2026-08-17: `fix-gate` is absorbed here):
-every stage is passed with
+**The gate lives in the workflow**: every stage is passed with
 
 ```bash
 python3 scripts/fix_gate.py check --stage <stage> --record <path> --repo <repo-path>
@@ -80,8 +79,10 @@ corpus (38% of corrections).
    (DB, CloudWatch, files): read them **from there**, and verify **which code is actually
    running** (deployed commit, not the disk: a real-test has already been run against a worktree
    30 commits stale).
-2. **Perimeter from the graph, never by grep.** `find_symbol` on the traceback symbol, then
-   `find_referencing_symbols` for callers. Stage `raggio` demands both axes: `chiamanti` AND
+2. **Perimeter from the graph, never by grep.** With the harness's code-graph tool (an LSP or a
+   symbol index), find the traceback symbol, then query its references or call hierarchy for the
+   callers (`find_referencing_symbols`, `references`, `call_hierarchy`, `trace_path`). Stage
+   `raggio` demands both axes: `chiamanti` AND
    `issue_prese`/`issue_lasciate` — zero callers is **declared**, not omitted.
 3. **Archive: has it happened before?** Search it actively (module + exception type) and declare
    the outcome in the record's `ricorrenza` field — stage `causa` blocks without it, even for
@@ -103,7 +104,7 @@ hypotheses with the evidence that killed them** · proven cause.
    Stage `rosso` calls its `red_check.py verify`: without that receipt, this gate blocks.
 2. **Blast radius before the fix, not after.** Callers from the graph are fix targets — and they
    are **proven, not listed**: stage `raggio` demands `chiamanti_cmd`, the command that produced
-   them (incident #107: primary site patched, callers never looked at, mute fix shipped).
+   them (a fix to the primary site whose callers nobody looked at ships mute).
 3. **Minimal fix.** No "while I'm here" refactors: the fix and the improvement are two commits.
    Simplification is welcome but OPTIONAL and post-green — and any simplify that touches code
    after `verde` re-opens the gates by construction (content-hashed receipts, SHA-bound
@@ -126,7 +127,9 @@ write a new one. Every new branch the fix introduces must be exercised, or the g
 1. **Which tests should have caught it, and why did they pass?** Real causes from the corpus:
    mocks instead of real IO · trivial asserts · subset instead of equality · the test never
    touches the production path.
-2. **Rewrite them**, don't add one alongside.
+2. **Rewrite them**, don't add one alongside. The rewritten test follows `tdd-dev`'s
+   `writing-tests.md` reference — the same rules Phase ② wrote the reproducing test under; read
+   it before the first rewritten body. Done when each test named in 1 is replaced, not shadowed.
 3. **Prove it**: `scripts/mutation.py` re-inserts the bug and reruns — stage `mutazione` demands
    the log attributed to the **same** `fix_sha` with `tornato_rosso: true`.
 4. **The harvest** (stage `raccolto`): the new test must appear in the output of the CI's
@@ -134,7 +137,7 @@ write a new one. Every new branch the fix introduces must be exercised, or the g
    **orphan**: it protects only whoever runs it by hand — it happened in this skill's own eval.
 5. If the hole is a **class** (*"every test in this module mocks the DB"*), the phase produces a
    ledger entry, not just a test.
-6. **Self-heal exit question** (from parallel-issue-flow Phase 7): was this bug one-off or
+6. **Self-heal exit question**: was this bug one-off or
    systemic? If a gate, skill, or hook let the pattern through, the answer patches THAT — the
    door corrects itself, or it stays a static list of past mistakes.
 7. **Commit boundary**: invoke `git-power commit-check` on the staged diff. Exit 3 means split

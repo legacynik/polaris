@@ -2,7 +2,7 @@
 name: polaris-grill
 description: Polaris skill — clarify product or technical intent. Use for "grill this idea", "clarify this feature", "challenge this spec", or ambiguous requirements before planning. Not for status, session resume, implementation, or autonomous issue creation.
 user-invocable: true
-version: 1.1.0
+version: 1.1.1
 ---
 
 # /polaris-grill — clarify before building
@@ -33,14 +33,9 @@ Read only what can change the interview:
    jobs, auth boundaries, and current code.
 6. The data surface when relevant: schema files, migrations, ORM models, generated types,
    constraints, indexes, tenancy rules, and the backend code that reads or writes them.
-7. A targeted memory query from the product repository:
-
-```bash
-polmem recall "<change intent and main constraint>" --top 5
-```
-
-If `polmem` is missing or the repository is not memory-wired, state the degraded memory coverage
-once and continue with committed contract files and live evidence. Never run `polmem init`.
+7. The repository's own notes for this change: search its decision log and lessons at the
+   declared paths for the change intent and main constraint. If it keeps none, say so once and
+   continue with committed contract files and live evidence.
 
 Follow the repository's code-discovery rules. Prefer its configured code graph or code-intelligence
 surface when present; use text search for strings, configuration, or gaps in the graph. Verify a
@@ -67,7 +62,7 @@ Maintain a small working ledger with three labels:
 - **Inference** — a reasoned conclusion that still needs confirmation.
 - **Unknown** — a material branch that neither the repository nor the user has resolved.
 
-Memory is context, never proof of current state. Treat `polmem recall`, decisions, lessons, plans,
+Memory is context, never proof of current state. Treat decisions, lessons, plans,
 and session notes as leads. Verify current-state claims against code, Git, the tracker, the database,
 or another authoritative runtime. When decisions conflict, identify the newest active decision,
 what it supersedes, and whether current code follows it.
@@ -116,8 +111,8 @@ Ask only for intent, authority, risk tolerance, or tradeoffs that evidence canno
 Ask one question at a time. Each question resolves exactly one material decision; never bundle
 multiple gates into one question. Each question must include:
 
-- a real choice between named options (A or B), one marked as recommended and default so "sì"
-  accepts it; never a bare "Confermi?" or "È questo che vuoi?";
+- a real choice between named options (A or B), one marked as recommended and default so "yes"
+  accepts it; never a bare "Do you confirm?" or "Is this what you want?";
 - the short Evidence basis or the Unknown it resolves;
 - the decision that the answer unlocks.
 

@@ -5,6 +5,98 @@ All notable changes to Polaris Team OS. The installed version is pinned in
 
 ## Unreleased
 
+### The PR chain, review tiers, and a package that stands alone
+
+**Upgrading:** `npx skills update -g -y` does not delete retired skills. Remove them once:
+
+```bash
+npx skills remove -g skill-meta pol-apex-curate pol-adr pr polaris-memory review
+```
+
+Added
+
+- **The PR chain.** `pol-ship` 2.1.0 is the single entry point once work is done: it loops locally
+  until the Definition of Done holds (tests, `polaris-review`, simplify, `real-testing`), pushes a
+  draft PR through `git-power`, signs the head on staging, writes the body with `pol-pr`, runs
+  `pol-babysit` to the owner's label, then sends one merge-and-deploy proposal with a rollback plan.
+  It merges once (a plain squash, never `gh pr merge --auto`) and deploys only on the owner's yes; a
+  verification window then reports advance, hold or a proposed rollback, never an automatic one.
+  `pol-pr` 1.2.0 writes the PR body the owner judges without reading code and absorbs the retired
+  `pr` (its visuals and evidence rules; English headings). `pol-babysit` 1.1.0 drives an open PR to
+  the owner's label on its current head.
+- **`codex-review` 1.0.0 ships standalone**: an independent, read-only Codex review whose findings
+  are checked against the source. It owns the Codex invocation for `polaris-review` and
+  `polaris-sweep`.
+- **`issue-contract` 2.3.0 is back** (it had left the package in the previous entry below), with a
+  checked AFK label: `tracker.afk_human` / `tracker.afk_agent` from `_polaris/config.yml`, else the
+  repository's own labels; work for a person with no label to carry it is not filed (exit 2).
+- **`tdd-dev` 2.5.0** ships `references/writing-tests.md`, with its four rules inline in the cycle;
+  `bugfix` Phase 4 points to it.
+- **`base-workflow` 0.4.0** checks the pinned version's documentation before calling a library API.
+
+Changed
+
+- **`review` is renamed `polaris-review`** (1.1.0) and picks its reviewer tier from the diff: size,
+  file count and risk paths (auth, money, schema, security, concurrency, plus the repository's
+  `review.risk_paths`). Tier 3 adds `codex-review`.
+- **`crasher` 0.4.0 proposes, a person picks.** It lists one deduplicated finding per confirmed
+  crash and files, through `issue-contract`, only the ones a person selects.
+- **`git-power` 0.6.0** finalizes in the repository's own checkout by returning to the base instead
+  of crashing.
+- `polaris-sweep` and `polaris-review` no longer name private infrastructure or unshipped skills.
+- `start`'s `config.yml` template shows a placeholder login (`your-github-login`), not a real one.
+- **`init` 0.4.0 needs no vault.** It ships its own scripts and uses the installed `architecture`
+  skill's backbone checker. Without a vault it audits, proposes and applies, writes no
+  `polaris.vault`, and skips only the ContextPack check, with one line.
+- Skill bodies and references are in English throughout (`polaris-sweep`, `end`, `plan-week`,
+  `update` and the bypass-test references). Strings that scripts print or tests match stay
+  verbatim. `pol-ship` records a missing contract field as `mode: reduced`.
+- Attributions moved out of the skill bodies into `CREDITS.md` for `end`, `plan-week` and
+  `database-schema`.
+- `start`'s `config.yml` template marks `contributors` as an optional roster that no skill reads.
+- `AGENTS.md` is short: the skills CLI is the only install path, and the skill list lives in the
+  README and `docs/skills.md`.
+- Docs: the README is rebuilt around the skills CLI and a phase table; new
+  [docs/skills.md](docs/skills.md) reference, [CONTRIBUTING.md](CONTRIBUTING.md) and a
+  [CREDITS.md](CREDITS.md) index; onboarding no longer requires Superpowers.
+
+Removed
+
+- **`polaris-memory`** no longer ships, and no shipped skill runs `polmem`: `end`, `plan-week`,
+  `polaris-grill`, `polaris-status`, `report`, `reference-capture` and `start` read the
+  repository's decision log and lessons instead.
+- `pr` (folded into `pol-pr`) and `review` (renamed `polaris-review`). `skill-meta`, `pol-apex-curate`
+  and `pol-adr` left in earlier releases; machines installed before then may still carry them.
+
+Fixed
+
+- **The vault sync no longer deletes package files.** It carries every file a skill folder holds
+  (CREDITS.md, LICENSE, `agents/`), reports a file only the package has instead of removing it, and
+  rewrites `skills-suite/` only in real paths: `polaris-sweep`'s pipeline regex keeps its last
+  alternative instead of matching every path.
+- **`init`'s Decision probe works on a skills-CLI install**: it finds the architecture skill's
+  checker under `~/.agents/skills` (or `.claude`, `.codex`) when no vault is declared.
+- **The ContextPack resolver ships whole.** `polaris/scripts/` gains the modules `contextpack.py`
+  and its siblings import (`contextpack_labels`, `contextpack_plans`, the receipt, flight, seal and
+  lesson-consolidation modules, `token_count`) with the tests that build their own fixtures; the
+  resolver and empty-repo test follow the no-stored-seals contract.
+
+### Earlier unreleased changes
+
+- **Le porte installate da sole bastano a se stesse.** `architecture` 1.4.0 porta con sé il checker
+  del backbone (`scripts/check_context_backbone.py`): `arch_doctor.py --which` stampa la copia della
+  skill; senza il resolver `contextpack.py` accanto, `--emit-context` esce 2 con
+  `CONTEXTPACK_UNAVAILABLE`. `architecture` e `domain` 0.4.0 allineate al vault: regole proprie in
+  `references/decision-rules/` per argomento, attribuzioni in `CREDITS.md`. Nuova porta
+  `base-workflow` 0.3.0 (draft): il metodo di build, soglie prese dal repository (`CONSTRAINTS.md`
+  prima). `issue-contract` esce dal pacchetto: `crasher` 0.3.0 stampa per ogni finding una ricerca
+  `gh issue list --search <fingerprint>` e un `gh issue create` col contratto nel corpo; i riferimenti
+  in `ambitious-goal`, `bugfix`, `git-power`, `polaris-sweep` seguono. `real-testing` 3.2.2:
+  `verdict.py` su un repository troppo giovane per la base esce 2 senza traceback. `tdd-dev` 2.4.2: i
+  due test con venv annidato si saltano, con il motivo, sotto `uv run --with pytest`. `polaris-status`
+  1.3.3 usa l'indice del portfolio solo se c'è, altrimenti ordina per recenza; `end` e `bugfix` parlano
+  di code-graph in generale, non di un fornitore. README: tolta la riga di `/pol-apex-curate`.
+
 - **`/start` mette davanti la coda del founder e dice quando il cockpit va riscritto** (`start` 1.13.1 →
   **1.14.0**). Nuovo `_cockpit_signal.py`: dalla sezione `## Coda founder` del cockpit stampa fino a 5
   righe `QUEUE:` (sicurezza e scadenze entro 7 giorni sempre, anche oltre 5), un `QUEUE_MORE:` contato per

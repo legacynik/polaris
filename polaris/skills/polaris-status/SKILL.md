@@ -2,7 +2,7 @@
 name: polaris-status
 description: Polaris skill — render an explicit, comprehensive status across a portfolio or one product repository, including live Git/GitHub pulse, active outcomes, team collisions, freshness, memory health, and the highest-leverage next move. Use for "polaris status", "pol status", "status completo", cross-repo priorities, portfolio briefing, or an explicit request to see everything. Do not use for "start", "resume", "continue", session recovery, or a single implementation task — `/start` is a local resume-only workflow.
 user-invocable: true
-version: 1.3.1
+version: 1.3.4
 ---
 
 # /polaris-status — observe the whole system
@@ -31,13 +31,18 @@ continue with the focused repo pulse when possible. Never hardcode a personal fi
 
 ## Step 2 — Read portfolio state with a bounded budget
 
-Use the semantic index before opening documents:
+Portfolio state exists only where a portfolio root does (Step 1); a focused repository pulse goes
+straight to Step 3. With a portfolio root, pick the documents to open before opening any. When
+the root carries its own index, query it:
 
 ```bash
-python3 "$POLARIS_HOME/scripts/polaris_query_index.py" "<status topic>" --top 5
+test -f "$POLARIS_HOME/scripts/polaris_query_index.py" \
+  && python3 "$POLARIS_HOME/scripts/polaris_query_index.py" "<status topic>" --top 5
 ```
 
-Read no more than the top three relevant results. Then read these control surfaces directly:
+Without that index, rank by recency instead: `git -C "$POLARIS_HOME" log -n 20 --name-only
+--format=` lists the documents touched last. Read no more than the top three relevant results
+either way. Then read these control surfaces directly:
 
 1. `POLARIS.md` — current phase, capacity, alerts, and live state.
 2. `POLARIS-BOARD.md` — only Active and Building plus the highest-priority blocked item.
@@ -82,23 +87,11 @@ When the repo carries `_polaris/config.yml`, also read:
 Treat tracker and git evidence as current truth. Plans and handoffs express intent; name any
 disagreement instead of reconciling it silently.
 
-## Step 4 — Check memory and health without making them gates
+## Step 4 — Read the repository's notes without making them a gate
 
-Run health once in explicit full-status scope:
-
-```bash
-polmem health
-```
-
-If the command is missing, the repo is not memory-wired, or process inspection is denied by the
-host sandbox, report `memory health: unavailable/degraded` with the exact reason and continue.
-
-Read only the first screen of `.wiki/hot.md` when present. Run targeted recall only when an active
-outcome, blocker, or user question provides a concrete query:
-
-```bash
-polmem recall "<active outcome or blocker>" --top 3
-```
+Only when an active outcome, blocker, or user question provides a concrete query, search the
+repository's decision log and lessons at the declared paths for it. If the repository keeps none,
+skip this step.
 
 Memory is assumed context, never proof of current state. Verify current-state claims against code,
 git, GitHub, or the authoritative external system.
@@ -148,11 +141,11 @@ one-confirm approval — you never mark or delete by hand.
    branch, which is free:
 
    ```bash
-   # La riconciliazione automatica dei thread superati è parcheggiata su
-   # `task/T6-prune-parked` (polaris-os#202): dipende da una verità di merge che
-   # sopravviva a un branch cancellato al merge, non ancora provata. Fino ad allora
-   # si legge il cockpit e si chiude a mano, con la PR mergiata come prova.
-   echo "NOTA: riconciliazione dei thread parcheggiata — chiusura manuale"
+   # Automatic reconciliation of superseded threads is parked on
+   # `task/T6-prune-parked`: it depends on a merge truth that survives a
+   # branch deleted at merge, which is not yet proven. Until then
+   # read the cockpit and close by hand, with the merged PR as proof.
+   echo "NOTE: thread reconciliation parked — manual close"
    ```
 
    It flags threads whose branch is **merged into origin/main** (superseded, proven) vs active vs
@@ -209,8 +202,7 @@ one-confirm approval — you never mark or delete by hand.
 
 4. **Propose the cleanup as ONE confirm loop, with the proof.** List the superseded threads + the
    mergeable branches + the `[archive?]` wiki docs, each with its evidence (merge SHA / PR / both-stale
-   ages), and ask a single yes/no. Only on yes: chiusura manuale dei thread confermati (riconciliazione automatica parcheggiata) to remove the confirmed
-   threads, delete the named merged branches, and set `lifecycle: archived` on the confirmed candidates.
+   ages), and ask a single yes/no. Only on yes: close the confirmed threads by hand (automatic reconciliation is parked) to remove them, delete the named merged branches, and set `lifecycle: archived` on the confirmed candidates.
    Never auto-delete, never archive a `[metadata-lag]` or front-door item, never touch
    active/unverified/other-panel threads.
 

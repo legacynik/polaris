@@ -3,9 +3,9 @@
 
 Selects ALL and ONLY the accepted Decisions applicable to the requested domains, with
 source_id/source_hash/freshness/reason per row; superseded Decisions are recorded in
-`dropped`, never included. Freshness is proven by the backbone validator (stale seals
-block before any selection). `resolve` prints a sealed pack; any contract violation
-exits 2 with `CODE: detail` on stderr. `test <fixture>` replays adversarial sandboxes.
+`dropped`, never included. Freshness is read now: a path a record cites that is gone is a
+STALE row by default and blocks under `--autonomous`. `resolve` prints the pack; any contract
+violation exits 2 with `CODE: detail` on stderr. `test <fixture>` replays adversarial sandboxes.
 """
 from __future__ import annotations
 
@@ -18,8 +18,14 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import check_context_backbone as cbb  # noqa: E402
+import contextpack_declared as declared_layer  # noqa: E402
+import contextpack_flight as flight_layer  # noqa: E402
+import contextpack_labels as labels_layer  # noqa: E402
+import contextpack_receipt as receipt  # noqa: E402
+import contextpack_seal as sealer  # noqa: E402
+import contextpack_unknown as unknown_layer  # noqa: E402
 
-BUDGET = 4000
+BUDGET = sealer.BUDGET  # one definition: the module that enforces it owns it
 # ponytail: the two canonical PRDs are 8.1k and 6.4k of content; 4k lands once they
 # are split (#325 follow-up). 10k binds today — documentary-backbone sits at 81% of it.
 AREA_BUDGET = 10_000
@@ -32,8 +38,9 @@ def _repo_domain_map(root: Path) -> dict[str, list[str]]:
              "gates": ["polaris.execution", "polaris.skills"], "docs": ["polaris.documentation"],
              "wiki": ["polaris.memory"], "team": ["polaris.company-os"],
              "infra": ["polaris.execution"], "tooling": ["polaris.execution"]}
-    known = _known_domains(root)
-    return {k: [d for d in v if d in known] for k, v in table.items()}
+    known = labels_layer.known_domains(root)
+    mapped = {k: [d for d in v if d in known] for k, v in table.items()}
+    return labels_layer.derived_labels(root, known) | {k: v for k, v in mapped.items() if v}
 
 
 def repo_domains_to_polaris(root: Path, labels: list[str]) -> list[str]:
@@ -46,13 +53,7 @@ def repo_domains_to_polaris(root: Path, labels: list[str]) -> list[str]:
     return sorted(set(out))
 
 
-def _known_domains(root: Path) -> set[str]:
-    dom = cbb._frontmatter(root / "DOMAIN.md")
-    return {d["domain_id"] for d in dom.get("domains", [])}
-
-
 def _decision_split(model: dict, selected: set[str]) -> tuple[list, list]:
-    shas = {d["decision_id"]: d["sha256"] for d in model["manifest"]["decisions"]}
     rows, dropped = [], []
     for item in model["decisions"]:
         rec = item["record"]
@@ -61,7 +62,7 @@ def _decision_split(model: dict, selected: set[str]) -> tuple[list, list]:
             continue
         if rec["workspace"] != model["workspace"]:
             raise cbb.ContractError("SCOPE_CONFLICT", f"{rec['decision_id']}: workspace {rec['workspace']}")
-        entry = {"source_id": rec["decision_id"], "source_hash": shas.get(rec["decision_id"], ""),
+        entry = {"source_id": rec["decision_id"], "source_hash": model["source_hashes"][item["path"]],
                  "freshness": "CURRENT", "reason": f"accepted Decision governs {','.join(hit)}"}
         if rec["status"] == "accepted":
             rows.append(entry)
@@ -74,10 +75,8 @@ def _decision_split(model: dict, selected: set[str]) -> tuple[list, list]:
     return rows, dropped
 
 
-def _area_row(root: Path, module_id: str, rel: str) -> dict:
-    return {"source_id": rel, "source_hash": cbb._source_hash(root, root / rel, at_head=True),
-            "freshness": "CURRENT",
-            "reason": f"active set of {module_id} via module-context.json (work item in active_work)"}
+def _area_row(root: Path, module: dict, rel: str) -> dict:
+    return sealer.area_row(root, module, rel)  # W3f: a gone doc is an `absent` row
 
 
 def _area(root: Path, module: dict) -> dict:
@@ -88,9 +87,8 @@ def _area(root: Path, module: dict) -> dict:
     The estimate is the CONTENT the agent opens, not the pointer rows: a ceiling over
     the rows reads ~160 tokens for an 8k area and could never bind. Committed bytes
     only, from the same tree the validator read."""
-    rows = [_area_row(root, module["module_id"], rel) for rel in module["default_context"]]
-    estimate = sum((len(cbb._source_bytes(root, root / row["source_id"], at_head=True)) + 3) // 4
-                   for row in rows)
+    rows = [_area_row(root, module, rel) for rel in module["default_context"]]
+    estimate = sealer.area_estimate(root, rows)
     area = {"module_id": module["module_id"], "active_work": module["active_work"],
             "documents": rows, "token_estimate": estimate, "budget": AREA_BUDGET,
             "over_budget": estimate > AREA_BUDGET}
@@ -109,9 +107,7 @@ def _module_rows(areas: list[dict], work_item: str) -> list[dict]:
 
 
 def _document_rows(model: dict, areas: list[dict], work_item: str) -> list[dict]:
-    rows = [{"source_id": name, "source_hash": model["source_hashes"][name], "freshness": "CURRENT",
-             "reason": "live technical authority (always in scope)"}
-            for name in sorted(cbb.LIVE_DOCS)]
+    rows = sealer.document_rows(model)
     return rows + _module_rows(areas, work_item)
 
 
@@ -120,16 +116,21 @@ def _work_item_declared(model: dict, work_item: str) -> bool:
     let a work item nobody committed seal a pack."""
     accepted = (i["record"] for i in model["decisions"] if i["record"]["status"] == "accepted")
     return (any(work_item in record.get("evidence", []) for record in accepted)
-            or any(work_item in module["active_work"] for module in model["modules"]))
+            or any(work_item in module["active_work"] for module in model["modules"])
+            or any(work_item in gone.get("active_work", []) for gone in model.get("stale_missing", {}).values()))
 
 
-def resolve(root: Path, work_item: str, domains: list[str]) -> dict[str, Any]:
-    model = cbb.validate(root, at_head=True)
+def resolve(root: Path, work_item: str, domains: list[str], *, degrade: bool = False) -> dict[str, Any]:
+    model = sealer.model_or_none(root, degrade)
+    if model is None:
+        absent = declared_layer.attach(root, sealer.seal(
+            root, unknown_layer.pack(root, work_item, domains)), receipt.areas(domains))
+        return receipt.close(root, flight_layer.attach(root, absent, receipt.areas(domains)))
     if work_item and not _work_item_declared(model, work_item):
         raise cbb.ContractError("WORK_ITEM_UNVERIFIED", work_item)
     work_item = work_item or f"foundation:{model['repo']}"
-    selected = set(domains) or _known_domains(root)
-    unknown = sorted(selected - _known_domains(root))
+    selected = set(domains) or labels_layer.known_domains(root)
+    unknown = sorted(selected - labels_layer.known_domains(root))
     if unknown:
         raise cbb.ContractError("UNKNOWN_DOMAIN", ",".join(unknown))
     decisions, dropped = _decision_split(model, selected)
@@ -137,15 +138,9 @@ def resolve(root: Path, work_item: str, domains: list[str]) -> dict[str, Any]:
     pack = {"schema_version": 1, "work_item": work_item, "workspace": model["workspace"],
             "repo": model["repo"], "domains": sorted(selected), "decisions": decisions,
             "documents": _document_rows(model, areas, work_item), "areas": areas,
-            "dropped": dropped, "area_budget": AREA_BUDGET,
-            "decision_manifest_hash": model["manifest"]["manifest_hash"], "token_budget": BUDGET}
-    pack["sealed_commit"] = cbb._head_commit(root)
-    pack["token_estimate"] = (len(json.dumps(pack, ensure_ascii=False)) + 3) // 4
-    if pack["token_estimate"] > BUDGET:
-        raise cbb.ContractError("CONTEXT_OVERFLOW", f"{pack['token_estimate']}>{BUDGET}")
-    pack["pack_seal"] = cbb._json_hash(pack)
-    pack["context_pack_id"] = f"CTX-{model['workspace']}-{pack['pack_seal'][:12]}"
-    return pack
+            "dropped": dropped, "area_budget": AREA_BUDGET, "token_budget": BUDGET}
+    return receipt.close(root, flight_layer.attach(root, declared_layer.attach(
+        root, sealer.seal(root, pack), receipt.areas(domains)), receipt.areas(domains)))
 
 
 def _fixture_superseded(root: Path) -> None:
@@ -154,23 +149,21 @@ def _fixture_superseded(root: Path) -> None:
     cbb._write_record(root / "decisions" / "DEC-2.md", new, "Successor")
     old.update(status="superseded", superseded_by="DEC-2")
     cbb._write_record(root / "decisions" / "DEC-1.md", old, "Old")
-    cbb.reseal_backbone(root)
 
 
 def _fixture_foreign(root: Path) -> None:
     rec = cbb._frontmatter(root / "decisions" / "DEC-1.md")
     rec["workspace"] = "foreign"
     cbb._write_record(root / "decisions" / "DEC-1.md", rec, "Foreign")
-    cbb.reseal_backbone(root)
 
 
 def _fixture_stale(root: Path) -> None:
-    (root / "source.txt").write_text("mutated without reseal\n")
+    (root / "source.txt").unlink()  # a path every live document cites, gone
 
 
 def run_fixture(name: str) -> int:
     mutate = {"superseded-decision": _fixture_superseded, "cross-workspace-collision": _fixture_foreign,
-              "stale-source": _fixture_stale}.get(name)
+              "stale-source": _fixture_stale, "stale-source-guided": _fixture_stale}.get(name)
     if mutate is None:
         print(f"unknown fixture: {name}", file=sys.stderr)
         return 2
@@ -178,9 +171,8 @@ def run_fixture(name: str) -> int:
         root = Path(tmp)
         cbb._fixture(root)
         mutate(root)
-        domains = sorted(_known_domains(root))
-        pack = resolve(root, "issue:fixture#1", domains)
-        print(json.dumps(pack, indent=2))
+        print(json.dumps(resolve(root, "issue:fixture#1", sorted(labels_layer.known_domains(root)),
+                                 degrade=name.endswith("-guided")), indent=2))
         return 0
 
 
@@ -195,7 +187,7 @@ def _run_case(name: str) -> tuple[int, str]:
 
 def _selfcheck() -> int:
     cases = [("superseded-decision", 0, "SUPERSEDED"), ("cross-workspace-collision", 2, "SCOPE_CONFLICT"),
-             ("stale-source", 2, "SOURCE_REF_STALE")]
+             ("stale-source", 2, "CITED_PATH_MISSING"), ("stale-source-guided", 0, '"freshness": "STALE"')]
     for name, want, marker in cases:
         code, out = _run_case(name)
         assert code == want and marker in out, f"{name}: exit={code}, marker={marker!r} missing"
@@ -213,22 +205,23 @@ def _guarded(fn) -> int:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="#153 ContextPack resolver")
-    ap.add_argument("command", nargs="?", choices=["resolve", "test"])
+    ap.add_argument("command", nargs="?", choices=["resolve", "test", "audit"])
     ap.add_argument("fixture", nargs="?")
     ap.add_argument("--root", type=Path, default=Path("."))
     ap.add_argument("--work-item", default="")
     ap.add_argument("--domains", action="append", default=[])
     ap.add_argument("--repo-domain", action="append", default=[])
     ap.add_argument("--selfcheck", action="store_true")
-    a = ap.parse_args()
-    if a.selfcheck:
-        return _selfcheck()
+    ap.add_argument("--autonomous", action="store_true", help="no human reads it: a cited path that is gone blocks")
+    a = receipt.parse(ap)
+    if a.selfcheck or a.command == "audit":
+        return _selfcheck() if a.selfcheck else receipt.audit(a.root, a.since)
     if a.command == "test":
         return _guarded(lambda: run_fixture(a.fixture or ""))
     if a.command == "resolve":
         def _run() -> int:
-            domains = a.domains + (repo_domains_to_polaris(a.root, a.repo_domain) if a.repo_domain else [])
-            print(json.dumps(resolve(a.root, a.work_item, domains), indent=2))
+            domains = a.domains + receipt.selected_domains(a.root, a.area, a.repo_domain)
+            print(json.dumps(resolve(a.root, a.work_item, domains, degrade=not a.autonomous), indent=2))
             return 0
         return _guarded(_run)
     ap.error("command required")

@@ -1,0 +1,3 @@
+ ! [rejected]        main -> main (fetch first)
+FAILED to push some refs to 'https://example.invalid/acme/repo.git'
+hint: Updates were rejected because the remote contains work that you do not have locally.

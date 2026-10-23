@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 /lab/js
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  17:00:49
+   Duration  90ms (transform 7ms, setup 0ms, import 13ms, tests 1ms, environment 0ms)
+

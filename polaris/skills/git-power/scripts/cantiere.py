@@ -935,15 +935,16 @@ def _merge_gap_reason(pr: dict | None, local_tip: str) -> str | None:
         return "nessuna PR trovata per questo branch"
     if pr.get("state") != "MERGED":
         return f"PR {pr.get('state', 'UNKNOWN')}, non mergiata"
-    if pr.get("headRefOid") and local_tip != pr["headRefOid"]:
+    if not pr.get("headRefOid"):
+        return "PR senza headRefOid: il tip locale non è verificabile"
+    if local_tip != pr["headRefOid"]:
         return f"branch ha commit dopo il merge (tip={local_tip} head={pr['headRefOid']})"
     return None
 
 
 def _merge_target(repo: Path, base: str) -> str:
-    remote = f"origin/{base}"
-    return remote if git(repo, "show-ref", "--verify", f"refs/remotes/{remote}",
-                         check=False) else base
+    remote = f"refs/remotes/origin/{base}"  # qualified: a local branch `origin/<base>` wins the short name
+    return remote if git(repo, "show-ref", "--verify", remote, check=False) else f"refs/heads/{base}"
 
 
 def _merge_truth(repo: Path, branch: str, base: str) -> tuple[dict | None, str | None, bool]:
@@ -1026,8 +1027,17 @@ def _finalize_apply(target: Path, branch: str, base: str) -> int:
         print("RIFIUTATO: il worktree corrente contiene lavoro o un'operazione aperta.")
         return 2
     primary = _primary_worktree(target)
-    main_state = _align_primary(primary, base)
     branch_sha = git(target, "rev-parse", f"refs/heads/{branch}", check=False)
+    if Path(primary).resolve() == target.resolve():
+        # The repository's own checkout is not a worktree to remove: return it to the base
+        # (the tree is clean, proven above), then delete the merged branch.
+        git(target, "switch", "-q", base)
+        main_state = _align_primary(primary, base)
+        git(primary, "update-ref", "-d", f"refs/heads/{branch}", branch_sha)
+        _snapshot(primary, branch_sha, "branch-delete-pr-merged", branch, branch_sha)
+        print(f"FINALIZED: checkout={target} branch={branch} back on {base} {main_state}")
+        return 0
+    main_state = _align_primary(primary, base)
     git(primary, "worktree", "remove", str(target))
     _snapshot(primary, branch_sha, "worktree-remove-pr-merged", str(target), branch_sha)
     git(primary, "update-ref", "-d", f"refs/heads/{branch}", branch_sha)

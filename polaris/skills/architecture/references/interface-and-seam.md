@@ -2,10 +2,10 @@
 
 Loads when Step 0 answered **`OWNED`**: every caller can still change in one commit. Optimise
 for **depth** — behaviour per unit of interface — never for what you can no longer take back.
-That's the other side: [`contract-and-commitment.md`](contract-and-commitment.md).
+The other side is [contract-and-commitment.md](contract-and-commitment.md).
 
-Absorbed from `codebase-design` (mattpocock/skills) — house terms below, do not substitute
-"component", "service", "API", or "boundary".
+Name things with the terms below — module, interface, seam, adapter — so every finding and
+design in this door uses one vocabulary.
 
 ## Contents
 
@@ -27,7 +27,7 @@ a slice spanning tiers. Scale-agnostic on purpose.
 plus invariants, ordering, error modes, required configuration, performance characteristics.
 Wider than "signature" or "API" — those name only the type-level surface.
 
-**Seam** (Feathers) — where the module's interface lives, the place you can alter behaviour
+**Seam** — where the module's interface lives, the place you can alter behaviour
 without editing in that place. Where to put it is a decision distinct from what sits behind it.
 
 **Adapter** — a concrete thing satisfying an interface at a seam. Names a *role*, not a
@@ -60,7 +60,7 @@ happens to the complexity when the module is gone.
 port unless at least two adapters are justified — typically production plus test. A
 single-adapter seam is indirection wearing an architecture diagram.
 
-**Validity condition, made explicit (2026-08-18):** this rule holds only where you **own the
+**Validity condition:** this rule holds only where you **own the
 callers** — Step 0 answered `OWNED`. On a `PUBLISHED` surface it is actively harmful if copied
 without this condition: there the correct seam count is **zero adapters** at commitment time,
 because adding one later is a breaking change for consumers you cannot enumerate. A rule that is
@@ -105,11 +105,10 @@ interface, not through it.
 Kept as a section, not as trivia — the value is the precedent of a skill naming what it
 considered and discarded:
 
-- **Depth as the ratio of implementation-lines to interface-lines** (Ousterhout's original
-  form) — rewards padding the implementation. Depth-as-leverage above replaces it.
+- **Depth as the ratio of implementation-lines to interface-lines** — rewards padding the implementation. Depth-as-leverage above replaces it.
 - **"Interface" as a language keyword or a class's public methods** — too narrow. Interface
   here is every fact a caller must know, including invariants and failure modes no type
   signature carries.
-- **"Boundary"** — overloaded with DDD's bounded context, a different correctness question
-  (is the concept true here, not what it costs). Say **seam** or **interface** instead; see
-  `domain`'s own door for where a concept boundary actually gets decided.
+- **"Boundary"** — overloaded with the bounded context, a different correctness question
+  (is the concept true here, not what it costs). Say **seam** or **interface**; where a concept
+  boundary falls is the `domain` door's question.

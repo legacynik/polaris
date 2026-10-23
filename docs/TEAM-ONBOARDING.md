@@ -4,37 +4,20 @@ This is the day-one checklist for a person opening a product repository for the 
 README covers *what* Polaris is; this covers *what you run* to get set up. If a command below fails,
 stop and report the blocker — do not create a personal vault or improvise a second configuration.
 
-## 1. Install the plugin
+## 1. Install the skills
 
-`legacynik/polaris` is the public plugin marketplace. The plugin contains workflow only — never put
-project data, private decisions, customer information or repository state into it. In Claude Code:
-
-```text
-/plugin marketplace add legacynik/polaris
-/plugin install polaris-team-os@polaris-team-os
-```
-
-Restart Claude Code, then verify:
+Install and update the package as the [README](../README.md#install) says: the skills CLI, global,
+every skill. Nothing else is required from this package. It carries workflow only — never put
+project data, private decisions, customer information or repository state into it. Then confirm the
+skills are installed:
 
 ```bash
-claude plugin list
+npx skills list -g
 ```
 
-You must see `polaris-team-os@polaris-team-os` enabled.
+You must see `start`, `update`, `end` and `pol-ship` among them.
 
 ## 2. Tool preflight — once per machine
-
-### Superpowers
-
-Polaris does not replace Superpowers — it uses it for planning and delivery when the work needs code.
-Install/verify the official plugin:
-
-```text
-/plugin install superpowers@claude-plugins-official
-```
-
-Confirm with `claude plugin list`. If the official marketplace is not available in your install, ask
-the maintainer for the configured marketplace command — do not guess an ID.
 
 ### GitHub CLI
 
@@ -46,62 +29,18 @@ gh --version   # missing → install it (macOS: brew install gh; see cli.github.
 gh auth status # not logged in → gh auth login
 ```
 
-### Context7
+### Optional tools
 
-Context7 provides up-to-date SDK and library documentation:
+None is required; install one when you use the skill that needs it. Never store keys or
+credentials in the repo.
 
-```text
-/plugin install context7@claude-plugins-official
-```
+| Tool | Used by | Without it |
+|---|---|---|
+| Codex CLI (`codex` on `PATH`) | `codex-review`, tier 3 of `polaris-review` | the caller falls back to its own second reviewer |
+| `yt-dlp` | `reference-capture`, for video transcripts | paste the transcript yourself |
+| Context7 | `polaris-grill`, for a version-specific dependency question | the official docs, with the fallback disclosed |
 
-### Plugin MCP servers
-
-Polaris declares Sequential Thinking and Codebase Memory; Context7 comes from the official plugin
-above. After the restart, check the real connection state, not just the file:
-
-```bash
-claude mcp list
-```
-
-They must show connected or carry an explicit reason. `codebase-memory` also needs the
-`codebase-memory-mcp` binary. If `claude mcp list` reports it missing, install it with your machine's
-Python manager (for example `pipx install codebase-memory-mcp`), then re-run `claude mcp list`. Never
-store keys or credentials in the repo.
-
-## 3. Put `polmem` on your PATH
-
-`polmem` is the repo's memory CLI: it runs `recall` over what the repo already knows (decisions,
-references, architecture, journal committed in `.wiki/`). **The CLI is the interface you use.** The
-MCP adapter is optional; the CLI is the reliable path.
-
-Install the launcher once per machine (a version-independent shim at `~/.local/bin/polmem`):
-
-```bash
-bash "$CLAUDE_PLUGIN_ROOT/polaris/scripts/install-polmem-cli.sh"
-```
-
-If it reports that `~/.local/bin` is not on your PATH, add to your shell profile:
-
-```bash
-export PATH="${HOME}/.local/bin:${PATH}"
-```
-
-Then, from inside a memory-wired product repository, verify:
-
-```bash
-polmem health
-polmem recall "confirmation gate"
-```
-
-`recall` returns ranked entries — score, source path, title, one-line summary. The three day-one
-commands are `polmem recall "<query>"`, `polmem health`, `polmem remember "<short note>"`. If
-`recall` says the repo is not memory-wired, `git pull` (the `.wiki` is committed and arrives with the
-code); if it is still missing, ask the repo owner to wire it — **do not run `polmem init` yourself**.
-`python3` must be installed. `recall` only reads the repo you run it in; `remember` **writes** one
-line to the repo’s committed journal — never put secrets, customer data or personal information in
-it. `recall` is assumed context to verify, not current state.
-
-## 4. Check the repo contract
+## 3. Check the repo contract
 
 The repository owns **one** Polaris root: `_polaris/`, committed with the code. The repository owner
 provides:
@@ -112,7 +51,7 @@ _polaris/decisions.md
 _polaris/lessons.md              # optional but standard
 ```
 
-Your own path is **not** pre-created for you. On your first `/start`, the plugin reads your exact
+Your own path is **not** pre-created for you. On your first `/start`, the skill reads your exact
 GitHub login (`gh api user --jq .login`) and creates:
 
 ```text
@@ -134,19 +73,19 @@ repository owner — do not create the contract yourself.
 > pre-created placeholder `team/` folders: the repo owner renames the root (`git mv polaris
 > _polaris`) and deletes the placeholders — real paths are recreated by each contributor's `/start`.
 
-## 5. First day
+## 4. First day
 
-1. Open Claude Code from the product repo.
+1. Open your agent CLI (Claude Code, Codex, ...) from the product repo.
 2. Run `/start`: read your authorized outcome, latest handoff/checkpoint, blocker, and next action.
 3. Use the explicit Polaris status workflow when you need repo pulse, team collisions, memory, or a
    portfolio-wide view.
 4. Before planning an ambiguous product or technical change, run `/polaris-grill`: it checks live
-   repo evidence, durable decisions, backend/schema contracts, memory, and versioned Context7 docs,
+   repo evidence, durable decisions, backend/schema contracts and, when available, versioned docs,
    then hands off a testable brief without implementing or creating tracker work.
 5. Run `/update` after real progress or a real blocker.
 6. Run `/end` when you stop: leave one concrete next action.
 
-## 6. The week
+## 5. The week
 
 - Each contributor runs `/plan-week` for **their own** week — a focus grounded in real issues/PRs
   and capacity. Commit it and let it travel into your PRs: a plan visible in the repo is reviewable

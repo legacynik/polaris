@@ -2,7 +2,7 @@
 name: report
 description: Polaris skill — produce a real weekly repository report for a FINISHED Sunday-to-Saturday week (asks confirmation first, refuses the current week) — TL;DR, day-by-day from session logs, merged-PR ground truth from gh, decisions, metrics, PM actions — anchored on the approved plan (planned versus actual). Trigger at week end, before a team review, or on "weekly report / what shipped this week / planned vs actual".
 user-invocable: true
-version: 1.3.1
+version: 1.3.2
 ---
 
 # /report — the week, with evidence
@@ -183,9 +183,9 @@ so; the tracker evidence still stands.
 ## Step 3 — Diff plan versus done
 
 For each plan row, mark it shipped (with a linked PR/issue/test), partially done, or not started —
-and why. A blocked item is useful information when its blocker and next decision are explicit. Use
-`polmem recall "<topic>" --top 3` if you need the decision context behind a blocker (if recall says
-the repo is not memory-wired, tell the repo owner — do not run `polmem init` yourself).
+and why. A blocked item is useful information when its blocker and next decision are explicit. Read
+the repository's decision log at its declared path when you need the decision context behind a
+blocker.
 
 ## Step 4 — Write the report file
 

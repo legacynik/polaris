@@ -48,6 +48,10 @@ def stale(base: str) -> list[str]:
     out = []
     for skill in sorted(touched_skills(base)):
         was, now = version_at(base, skill), version_at("HEAD", skill)
+        gone = subprocess.run(["git", "cat-file", "-e", f"HEAD:polaris/skills/{skill}"],
+                              capture_output=True).returncode != 0
+        if gone:
+            continue                     # skill rimossa: non c'e' versione da alzare
         if now is None:
             out.append(f"{skill}: nessun campo `version:`")
         elif was is not None and was == now:

@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 /lab/js
+
+No test files found, exiting with code 1
+
+filter: nothing_here.test.js
+include: **/*.{test,spec}.?(c|m)[jt]s?(x)
+exclude:  **/node_modules/**, **/.git/**
+

@@ -1,0 +1,3 @@
+cc -c -o build/step-3.o src/step-3.c
+FAILED build/step-3
+make: *** [Makefile:12: build/step-3] Error 1

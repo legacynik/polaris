@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ambitious Goal"
+  short_description: "Refine feature outcomes and verifiable definitions of done"
+  default_prompt: "Use $ambitious-goal to sharpen my feature or epic outcome and define its scope, DoD and regression checks."

@@ -1,26 +1,25 @@
 ---
 title: bypass-test — git-power
-description: I test che devono fallire se qualcuno aggira il boundary del commit o il gate di chiusura guidata.
+description: The tests that must fail if someone bypasses the commit boundary or the guided-close gate.
 ---
 
 # Bypass-test
 
-Sei scenari: tre presi **verbatim** da una voce del registro (G7#2, G8#2) o dal near-miss
-misurato in `STATO-REPO.md`, tre aggiunti dopo l'attacco adversariale del 2026-08-09
-(`EVAL-cantiere-bypass.md`, verdetto DEBOLE — vie laterali L1/L3, e `EVAL-cantiere-copertura.md`,
-verdetto NON-COPRE su `reset --hard`/`.method`). Ognuno ha il comando eseguibile e cosa DEVE
-succedere. Se un comando qui sotto si comporta diversamente da quanto scritto, la skill non è
-blindata — non promuoverla.
+Six scenarios: three taken **verbatim** from a registry entry (G7#2, G8#2) or from the near-miss
+measured on the repo, three added after the adversarial attack of 2026-08-09
+(verdict WEAK on the side paths L1/L3, DOES-NOT-COVER on `reset --hard`/`.method`). Each has the runnable command and what MUST
+happen. If a command below behaves differently from what is written, the skill is not
+hardened — do not promote it.
 
-**Eseguibile in un colpo**: `python3 ../scripts/cantiere.py --selfcheck` — costruisce ognuno di
-questi sei scenari (più tre altri: merge-safe che chiude correttamente, lock da attività recente
-vero/falso, branch orfano mai force-cancellato) su repo git **reali** in una cartella temporanea,
-non mock. Exit 0 solo se tutti e 9 si comportano come dichiarato qui.
+**Runnable in one shot**: `python3 ../scripts/cantiere.py --selfcheck` — it builds each of
+these six scenarios (plus three more: a merge-safe that closes correctly, a lock from recent activity
+true/false, an orphan branch never force-deleted) on **real** git repos in a temporary folder,
+not mocks. Exit 0 only if all 9 behave as declared here.
 
-## 1 — Worktree con modifiche non committate (registro G7#2)
+## 1 — Worktree with uncommitted changes (registry G7#2)
 
-> "chiedere la chiusura di un worktree con modifiche non committate — la skill deve rifiutare e
-> mostrare `git status`, non proporre `--force`."
+> "asking to close a worktree with uncommitted changes — the skill must refuse and
+> show `git status`, not propose `--force`."
 
 ```bash
 tmp=$(mktemp -d) && cd "$tmp"
@@ -36,18 +35,18 @@ echo "EXIT=$?"                      # DEVE essere 2, mai 0
 git worktree list | grep wt-dirty   # DEVE ancora esistere
 ```
 
-**Deve succedere**: `EXIT=2`, il testo stampato include l'output vero di `git status` (non un
-messaggio generico), il worktree resta sul disco. **Non deve succedere**: nessuna riga stampata
-o eseguita contiene `--force`; verificato anche staticamente — `scripts/cantiere.py` non contiene
-UNA chiamata `git()` reale con `--force` o `-D` come argomento letterale (AST-walk, non grep di
-superficie: vedi `_assert_no_force_call_sites` nel selfcheck, per non farsi ingannare da un
-commento che ne PARLA).
+**Must happen**: `EXIT=2`, the printed text includes the real output of `git status` (not a
+generic message), the worktree stays on disk. **Must not happen**: no printed or executed
+line contains `--force`; also verified statically — `scripts/cantiere.py` contains
+NOT ONE real `git()` call with `--force` or `-D` as a literal argument (AST walk, not a surface
+grep: see `_assert_no_force_call_sites` in the selfcheck, so as not to be fooled by a
+comment that TALKS about it).
 
-## 2 — Stash durante un merge con conflitto irrisolto (registro G8#2)
+## 2 — Stash during a merge with an unresolved conflict (registry G8#2)
 
-> "working tree con 1 file modificato non committato + merge in corso finto → `git stash` deve
-> uscire con errore bloccante, non successo silenzioso; verificare che `.git/MERGE_HEAD`
-> sopravviva al tentativo."
+> "working tree with 1 modified uncommitted file + fake merge in progress → `git stash` must
+> exit with a blocking error, not silent success; verify that `.git/MERGE_HEAD`
+> survives the attempt."
 
 ```bash
 # repo con uno stash preesistente E POI un merge che va in conflitto (mai creare lo stash
@@ -67,15 +66,15 @@ test -f .git/MERGE_HEAD && echo "MERGE_HEAD sopravvive"   # DEVE stampare
 git stash list | grep 'stash@{0}'    # DEVE esistere ancora
 ```
 
-**Deve succedere**: `EXIT=2`, `.git/MERGE_HEAD` intatto, lo stash NON toccato — anche se lo
-stash stesso non c'entra nulla col merge (è "estraneo"): la regola è incondizionata finché il
-repo è mid-merge, perché è l'unico modo di non fidarsi di quale stash sia "innocuo".
+**Must happen**: `EXIT=2`, `.git/MERGE_HEAD` intact, the stash NOT touched — even if the
+stash itself has nothing to do with the merge (it is "unrelated"): the rule is unconditional while the
+repo is mid-merge, because it is the only way not to trust which stash is "harmless".
 
-## 3 — Attività concorrente rilevata (near-miss reale, `STATO-REPO.md`)
+## 3 — Concurrent activity detected (real near-miss)
 
-> *"L'agent che stava misurando acme-api ha beccato, durante la misura, un `git pull --rebase`
-> lanciato da un altro panel... per qualche secondo `git ls-files` ha restituito un albero
-> pre-migrazione."*
+> *"The agent that was measuring acme-api caught, during the measurement, a `git pull --rebase`
+> launched by another panel... for a few seconds `git ls-files` returned a
+> pre-migration tree."*
 
 ```bash
 tmp=$(mktemp -d) && git -C "$tmp" init -q -b main
@@ -89,18 +88,18 @@ print(cantiere.recent_activity_lock(pathlib.Path('$tmp')))"
 # DEVE stampare True subito dopo un commit; False se rilanciato dopo 180s
 ```
 
-**Deve succedere**: `census`/`close` classificano il worktree `pericoloso` con la nota
-"attività concorrente rilevata" finché `HEAD` non è fermo da >180s — nessuna azione proposta in
-quella finestra, indipendentemente da quanto "pulito" sembri lo stato git.
+**Must happen**: `census`/`close` classify the worktree `pericoloso` with the note
+"attività concorrente rilevata" until `HEAD` has been still for >180s — no action proposed in
+that window, regardless of how "clean" the git state looks.
 
-## 4 — Chiamata diretta alla funzione, non alla CLI (bypass-eval L1)
+## 4 — Direct call to the function, not the CLI (bypass-eval L1)
 
-> "la chiamata diretta alla funzione deve essere gated quanto la CLI — è il buco reale trovato
-> nel corpus (un gate che scatta solo via `main()`)."
+> "the direct call to the function must be gated as much as the CLI — it is the real hole found
+> in the corpus (a gate that fires only via `main()`)."
 
-Prima di questo fix, `import cantiere; cantiere.git(repo, "worktree", "remove", "--force", str(wt))`
-rimuoveva un worktree sporco **senza passare da `close_worktree`**, perché la guardia viveva solo
-nei wrapper, non nella primitiva `git()`. Riproducibile fuori dal selfcheck:
+Before this fix, `import cantiere; cantiere.git(repo, "worktree", "remove", "--force", str(wt))`
+removed a dirty worktree **without going through `close_worktree`**, because the guard lived only
+in the wrappers, not in the `git()` primitive. Reproducible outside the selfcheck:
 
 ```bash
 tmp=$(mktemp -d) && git -C "$tmp" init -q -b main
@@ -122,16 +121,16 @@ except cantiere.Refused as e:
 "
 ```
 
-**Deve succedere**: `cantiere.Refused` sollevata da `git()` stessa, il worktree resta su disco.
-**Non deve succedere**: nessuna eccezione, il worktree sparisce. Stesso test copre `-D` su un
-branch non mergiato, `reset --hard` su un tree sporco, e `stash clear` — tutti rifiutati dalla
-stessa primitiva, non da un wrapper che il chiamante può saltare. Selfcheck:
+**Must happen**: `cantiere.Refused` raised by `git()` itself, the worktree stays on disk.
+**Must not happen**: no exception, the worktree disappears. The same test covers `-D` on an
+unmerged branch, `reset --hard` on a dirty tree, and `stash clear` — all refused by the
+same primitive, not by a wrapper the caller can skip. Selfcheck:
 `_selfcheck_direct_git_call_still_refuses`.
 
-## 5 — `.method/ledger.md` aperto (contratto `metodologia`, EVAL-copertura §4)
+## 5 — `.method/ledger.md` open
 
 > "`cantiere` drains/removes [ledger.md + .polaris-owner] when the worktree or branch closes" —
-> dichiarato da `metodologia/SKILL.md`, mai implementato prima di questo fix.
+> declared by `metodologia/SKILL.md`, never implemented before this fix.
 
 ```bash
 tmp=$(mktemp -d) && cd "$tmp" && git init -q -b main repo && cd repo
@@ -147,17 +146,17 @@ python3 /path/to/cantiere/scripts/cantiere.py close --repo "$tmp/repo" \
 echo "EXIT=$?"                    # DEVE essere 2, non 0 — anche se git status non vede nulla
 ```
 
-**Deve succedere**: `EXIT=2` nonostante `git status` sia pulito — la guardia legge il ledger, non
-solo `git status`. **Nota sulla riproduzione a mano**: il comando sopra rifiuta ANCHE per
-`recent_activity_lock` (il worktree è appena stato creato, <180s fa) — per isolare il solo gate
-`.method` con `TASK 1: complete` e vedere `EXIT=0`, serve backdatare `.git/HEAD` del worktree
-oltre 180s (`_age_head()` lo fa nel selfcheck, non riproducibile a mano in poche righe). La metà
-che conta per la sicurezza — il rifiuto quando il piano è aperto — è quella sopra, riproducibile
-subito. **Limite dichiarato**: non distingue il proprietario del piano da chi chiama `close` —
-blocca per qualunque piano aperto, non solo per quello di un altro pannello. Selfcheck completo
-(entrambe le direzioni, mtime controllato): `_selfcheck_method_ledger_blocks_close`.
+**Must happen**: `EXIT=2` even though `git status` is clean — the guard reads the ledger, not
+only `git status`. **Note on manual reproduction**: the command above ALSO refuses because of
+`recent_activity_lock` (the worktree was just created, <180s ago) — to isolate the `.method`
+gate alone with `TASK 1: complete` and see `EXIT=0`, you need to backdate the worktree's `.git/HEAD`
+past 180s (`_age_head()` does it in the selfcheck, not reproducible by hand in a few lines). The half
+that matters for safety — the refusal when the plan is open — is the one above, reproducible
+right away. **Declared limit**: it does not distinguish the plan's owner from whoever calls `close` —
+it blocks for any open plan, not only another panel's. Full selfcheck
+(both directions, controlled mtime): `_selfcheck_method_ledger_blocks_close`.
 
-## 6 — `reset --hard` guardato (description lo dichiarava, 0 righe lo implementavano)
+## 6 — guarded `reset --hard` (the description declared it, 0 lines implemented it)
 
 ```bash
 tmp=$(mktemp -d) && git -C "$tmp" init -q -b main
@@ -170,43 +169,43 @@ echo "EXIT=$?"              # DEVE essere 2
 cat "$tmp/f.txt"             # DEVE mostrare ancora 'dirty' — nessuna perdita
 ```
 
-**Deve succedere**: `EXIT=2`, il contenuto non committato sopravvive, `git status` viene mostrato.
-Su un tree pulito lo stesso comando esegue il reset e logga `ORIG_HEAD` nel Git common dir,
-`polaris-cantiere/removed-log.jsonl`, prima che qualcosa vada perso senza sporcare main. Selfcheck:
+**Must happen**: `EXIT=2`, the uncommitted content survives, `git status` is shown.
+On a clean tree the same command performs the reset and logs `ORIG_HEAD` in the Git common dir,
+`polaris-cantiere/removed-log.jsonl`, before anything is lost, without dirtying main. Selfcheck:
 `_selfcheck_reset_hard_guarded`.
 
-## 7 — Commit staged oltre il boundary
+## 7 — Staged commit beyond the boundary
 
-`scripts/test/test_git_power.py` costruisce un repo reale: 5 file staged devono dare `OK`/exit 0;
-il sesto deve dare `CONCERN`/exit 3 con conteggi esatti. Il test passa dalla CLI pubblica, non
-chiama direttamente la funzione. Un file binario è sempre `CONCERN`, perché `--numstat` non può
-dimostrarne il numero di righe.
+`scripts/test/test_git_power.py` builds a real repo: 5 staged files must give `OK`/exit 0;
+the sixth must give `CONCERN`/exit 3 with exact counts. The test goes through the public CLI, it does not
+call the function directly. A binary file is always `CONCERN`, because `--numstat` cannot
+prove its line count.
 
 ## 8 — Lifecycle: remote merge, dirty main, cleanup
 
-`scripts/test/test_git_power.py` crea un origin bare, una main locale stale e sporca, un worktree
-feature pulito e una PR `MERGED` simulata dal confine pubblico `gh`. `phase finalize` deve provare
-che il merge commit è in `origin/main`, preservare il file non tracciato su main, rimuovere il
-worktree e cancellare il branch con compare-and-delete sullo SHA esatto. Lo stesso modulo prova
-che `post-push` conserva una PR OPEN e che `close` rifiuta un worktree pulito ma non mergiato.
+`scripts/test/test_git_power.py` creates a bare origin, a stale and dirty local main, a clean
+feature worktree and a `MERGED` PR simulated at the public `gh` boundary. `phase finalize` must prove
+that the merge commit is in `origin/main`, preserve the untracked file on main, remove the
+worktree and delete the branch with compare-and-delete on the exact SHA. The same module proves
+that `post-push` keeps an OPEN PR and that `close` refuses a clean but unmerged worktree.
 
-Lo stesso `--selfcheck`, chiamando direttamente la primitiva `git()`, prova anche i comandi
-dell'incidente-class: `clean -fd`, `checkout --`, `restore --worktree` e `stash push` su tree
-sporco devono sollevare `Refused` e lasciare file tracciati/non tracciati intatti.
+The same `--selfcheck`, calling the `git()` primitive directly, also proves the incident-class
+commands: `clean -fd`, `checkout --`, `restore --worktree` and `stash push` on a dirty
+tree must raise `Refused` and leave tracked/untracked files intact.
 
-## Onestà sul limite
+## Honesty about the limit
 
-Il caso 3 è un **proxy meccanico** (recency), non una vera ownership-per-provenienza: se un altro
-pannello ha scritto >180s fa e poi si è fermato senza committare (es. sta ancora editando un file
-senza salvare), questo strumento non lo vede — vede solo `git status` (sporco → `pericoloso` per
-un'altra ragione) o niente (se il file non è tracciato e non modificato ancora). Non è un buco
-silenzioso: è dichiarato qui e in `SKILL.md` §Meccanismo, non nascosto dietro "provenienza"
-come se fosse risolta.
+Case 3 is a **mechanical proxy** (recency), not true ownership-by-provenance: if another
+panel wrote >180s ago and then stopped without committing (e.g. it is still editing a file
+without saving), this tool does not see it — it sees only `git status` (dirty → `pericoloso` for
+another reason) or nothing (if the file is untracked and not yet modified). It is not a silent
+hole: it is declared here and in `SKILL.md` §Meccanismo, not hidden behind "provenance"
+as if it were solved.
 
-**Limite non chiuso, dichiarato apposta (bypass-eval L2)**: niente di quanto sopra intercetta un
-`git reset --hard`/`git stash`/`git worktree remove --force` digitato **fuori** da questo tool —
-nessun harness ha un hook `PreToolUse` che lo reindirizzi qui oggi. La guardia è reale per chi la
-invoca (CLI o funzione diretta, §4 sopra); non è un'intercettazione automatica di un comando shell
-arbitrario. Costruire quell'hook tocca `~/.claude/settings.json`, condiviso da tutti i pannelli
-paralleli del founder — fuori scope di un fix a questo bundle, per scelta esplicita, non per
-omissione.
+**Limit not closed, declared on purpose (bypass-eval L2)**: nothing above intercepts a
+`git reset --hard`/`git stash`/`git worktree remove --force` typed **outside** this tool —
+no harness has a `PreToolUse` hook that redirects it here today. The guard is real for whoever
+invokes it (CLI or direct function, §4 above); it is not an automatic interception of an
+arbitrary shell command. Building that hook touches `~/.claude/settings.json`, shared by all the
+repo owner's parallel panels — out of scope for a fix to this bundle, by explicit choice, not by
+omission.

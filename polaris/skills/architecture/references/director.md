@@ -17,7 +17,7 @@ it is never zero, clean, absent or majority-completed.
 
 On resume, load the latest sealed receipt cited by the current issue or work item and continue from
 the first non-closed stage. When its source hashes still match, do not reopen closed stages, reload
-their books or mine raw traces. The open stage may inspect only new artifact paths explicitly named
+their rule files or mine raw traces. The open stage may inspect only new artifact paths explicitly named
 by the current work item. If none are named, preserve its recorded `blocked` or `non_observable`
 state and stop; never scan directories for possible arrivals. A missing/stale receipt is `BLOCK`;
 the transcript is not a fallback state store.
@@ -53,29 +53,19 @@ Each packet declares `packet_id`, base SHA, exclusive worktree, exact write set,
 closure check. Before dispatch, compute intersections across both:
 
 1. declared file/symbol write sets;
-2. derived shared surfaces such as generated manifests, live-document seals and downstream reports.
+2. derived shared surfaces such as generated maps and downstream reports.
 
-Any remaining intersection is a collision. Shared generated/seal surfaces are merger-owned: remove
+Any remaining intersection is a collision. Shared generated surfaces are merger-owned: remove
 them from worker write sets before scheduling, and reject a packet that still claims them. They do
-not serialize otherwise disjoint packets. When a seal is a field or generated region inside an
-authored file, remove only that field or region; the worker still owns the remaining authored body.
+not serialize otherwise disjoint packets. When a generated region sits inside an authored file,
+remove only that region; the worker still owns the remaining authored body.
 A surface is derived only when its deterministic regeneration command is declared; otherwise it is
 authored. Select a maximal provably disjoint wave; if several have the same cardinality, choose the
 first tuple in declared packet order. Unknown ownership or scope serializes the packets.
 
-Polaris declares `python3 -I scripts/check_context_backbone.py --reseal .` as the deterministic,
-merger-only regeneration command for live-document `snapshot_ref` fields, Decision `scope_ref`
-fields and `decisions/manifest.json`. Those fields are derived; the surrounding document bodies are
-still authored and remain in their packet's write set.
-Receipts name these at the regeneration boundary — `ARCHITECTURE.md#snapshot_ref`,
-`CONTEXT.md#snapshot_ref`, `DOMAIN.md#snapshot_ref`, `decisions/DEC-*.md#scope_ref`, and
-`decisions/manifest.json` — rather than expanding whichever individual Decision happens to change.
-Every Polaris write-wave declares all five because `--reseal` owns that atomic regeneration
-boundary, even when the current lane set appears to invalidate only a subset.
-
 The merger accepts a packet only when its receipt exists, its diff is contained in the declared
 write set, its base is the inspected SHA or a reviewed descendant, and its closure check passes.
-After integrating the wave, the merger alone regenerates shared projections/seals and runs the
+After integrating the wave, the merger alone regenerates shared projections and runs the
 repository closure check. Conflict, scope escape, stale base, missing receipt or failed closure is
 `REJECT`, never a hand-merged success.
 

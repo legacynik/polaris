@@ -3,14 +3,11 @@
 Loads when Step 0 answered **`PUBLISHED`**: not every caller can change in one commit, or the
 caller set is not closed, or landing a change needs another party's release. Optimise for
 **commitment** — what you can no longer take back — never for a smaller surface at the cost of
-future flexibility. That's the other side: [`interface-and-seam.md`](interface-and-seam.md).
-
-Absorbed from `api-and-interface-design` (Osmani, `addyosmani-agent-skills`) — the best contract
-content in the house, without a rival.
+future flexibility. The other side is [interface-and-seam.md](interface-and-seam.md).
 
 ## Contents
 
-- [Hyrum's Law as an operating premise](#hyrums-law-as-an-operating-premise)
+- [Every observable behaviour is a contract](#every-observable-behaviour-is-a-contract)
 - [The One-Version rule](#the-one-version-rule)
 - [Published seams build at zero adapters](#published-seams-build-at-zero-adapters)
 - [Idempotency — the full section](#idempotency--the-full-section)
@@ -18,15 +15,11 @@ content in the house, without a rival.
 - [Where validation does NOT go](#where-validation-does-not-go)
 - [Third-party responses are untrusted data](#third-party-responses-are-untrusted-data)
 
-## Hyrum's Law as an operating premise
+## Every observable behaviour is a contract
 
-> With a sufficient number of consumers, every observable behaviour of a system is depended on
-> by somebody — regardless of what the contract promises.
-
-Not a quote to cite, a premise to operate under: undocumented quirks, error message text,
-timing, and ordering all become de facto contracts the moment a consumer you cannot enumerate
-depends on them. It is the one sentence in the house that explains *why* the answer to Step 0
-changes every rule downstream — a `PUBLISHED` surface has already made promises it never wrote
+Operate on this premise: once enough consumers exist, each thing a caller can observe — the
+documented contract, and also undocumented quirks, error message text, timing and ordering — is
+depended on by one of them. It explains *why* the answer to Step 0 changes every rule downstream — a `PUBLISHED` surface has already made promises it never wrote
 down. Consequences:
 
 - Be intentional about what a caller can observe — every observable behaviour is a potential
@@ -34,7 +27,7 @@ down. Consequences:
 - Don't leak implementation details across the seam; if it can be observed, assume it will be
   depended on.
 - Plan deprecation at design time, not when the first consumer complains.
-- Passing contract tests is not safety: Hyrum's Law means a change that looks safe by every
+- Passing contract tests is not safety: a change that looks safe by every
   written contract can still break a real consumer leaning on something nobody promised.
 
 ## The One-Version rule
@@ -107,7 +100,7 @@ Fill new rows from real transcripts, never invented ones.
 | "We don't need pagination for now" | You will, the moment one caller has 100+ items. |
 | "PATCH is complicated, let's just use PUT" | PUT needs the full object every time; PATCH is what callers actually want. |
 | "We'll version it when we need to" | A breaking change without versioning breaks every consumer that day, not on a schedule you pick. |
-| "Nobody uses that undocumented behaviour" | Hyrum's Law: if it's observable, someone depends on it. |
+| "Nobody uses that undocumented behaviour" | If it is observable, someone depends on it. |
 | "We can just maintain two versions" | Two live versions multiply maintenance and create the diamond-dependency problem — see the One-Version rule. |
 | "Internal APIs don't need contracts" | An internal consumer is still a consumer; a contract is what lets two teams build in parallel without coupling by accident. |
 | "Accepting the Idempotency-Key header is enough" | The header is the contract; storing the key against the result is the implementation. Accepting it and not honouring it tells the client retrying is safe when it isn't. |
@@ -116,9 +109,8 @@ Fill new rows from real transcripts, never invented ones.
 
 ## Where validation does NOT go
 
-`metodologia` carries only the positive half of this rule ("validate at boundaries"); the
-negative half is what stops validation sprawling into every function in the codebase. Validation
-belongs at the system's edges — a route handler, a form submission, a third-party response, an
+Validate at the boundaries; the other half of the rule — where validation stays out — is what
+stops it sprawling into every function in the codebase. Validation belongs at the system's edges — a route handler, a form submission, a third-party response, an
 environment variable load. It does **not** belong:
 
 - between internal functions that already share a type contract — the type contract *is* the

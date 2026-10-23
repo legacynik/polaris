@@ -21,7 +21,7 @@ ATTESTAZIONI_OK = {"attestata", "non-deployabile"}
 # una PR che tocca la pipeline si fonde solo con un umano.
 PIPELINE = re.compile(
     r"(^|/)\.github/workflows/|(^|/)\.fix/contract\.yml$|(^|/)sweep_gate\.py$"
-    r"|(^|/)fix_gate\.py$|(^|/)red_check\.py$|(^|/)")
+    r"|(^|/)fix_gate\.py$|(^|/)red_check\.py$|(^|/)skills-suite/")
 
 
 def read_frontmatter(path: Path) -> dict:

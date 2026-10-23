@@ -1,17 +1,16 @@
 ---
 name: retro
 description: ◇ Use when the user asks for a retrospective on a coding session to identify improvements to agent navigation, checks and information access. Not for automatically editing the environment.
-version: 1.0.0
+version: 1.0.1
 user-invocable: true
 disable-model-invocation: true
-source: "mattpocock/skills@49dd158d1076134a641b33efb035946536778336/skills/engineering/retro"
 ---
 
 The user has asked for a **retrospective**. You are suggesting improvements to the coding agent's **environment** to improve future runs.
 
 ## Steps
 
-1. Read the host repository's agent-writing guidance. If `writing-for-agents` is installed, use it as a style guide; otherwise follow the host's existing agent instructions. Do not require a Skill tool that a harness does not provide.
+1. Read the host repository's agent-writing guidance and its existing agent instructions, and follow them as the style guide.
 
 2. Read the primary sources for the session the user specifies. This may mean searching through session logs on this machine. If the user doesn't specify a session, default to the current one.
 
@@ -44,7 +43,7 @@ You have access to several files in the repo:
 - `CLAUDE.md`/`AGENTS.md`: these files are pushed to the context window of any agent working in this repo. They should be used incredibly sparingly, usually only for **navigation pointers** to other files.
 - `CODING_STANDARDS.md`: this file is read during review, not implementation. Add **navigation pointers** to docs folders if the standards file gets more than 1,000 lines long.
 - Docs: use docs as references files, pointed to by other files. Look for existing docs before writing new ones.
-- Skills: use skills for docs (since their description goes into the agent's context window), or for user-invoked commands. Follow the advice in the `writing-for-agents` skill when it is installed.
+- Skills: use skills for docs (since their description goes into the agent's context window), or for user-invoked commands.
 
 ## When NOT to use
 

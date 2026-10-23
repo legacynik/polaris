@@ -9,7 +9,7 @@ status: draft
 Gate: `../scripts/reference_catalog.py`. Run the bundled self-check:
 
 ```bash
-python3 reference-capture/scripts/reference_catalog.py --selfcheck
+python3 scripts/reference_catalog.py --selfcheck   # from the skill directory
 ```
 
 It must exit `0` only after proving all of these branches:

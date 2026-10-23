@@ -1,23 +1,23 @@
 # bypass-test — critic
 
-Ogni caso è riproducibile con un comando. Il criterio è uno: **prima della porta passava, adesso
-deve fallire.** I casi 1-3 sono i tre fallimenti misurati sul campo, non ipotesi.
+Every case is reproducible with one command. The criterion is single: **before the gate it passed, now
+it must fail.** Cases 1-3 are the three failures measured in the field, not hypotheses.
 
 ```bash
 mkdir -p /tmp/critic-artifact
 printf 'actual artifact line\n' > /tmp/critic-artifact/a.md
 ```
 
-## Il baseline che questi casi riproducono
+## The baseline these cases reproduce
 
-Tre run identiche di Opus nudo sullo stesso artefatto (una riga di censimento gstack), 2026-08-21,
-prompt identico e nessun suggerimento di formato. Tutte e tre hanno trovato i difetti reali. Nessuna
-ha superato i casi qui sotto.
+Three identical runs of bare Opus on the same artifact (one skill-census row), 2026-08-21,
+identical prompt and no format hint. All three found the real defects. None
+passed the cases below.
 
-## Caso 1 — commento senza rendiconto (0/3 lo superavano)
+## Case 1 — report without an account (0/3 passed it)
 
-Un report con finding veri e nessun `ledger`: il critico non dice cosa ha aperto né cosa ha
-accettato sulla fiducia.
+A report with real findings and no `ledger`: the critic does not say what it opened or what it
+accepted on trust.
 
 ```bash
 cat > /tmp/bypass-1.json <<'JSON'
@@ -28,10 +28,10 @@ JSON
 python3 scripts/critic_gate.py --validate /tmp/bypass-1.json   # atteso: exit 1, "ledger: missing"
 ```
 
-## Caso 2 — finding plausibile mai falsificato (3/3 lo producevano)
+## Case 2 — plausible finding never falsified (3/3 produced it)
 
-Ledger completo, citazione presente, ma nessun contro-argomento tentato. È la forma esatta delle tre
-run nude.
+Complete ledger, quote present, but no counter-argument attempted. It is the exact shape of the three
+bare runs.
 
 ```bash
 python3 - <<'PY' > /tmp/bypass-2.json
@@ -43,11 +43,11 @@ PY
 python3 scripts/critic_gate.py --validate /tmp/bypass-2.json   # atteso: exit 1, "falsification: missing"
 ```
 
-## Caso 3 — finding non citato, declassato invece che scartato
+## Case 3 — unquoted finding, downgraded instead of discarded
 
-È il difetto **verificato nel donatore**: gstack forza un finding non citato a confidenza `4-5`
-dichiarandolo soppresso, ma la sua tabella mostra `5-6` «con caveat», quindi un finding a 5 arriva
-comunque all'utente. Qui non esiste banda.
+This is the defect **verified in the donor**: the donor skill forces an unquoted finding to confidence `4-5`
+claiming it is suppressed, but its table shows `5-6` «with caveat», so a finding at 5 reaches
+the user anyway. Here there is no band.
 
 ```bash
 python3 - <<'PY' > /tmp/bypass-3.json
@@ -60,10 +60,10 @@ PY
 python3 scripts/critic_gate.py --validate /tmp/bypass-3.json   # atteso: exit 1, "unquoted is not a finding"
 ```
 
-## Caso 4 — zero finding taciuti
+## Case 4 — silent zero findings
 
-«Sembra a posto» senza dirlo. È la scappatoia che gstack lascia aperta: tutti gli specialist possono
-tornare `NO FINDINGS` e il run prosegue a `clean` senza che nessuno lo dichiari.
+«Looks fine» without saying so. It is the loophole the donor skill leaves open: all the specialists can
+return `NO FINDINGS` and the run proceeds to `clean` without anyone declaring it.
 
 ```bash
 python3 - <<'PY' > /tmp/bypass-4.json
@@ -75,11 +75,11 @@ PY
 python3 scripts/critic_gate.py --validate /tmp/bypass-4.json   # atteso: exit 1, "zero findings must be declared"
 ```
 
-Zero finding **dichiarati** invece passano, ed è voluto: `halt.reason` non vuoto → exit 0.
+Zero **declared** findings do pass instead, and that is intended: non-empty `halt.reason` → exit 0.
 
-## Caso 5 — finding che non è sopravvissuto al proprio contro-argomento
+## Case 5 — finding that did not survive its own counter-argument
 
-Il critico tenta la falsificazione, il contro-argomento tiene, e riporta il finding lo stesso.
+The critic attempts falsification, the counter-argument holds, and it reports the finding anyway.
 
 ```bash
 python3 - <<'PY' > /tmp/bypass-5.json
@@ -92,9 +92,9 @@ PY
 python3 scripts/critic_gate.py --validate /tmp/bypass-5.json   # atteso: exit 1, "did not survive"
 ```
 
-## Caso 6 — input illeggibile che non deve passare per verde
+## Case 6 — unreadable input that must not pass as green
 
-File assente, vuoto, o JSON rotto: **exit 2**, mai exit 0. Un gate che non sa leggere non approva.
+Missing file, empty file, or broken JSON: **exit 2**, never exit 0. A gate that cannot read does not approve.
 
 ```bash
 python3 scripts/critic_gate.py --validate /tmp/does-not-exist.json   # atteso: exit 2, "UNUSABLE"
@@ -102,10 +102,10 @@ printf '   ' > /tmp/bypass-6.json && python3 scripts/critic_gate.py --validate /
 printf '{nope'  > /tmp/bypass-6.json && python3 scripts/critic_gate.py --validate /tmp/bypass-6.json
 ```
 
-## Caso 7 — citazione o clausola contrattuale inventata
+## Case 7 — invented quote or contract clause
 
-Il gate rilegge sia `evidence.path:line` sia `contract_quote`. Una frase plausibile ma assente
-dall'artefatto o dal contratto deve fallire.
+The gate rereads both `evidence.path:line` and `contract_quote`. A plausible sentence that is absent
+from the artifact or the contract must fail.
 
 ```bash
 python3 - <<'PY' > /tmp/bypass-7.json
@@ -120,21 +120,21 @@ PY
 python3 scripts/critic_gate.py --validate /tmp/bypass-7.json   # exit 1, both quotes rejected
 ```
 
-## B8 — artifact relativo risolto dalla cwd del chiamante
+## B8 — relative artifact resolved from the caller's cwd
 
-Il selfcheck scrive report e artifact insieme, poi invoca il gate da una cwd sorella vuota. La
-versione precedente cerca `artifact/` nella cwd e fallisce; il gate corrente lo risolve dal report.
+The selfcheck writes report and artifact together, then invokes the gate from an empty sibling cwd. The
+previous version looks for `artifact/` in the cwd and fails; the current gate resolves it from the report.
 
-## Quello che questa porta NON blocca — dichiarato
+## What this gate does NOT block — declared
 
-- **Un ledger mentito.** `opened` può elencare un file che il critico non ha davvero letto: lo
-  script verifica la presenza del campo, non la lettura. Chiudere questa metà richiede la
-  strumentazione delle tool call, fuori dallo scope di un gate che decide in millisecondi.
-- **Una falsificazione di facciata.** `counter` non vuoto e `survived: true` si scrivono anche
-  senza aver pensato. Il gate impone che il passo esista e sia visibile a chi legge, non che sia
-  stato fatto bene — quello lo giudica il T3, non uno script.
-- **Provenienza runtime mentita.** Il gate verifica file e righe, non può provare che il modello
-  abbia davvero eseguito le tool call dichiarate; il T3 fresco resta l'autorità su quel passaggio.
+- **A lied-about ledger.** `opened` can list a file the critic did not really read: the
+  script verifies the presence of the field, not the reading. Closing this half requires
+  instrumenting the tool calls, out of scope for a gate that decides in milliseconds.
+- **A façade falsification.** A non-empty `counter` and `survived: true` can be written even
+  without having thought. The gate imposes that the step exists and is visible to the reader, not that it was
+  done well — that is judged by T3, not by a script.
+- **Lied-about runtime provenance.** The gate verifies files and lines, it cannot prove that the model
+  really executed the declared tool calls; the fresh T3 remains the authority on that step.
 
 ```bash
 python3 scripts/critic_gate.py --selfcheck   # 24 rami, inclusi ignoranza e rilocazione

@@ -1,0 +1,5 @@
+--- FAIL: TestAdd (0.00s)
+    add_test.go:7: want 3, got 2
+FAIL
+FAIL	example	0.631s
+FAIL

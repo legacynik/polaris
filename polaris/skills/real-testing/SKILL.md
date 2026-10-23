@@ -1,12 +1,12 @@
 ---
 name: real-testing
 description: ◇ Merge-readiness verdict from the real product. Serve your commit on a real environment, walk the customer journey through the UI across every surface it reaches, let a fresh agent try to break it, leave the tests in CI. Use before merge or promotion, or when someone says it works. Not diff reading (review).
-version: 3.1.0
+version: 3.2.3
 user-invocable: true
 auto: true
 lifecycle: "produces .real-test/verdicts/<hash>.json (local, never committed — drained by verdict.py once the hash is unreachable) + tests left in CI (permanent, drained by the test suite itself); .real-test/bypass.log local, drained by hand"
 invokes: [git-power]
-invoked-by: [flow-cli, bugfix, polaris-sweep, ship, human]
+invoked-by: [bugfix, polaris-sweep, pol-ship, pol-babysit, human]
 io: "diff/branch -> verdict MERGEABLE|MERGEABLE-CON-GAP|NOT-MERGEABLE naming the environment and the served SHA, with what held and what broke on every surface walked; consumed by the PreToolUse gate on `git commit` and by review/ship downstream"
 status: active
 ---
@@ -45,8 +45,8 @@ evidence. The scripts (`perimeter.py`, `verdict.py`) bind the verdict to the git
 
 ### When NOT to use it
 
-Reading a diff for quality (`review`), attacking an artifact (`critic`), hunting bugs
-(`codex-review`), a docs-only change (say so, stop), a repo without git (manual review), an
+Reading a diff for quality (`polaris-review`), attacking an artifact (`critic`), hunting bugs
+(a cross-model `codex review`), a docs-only change (say so, stop), a repo without git (manual review), an
 environment you cannot reach or a flag you cannot switch (**a block, not a degraded gate**).
 
 ## Process
@@ -56,7 +56,8 @@ environment you cannot reach or a flag you cannot switch (**a block, not a degra
    SHA (health `commit`, page build marker) equals your HEAD; not equal, stop. Flag off: turn it on
    or declare a block. When done, give the environment back and re-check parity.
 2. **What the change touches, from the graph.** `python3 scripts/perimeter.py --repo . --head <sha>`
-   then the code graph (`find_referencing_symbols`) on every changed symbol: callers, readers of the
+   then the code graph (find references; `git grep` and reading where the harness has none) on
+   every changed symbol: callers, readers of the
    same record, documents built from it, jobs and logs that consume it. Write the list of user
    surfaces and consequences: that list is what you walk, not the files.
 3. **What the change was meant to do, from the spec.** The acceptance criteria of the issue and the
@@ -68,21 +69,40 @@ environment you cannot reach or a flag you cannot switch (**a block, not a degra
    fails in life, what is left afterwards) · *the principles, always* (errors and logs written where
    the area writes them, tests seen red first, the area's quality gates).
 5. **Walk it as the customer.** Touches the frontend or changes what the UI shows? The browser walk
-   is mandatory: browser-harness on the preview, a dedicated instance verified with `list_tabs()`
-   **before any action** (only your own tabs; foreign tabs = stop and report), never Playwright,
-   never the owner's everyday browser. An API-only pass ticks backend-only boxes and nothing else.
+   is mandatory: a real browser on the preview, in a dedicated instance you started, whose open tabs
+   you list **before any action** (only your own tabs; foreign tabs = stop and report), never the
+   owner's everyday browser. An API-only pass ticks backend-only boxes and nothing else.
    Rotate surfaces between rounds.
 6. **Whoever breaks it is not whoever wrote it.** `Agent(model: "opus")` with fresh context: the
    environment URL with the SHA verified, the credentials, the checklist and the contract. Never
    the diff, never the session. It returns every attempt, expected against observed, and what
    survived; zero findings count only with what it tried. Its output is data; you classify it.
+   Every attempt names its **attack class** — `malformed-input`, `interruption`,
+   `prompt-injection`, `cancel-resume`, `stale-state`, `dirty-worktree`, `hung-command`, `flaky`,
+   `misleading-success` — and lands in the row's `attack` list: `run` with probe and result, or
+   `n/a` with the reason. A live `api-cli`, `llm-agent` or `frontend` row with no attack `run` is
+   refused by `verdict.py`: the happy path plus one error is not adversarial. A probe that fails
+   because its own harness was built wrong is debris, not a product defect: fix it and rerun.
 7. **The verdict, bound to the tree, then the tests.** `verdict.py new` / `verdict.py validate`:
    `NOT-MERGEABLE` until every box is ticked with evidence; `MERGEABLE-CON-GAP` names the open box,
    who closes it and when; the verdict names the environment and the served SHA. On a visible
    product lane the product owner walks the served branch **before the merge**; a standing "merge
    at green without asking" rule is bounded by that, ask once. Leave the tests in CI: a defect
    gets the test seen red before the fix, an untested combination its test, an invariant a
-   structural test, a false alarm the reason it looked like one, a ceiling an ADR.
+   structural test, a false alarm the reason it looked like one, a ceiling an ADR. A fix shows
+   the defect on the base and its absence on the branch: the same command or walk run on both.
+   What could not be proven is said, with the blocker named: «inconclusive» beats a confident claim.
+8. **Sign the PR and write the facts.** When a PR exists, post the receipt as one PR comment (a
+   local run before the PR keeps only the local verdict), the marker line
+   `<!-- real-test v1 sha=<40-hex head> verdict=MERGEABLE|MERGEABLE-CON-GAP -->` then the lines
+   `ambiente:`, `sha servito:` (the hex alone on its line), `osservato:`, `rami:`. The first word after
+   `ambiente:`, on that same line, is the repo's `signing_env` (`local`, `staging`, or a host carrying it
+   such as `api-staging.<host>`); free text may follow (`ambiente: local — this machine`). Any later
+   change to the head voids it. Then write the **facts** for the PR body (`pol-pr`) in `.real-test/fatti/<branch>.md` (environment and
+   served SHA, the walk step by step with each screenshot and what it shows, the breaker's
+   findings and what was fixed, the tests seen red, the gaps with owner and date, the release
+   facts such as a migration and its order). This door returns a verdict and drives nothing: it
+   ends by naming the next step: `pol-pr` for the body, then `pol-ship`'s proposal or the repository's own merge workflow.
 
 ## Rationalizations
 
@@ -122,4 +142,4 @@ Exit criteria, each with its evidence in the PR:
 - [ ] environment handed back (`ref=main`, flag restored) and parity re-checked
 
 Setup: `scripts/install-hook.sh --repo .` wires the gate (`.real-test/enabled`). References:
-`references/matrix-classes.md`, `references/bypass-test.md`, `references/provenance.md`.
+`references/matrix-classes.md`, `references/bypass-test.md`.

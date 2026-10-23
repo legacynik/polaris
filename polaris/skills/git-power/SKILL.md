@@ -1,13 +1,13 @@
 ---
 name: git-power
 description: ◇ Use before any Git commit or PR boundary and before any destructive Git action. MUST invoke for every `reset --hard` and every pre-PR comparison of a branch against origin/main; never substitute raw Git. Also censuses and safely closes worktrees, branches, stashes and PRs. Triggers on commit hygiene, PR too large, stale branches.
-version: 0.5.1
+version: 0.6.0
 user-invocable: true
 auto: false
 status: active
 lifecycle: the phase router emits no durable artifact; census JSON is regenerated live; destructive receipts live under the shared Git common dir at polaris-cantiere/removed-log.jsonl so cleanup never dirties main
 invokes: []
-invoked-by: [update, issue-contract, bugfix, ship, start, end, human esplicito, real-testing]
+invoked-by: [update, issue-contract, bugfix, pol-ship, start, end, human, real-testing]
 io: phase + live git/gh state -> one deterministic verdict or guarded action; no transcript and no full-workflow context
 ---
 
@@ -38,7 +38,9 @@ python3 "$GP" phase finalize --repo <current-worktree> --confirm <same-absolute-
 `finalize` runs from the worktree it closes and requires exact path confirmation. It acts only
 when `gh pr view` says `MERGED`, the PR head equals the current branch, and GitHub's merge commit
 is contained in `origin/<base>` after a fresh fetch. This supports merge commits, rebase merges,
-and squash merges without trusting a stale local `main`.
+and squash merges without trusting a stale local `main`. Run from the repository's own checkout
+(no linked worktree), it switches that clean checkout back to the base, aligns it and deletes the
+merged branch; there is no worktree to remove.
 
 The primary worktree is always handled explicitly:
 
@@ -68,7 +70,7 @@ python3 "$GP" --selfcheck
 merge/rebase/cherry-pick operations, open `.method/ledger.md` tasks, clean-but-unmerged
 worktrees, unmerged branches, and recent activity belonging to an unknown panel. No force flag.
 
-### `census --tsv` and `--apply` (#252, child of #130)
+### `census --tsv` and `--apply`
 
 Worktree rows carry a dedicated verdict vocabulary — `MAIN · PRUNABLE · IN_USE · DIRTY · ACTIVE ·
 CLOSABLE · COMMITS_AFTER_MERGE · ?` — replacing the old vivo/orfano/mergiato-da-chiudere/pericoloso
@@ -88,7 +90,7 @@ prune` for entries already gone from disk. DIRTY and IN_USE (a live process has 
 via `lsof`, on top of the existing `recent_activity_lock` HEAD-mtime guard) are never in the
 removed set — proven by fixture and by three-consecutive-run idempotency (`removed=N` on stderr;
 0 on the second and third run). `gate --threshold N` refuses a new worktree when CLOSABLE count
-`>= N`; #130 has not declared a real number yet (blocked on #127), so the default threshold is
+`>= N`; no real number is declared yet, so the default threshold is
 `None`, which never blocks — it only reports the count.
 
 `reset-hard` is the only guarded hard reset: dirty or mid-operation means exit 2. The primitive
@@ -97,11 +99,11 @@ also refuses `--force`, `branch -D`, `clean -f`, `stash clear`, and dirty-tree d
 
 ## Quando NON usarla
 
-- Merge/deploy policy remains `ship`; git-power owns Git state and post-merge convergence.
+- Merge/deploy policy stays with the repository's merge workflow; git-power owns Git state and post-merge convergence.
 - Size is a concern signal, not proof that a commit is semantically atomic.
 - It does not resolve conflicts or create feature worktrees.
 - Raw `git` typed outside this tool is not intercepted. Standard workflow enforcement comes from
-  callers (`update`, `ship`, `end`) invoking the exact phase; bypassing those callers bypasses the
+  callers (`update`, `end`) invoking the exact phase; bypassing those callers bypasses the
   lifecycle.
 
 ## Proof

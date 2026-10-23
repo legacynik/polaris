@@ -211,8 +211,8 @@ def _cases(repo: Path) -> list[tuple[str, bool]]:
     out = [("template is valid JSON with a SessionStart hook", bool(blocks)),
            ("the matcher is `compact`", "compact" in [b.get("matcher") for b in blocks]),
            ("it names the door that finds the reinserter", "session_gate.py" in command),
-           ("the permissions preset survived the merge",
-            "Bash(polmem *)" in doc.get("permissions", {}).get("allow", []))]
+           ("the template grants no tool permission",
+            not doc.get("permissions", {}).get("allow"))]
     code, said = _probe(command, repo)
     out.append(("silent and exit 0 with no resolver", code == 0 and said == ""))
     _plant(repo)

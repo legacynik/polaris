@@ -1,118 +1,104 @@
 ---
 name: issue-contract
-description: ◇ The ONE door to the GitHub tracker, for creating, updating, deduping or grouping issues and epics. Triggers on apri una issue, file an issue or a bug, track this, triage this, accorpa sotto epic, or a handoff from wayfinder. Searches first, then enforces the founder contract on the repo's own template — never a freeform gh issue create. Not for decomposing nebulous efforts.
-version: 2.0.2
+description: ◇ Create or update GitHub issues with a clear definition of done and regression checks. Use when asked to open an issue, track a bug, or hand work to another lane.
+version: 2.3.0
 user-invocable: true
 auto: true
-job: route any tracker request (new / extend / group) and enforce the full issue contract on whichever arm wins
-when_not: nebulous efforts not yet decomposed (wayfinder); question/discussion items (repo's light form, no full contract); non-GitHub trackers (Linear); 2-minute micro-fixes nobody wants tracked; backlog surveillance on a schedule (routine lane, polaris-os#62); judging code on an approved PR (review)
-lifecycle: issue GitHub reale o label di stato via gh (drenate da `ship`) o brief locale in `<repo>/.issue-contract/` o `_polaris/issues/` (drenato al primo template reale) — adapter cache in `~/.cache/issue-contract/` auto-invalidante · redundancy/dedup artifacts drenati da transition_gate.py alla scrittura · `.out-of-scope/<concept>.md` si auto-drena a ogni passata.
-invokes: [bugfix, git-power]
-invoked-by: [wayfinder, start, cron-sweep, spec-driven-development, crasher, human]
-io: riceve una richiesta tracker (nuovo item, update di #N, accorpamento) + repo-path -> dopo ricerca obbligatoria produce UNA di - issue nuova contract-complete con numero - transizione di stato gated su issue esistente - epic con figlie collegate - o un rifiuto con il pezzo mancante nominato.
+job: record the requested work in the tracker without starting implementation
+when_not: implementation, code review, or speculative roadmap decomposition
+lifecycle: GitHub issue or update; no duplicate local brief
+invokes: [bugfix, git-power, ambitious-goal]
+invoked-by: [start, cron-sweep, crasher, human]
+io: request and existing evidence -> issue URL carrying its AFK label, with branch link when supplied
 status: active
 ---
 
-# issue-contract
+# Issue Contract
 
-One door to the tracker. Whatever the request — new issue, update, grouping — the flow is the
-same: **search first, route with the data in front of you, then act through a gate**. Nothing
-reaches `gh` by hand.
+Make the ticket useful and easy to read. The required content is a short description, a
+definition of done, what to test to avoid regressions, and who may pick the work up. Write in
+the language the repository's existing issues use unless the user asks for another. Technical
+names and commands belong only where they help someone execute or verify the work.
 
-## STEP 0 — Search (mandatory, before any writing)
+## Default flow
 
-- Code touched: Serena graph (`find_symbol`, `search_for_pattern`, `find_referencing_symbols`).
-- Tracker: `gh issue list --repo <o/r> --search "<concept>" --state all --json number,title,state`.
+`invokes` lists available routes, not mandatory steps; use the conditions below.
 
-Every path/symbol you will cite must come from this step (B15 blocks unverified references —
-mark genuinely-new files `(new)`).
+1. **Search once for duplicates.** `gh issue list --state all --search "<key words>"`. Reuse a
+   clearly matching issue; otherwise create one. Inspect code only to resolve a concrete
+   uncertainty, through the code graph or LSP if available. Done when you hold either the twin's
+   number or the search that found none.
+2. **Refine a feature only when needed.** For a feature or feature epic whose outcome, scope or
+   DoD is unclear, use `ambitious-goal`: pass the evidence and constraints, take back the
+   contract, publish it here. Bugs and mechanical tickets skip this step; no mandatory interview.
+3. **Decide who may pick it up, before writing.** The work is for a **person** when any holds:
+   the request says to leave it to a person, keep it, not hand it to an agent, or not auto-claim
+   it; it needs an access, credential or authority an agent does not hold; it waits on a
+   product, business, legal or owner decision; the repository's own policy reserves that kind of
+   work. Otherwise follow the repository's AFK policy. Then let the script name the label:
 
-## STEP 1 — Route (three outcomes, decided here, never by the trigger)
+   ```bash
+   gh label list --json name --limit 500 > /tmp/labels.json
+   python3 scripts/afk_label.py pick --human yes --labels /tmp/labels.json   # or --human no
+   ```
 
-| Found | Route | Mechanism |
-|---|---|---|
-| Nothing similar | **NEW** issue/epic | `scripts/build_issue.py` (below) |
-| A partial match | **EXTEND** it — comment, add ACs, change state | `scripts/transition_gate.py` — state machine in [references/update-gate.md](references/update-gate.md) |
-| Scattered pieces | **GROUP** — epic + typed children | `build_issue.py --type epic`, then `transition_gate.py` on the pieces |
+   It reads `tracker.afk_human` / `tracker.afk_agent` from the product repository's
+   `_polaris/config.yml` when present, else the repository's own labels (`afk:human`,
+   `ready-for-human`, `needs-human` for a person; `afk:eligible`, `ready-for-agent`,
+   `agent-ready` for an agent). Exit 2 means work for a person has no label to carry it: tell the
+   user which label to create or configure, and do not file the issue without it. Done when you
+   hold the label name (empty only for agent work in a repository with no AFK labels).
+4. **Write the short ticket below**, then pick routine labels (type, area, priority) from the
+   repository's existing labels and its issue templates. Preserve existing assignees and state
+   unless asked to change them.
+5. **Create or update directly** with the connected GitHub tools or `gh` with a body file and
+   `--label <the step-3 label>`. A request to open an issue already authorizes creation: no
+   second confirmation or dry-run handoff.
 
-If you can't say why the item deserves to exist on its own, you already have the answer: extend.
+```markdown
+<What is wrong or needed, why it matters, and any relevant branch or evidence link.>
 
-## The eight contracts (NEW arm — all enforced by `build_issue.py`, exit 2 with the missing piece)
+## DoD
+- <Observable result that makes the work complete.>
 
-1. **Measurable DoD** — every `--ac` needs >=2 independent signals (number / % / `code` /
-   test-keyword / exit-code).
-2. **Adversarial tests upfront** (`--adv-test`, >=2 executable) — run right after
-   implementation, before merge/deploy.
-3. **Executive** (`--exec`) — plain Italian, no backticks: the founder reads what the issue
-   does without the tech part.
-4. **Existence justified** (`--dedup "Searched: ... Found: ..."`) — renders as
-   `## Not a duplicate because`: the STEP 0 receipt, visible in the issue. At `--apply` the
-   script re-checks live and blocks on collision (extend / group / `--ack-existing`).
-5. **Verified references** (B15) — every cited path exists in the repo or the item says
-   `(new)`. Fabricated targets are worse than none.
-6. **Domain label** (`--domain`, from `.github/DOMAINS.yml`) — renders `domain:<x>`,
-   filterable. Empty glossary blocks; absent glossary warns.
-7. **Priority** (`--priority p0|p1|p2|p3`).
-8. **AFK eligibility** (`--afk yes|no`) — declared at birth, always: may an unattended agent
-   claim this? `yes` → label `afk:eligible` (what multi-poll picks up), `no` → `afk:human`.
-
-## NEW arm — usage
-
-```bash
-python3 scripts/parse_template.py --repo-path <repo> --json   # repo's real template (cached)
-python3 scripts/build_issue.py --repo-path <repo> --repo-slug <owner/repo> \
-  --type bug --title "Login 500s on empty password" \
-  --ac '`POST /login` with empty password returns 400, not 500' \
-  --adv-test '`pytest tests/test_login.py` (new) red before the fix, green after' \
-  --adv-test '`curl -X POST /login -d "{}"` returns 400, not 500' \
-  --exec "Oggi il login esplode con un errore da server quando la password è vuota." \
-  --dedup "Searched: gh --search login 500; Serena find_symbol login. Found: none." \
-  --domain auth --priority p1 --afk yes
-# dry-run by default; --apply creates for real (autonomous chain uses --apply directly,
-# human invocation confirms the dry-run first)
+## Regression checks
+- <The normal behavior to preserve and the failure or edge case to exercise.>
 ```
 
-`--type` matches the repo's OWN template names (free text, never an enum). No template in the
-repo → local brief with the same eight gates. No epic template → `_polaris` epic#38 shape,
-declared. Details unchanged from v1.x — see [references/bypass-test.md](references/bypass-test.md).
-
-## UPDATE arm — state, promotion, wontfix (the former `triage`)
-
-States: `needs-triage · needs-info · ready-for-agent · ready-for-human · wontfix`. Every
-promotion runs through `decide()` — a direct import is gated exactly like the CLI, and
-`--apply` fuses decision + `gh issue edit` in one process:
-
-```bash
-python3 scripts/transition_gate.py --to <state> --apply --issue-number <n> --repo <o/r> \
-  [--issue-json snap.json] --redundancy-file red.md [--reason ...] [--out-of-scope-file ...]
-```
-
-`ready-for-agent` and `wontfix rejected-*` REQUIRE `--issue-json` (unverifiable = blocked).
-Promotion to `ready-for-agent` posts the brief ([references/agent-brief.md](references/agent-brief.md))
-and dispatches `bugfix`. Prior rejections live in `.out-of-scope/`
-([references/out-of-scope.md](references/out-of-scope.md)). Full shape and bypass proof:
-[references/update-gate.md](references/update-gate.md), [references/bypass-test-update.md](references/bypass-test-update.md).
+Use as many bullets as the actual work needs. Do not invent numeric targets, commands, file
+paths, or a test implementation merely to fill a template. Distinguish tests still to run from
+evidence already collected. Add reproduction steps only when they help.
 
 ## When NOT to use
 
-- **Nebulous efforts** not yet decomposed ("sistemare l'auth") → `wayfinder` first.
-- **Question/discussion items** (grilling) → the repo's light form; the full contract would
-  push people back to freeform.
-- **Non-GitHub trackers** (Linear) → that tracker's native tool.
-- **2-minute micro-fixes** nobody wants tracked — process for its own sake is the opposite defect.
-- **Scheduled backlog surveillance** (alarms, stale scans) → routine lane (polaris-os#62), not
-  this skill's lifecycle.
-- **Judging code on an approved PR** → `review`.
+- Opening an issue does not authorize implementation, assigning it to yourself, or launching
+  an agent. A handoff stays with the receiving lane; do not fix it while preparing the ticket.
+- Link existing branches, PRs and evidence. Do not create a plan, ADR, local dossier, patch
+  archive or review process just to open an issue. Create a branch only when requested.
+- No mandatory multi-field contract, score, cost estimate, executive section, dedup essay,
+  minimum test count or measurable-signal regex. Honor any genuinely enforced repository
+  requirement without turning optional issue-form fields into another interview.
+- Do not promote or dispatch work merely because an issue was created.
 
-## What this gate cannot stop
+## Before returning
 
-A freeform `gh issue create`, direct API calls or the web UI bypass these scripts entirely.
-Closing that needs the repo layer: contract-aligned issue forms (required fields + dropdowns
-generated from `DOMAINS.yml`) and a retroactive CI check flagging non-conforming issues
-(nag, never a block) — tracked in the seeding package, not faked here.
+Read the issue back and check its labels carry the step-3 decision:
 
-## Bypass-test
+```bash
+gh issue view <N> --json labels > /tmp/issue.json
+python3 scripts/afk_label.py verify --human yes --issue /tmp/issue.json --labels /tmp/labels.json
+```
 
-`references/bypass-test.md` — Tests 1–8 (v1.0.0) + B9–B16 (founder contract 2026-08-16),
-each with before/after output and version. `references/bypass-test-update.md` — the update
-arm's 14 fail-closed proofs. `--selfcheck` on both scripts replays everything offline in <1s.
+Exit 0 is required: exit 1 names the missing label, or an agent label on work for a person;
+fix it with `gh issue edit <N> --add-label/--remove-label` and verify again. Then check the DoD
+and regression checks match the request and any supplied branch link is present. Return the
+link without replaying the workflow.
+
+## Selfcheck
+
+```bash
+python3 scripts/afk_label.py --selfcheck
+python3 -m pytest -q tests/test_afk_label.py
+```
+
+Bypass cases: `references/bypass-test.md`.
