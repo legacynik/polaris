@@ -1,0 +1,22 @@
+{
+  "artifact": "../fixtures/guard",
+  "contract": "On a dirty worktree, refuse reset --hard, checkout -- ., restore --worktree, stash, clean -fd, branch -D, and push --force.",
+  "ledger": {"opened": ["guard.py"], "not_opened": [], "accepted_unverified": []},
+  "findings": [
+    {
+      "claim": "DESTRUCTIVE omits checkout -- ., restore --worktree, stash, and clean -fd, so allowed() permits four required-refusal commands on a dirty worktree",
+      "severity": "critical",
+      "contract_quote": "refuse reset --hard, checkout -- ., restore --worktree, stash, clean -fd, branch -D, and push --force",
+      "evidence": {"path": "guard.py", "line": 1, "quote": "DESTRUCTIVE = (\"reset --hard\", \"branch -D\", \"push --force\")"},
+      "falsification": {"counter": "maybe those four are gated elsewhere in the module, not shown in this fixture", "survived": true, "why": "file is the entire artifact; allowed() only checks DESTRUCTIVE, no other gating logic exists"}
+    }
+  ],
+  "dropped": [
+    {
+      "candidate": "substring matching in DESTRUCTIVE could false-positive on unrelated commands containing 'push --force' as text",
+      "counter": "contract only requires refusal of the listed commands, not precision against false positives",
+      "why_it_died": "not a contract violation, only a design nuance outside stated requirements"
+    }
+  ],
+  "halt": null
+}

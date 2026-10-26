@@ -16,7 +16,7 @@ from pathlib import Path
 # ONE line model for the whole package: the donor writes state as TABLES, and a bullet-only reader
 # reported `TODOS_ACTIVE=0` on the real file while quietly losing an overdue follow-up.
 import sys
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "update" / "scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "end" / "scripts"))
 from state_lines import kinds, section as body_of, table_row  # noqa: E402
 from state_sections import ENTRY, OUTER, SECTIONS as REGISTRY, heading  # noqa: E402
 
@@ -96,8 +96,8 @@ def emit_spool(main_wt: Path) -> list[str]:
         return []
     spool = Path(common if Path(common).is_absolute() else main_wt / common) / "polaris-deferred"
     n = len([p for p in spool.rglob("*") if p.is_file()]) if spool.is_dir() else 0
-    return [f"SPOOL_LEGACY={n} — vecchie entry mai committate in {spool}: "
-            "portale a mano con git add, poi cancella la cartella"] if n else []
+    return [f"SPOOL_LEGACY={n} — old entries never committed in {spool}: "
+            "bring them over by hand with git add, then delete the directory"] if n else []
 
 
 def emit_drift(main_wt: Path, login: str) -> list[str]:
@@ -187,7 +187,7 @@ def _vault(root: Path) -> Path | None:
         declared = declared if declared.is_absolute() else root / declared
         if declared.is_dir():
             if key:
-                print(f"NOTA: {key} è deprecato — git config polaris.vault {declared}",
+                print(f"NOTE: {key} is deprecated — git config polaris.vault {declared}",
                       file=sys.stderr)
             return declared
     return None
@@ -240,3 +240,42 @@ def _held_for_lane(lines: list[str]) -> list[str]:
     rows = [ln for ln in lines if ln.startswith("layer: ")]
     kept = [ln for ln in lines if not ln.startswith(("layer: ", "QUESTION:", "AREA_CHOSEN:"))]
     return kept + ([f"PACK: {len(rows)} rows held for lane entry"] if rows else [])
+
+
+def _selfcheck() -> int:
+    """The pure readers and the vault lookup; the emitters run end to end in brief_signals."""
+    import tempfile
+    todos = ("## Active\n\n| Task | Added | Context |\n|---|---|---|\n| `a` — x | W32 | c |\n"
+             "| *None* | | |\n\n## Follow-ups\n\n| Item | Review Date | Note |\n|---|---|---|\n"
+             "| riprendi | 2026-09-01 | |\n")
+    ok = [section(todos, "## Active") == ["| `a` — x | W32 | c |"],          # placeholder dropped
+          due_on("| riprendi | 2026-09-01 | |") == "2026-09-01",
+          due_on("- riprendi · Review: 2026-09-02") == "2026-09-02",
+          _held_for_lane(["AREA: x", "layer: a", "layer: b", "QUESTION: which?"])
+          == ["AREA: x", "PACK: 2 rows held for lane entry"]]
+    saved = os.environ.pop("POLARIS_VAULT", None)
+    try:
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            ok.append(emit_todos(root, "2026-09-03")[0].startswith("TODOS=absent"))
+            (root / "vault" / "scripts").mkdir(parents=True)
+            os.environ["POLARIS_VAULT"] = str(root / "vault")
+            ok.append(_vault(root) == root / "vault")
+            ok.append(_resolver(root) is None)                 # a vault without the script
+            (root / "vault" / RESOLVER).write_text("")
+            ok.append(_resolver(root) == root / "vault" / RESOLVER)
+            os.environ["POLARIS_VAULT"] = str(root / "nowhere")
+            ok.append(_vault(root) != root / "nowhere")          # never invented
+    finally:
+        os.environ.pop("POLARIS_VAULT", None)
+        if saved is not None:
+            os.environ["POLARIS_VAULT"] = saved
+    print(f"_brief_parts selfcheck: {sum(ok)}/{len(ok)} branches OK")
+    return 0 if all(ok) else 1
+
+
+if __name__ == "__main__":
+    if sys.argv[1:] not in ([], ["--selfcheck"]):
+        print("usage: _brief_parts.py [--selfcheck]", file=sys.stderr)
+        sys.exit(2)
+    sys.exit(_selfcheck())

@@ -4,7 +4,7 @@ The founder's rule of 2026-09-04: *«il log di sessione si committa dove sei, su
 corrente, sempre. Niente spool, niente rinvii, niente worktree principale sul default»*.
 
 Every repo here is built by `host_repo` from the package's own templates, and every command
-is a shipped script or a bash block read verbatim out of a shipped SKILL.md.
+is a shipped script run directly.
 """
 from __future__ import annotations
 
@@ -26,22 +26,9 @@ def session_log(repo: Path, login: str = LOGIN) -> Path:
     return log
 
 
-def end_files(repo: Path, login: str = LOGIN) -> list[str]:
-    """The four paths `/end` Step 5 names and that exist on a normal run, repo-relative."""
-    root = repo / "_polaris"
-    log = session_log(repo, login)
-    hand = root / "team" / login / "handoff" / f"{TODAY}.md"
-    hand.parent.mkdir(parents=True, exist_ok=True)
-    hand.write_text(f"# Handoff {TODAY} — @{login}\n## Shipped (verified)\n- niente\n")
-    (root / "decisions.md").write_text(f"## {TODAY} — decision (@{login})\n")
-    (root / "lessons.md").write_text(f"## {TODAY} — lesson (@{login})\n")
-    return sorted(str(p.relative_to(repo)) for p in
-                  (log, hand, root / "decisions.md", root / "lessons.md"))
-
-
 def checkpoint_commit(cwd: Path) -> subprocess.CompletedProcess:
     """`checkpoint.sh commit` — the command the shipped `/update` Landing block names."""
-    return run_script("update", "checkpoint.sh", "commit", cwd=str(cwd))
+    return run_script("end", "checkpoint.sh", "commit", cwd=str(cwd))
 
 
 def dirt(repo: Path) -> list[str]:

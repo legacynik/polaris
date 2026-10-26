@@ -1,0 +1,69 @@
+{
+  "skill": "database-schema",
+  "method": "ARRIVAL (explicit | implicit | negative) x TASK (query | migration | model | RLS | question about the data). Positives touch the real schema; negatives are data-model or migration-strategy commitments (architecture), database-free work, and a schema already checked this session.",
+  "cases": [
+    {
+      "id": "p01",
+      "should_trigger": true,
+      "kind": "explicit",
+      "tuple": "query / explicit",
+      "prompt": "Before you write the query, check the real schema of orders and invoices."
+    },
+    {
+      "id": "p02",
+      "should_trigger": true,
+      "kind": "implicit",
+      "tuple": "query / implicit",
+      "prompt": "Aggiungi un filtro per stato sulla lista ordini, la colonna dovrebbe chiamarsi status."
+    },
+    {
+      "id": "p03",
+      "should_trigger": true,
+      "kind": "implicit",
+      "tuple": "migration / implicit",
+      "prompt": "Write a migration that adds a discount_pct column to quote_lines."
+    },
+    {
+      "id": "p04",
+      "should_trigger": true,
+      "kind": "implicit",
+      "tuple": "question / implicit",
+      "prompt": "Perché il campo trace_id è sempre null nelle fatture?"
+    },
+    {
+      "id": "p05",
+      "should_trigger": true,
+      "kind": "implicit",
+      "tuple": "RLS / implicit",
+      "prompt": "Add an RLS policy so users only update their own quotes."
+    },
+    {
+      "id": "p06",
+      "should_trigger": true,
+      "kind": "explicit",
+      "tuple": "question / explicit",
+      "prompt": "Does the clients table have an email column? Check, don't guess."
+    },
+    {
+      "id": "n01",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "architecture",
+      "prompt": "Should quotes and orders share one table or two? We need to decide the data model."
+    },
+    {
+      "id": "n02",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "no database",
+      "prompt": "Change the button color on the settings page to our brand blue."
+    },
+    {
+      "id": "n03",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "architecture",
+      "prompt": "Plan the expand/contract order for renaming customer to client across three services."
+    }
+  ]
+}

@@ -6,11 +6,11 @@ This repository is the Polaris skills package: each skill is a folder under `pol
 whose `SKILL.md` an agent follows. Users install and update it only through the skills CLI.
 
 The skill list and the `_polaris/config.yml` keys each skill reads live in [README.md](README.md)
-and [docs/skills.md](docs/skills.md); do not copy them here. The session commands are
-[start](polaris/skills/start/SKILL.md), [update](polaris/skills/update/SKILL.md),
-[end](polaris/skills/end/SKILL.md), [plan-week](polaris/skills/plan-week/SKILL.md),
-[report](polaris/skills/report/SKILL.md), [polaris-status](polaris/skills/polaris-status/SKILL.md)
-and [polaris-grill](polaris/skills/polaris-grill/SKILL.md).
+and [docs/skills.md](docs/skills.md); do not copy them here. How the structures work (delivery
+cycle, plan file, tracking, decisions, documents, context pack, sessions, memory) is in `docs/`.
+The router is [base-workflow](polaris/skills/base-workflow/SKILL.md); the session commands are
+[start](polaris/skills/start/SKILL.md), [end](polaris/skills/end/SKILL.md),
+[status](polaris/skills/status/SKILL.md) and [week](polaris/skills/week/SKILL.md).
 
 ## Setup
 

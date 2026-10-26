@@ -1,0 +1,120 @@
+[
+  {
+    "id": "idea-goes-to-grill",
+    "prompt": "Ho un'idea: aggiungere l'export CSV delle offerte, con filtri per data. Partiamo.",
+    "expect": [
+      "grill"
+    ],
+    "forbid": [
+      "plan-area",
+      "implement-plan",
+      "tdd-dev",
+      "ship"
+    ],
+    "next_any": [
+      "plan-area",
+      "prototype",
+      "taglia",
+      "size"
+    ]
+  },
+  {
+    "id": "bug-goes-to-bugfix",
+    "prompt": "Bug: il totale IVA esce 0 sulle offerte estere. Traceback: ZeroDivisionError in vat.py line 42, compute_vat(). Sistemalo.",
+    "expect": [
+      "bugfix"
+    ],
+    "forbid": [
+      "grill",
+      "plan-area"
+    ],
+    "next_any": [
+      "ship",
+      "riproduz",
+      "reproduc",
+      "traceback",
+      "stadio",
+      "stage"
+    ]
+  },
+  {
+    "id": "scoped-medium-goes-to-plan-area",
+    "prompt": "Grill fatto sull'export CSV: taglia Media, perimetro confermato (solo export, niente import). Adesso scriviamo il piano.",
+    "expect": [
+      "plan-area"
+    ],
+    "forbid": [
+      "implement-plan",
+      "ship"
+    ],
+    "next_any": [
+      "critic"
+    ]
+  },
+  {
+    "id": "done-goes-to-ship",
+    "prompt": "Il lavoro sull'export CSV è finito e i test sono verdi: apri la PR e portala al merge.",
+    "expect": [
+      "ship"
+    ],
+    "forbid": [
+      "grill",
+      "plan-area"
+    ],
+    "next_any": [
+      "babysit",
+      "pr ",
+      "owner",
+      "merge"
+    ]
+  },
+  {
+    "id": "track-only-goes-to-issue-contract",
+    "prompt": "Segnati questa cosa per dopo, non farla ora: il pulsante Esporta non ha il tooltip.",
+    "expect": [
+      "issue-contract"
+    ],
+    "forbid": [
+      "tdd-dev",
+      "implement-plan",
+      "bugfix"
+    ],
+    "next_any": [
+      "ora o dopo",
+      "now or later",
+      "adesso",
+      "dopo",
+      "later"
+    ]
+  },
+  {
+    "id": "open-architecture-idea-grills-first",
+    "prompt": "Idea: spostiamo il calcolo dei prezzi dal backend a un servizio separato con la sua API, così lo usano anche altri prodotti. Ragioniamoci e poi facciamo il piano.",
+    "expect": [
+      "grill"
+    ],
+    "forbid": [
+      "plan-area",
+      "implement-plan",
+      "ship"
+    ],
+    "next_any": [
+      "architecture"
+    ]
+  },
+  {
+    "id": "taken-decision-goes-to-architecture",
+    "prompt": "Abbiamo deciso: il calcolo dei prezzi esce dal backend e diventa un servizio separato con la sua API, lo userà anche l'app mobile. Registra la decisione e poi facciamo il piano.",
+    "expect": [
+      "architecture"
+    ],
+    "forbid": [
+      "implement-plan",
+      "ship"
+    ],
+    "next_any": [
+      "plan-area",
+      "prototype"
+    ]
+  }
+]

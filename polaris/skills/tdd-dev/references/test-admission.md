@@ -11,6 +11,7 @@ observed weak tests, not hypothetical style preferences. A receipt cannot rescue
 | Source lacks `or True` | Implementation text, not guard behaviour | Send the cheapest invalid input through the public guard; assert refusal |
 | Direct call to private `_thrashing` | A harmless rename breaks the test | Drive the public stage/CLI with break rows and observe admission/refusal |
 | Generated argv contains a script path | Existence is not executed wiring | Run the public dry-run path and inspect the downstream contract |
+| A file exists, a doc holds a word, a function has a name, a config value equals 5 | Pins a name, a path, text or a setting; fires on a rename, sleeps through a bug | Refuse it aloud (`SKILL.md` → *How tests are written*); run the unit with inputs the test supplies, settings included, and assert its output, side effect or exit code |
 
 The fixture corpus under `eval/behaviour/` reproduces these patterns with neutral features.
 Source/prose greps and argv inspection may remain diagnostic checks, never the behavioural TEST.
@@ -36,8 +37,8 @@ finding, not a reason for a deeper mock.
 ## Frozen-test outcome grader
 
 ```bash
-python3 tdd-dev/scripts/test_value_grade.py <feature-dir> <candidate-test.py>
-python3 tdd-dev/scripts/test_value_grade.py --check-fixtures
+python3 skills-suite/tdd-dev/scripts/test_value_grade.py <feature-dir> <candidate-test.py>
+python3 skills-suite/tdd-dev/scripts/test_value_grade.py --check-fixtures
 ```
 
 The feature directory contains `spec.md` (public contract only), `base/`, `solution/`,

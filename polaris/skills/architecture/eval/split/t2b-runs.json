@@ -1,0 +1,164 @@
+[
+ {
+  "id": "p08",
+  "should_trigger": true,
+  "runs": [
+   {
+    "first_tool": [
+     "Bash",
+     null
+    ],
+    "rank1": false
+   },
+   {
+    "first_tool": [
+     "Bash",
+     null
+    ],
+    "rank1": false
+   },
+   {
+    "first_tool": [
+     "Bash",
+     null
+    ],
+    "rank1": false
+   }
+  ]
+ },
+ {
+  "id": "p04",
+  "should_trigger": true,
+  "runs": [
+   {
+    "first_tool": [
+     "Skill",
+     "architecture"
+    ],
+    "rank1": true
+   },
+   {
+    "first_tool": [
+     "Skill",
+     "architecture"
+    ],
+    "rank1": true
+   },
+   {
+    "first_tool": [
+     "Skill",
+     "architecture"
+    ],
+    "rank1": true
+   }
+  ]
+ },
+ {
+  "id": "p03",
+  "should_trigger": true,
+  "runs": [
+   {
+    "first_tool": [
+     "Bash",
+     null
+    ],
+    "rank1": false
+   },
+   {
+    "first_tool": [
+     "Skill",
+     "architecture"
+    ],
+    "rank1": true
+   },
+   {
+    "first_tool": [
+     "Bash",
+     null
+    ],
+    "rank1": false
+   }
+  ]
+ },
+ {
+  "id": "p09",
+  "should_trigger": true,
+  "runs": [
+   {
+    "first_tool": [
+     "Skill",
+     "architecture"
+    ],
+    "rank1": true
+   },
+   {
+    "first_tool": [
+     "Skill",
+     "architecture"
+    ],
+    "rank1": true
+   },
+   {
+    "first_tool": [
+     "Skill",
+     "architecture"
+    ],
+    "rank1": true
+   }
+  ]
+ },
+ {
+  "id": "n02",
+  "should_trigger": false,
+  "runs": [
+   {
+    "first_tool": [
+     "Bash",
+     null
+    ],
+    "rank1": false
+   },
+   {
+    "first_tool": [
+     "Bash",
+     null
+    ],
+    "rank1": false
+   },
+   {
+    "first_tool": [
+     "Bash",
+     null
+    ],
+    "rank1": false
+   }
+  ]
+ },
+ {
+  "id": "n03",
+  "should_trigger": false,
+  "runs": [
+   {
+    "first_tool": [
+     "Bash",
+     null
+    ],
+    "rank1": false
+   },
+   {
+    "first_tool": [
+     "Skill",
+     "superpowers:systematic-debugging"
+    ],
+    "rank1": false
+   },
+   {
+    "first_tool": [
+     "Bash",
+     null
+    ],
+    "rank1": false
+   }
+  ]
+ }
+]

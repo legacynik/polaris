@@ -1,0 +1,57 @@
+{
+  "date": "2026-10-25",
+  "judge": "fresh-context agent, fast model, blind to which run is which version; judged each assertion on one transcript alone",
+  "transcripts": {
+    "baseline": "baseline.md (tdd-dev 2.6.0)",
+    "after": "after.md (tdd-dev 2.7.0)"
+  },
+  "red": [
+    "c10",
+    "c11",
+    "c12"
+  ],
+  "guards_green_on_both": [
+    "c9",
+    "c13"
+  ],
+  "verdicts": {
+    "baseline": {
+      "c1": "yes",
+      "c2": "yes",
+      "c3": "no",
+      "c5": "yes",
+      "c7": "yes",
+      "c9": "yes",
+      "c10": "no",
+      "c11": "no",
+      "c12": "no",
+      "c13": "yes"
+    },
+    "after": {
+      "c1": "yes",
+      "c2": "yes",
+      "c3": "yes",
+      "c5": "yes",
+      "c7": "yes",
+      "c9": "yes",
+      "c10": "yes",
+      "c11": "yes",
+      "c12": "yes",
+      "c13": "yes"
+    }
+  },
+  "why": {
+    "baseline": {
+      "c10": "the replacement still calls load_settings(CONFIG) on the real config.yml and asserts 6, so editing the shipped config turns it red",
+      "c11": "monkeypatch.setattr(sessions, 'datetime', FrozenDatetime) with 'no production change is needed' patches a name inside the module",
+      "c12": "Request 4 answers with a unit-test list and the bugfix path and never proposes an integration or real-testing check of the whole flow",
+      "c3": "no RED output is read or rejected; every RED is 'none naturally'"
+    },
+    "after": {
+      "c10": "passes {'max_retries': 2} directly: 'The settings are handed in, so config.yml is never read.'",
+      "c11": "changes the production signature to is_expired(session, now=None) and the test passes NOW in, with no patching",
+      "c12": "'The production break ... is caught by an integration test or real-testing. That is the whole flow path'",
+      "c3": "'the first run is a TypeError on the unknown now argument. That is staged, not a valid RED'"
+    }
+  }
+}

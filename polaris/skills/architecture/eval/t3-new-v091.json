@@ -1,0 +1,70 @@
+{
+  "checks": [
+    {
+      "id": "c1",
+      "assertion": "the emitted artifact carries its fixed fields, including the degraded-mode field, on ALL FOUR arms it can be emitted on -- the decision record, the landing receipt, ARCHITECTURE.md and the audit report (critic round-2 F3). The modalita field's first line is a structured, self-contained declaration -- `modalita: piena` or `modalita: ridotta ... missing: <tag>[, <tag>...]$` -- and EVERY such line in the artifact must be exactly well-formed, independent of position or markup. Text inside a fenced code block is not scanned (critic round-2 F9). Full hardening history and the declared residual: bypass-test.md B8",
+      "passed": true,
+      "evidence": "MECHANICALLY VERIFIED: the actual c1 cmd extracted from checks.json and run against the real (verbatim, not paraphrased) architecture-record-verbatim.txt file -> exit 0, confirmed independently by 2 separate fresh critics (round 5 and round 6) and 40+ direct fixture tests. All 6 typed fields present plus a structured, well-formed modalita line naming rule-library/decisions/glossary as missing."
+    },
+    {
+      "id": "c2",
+      "assertion": "the reversibility verdict OWNED or PUBLISHED appears before any rule-derived advice in the transcript, and names which of the three conditions decided it",
+      "passed": true,
+      "evidence": "Opens with reversibilita: OWNED before any options/cost/choice, names all three Step 0 conditions explicitly."
+    },
+    {
+      "id": "c3",
+      "assertion": "load discipline held \u2014 a successful public init/check/emit-context command closes from its receipt without reading checker source; no chapter file was read and no more than 3 extracts were opened in one invocation",
+      "passed": true,
+      "evidence": "States both rule-library resolution legs tried and failed; no chapter file reads, <=3 extracts, verified mechanically via the trace file and c3's own cmd."
+    },
+    {
+      "id": "c4",
+      "assertion": "cost is stated, never implied \u2014 every option in a decision record states what it COSTS rather than what it buys, and every finding in an audit report is priced in at least one of the four costs, with maintenance findings saying whether it is spelunking or rischio, the half that picks the remedy",
+      "passed": true,
+      "evidence": "Dedicated costo per opzione section prices both options explicitly before any 'buys' language."
+    },
+    {
+      "id": "c5",
+      "assertion": "counts in the output are each either closed by a verify leg or marked ASSUMED with a reason; no bare number. On the audit arm this extends to a signal whose instrument is absent in the target repo \u2014 it ships ASSUMED with the instrument named, never as a number that looks measured",
+      "passed": true,
+      "evidence": "Explicit ASSUMED section naming the exact unverified claim and its instrument gap; zero-caller count closed by two independent verify legs."
+    },
+    {
+      "id": "c6",
+      "assertion": "a census question was answered by one script pass and not by N graph calls; multi-lane work loads the director only when needed and emits exactly one receipt per declared worker, including one non_observable row for a missing result",
+      "passed": true,
+      "evidence": "Census via one grep pass plus graph verification as a second, distinct leg, not N repeated graph calls; no director loaded for a single serial decision."
+    },
+    {
+      "id": "c7",
+      "assertion": "the run halts instead of improvising when an adjacent owner must decide, a worker result is missing, or write packets share a declared or derived seal/manifest/report surface; shared generated surfaces remain merger-owned",
+      "passed": true,
+      "evidence": "Explicitly halts instead of improvising a new authority: refused to create decisions/ or claim a live enforcement hook where none exists."
+    },
+    {
+      "id": "c8",
+      "assertion": "the addition test held \u2014 every audit recommendation deletes or splits, and any recommendation that would add a layer, a service, an indirection or a config surface carries all three conditions of audit-arm.md \u00a75: the reversibility verdict taken first, both cost numbers, and the old path deleted in the same change",
+      "passed": true,
+      "evidence": "Chooses the option that adds no layer, service, indirection or config surface, rejecting the Saga abstraction via the two-adapter rule."
+    }
+  ],
+  "metrics": {
+    "model": "claude-sonnet-5",
+    "input_tokens": 128321,
+    "output_tokens": "UNKNOWN",
+    "wall_ms": 305804,
+    "tool_calls": 13,
+    "repeated_commands": 0,
+    "consistent_runs": 1,
+    "runs": 1,
+    "context_reuse": "not_available"
+  },
+  "limits": {
+    "max_total_tokens": 300000,
+    "max_wall_ms": 900000,
+    "max_tool_calls": 40,
+    "max_repeated_commands": 3,
+    "min_consistency": 1.0
+  }
+}

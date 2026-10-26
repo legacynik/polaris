@@ -1,0 +1,30 @@
+{
+  "checks": [
+    {"assertion": "c1 public commit-check reports exact staged counts and exit 3", "passed": true, "evidence": "eleven public unittest cases pass, including staged counts, both upstream states, phase routing, and receipt ordering"},
+    {"assertion": "c2 size remains a concern signal, not semantic atomicity proof", "passed": true, "evidence": "phase pre-pr delegates once to the unchanged concern-only commit-check"},
+    {"assertion": "c3 concern requires split or indivisible-boundary receipt", "passed": true, "evidence": "ship still blocks exit 3 until split or explicit indivisible receipt"},
+    {"assertion": "c4 destructive actions are guarded and receipts follow success", "passed": true, "evidence": "selfcheck passes primitive guards; public RED-to-GREEN cases prove refused stash, failed branch delete, and failed finalize write no destructive receipt"},
+    {"assertion": "c5 update ship and end route exact lifecycle phases", "passed": true, "evidence": "public caller test proves checkpoint, pre-pr, push, post-push, and finalize wiring and absence of the old finishing menu"},
+    {"assertion": "c6 phase-specific execution avoids census and repeated commands", "passed": true, "evidence": "each caller names one phase; external run reported zero repeated commands"},
+    {"assertion": "c7 OPEN stays alive and remote MERGED finalizes despite dirty stale main", "passed": true, "evidence": "public fixtures prove KEEP for OPEN and FINALIZED plus MAIN_DIRTY_PRESERVED for remote MERGED"},
+    {"assertion": "c8 clean unmerged worktree close is refused", "passed": true, "evidence": "public CLI returns 2, reports non è mergiato, and leaves the worktree present"}
+  ],
+  "metrics": {
+    "model": "claude-sonnet-5",
+    "input_tokens": 765244,
+    "output_tokens": 7547,
+    "wall_ms": 89445,
+    "tool_calls": 10,
+    "repeated_commands": 0,
+    "consistent_runs": 1,
+    "runs": 1,
+    "context_reuse": "reused"
+  },
+  "limits": {
+    "max_total_tokens": 1100000,
+    "max_wall_ms": 240000,
+    "max_tool_calls": 12,
+    "max_repeated_commands": 0,
+    "min_consistency": 1.0
+  }
+}

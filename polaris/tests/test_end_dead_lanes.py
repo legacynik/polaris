@@ -47,7 +47,7 @@ class StateCloseTakesAnIssueNumber(unittest.TestCase):
     def test_key_hash_n_closes_the_one_lane_citing_it(self):
         repo = host_repo()
         path = cockpit(repo)
-        done = run_script("update", "state_close.py", "close", str(path), "--key", "#77",
+        done = run_script("end", "state_close.py", "close", str(path), "--key", "#77",
                           "--owner", LOGIN, "--now", "2026-09-30",
                           "--todos", str(repo / "_polaris" / "state" / "absent.md"))
         self.assertEqual(done.returncode, 0, done.stdout + done.stderr)

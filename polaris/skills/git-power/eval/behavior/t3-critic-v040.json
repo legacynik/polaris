@@ -1,0 +1,91 @@
+{
+  "agent_type": "critic",
+  "fork_turns": "none",
+  "review_lanes": ["critic"],
+  "reviewed_diff_sha256": "765125471d03891b99d1facd859aee07085e8b2c7dabdabd92f687360d95faac",
+  "transcript_sha256": "646e4b15c13e8dd1d97356271e25c4cae476b8f4ed893a57b1c30eb50700c4e5",
+  "graded_checks": [
+    {"id": "c1", "passed": true, "evidence": "Hash verified; python3 -m unittest scripts.test.test_git_power -v ran 11 tests OK, including staged commit-check exact counts and exit 3."},
+    {"id": "c2", "passed": true, "evidence": "skills-suite/git-power/SKILL.md keeps size as concern signal; cmd_commit_check prints split/indivisible guidance and returns 3 without claiming semantic atomicity."},
+    {"id": "c3", "passed": true, "evidence": "skills-suite/ship/SKILL.md Phase A step 7 blocks PR creation on git-power phase pre-pr exit 3 until split or explicit indivisible receipt."},
+    {"id": "c4", "passed": true, "evidence": "cantiere.py --selfcheck passed 9/9; independent AST ordering probe found _snapshot after destructive mutation in close_worktree/close_branch/close_stash/close_reset_hard/_finalize; refused stash, branch-delete, and finalize tests wrote no receipts."},
+    {"id": "c5", "passed": true, "evidence": "validate_suite passed 1/1; caller test passed; rg confirmed update checkpoint, ship pre-pr/push/post-push/finalize, and end post-push/finalize route through git-power phases."},
+    {"id": "c6", "passed": true, "evidence": "cmd_phase dispatches one selected branch; pre-pr delegates to cmd_commit_check; no census call appears in phase handlers; transcript/new receipt reports repeated_commands=0 within envelope."},
+    {"id": "c7", "passed": true, "evidence": "Focused lifecycle unittest passed: missing and mismatched upstream push, OPEN keep, MERGED finalize with MAIN_DIRTY_PRESERVED, and clean-unmerged refusal all OK."},
+    {"id": "c8", "passed": true, "evidence": "test_close_refuses_a_clean_unmerged_worktree passed; close_worktree checks branch ancestry against origin/default or default and returns refusal before worktree removal."}
+  ],
+  "verdict": "PASS",
+  "findings": [],
+  "attacks": {
+    "sibling_branches": {
+      "inventory": [
+        "ip-registry/skills/update/SKILL.md:phase checkpoint -> git-power",
+        "skills-suite/ship/SKILL.md:phase pre-pr/push/post-push/finalize -> git-power",
+        "ip-registry/skills/end/SKILL.md:post-push/finalize -> git-power"
+      ],
+      "probes": [
+        {"target": "ip-registry/skills/update/SKILL.md:phase checkpoint -> git-power", "passed": true, "evidence": "rg found phase checkpoint at ip-registry/skills/update/SKILL.md:151; caller unittest test_standard_callers_route_only_their_lifecycle_phases passed."},
+        {"target": "skills-suite/ship/SKILL.md:phase pre-pr/push/post-push/finalize -> git-power", "passed": true, "evidence": "rg found ship phase pre-pr/push/post-push/finalize at skills-suite/ship/SKILL.md:83-86 and finalize at 109; caller unittest passed."},
+        {"target": "ip-registry/skills/end/SKILL.md:post-push/finalize -> git-power", "passed": true, "evidence": "rg found post-push/finalize at ip-registry/skills/end/SKILL.md:250-252 and old superpowers finishing menu absent by unittest assertion."}
+      ]
+    },
+    "claim_code_mismatch": {
+      "inventory": [
+        "skills-suite/git-power/SKILL.md:push creates or repairs feature upstream",
+        "skills-suite/git-power/SKILL.md:OPEN PR -> KEEP",
+        "skills-suite/git-power/SKILL.md:MERGED PR -> finalize dirty main preserved",
+        "skills-suite/git-power/scripts/cantiere.py:reset-hard -> cmd_reset reachable",
+        "skills-suite/git-power/scripts/cantiere.py:phase -> cmd_phase reachable"
+      ],
+      "probes": [
+        {"target": "skills-suite/git-power/SKILL.md:push creates or repairs feature upstream", "passed": true, "evidence": "Both missing-upstream and origin/main-mismatch public tests passed; cmd_phase uses push -u unless upstream exactly equals origin/<branch>."},
+        {"target": "skills-suite/git-power/SKILL.md:OPEN PR -> KEEP", "passed": true, "evidence": "test_post_push_keeps_an_open_pr_worktree passed; cmd_phase post-push prints KEEP for non-MERGED PR and does not remove worktree/branch."},
+        {"target": "skills-suite/git-power/SKILL.md:MERGED PR -> finalize dirty main preserved", "passed": true, "evidence": "test_finalize_closes_merged_worktree_without_touching_dirty_main passed; output includes FINALIZED and MAIN_DIRTY_PRESERVED, feature worktree removed, main dirty file preserved."},
+        {"target": "skills-suite/git-power/scripts/cantiere.py:reset-hard -> cmd_reset reachable", "passed": true, "evidence": "AST/parser probe found rh.set_defaults(func=cmd_reset); reset-hard public CLI dirty-tree test passed with exit 2 and file preserved."},
+        {"target": "skills-suite/git-power/scripts/cantiere.py:phase -> cmd_phase reachable", "passed": true, "evidence": "AST/parser probe found ph.set_defaults(func=cmd_phase); focused phase tests for push/post-push/finalize passed."}
+      ]
+    },
+    "bypasses": {
+      "inventory": [
+        "skills-suite/git-power/scripts/cantiere.py:_guard -> clean -fd refused",
+        "skills-suite/git-power/scripts/cantiere.py:_guard -> checkout -- refused",
+        "skills-suite/git-power/scripts/cantiere.py:_guard -> restore --worktree refused",
+        "skills-suite/git-power/scripts/cantiere.py:_guard -> stash push refused",
+        "skills-suite/git-power/SKILL.md:raw git outside tool -> declared bypass"
+      ],
+      "probes": [
+        {"target": "skills-suite/git-power/scripts/cantiere.py:_guard -> clean -fd refused", "passed": true, "evidence": "Direct import probe printed BYPASS_OK for clean -fd refused; untracked file remained present."},
+        {"target": "skills-suite/git-power/scripts/cantiere.py:_guard -> checkout -- refused", "passed": true, "evidence": "Direct import probe printed BYPASS_OK for checkout -- refused; dirty tracked content remained unchanged."},
+        {"target": "skills-suite/git-power/scripts/cantiere.py:_guard -> restore --worktree refused", "passed": true, "evidence": "Direct import probe printed BYPASS_OK for restore --worktree refused; dirty tracked content remained unchanged."},
+        {"target": "skills-suite/git-power/scripts/cantiere.py:_guard -> stash push refused", "passed": true, "evidence": "Direct import probe printed BYPASS_OK for stash push refused on dirty tree; file content remained unchanged."},
+        {"target": "skills-suite/git-power/SKILL.md:raw git outside tool -> declared bypass", "passed": true, "evidence": "SKILL.md states raw git typed outside this tool is not intercepted and enforcement comes from callers invoking exact phases; no hidden hook claim remains."}
+      ]
+    },
+    "false_green_selfchecks": {
+      "inventory": [
+        "scripts/test/test_git_power.py:refused dirty stash -> no receipt",
+        "scripts/test/test_git_power.py:checked-out branch delete failure -> no receipt",
+        "scripts/test/test_git_power.py:locked finalize failure -> no receipt",
+        "scripts/test/test_git_power.py:missing upstream push -> sets upstream",
+        "scripts/test/test_git_power.py:default-branch upstream mismatch -> repaired",
+        "scripts/test/test_git_power.py:OPEN keep -> worktree alive",
+        "scripts/test/test_git_power.py:MERGED stale dirty main -> finalized + main preserved",
+        "scripts/test/test_git_power.py:clean unmerged worktree -> refused"
+      ],
+      "probes": [
+        {"target": "scripts/test/test_git_power.py:refused dirty stash -> no receipt", "passed": true, "evidence": "Individual unittest test_refused_stash_pop_does_not_write_a_destructive_receipt passed; stash survived and removed-log.jsonl absent."},
+        {"target": "scripts/test/test_git_power.py:checked-out branch delete failure -> no receipt", "passed": true, "evidence": "Individual unittest test_failed_branch_delete_does_not_write_a_destructive_receipt passed; checked-out worktree survived and receipt absent."},
+        {"target": "scripts/test/test_git_power.py:locked finalize failure -> no receipt", "passed": true, "evidence": "Individual unittest test_failed_finalize_does_not_write_a_destructive_receipt passed; locked worktree survived and receipt absent."},
+        {"target": "scripts/test/test_git_power.py:missing upstream push -> sets upstream", "passed": true, "evidence": "Focused unittest test_push_phase_sets_a_missing_upstream_before_pr passed; upstream and remote feature ref equal HEAD."},
+        {"target": "scripts/test/test_git_power.py:default-branch upstream mismatch -> repaired", "passed": true, "evidence": "Focused unittest test_push_phase_replaces_a_default_branch_upstream passed; origin/main became origin/feat/wrong-upstream."},
+        {"target": "scripts/test/test_git_power.py:OPEN keep -> worktree alive", "passed": true, "evidence": "Focused unittest test_post_push_keeps_an_open_pr_worktree passed; KEEP printed, worktree exists, branch remains."},
+        {"target": "scripts/test/test_git_power.py:MERGED stale dirty main -> finalized + main preserved", "passed": true, "evidence": "Focused unittest test_finalize_closes_merged_worktree_without_touching_dirty_main passed; feature worktree removed, branch deleted, main parallel.txt preserved."},
+        {"target": "scripts/test/test_git_power.py:clean unmerged worktree -> refused", "passed": true, "evidence": "Focused unittest test_close_refuses_a_clean_unmerged_worktree passed; exit 2, refusal text, worktree still exists."}
+      ]
+    }
+  },
+  "model": "gpt-5.5",
+  "input_tokens": "UNKNOWN",
+  "output_tokens": "UNKNOWN",
+  "wall_ms": 120000
+}

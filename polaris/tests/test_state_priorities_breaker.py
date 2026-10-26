@@ -37,7 +37,7 @@ def cockpit(body: str) -> Path:
 
 
 def put(path: Path, stdin: str):
-    return run_script("update", "state_priorities.py", "set", str(path), "--now", "2026-09-24",
+    return run_script("end", "state_priorities.py", "set", str(path), "--now", "2026-09-24",
                       input=stdin)
 
 
@@ -58,7 +58,7 @@ class BreakerOnFortyTwo(unittest.TestCase):
 
     def test_a_malformed_stamp_is_named_not_silent(self):
         path = cockpit("## Active Priorities\n\n<!-- pol:priorities updated=2026-13-45 -->\n1. x\n")
-        done = run_script("update", "state_priorities.py", "check", str(path), "--now", "2026-09-24")
+        done = run_script("end", "state_priorities.py", "check", str(path), "--now", "2026-09-24")
         self.assertEqual(done.returncode, 0, done.stderr)
         self.assertIn("PRIORITIES_STALE=malformed", done.stdout)
 

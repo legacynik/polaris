@@ -1,0 +1,32 @@
+[
+  {
+    "id": "c1",
+    "category": "outcome",
+    "assertion": "the spike states one named question before any code, and the plan assumption it tests when one exists",
+    "cmd": null
+  },
+  {
+    "id": "c2",
+    "category": "process",
+    "assertion": "the spike lives on a throwaway branch; nothing from it is merged into main except the verdict block",
+    "cmd": null
+  },
+  {
+    "id": "c3",
+    "category": "outcome",
+    "assertion": "the verdict block lands in plan file section 4 with question, answer, evidence (branch and commit) and what it changes; the tested assumption flips to proven: <verdict> or is rewritten",
+    "cmd": null
+  },
+  {
+    "id": "c4",
+    "category": "outcome",
+    "assertion": "a spike that answered nothing is deleted and writes no verdict",
+    "cmd": null
+  },
+  {
+    "id": "c5",
+    "category": "outcome",
+    "assertion": "the suite gate accepts the skill",
+    "cmd": "python3 -m pytest -q tests/test_prototype.py"
+  }
+]

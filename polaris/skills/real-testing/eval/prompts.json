@@ -1,0 +1,137 @@
+{
+ "skill": "real-testing",
+ "method": "SUBJECT (a phase served locally | staged diff | branch or PR | a real-test claim to be checked instead of trusted | production with no diff) x ARRIVAL (explicit | implicit | contextual). Positives include the symptoms the description names — a verdict proved against the fixed line only, a new branch never exercised, a test that touched only a mock, a verdict older than the latest edit, an attack designed by the author — plus the two modes 4.0.0 adds: per-phase local against the phase DoD, and the production check from the repo's real_test journey, with the logged-in-profile rule (never a password). Negatives: tdd-dev, review, ship, a docs-only change, a folder with no git.",
+ "cases": [
+  {
+   "id": "p01",
+   "should_trigger": true,
+   "kind": "explicit",
+   "tuple": "diff / explicit",
+   "prompt": "Real-test this staged diff before I commit: derive the perimeter from the change itself, not from memory."
+  },
+  {
+   "id": "p02",
+   "should_trigger": true,
+   "kind": "implicit",
+   "tuple": "diff / implicit",
+   "prompt": "I fixed the newline collapse. Before this goes anywhere, check that the branch I actually added is exercised and not just the line I edited."
+  },
+  {
+   "id": "p03",
+   "should_trigger": true,
+   "kind": "contextual",
+   "tuple": "diff / contextual",
+   "prompt": "Last time we validated against the function that had already been replaced and it sat broken in prod for three days. Don't let that happen here."
+  },
+  {
+   "id": "p04",
+   "should_trigger": true,
+   "kind": "explicit",
+   "tuple": "PR / explicit",
+   "prompt": "Give me a merge-readiness verdict on PR #901: MERGEABLE, MERGEABLE-CON-GAP or NOT-MERGEABLE, with the matrix per file."
+  },
+  {
+   "id": "p05",
+   "should_trigger": true,
+   "kind": "implicit",
+   "tuple": "PR / implicit",
+   "prompt": "Deploy this branch to staging and actually interrogate it — the endpoints the diff crosses, the row in the DB, the provider trace — not the home page."
+  },
+  {
+   "id": "p06",
+   "should_trigger": true,
+   "kind": "contextual",
+   "tuple": "PR / contextual",
+   "prompt": "Everything is green but every green test here mocks the database and the LLM. I don't believe it."
+  },
+  {
+   "id": "p07",
+   "should_trigger": true,
+   "kind": "explicit",
+   "tuple": "claim-check / explicit",
+   "prompt": "Someone left a verdict saying this is mergeable. Check the claim instead of trusting it — the tree has moved since."
+  },
+  {
+   "id": "p08",
+   "should_trigger": true,
+   "kind": "implicit",
+   "tuple": "adversarial / implicit",
+   "prompt": "Try to break this change every way you can before we merge it, and don't let the person who wrote it design the attempts."
+  },
+  {
+   "id": "p09",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "prove-behaviour / explicit",
+   "prompt": "Write the failing test for this acceptance criterion first, prove its red, then implement the minimum that makes it pass.",
+   "why_negative": "adjacent-tdd-dev"
+  },
+  {
+   "id": "p10",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "quality-read / implicit",
+   "prompt": "Read this diff for naming, structure and whether it follows our conventions, and rank what you find by severity.",
+   "why_negative": "adjacent-review"
+  },
+  {
+   "id": "p11",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "release / explicit",
+   "prompt": "Merge the approved PR, deploy it, and watch the canary against the baseline.",
+   "why_negative": "adjacent-ship"
+  },
+  {
+   "id": "p12",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "docs-only / implicit",
+   "prompt": "I fixed a typo in the README. Do I need to spin up the whole stack for this?",
+   "why_negative": "declared-not-for"
+  },
+  {
+   "id": "p13",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "no-git / contextual",
+   "prompt": "This folder is not under version control at all — there is no commit to hash. Review it by hand.",
+   "why_negative": "declared-not-for"
+  },
+  {
+   "id": "p14",
+   "should_trigger": true,
+   "kind": "implicit",
+   "tuple": "phase / per-phase local",
+   "prompt": "Phase 3 changes what the quote page shows. Run it locally against the phase DoD before I close the phase; no staging."
+  },
+  {
+   "id": "p15",
+   "should_trigger": true,
+   "kind": "explicit",
+   "tuple": "production / production check",
+   "prompt": "Testa l'app: fai il giro del cliente in produzione col profilo di prova e dimmi se qualcosa si è rotto."
+  },
+  {
+   "id": "n14",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "near-miss: critic",
+   "prompt": "Attack this decision record from fresh context before the founder accepts it."
+  },
+  {
+   "id": "p16",
+   "should_trigger": true,
+   "kind": "contextual",
+   "tuple": "production / expired session",
+   "prompt": "The scheduled health check of the live app is due; the test browser profile may have been logged out since last week."
+  },
+  {
+   "id": "n15",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "near-miss: review second opinion",
+   "prompt": "Ask another model family to read this diff and verify its findings against the source."
+  }
+ ]
+}

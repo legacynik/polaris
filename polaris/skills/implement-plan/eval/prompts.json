@@ -1,0 +1,83 @@
+{
+  "skill": "implement-plan",
+  "method": "ARM (start a build | resume after a crash | close a phase) x ARRIVAL (explicit | implicit | contextual), in both languages the founder drives the work in. Negatives are the doors next to it: tiny work (tdd-dev), a bug (bugfix), a plan not written or not accepted yet (plan), shipping a gated branch (ship), a review with no build (review).",
+  "cases": [
+    {
+      "id": "p01",
+      "should_trigger": true,
+      "kind": "explicit",
+      "tuple": "build / explicit",
+      "prompt": "Implementa il piano accettato dell'area pricing: l'epic Beads è tst-mol-v6c, parti dalla fase 1."
+    },
+    {
+      "id": "p02",
+      "should_trigger": true,
+      "kind": "explicit",
+      "tuple": "build / explicit",
+      "prompt": "Run implement on epic pv-mol-4qa: the plan file was accepted this morning and the epic is poured."
+    },
+    {
+      "id": "p03",
+      "should_trigger": true,
+      "kind": "implicit",
+      "tuple": "build / implicit",
+      "prompt": "Il founder ha messo status: accepted sul piano del parser e l'epic c'è: esegui le fasi con i gate."
+    },
+    {
+      "id": "p04",
+      "should_trigger": true,
+      "kind": "implicit",
+      "tuple": "resume / implicit",
+      "prompt": "The loop crashed halfway through phase 2 of the feature epic; pick up where it stopped."
+    },
+    {
+      "id": "p05",
+      "should_trigger": true,
+      "kind": "implicit",
+      "tuple": "resume / implicit",
+      "prompt": "Riprendi il build: bd ready sull'epic mostra due task pronti della fase 3."
+    },
+    {
+      "id": "p06",
+      "should_trigger": true,
+      "kind": "contextual",
+      "tuple": "phase gate / contextual",
+      "prompt": "All tasks of phase 1 are closed in Beads; close the phase the proper way and move on."
+    },
+    {
+      "id": "n01",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "tiny work",
+      "prompt": "Rename this one helper and fix its two callers, one PR."
+    },
+    {
+      "id": "n02",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "bug",
+      "prompt": "Questo traceback in produzione: il preventivo esce a zero. Sistemalo."
+    },
+    {
+      "id": "n03",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "plan not accepted",
+      "prompt": "Write the plan for the new pricing area and break it into phases."
+    },
+    {
+      "id": "n04",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "ship",
+      "prompt": "The branch is done and gated; open the PR and get it merged."
+    },
+    {
+      "id": "n05",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "review only",
+      "prompt": "Fai una review di questo diff e dimmi cosa non va."
+    }
+  ]
+}

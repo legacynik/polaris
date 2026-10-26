@@ -1,0 +1,20 @@
+[
+ {
+  "id": "c1",
+  "category": "outcome",
+  "assertion": "the paths come from resume_paths.sh and a non-zero exit stops the run with its message, never a guessed path",
+  "cmd": "bash skills-suite/start/scripts/resume_paths.sh --selfcheck"
+ },
+ {
+  "id": "c2",
+  "category": "process",
+  "assertion": "no git fetch, gh pr list or memory recall runs during start; the only network call allowed is gh api user on first use",
+  "cmd": null
+ },
+ {
+  "id": "c3",
+  "category": "style",
+  "assertion": "the answer is the brief only, plain markdown outside a code fence: Resume, Remember, Pack, Signals, empty lines omitted",
+  "cmd": null
+ }
+]

@@ -1,0 +1,63 @@
+{
+  "checks": [
+    {
+      "id": "c1",
+      "assertion": "the emitted artifact carries its fixed fields: decisions carry the trade-off fields, landing carries call_sites/prerequisites/closure_check, and ARCHITECTURE.md carries the executable live-document frontmatter",
+      "passed": false,
+      "evidence": "donor lacks c1"
+    },
+    {
+      "id": "c2",
+      "assertion": "the reversibility verdict OWNED or PUBLISHED appears before any rule-derived advice in the transcript, and names which of the three conditions decided it",
+      "passed": false,
+      "evidence": "donor lacks c2"
+    },
+    {
+      "id": "c3",
+      "assertion": "load discipline held — no chapter file was read (chapters are study material, only DECISION-RULES.md is decision input) and no more than 3 extracts were opened in one invocation; an arm that loads every book is an arm whose routing did not fire",
+      "passed": true,
+      "evidence": "donor satisfies c3"
+    },
+    {
+      "id": "c4",
+      "assertion": "cost is stated, never implied — every option in a decision record states what it COSTS rather than what it buys, and every finding in an audit report is priced in at least one of the four costs, with maintenance findings saying whether it is spelunking or rischio, the half that picks the remedy",
+      "passed": false,
+      "evidence": "donor lacks c4"
+    },
+    {
+      "id": "c5",
+      "assertion": "counts in the output are each either closed by a verify leg or marked ASSUMED with a reason; no bare number. On the audit arm this extends to a signal whose instrument is absent in the target repo — it ships ASSUMED with the instrument named, never as a number that looks measured",
+      "passed": true,
+      "evidence": "donor satisfies c5"
+    },
+    {
+      "id": "c6",
+      "assertion": "a census question was answered by one script pass and not by N graph calls",
+      "passed": true,
+      "evidence": "donor satisfies c6"
+    },
+    {
+      "id": "c7",
+      "assertion": "on a question the four extracts do not decide (domain boundary, strategy, vendor tuning) the run halts and names the owner instead of improvising from an adjacent rule",
+      "passed": false,
+      "evidence": "donor lacks c7"
+    },
+    {
+      "id": "c8",
+      "assertion": "the addition test held — every audit recommendation deletes or splits, and any recommendation that would add a layer, a service, an indirection or a config surface carries all three conditions of audit-arm.md §5: the reversibility verdict taken first, both cost numbers, and the old path deleted in the same change",
+      "passed": false,
+      "evidence": "donor lacks c8"
+    }
+  ],
+  "metrics": {
+    "model": "deterministic-evidence-audit-v1",
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "wall_ms": 10,
+    "tool_calls": 1,
+    "repeated_commands": 0,
+    "consistent_runs": 1,
+    "runs": 1,
+    "context_reuse": "not_available"
+  }
+}

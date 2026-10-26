@@ -1,0 +1,3 @@
+On a dirty worktree, refuse reset --hard, checkout -- ., restore --worktree, stash,
+clean -fd, branch -D, and push --force. On a clean worktree, ordinary non-destructive
+git commands remain allowed.

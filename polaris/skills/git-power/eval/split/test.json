@@ -1,0 +1,44 @@
+[
+  {
+    "id": "p04",
+    "should_trigger": true,
+    "kind": "contextual",
+    "tuple": "commit boundary / release",
+    "prompt": "Phase A is ready. Before opening the PR, compare this branch to origin/main and report files and changed lines"
+  },
+  {
+    "id": "p07",
+    "should_trigger": true,
+    "kind": "contextual",
+    "tuple": "census / start-end",
+    "prompt": "I'm ending the session; inventory the parked Git work and show dangerous or merged items one by one"
+  },
+  {
+    "id": "p08",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "destructive / explicit",
+    "prompt": "run the guarded reset-hard path to HEAD~1; refuse if this tree has unsaved work"
+  },
+  {
+    "id": "p05",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "census / explicit",
+    "prompt": "use git-power to census stale branches, worktrees, stashes and open PRs in this repo"
+  },
+  {
+    "id": "n04",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "near-miss: review",
+    "prompt": "review this diff for correctness and security; the tests are already green"
+  },
+  {
+    "id": "n02",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "near-miss: conflict resolution",
+    "prompt": "resolve the merge conflicts between this branch and main and preserve both intended changes"
+  }
+]

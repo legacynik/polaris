@@ -1,0 +1,51 @@
+[
+  {
+    "id": "p02",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "spec / omission / names job",
+    "prompt": "Attack this spec from a clean context before anyone implements it. I want only findings that survive a counter-argument."
+  },
+  {
+    "id": "p04",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "skill output / fabrication / names job",
+    "prompt": "This review report cites line 41, but I suspect the quote is invented. Validate the report against the materialized bundle before promotion."
+  },
+  {
+    "id": "p05",
+    "should_trigger": true,
+    "kind": "contextual",
+    "tuple": "plan / omission / buried",
+    "prompt": "We are about to accept this migration plan. Give a fresh adversary only the plan and its contract, record what it did not open, and drop anything it cannot quote."
+  },
+  {
+    "id": "n05",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "mechanical edit",
+    "prompt": "Rename this variable, run formatting and commit the mechanical change."
+  },
+  {
+    "id": "n04",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "near-miss: sweep",
+    "prompt": "Sweep the whole repository for stale decisions and post the consolidated findings."
+  },
+  {
+    "id": "p09",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "plan / omission / names job",
+    "prompt": "The plan file for the pricing area is complete. Before status goes to accepted, have a fresh adversary attack it against its own outcome and DoD."
+  },
+  {
+    "id": "n07",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "near-miss: review audit",
+    "prompt": "Audit this phase diff on the six axes and open beads for the structural findings."
+  }
+]

@@ -1,0 +1,20 @@
+[
+ {
+  "id": "c1",
+  "category": "outcome",
+  "assertion": "the briefing carries a DECIDED, NOT DONE section with the --not-done rows verbatim and oldest first, or the one 'skipped' line",
+  "cmd": "python3 -m pytest -q scripts/test/test_decision_execution.py -k OldestFirst"
+ },
+ {
+  "id": "c2",
+  "category": "process",
+  "assertion": "status writes nothing: no state file, generator, branch deletion or thread close happens without the single confirm",
+  "cmd": null
+ },
+ {
+  "id": "c3",
+  "category": "style",
+  "assertion": "the briefing stays under 50 lines, omits empty sections, and ends with one MY CALL line",
+  "cmd": null
+ }
+]

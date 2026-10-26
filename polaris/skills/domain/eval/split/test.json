@@ -1,0 +1,39 @@
+[
+ {
+  "id": "t03",
+  "should_trigger": true,
+  "kind": "contextual",
+  "tuple": "term · en · contextual",
+  "prompt": "marketing says 'lead' meaning a single notification, the CRM people mean the whole lifecycle from first contact to signature. I keep having to ask which one. can we just call them MarketingLead and CrmLead in the code and move on?",
+  "note": "the prefix anti-pattern is the bait; the correct answer is that this is the context ceiling talking"
+ },
+ {
+  "id": "i03",
+  "should_trigger": true,
+  "kind": "explicit",
+  "tuple": "integrate · it · explicit",
+  "prompt": "usa dominio: listino e pricing sono due contesti separati e devono parlarsi. che pattern di integrazione usiamo fra i due?"
+ },
+ {
+  "id": "m01",
+  "should_trigger": true,
+  "kind": "explicit",
+  "tuple": "map · en · explicit",
+  "prompt": "map the contexts of this repo",
+  "note": "the baseline prompt: three naked runs on this sentence produced 25, 24 and 18 units"
+ },
+ {
+  "id": "n02",
+  "should_trigger": false,
+  "kind": "negative",
+  "tuple": "near-miss · architettura · granularity",
+  "prompt": "should the pricing waterfall become its own deployable service, or stay in the monolith? how granular do we go here"
+ },
+ {
+  "id": "n03",
+  "should_trigger": false,
+  "kind": "negative",
+  "tuple": "near-miss · architettura · published contract",
+  "prompt": "we're changing the response shape of the public quotes endpoint, three external integrators consume it"
+ }
+]

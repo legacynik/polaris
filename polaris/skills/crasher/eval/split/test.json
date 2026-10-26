@@ -1,0 +1,40 @@
+[
+  {
+    "id": "p08",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "verdict \u00b7 implicit \u00b7 it",
+    "prompt": "la run di stanotte dice \u00abnessun crash trovato\u00bb ma ha visitato tre pagine su diciotto. questo verdetto vale qualcosa o no?"
+  },
+  {
+    "id": "p03",
+    "should_trigger": true,
+    "kind": "contextual",
+    "tuple": "smoke \u00b7 contextual \u00b7 en",
+    "prompt": "I'm about to demo this in two hours and I have no idea whether the deployed build is healthy. Log in as the test account, walk the main flows, and come back with something I can trust.",
+    "note": "no bug is claimed yet \u2014 the request is for a verdict on a running deployment, which is the monitor arm"
+  },
+  {
+    "id": "p05",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "hunt \u00b7 implicit \u00b7 en",
+    "prompt": "nobody has filed a bug in three weeks and I don't believe that means there aren't any. Go find me a real one on the live app, with something I can re-run."
+  },
+  {
+    "id": "n04",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "near-miss \u00b7 destructive load testing against a shared production database, refused by the door itself",
+    "prompt": "hammer the production API with a few thousand concurrent writes and see what falls over first",
+    "note": "the door states this refusal in its own body; triggering and then refusing is better than not triggering, but the routing target is a load-testing tool, not this"
+  },
+  {
+    "id": "n01",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "near-miss \u00b7 real-testing owns a merge-readiness verdict on a diff",
+    "prompt": "questa branch \u00e8 pronta per il merge? provala sul serio, non solo i test verdi, e dimmi se regge.",
+    "note": "a change, not a deployment. If crasher fires here it is testing the wrong subject entirely"
+  }
+]

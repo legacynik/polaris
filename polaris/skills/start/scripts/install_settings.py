@@ -21,9 +21,11 @@ Three rules, because a settings file belongs to the repository and not to us:
   permissions and every other plugin's hooks — with no backup and a non-atomic write. A
   file that exists, does not parse and is not blank now stops the install with
   `SETTINGS_UNREADABLE` and a non-zero exit, and nothing is written at all.
-- **The hook is silent where it has nothing to do.** The command tests for the resolver and
-  ends in `|| true`: a repository without the harness must not learn the feature exists
-  (contract #155), and a hook may never fail a session.
+- **The hook is silent where it has nothing to do, and loud where it fails.** The command
+  runs the door only `if` it exists: a repository without the harness must not learn the
+  feature exists (contract #155). A door that exists and fails exits non-zero — a
+  SessionStart hook's exit code never blocks a session, so swallowing it bought nothing
+  and hid every broken reinsertion.
 """
 from __future__ import annotations
 
@@ -152,21 +154,26 @@ def _probe(command: str, repo: Path) -> tuple[int, str]:
     """RUN the hook command. A hook is a string until somebody executes it, and a string
     is green under every breakage there is.
 
-    Against THIS package: the command names `$CLAUDE_PLUGIN_ROOT`, which outside an install
-    falls back to `~/.agents/skills`. A checkout is not an installation, so the probe was
-    green or red depending on what the machine happened to have installed."""
-    done = subprocess.run(["sh", "-c", command], cwd=repo, capture_output=True, text=True,
-                          env={**os.environ, "CLAUDE_PROJECT_DIR": str(repo),
-                               "CLAUDE_PLUGIN_ROOT": str(HERE.parents[2])})
+    Against THIS package: the command names `$CLAUDE_PLUGIN_ROOT/skills`, which outside an
+    install falls back to `~/.agents/skills`. A checkout is not an installation, and its skills
+    root is not always called `skills` (`skills-suite/` in polaris-os), so the probe gets a
+    plugin root of its own whose `skills` IS the root this file ships in."""
+    plugin = repo / ".probe-plugin"
+    if not (plugin / "skills").exists():
+        plugin.mkdir(exist_ok=True)
+        (plugin / "skills").symlink_to(HERE.parents[1])
+    env = {k: v for k, v in os.environ.items() if k != "POLARIS_VAULT"}   # no machine vault
+    env.update(GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1",
+               CLAUDE_PROJECT_DIR=str(repo), CLAUDE_PLUGIN_ROOT=str(plugin))
+    done = subprocess.run(["sh", "-c", command], cwd=repo, capture_output=True, text=True, env=env)
     return done.returncode, done.stdout.strip()
 
 
-def _plant(repo: Path) -> None:
+def _plant(repo: Path, body: str = "print('REINSERT: stub ran')\n") -> None:
     """A repository that does carry the harness, as far as the hook can tell."""
-    (repo / "_polaris" / "scripts").mkdir(parents=True)
+    (repo / "_polaris" / "scripts").mkdir(parents=True, exist_ok=True)
     (repo / "_polaris" / "config.yml").write_text("areas: []\n", encoding="utf-8")
-    (repo / "_polaris" / "scripts" / "contextpack_reinsert.py").write_text(
-        "print('REINSERT: stub ran')\n", encoding="utf-8")
+    (repo / "_polaris" / "scripts" / "contextpack_reinsert.py").write_text(body, encoding="utf-8")
 
 
 OTHERS = {"permissions": {"allow": ["Bash(git *)"], "deny": ["Bash(rm -rf /)"]},
@@ -219,12 +226,17 @@ def _cases(repo: Path) -> list[tuple[str, bool]]:
     code, said = _probe(command, repo)
     out.append(("runs the resolver when the repo has one", code == 0 and "stub ran" in said))
     out.append(("a second install changes nothing", install(repo) == ["SETTINGS: already current"]))
+    _plant(repo, "import sys\nsys.exit(2)\n")
+    code, _ = _probe(command, repo)
+    out.append(("a failing reinserter is visible (non-zero)", code != 0))
     return out + _keeps_what_was_there(repo / "other") + [_upgrades(repo / "old")]
 
 
+# What an older machine carries: the first hook, before the door existed. Its trailing fail-open
+# is left out: install recognises the hook by the script it names (OURS), not by its tail.
 LEGACY = {"hooks": {"SessionStart": [{"matcher": "compact", "hooks": [
     {"type": "command", "command": 'python3 "$CLAUDE_PROJECT_DIR/_polaris/scripts/'
-                                   'contextpack_reinsert.py" reinsert --root "$r" || true'}]}]}}
+                                   'contextpack_reinsert.py" reinsert --root "$r"'}]}]}}
 
 
 def _upgrades(repo: Path) -> tuple[str, bool]:

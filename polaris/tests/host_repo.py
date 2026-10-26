@@ -1,20 +1,16 @@
 """A throwaway HOST repository, built from the package's own `_polaris` templates.
 
-Every test in this lane runs the scripts the shipped SKILL.md bodies name, inside a real
-`git init` tree that carries the contract a host repo would carry. Nothing here writes a
-stub the test then asserts on: the fixtures are the templates the package ships, and the
-commands are read out of the shipped skill bodies (`skill_block`) so a skill that stops
-calling its script fails the test instead of passing it.
+Every test in this lane runs a shipped script directly, inside a real `git init` tree that
+carries the contract a host repo would carry. Nothing here writes a stub the test then asserts
+on: the fixtures are the templates the package ships.
 """
 from __future__ import annotations
 
 import os
-import re
 import shutil
 import subprocess
 import sys
 import tempfile
-import textwrap
 from pathlib import Path
 
 PKG = Path(__file__).resolve().parents[1]
@@ -56,7 +52,7 @@ def seed_state(repo: Path, name: str) -> Path:
 def written(path: Path, row: str, week: str = "") -> None:
     """Place a row with the SHIPPED writer: a hand-typed fixture only proves the reader
     agrees with itself. A `week` picks the todos door; without one it is a cockpit thread."""
-    script = PKG / "skills" / "update" / "scripts" / "state_upsert.py"
+    script = PKG / "skills" / "end" / "scripts" / "state_upsert.py"
     args = ["--week", week] if week else ["--owner", LOGIN, "--now", "2026-09-03"]
     done = subprocess.run([sys.executable, str(script), "week" if week else "thread",
                            str(path), *args], input=row + "\n", capture_output=True, text=True)
@@ -75,28 +71,8 @@ def env_for(repo: Path, login: str = LOGIN) -> dict:
             "CURRENT": str(root / "state" / "current.md")}
 
 
-def skill_block(skill: str, needle: str) -> str:
-    """The shipped bash block that contains `needle`, verbatim from the SKILL.md."""
-    body = (PKG / "skills" / skill / "SKILL.md").read_text(encoding="utf-8")
-    blocks = [textwrap.dedent(b) for b in
-              re.findall(r"^[ \t]*```bash\n(.*?)^[ \t]*```", body, re.M | re.S)]
-    hits = [b for b in blocks if needle in b]
-    if len(hits) != 1:
-        raise AssertionError(
-            f"/{skill} has {len(hits)} shipped bash blocks containing {needle!r} — the skill "
-            "no longer names the command this contract is about, or names it twice")
-    return hits[0]
-
-
-def run_block(skill: str, needle: str, repo: Path, **extra: str) -> subprocess.CompletedProcess:
-    """Execute that block in the host repo, exactly as the skill instructs."""
-    env = {**env_for(repo), **extra}
-    return subprocess.run(["bash", "-c", skill_block(skill, needle)],
-                          cwd=str(repo), env=env, capture_output=True, text=True)
-
-
 def run_script(skill: str, name: str, *args: str, **kw) -> subprocess.CompletedProcess:
-    """Run one shipped script directly, for the branches a single block cannot force."""
+    """Run one shipped script directly, from its public entry point."""
     script = PKG / "skills" / skill / "scripts" / name
     runner = [sys.executable] if name.endswith(".py") else ["bash"]
     return subprocess.run([*runner, str(script), *args], capture_output=True, text=True, **kw)

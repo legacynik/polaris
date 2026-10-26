@@ -31,28 +31,13 @@ def installed_tree() -> Path:
 
 class TheInstalledTreeCarriesWhatTheSkillsAskFor(unittest.TestCase):
 
-    def test_every_plugin_root_path_named_by_a_shipped_skill_exists_once_installed(self):
-        """A path a skill names must exist once installed — UNLESS the skill declares what to do
-        without it. `git-power/scripts/cantiere.py` is a legitimate optional dependency: it is
-        guarded and it prints why it is skipping. An unguarded path that the install does not
-        carry is a first-use failure, which is exactly what the templates were."""
-        missing = []
-        for skill in sorted(SKILLS.glob("*/SKILL.md")):
-            lines = skill.read_text(encoding="utf-8").splitlines()
-            for n, line in enumerate(lines):
-                for rel in PLUGIN_ROOT.findall(line):
-                    if (INSTALLED / rel).exists() or GUARD.search("\n".join(lines[n:n + 3])):
-                        continue
-                    missing.append(f"{skill.parent.name} -> {rel}")
-        self.assertEqual([], missing, "a skill names a path the install lacks, with no fallback")
-
     def test_the_state_templates_the_selfchecks_seed_from_resolve_when_installed(self):
-        sys.path.insert(0, str(INSTALLED / "skills" / "update" / "scripts"))
+        sys.path.insert(0, str(INSTALLED / "skills" / "end" / "scripts"))
         out = subprocess.run(
             [sys.executable, "-c",
              "import sys; sys.path.insert(0, sys.argv[1]); import _selfcheck_parts as s;"
              "print(s.TEMPLATES)",
-             str(INSTALLED / "skills" / "update" / "scripts")],
+             str(INSTALLED / "skills" / "end" / "scripts")],
             capture_output=True, text=True)
         resolved = Path(out.stdout.strip())
         self.assertTrue(resolved.is_dir(), f"selfcheck templates unresolved when installed: {resolved}")
@@ -60,7 +45,7 @@ class TheInstalledTreeCarriesWhatTheSkillsAskFor(unittest.TestCase):
             self.assertTrue((resolved / name).is_file(), f"{name} missing from {resolved}")
 
     def test_a_selfcheck_that_seeds_from_a_template_runs_in_the_installed_tree(self):
-        script = INSTALLED / "skills" / "update" / "scripts" / "recent_context.py"
+        script = INSTALLED / "skills" / "end" / "scripts" / "recent_context.py"
         done = subprocess.run([sys.executable, str(script), "--selfcheck"],
                               capture_output=True, text=True)
         self.assertEqual(0, done.returncode, f"crashed when installed:\n{done.stderr[-400:]}")

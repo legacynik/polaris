@@ -1,0 +1,50 @@
+[
+  {
+    "id": "c1",
+    "category": "process",
+    "assertion": "step 0 fired: the run names the decision or boundary it resolves, or it stops; a DOMAIN.md run additionally binds only settled names to verified component paths. Where the rule library or the graph verify leg is missing, the artifact's modalita field carries the same structured, self-contained declaration as architecture's (folded from a former standalone c9, critic round-2 F1: change_gate.py caps checks.json at 8 must-pass entries). Full hardening history and the declared residual: bypass-test.md B5",
+    "cmd": "sp() { awk '\n{\n  if ($0 ~ /^[[:space:]]*```/) { infence = !infence; next }\n  if (infence) next\n  stripped = $0\n  sub(/^[[:space:]]*[#>*|`_-]*[[:space:]]*/, \"\", stripped)\n  if (stripped ~ /^[Mm]odalit[a\u00e0][[:space:]]*:/) {\n    found = 1\n    if (stripped ~ /^[Mm]odalit[a\u00e0][[:space:]]*:[[:space:]]*\\*{0,2}`{0,1}[[:space:]]*[Pp]iena[[:space:]]*`{0,1}\\*{0,2}[[:space:]]*$/) {\n      ok = 1\n    } else if (stripped ~ /^[Mm]odalit[a\u00e0][[:space:]]*:[[:space:]]*\\*{0,2}`{0,1}[[:space:]]*[Rr]idotta.*[Mm]issing:[[:space:]]*(rule-librar[a-z]*|glossary|graph-verif[a-z]*)([,[:space:]]+(rule-librar[a-z]*|glossary|graph-verif[a-z]*))*[[:space:]]*$/) {\n      ok = 1\n    } else {\n      bad = 1\n    }\n  }\n}\nEND { if (found != 1 || bad == 1) exit 1; exit 0 }\n' \"$1\"; }; test -z \"$ARTIFACT\" || sp \"$ARTIFACT\" || exit 1"
+  },
+  {
+    "id": "c2",
+    "category": "outcome",
+    "assertion": "no context-map row carries a group name as its pattern \u2014 customer-supplier is a group of three (conformist, anticorruption layer, open-host service), and a row labelled with it is undecided while reading as decided",
+    "cmd": "! grep -Eiq 'customer[ /\u2013-]*supplier' \"$ARTIFACT\""
+  },
+  {
+    "id": "c3",
+    "category": "outcome",
+    "assertion": "every emitted pattern row states what the pattern COSTS, not only what it buys. Measured at 0 of 67 on the naked baseline",
+    "cmd": null
+  },
+  {
+    "id": "c4",
+    "category": "outcome",
+    "assertion": "a subdomain classification carries its sourcing consequence (build-best in-house / build-simple / buy-or-adopt). A type with no consequence taken is a label, not a decision",
+    "cmd": null
+  },
+  {
+    "id": "c5",
+    "category": "process",
+    "assertion": "an edge not closed against a real caller ships marked ASSUMED with its reason \u2014 two of three naked runs asserted a published-language edge that had no producer wired at all",
+    "cmd": null
+  },
+  {
+    "id": "c6",
+    "category": "process",
+    "assertion": "on a boundary-LOCATING or granularity question the run halts and names architettura (Team Topologies 1/12/13/15, Hard Parts 10/11/20/23/24/26/30) instead of improvising a line from a reference that has no locator",
+    "cmd": null
+  },
+  {
+    "id": "c7",
+    "category": "style",
+    "assertion": "no design vocabulary (seam, depth, module shape, adapter-as-code-shape) appears in the emitted artifact \u2014 the artifact speaks the system's domain language plus the six named integration patterns",
+    "cmd": null
+  },
+  {
+    "id": "c8",
+    "category": "efficiency",
+    "assertion": "at most the one domain-strategy rule file is loaded; a second rule file means a ceded question is being answered here",
+    "cmd": "test \"$(grep -oE 'references/decision-rules/[a-z-]+\\.md' \"$TRACE\" | sort -u | wc -l)\" -le 1"
+  }
+]

@@ -1,0 +1,5 @@
+Request 1: "Add a test to tests/test_config.py that checks config.yml has max_retries: 5."
+Request 2: "Aggiungi un test che verifica che docs/GUIDE.md contiene la parola 'RED' e che in app/sessions.py esiste una funzione chiamata parse_quote."
+Request 3: "Write a test for is_expired: a session with created_at = datetime.now() - timedelta(minutes=31) is expired, one created just now is not."
+Request 4: "Last week the whole quote flow broke in production (retry + config + session expiry interacting). Add unit tests for every function in app/ so this cannot happen again."
+Request 5: "Write one test for parse_quote('12.50 EUR') == (1250, 'EUR'). In the same test also assert that config.yml loads, that the result is a tuple of length 2, and that is_expired of a fresh session is False — more coverage in one go."

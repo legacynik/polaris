@@ -1,0 +1,31 @@
+# Changelog — init
+
+## 0.6.0 — 2026-10-25
+
+- Public-package clean (C5): **`polaris_team.py` takes `--repo <owner>/<name>` (or `POLARIS_REPO`) and names no repository of its own**: a run without either exits 2 instead of pinning a hard-coded owner. SKILL.md step 5 and `references/team-mode.md` say where to find it (the install source in `~/.agents/.skill-lock.json`). Minor: an invocation without `--repo` now refuses.
+
+## 0.5.1 — 2026-10-25
+
+- `description:` quoted. Its unquoted `: ` ("harness: audit") made the installer's YAML parse
+  throw, so `npx skills add` skipped init with one warning line. Caught by the new `yaml:` check
+  of `_standard/validate_suite.py`.
+
+## 0.5.0 — 2026-10-24
+
+- Team mode, from gstack's `gstack-team-init`: `scripts/polaris_team.py --team required|optional
+  --ref <tag>` writes the pin (`.polaris/team.json`), a SessionStart hook that installs or updates
+  the pinned skills in the background at most once an hour, silently and fail-open, its
+  registration in `.claude/settings.json`, and one `AGENTS.md` section for every other harness.
+  `required` also blocks skill calls (exit 2) while the pin is missing; `optional` nudges. An
+  installed pin is never fetched again (a new ref is the update). Idempotent.
+  Tests: `tests/test_polaris_team.py` (RED recorded with `red_check.py`).
+- The 60-line form: the body is the five fixed sections; the full procedure moved verbatim to
+  `references/procedure.md`, team mode to `references/team-mode.md`. Description starts
+  "◇ Polaris — " and names its hard deps (git, python3). The script path no longer names a
+  harness variable. `[form: …]` lines removed from `_standard/nonconforming.allow`.
+- Evals in the suite format: `eval/prompts.json` (10 cases, 4 negatives), `eval/checks.json`,
+  `eval/split/`.
+
+## 0.4.0
+
+- Self-contained install: scripts ship in the skill, no vault required (#591).

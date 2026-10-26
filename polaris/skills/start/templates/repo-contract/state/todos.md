@@ -10,9 +10,9 @@ created twice or aged by the wrong hand:
 
 | Command | May do | May never do |
 |---|---|---|
-| `plan-week` | reconcile `Active`, roll `Completed`, promote a `Follow-up` whose Review Date arrived | re-stamp `Added`, empty `Active` |
-| `/update` | refresh the text of a row the current thread cites | add a row, move a row, touch `Added` |
-| `/end` | move a landed row from `Active` to `Completed` | add a row, prune `Follow-ups` |
+| `week` | reconcile `Active`, roll `Completed`, promote a `Follow-up` whose Review Date arrived | re-stamp `Added`, empty `Active` |
+| `/end checkpoint` | refresh the text of a row the current thread cites | add a row, move a row, touch `Added` |
+| `/end` close | move a landed row from `Active` to `Completed` | add a row, prune `Follow-ups` |
 
 **Why it sits beside GitHub instead of replacing it**: the todos *are* the issues (decision
 2026-04-29, not reversed). Here is this week's slice — exactly what a tracker with hundreds of open
@@ -22,7 +22,7 @@ issues per project cannot give you.
 
 ## Active
 
-<!-- Reconciled by `plan-week`, NEVER emptied: rebuilt from scratch, everything in flight and
+<!-- Reconciled by `week`, NEVER emptied: rebuilt from scratch, everything in flight and
      unfinished would vanish. A row leaves for one reason only — its work actually landed (the same
      bar `/end` applies to a thread; a turning calendar is not evidence). `Added` is the date of the
      FIRST entry and is never re-stamped: it is the signal that says how many weeks something has
@@ -51,7 +51,7 @@ issues per project cannot give you.
 
 <!-- The only section that CROSSES weeks, and the reason the file exists beside GitHub: an issue can
      be open, it cannot be *dormant until a date*. Review Date in the past => the row returns to
-     `Active` at the next `plan-week` (`todos_roll.py`), stamped with the week it CAME DUE — never
+     `Active` at the next `week` (`todos_roll.py`), stamped with the week it CAME DUE — never
      with today, which would erase the age `Added` exists to carry. -->
 
 | Item | Review Date | Note |
@@ -59,4 +59,4 @@ issues per project cannot give you.
 | | | |
 
 <!-- pol:state-contract -->
-*Contratto del file — vista viva del piano settimanale, non un secondo registro: la storia sta in `team/<login>/weeks/YYYY-Www.md`, che non si riscrive mai. `plan-week` RICONCILIA `Active` — aggiunge le righe della settimana nuova, toglie solo quelle il cui lavoro è atterrato davvero, e non ritimbra mai la data `Added`; `/update` aggiorna il TESTO di una riga che il thread corrente cita, senza aggiungerne; `/end` sposta in `Completed` una riga atterrata. `Completed` vale solo per la settimana corrente. `Follow-ups` è l'unica sezione che attraversa le settimane: quando la sua Review Date è passata, la riga torna in `Active`.*
+*File contract — the live view of the weekly focus, not a second ledger: the history lives in `team/<login>/weeks/YYYY-Www.md`, which is never rewritten. `week` RECONCILES `Active` — it adds the new week's rows, removes only those whose work really landed, and never re-stamps the `Added` date; an `end` checkpoint edits the TEXT of a row the current thread cites, without adding one; the `end` close moves a landed row to `Completed`. `Completed` holds the current week only. `Follow-ups` is the only section that crosses weeks: once its Review Date has passed, the row returns to `Active`.*

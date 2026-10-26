@@ -1,0 +1,14 @@
+{
+  "artifact": "../fixtures/clean",
+  "contract": "clamp returns lower when value is below lower, upper when value is above upper, and value inside the inclusive range. It raises ValueError when lower exceeds upper.",
+  "ledger": {"opened": ["clamp.py"], "not_opened": [], "accepted_unverified": []},
+  "findings": [],
+  "dropped": [
+    {
+      "candidate": "clamp(value, lower, upper) does not raise when lower == upper (only lower > upper is checked)",
+      "counter": "Contract states ValueError only when lower exceeds upper; lower == upper is a valid degenerate range and min(max(value,lower),upper) correctly returns lower==upper in that case",
+      "why_it_died": "Behavior matches contract text exactly; equal bounds are not a violation of 'lower exceeds upper'"
+    }
+  ],
+  "halt": {"reason": "Implementation matches all stated branches (below/above/inside/error) with no deviation found in the single artifact file"}
+}

@@ -1,0 +1,51 @@
+[
+ {
+  "id": "p01",
+  "should_trigger": true,
+  "kind": "explicit",
+  "tuple": "portfolio / explicit",
+  "prompt": "polaris status"
+ },
+ {
+  "id": "p03",
+  "should_trigger": true,
+  "kind": "implicit",
+  "tuple": "portfolio / implicit",
+  "prompt": "Across all repos, where are we and what should I do next?"
+ },
+ {
+  "id": "p04",
+  "should_trigger": true,
+  "kind": "implicit",
+  "tuple": "focused / implicit",
+  "prompt": "che stato ha questo repo? PR aperte, branch, rischi"
+ },
+ {
+  "id": "p06",
+  "should_trigger": true,
+  "kind": "explicit",
+  "tuple": "focused / explicit",
+  "prompt": "full status of this repo, with collisions"
+ },
+ {
+  "id": "n01",
+  "should_trigger": false,
+  "kind": "negative",
+  "tuple": "resume",
+  "prompt": "riprendi da dove eravamo"
+ },
+ {
+  "id": "n03",
+  "should_trigger": false,
+  "kind": "negative",
+  "tuple": "implement-plan",
+  "prompt": "fix the failing test in pricing"
+ },
+ {
+  "id": "n04",
+  "should_trigger": false,
+  "kind": "negative",
+  "tuple": "checkpoint",
+  "prompt": "save progress"
+ }
+]

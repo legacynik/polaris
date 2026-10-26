@@ -16,7 +16,7 @@ import sys
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "update" / "scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "end" / "scripts"))
 from _brief_parts import git, section  # noqa: E402
 from state_lines import read  # noqa: E402
 
@@ -29,7 +29,7 @@ SECURITY = re.compile(r"\b(secrets?|segret[oi]|password|passwd|api[ _-]?keys?|ke
 PROD = re.compile(r"\b(prod|production|produzione|paus\w*|paused|bloccat\w*|blocked|down)\b", re.I)
 SOON = re.compile(r"\b(oggi|domani|today|tomorrow)\b", re.I)
 KINDS = (("ok", re.compile(r"\b(ok|via libera|approv\w*)\b", re.I)),
-         ("decisioni", re.compile(r"\b(decid\w*|decision\w*|scelta|sì o no|sì/no|yes-no|yes/no)",
+         ("decisions", re.compile(r"\b(decid\w*|decision\w*|scelta|sì o no|sì/no|yes-no|yes/no)",
                                   re.I)))
 # The age slot of the contract line `<what> · <since YYYY-MM-DD, from …> · <unblock>`.
 AGE = re.compile(r"(?:·\s*|\bsince\s+|\bdal\s+)(\d{4}-\d{2}-\d{2})", re.I)
@@ -66,7 +66,7 @@ def _urgency(item: str, now: date) -> int:
 
 
 def _kind(item: str) -> str:
-    return next((name for name, pat in KINDS if pat.search(item)), "altro")
+    return next((name for name, pat in KINDS if pat.search(item)), "other")
 
 
 def _cut(item: str) -> str:
@@ -81,11 +81,11 @@ def _queue(items: list[str], now: date) -> list[str]:
     shown = forced + [i for i in order if i not in forced][:max(0, SHOWN - len(forced))]
     out = [f"QUEUE: {_cut(items[i])}" for i in shown]
     rest = [_kind(items[i]) for i in order if i not in shown]
-    counts = [f"+{rest.count(k)} {k}" for k in ("ok", "decisioni", "altro") if k in rest]
+    counts = [f"+{rest.count(k)} {k}" for k in ("ok", "decisions", "other") if k in rest]
     out += [f"QUEUE_MORE: {' · '.join(counts)}"] if counts else []
     old = [i for i in order if (_age(items[i]) or now) <= now - timedelta(ASK_DAYS)]
     oldest = min(old, key=lambda i: _age(items[i]), default=None)
-    ask = [f"QUEUE_ASK: avanti o scarto? {_cut(items[oldest])}"] if oldest is not None else []
+    ask = [f"QUEUE_ASK: keep or drop? {_cut(items[oldest])}"] if oldest is not None else []
     return out + ask
 
 
@@ -127,3 +127,32 @@ def emit_cockpit(current: Path, main_wt: Path, now: str) -> list[str]:
         return _queue(items, today) + signal
     except (OSError, ValueError, UnicodeDecodeError):
         return []
+
+
+def _selfcheck() -> int:
+    """Urgency by whole words, forced lines always shown, one typed count, one question."""
+    import tempfile
+    now = date(2026, 9, 3)
+    ok = [_urgency("ruotare la chiave Stripe", now) == 0,
+          _urgency("demo il 2026-09-05", now) == 1,
+          _urgency("· since 2026-09-05, from x · ok", now) == 3,   # the age slot is no deadline
+          _urgency("job in pausa", now) == 2,
+          _urgency("aggiornare il markdown", now) == 3]            # `down` inside a word is not prod
+    items = ["token da ruotare", *[f"ok sul piano {n}" for n in range(6)],
+             "decidere il nome · since 2026-07-01"]
+    out = _queue(items, now)
+    shown = [ln for ln in out if ln.startswith("QUEUE: ")]
+    ok += [shown[0] == "QUEUE: token da ruotare", len(shown) == SHOWN,
+           any(ln.startswith("QUEUE_MORE: +") for ln in out),
+           any(ln.startswith("QUEUE_ASK: ") and "decidere il nome" in ln for ln in out)]
+    with tempfile.TemporaryDirectory() as d:
+        ok.append(emit_cockpit(Path(d) / "absent.md", Path(d), "2026-09-03") == [])
+    print(f"_cockpit_signal selfcheck: {sum(ok)}/{len(ok)} branches OK")
+    return 0 if all(ok) else 1
+
+
+if __name__ == "__main__":
+    if sys.argv[1:] not in ([], ["--selfcheck"]):
+        print("usage: _cockpit_signal.py [--selfcheck]", file=sys.stderr)
+        sys.exit(2)
+    sys.exit(_selfcheck())

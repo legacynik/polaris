@@ -1,0 +1,30 @@
+[
+  {
+    "id": "p03",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "build / implicit",
+    "prompt": "Il founder ha messo status: accepted sul piano del parser e l'epic c'è: esegui le fasi con i gate."
+  },
+  {
+    "id": "p06",
+    "should_trigger": true,
+    "kind": "contextual",
+    "tuple": "phase gate / contextual",
+    "prompt": "All tasks of phase 1 are closed in Beads; close the phase the proper way and move on."
+  },
+  {
+    "id": "n02",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "bug",
+    "prompt": "Questo traceback in produzione: il preventivo esce a zero. Sistemalo."
+  },
+  {
+    "id": "n04",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "ship",
+    "prompt": "The branch is done and gated; open the PR and get it merged."
+  }
+]

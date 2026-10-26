@@ -15,14 +15,14 @@ skills are installed:
 npx skills list -g
 ```
 
-You must see `start`, `update`, `end` and `pol-ship` among them.
+You must see `start`, `end`, `base-workflow` and `ship` among them.
 
 ## 2. Tool preflight — once per machine
 
 ### GitHub CLI
 
-The first `/start` resolves and caches your exact login through `gh`; `/plan-week` and `/report`
-read delivery evidence through it. Without authenticated `gh`, those setup/evidence paths stop:
+The first `/start` resolves and caches your exact login through `gh`; `/week` reads delivery
+evidence through it. Without authenticated `gh`, those setup/evidence paths stop:
 
 ```bash
 gh --version   # missing → install it (macOS: brew install gh; see cli.github.com)
@@ -36,9 +36,10 @@ credentials in the repo.
 
 | Tool | Used by | Without it |
 |---|---|---|
-| Codex CLI (`codex` on `PATH`) | `codex-review`, tier 3 of `polaris-review` | the caller falls back to its own second reviewer |
-| `yt-dlp` | `reference-capture`, for video transcripts | paste the transcript yourself |
-| Context7 | `polaris-grill`, for a version-specific dependency question | the official docs, with the fallback disclosed |
+| Beads (`bd`) | `plan-area`, `implement-plan`, `issue-contract`, the gates | required by those skills: they stop and say `brew install beads` |
+| Codex CLI (`codex` on `PATH`) | `review`'s second-opinion mode | another model family, or the mode is skipped and said |
+| `browser-harness` | `real-testing`, `crasher` UI walks | API-only walk, UI boxes left unticked |
+| Context7 | `grill`, for a version-specific dependency question | the official docs, with the fallback disclosed |
 
 ## 3. Check the repo contract
 
@@ -77,17 +78,17 @@ repository owner — do not create the contract yourself.
 
 1. Open your agent CLI (Claude Code, Codex, ...) from the product repo.
 2. Run `/start`: read your authorized outcome, latest handoff/checkpoint, blocker, and next action.
-3. Use the explicit Polaris status workflow when you need repo pulse, team collisions, memory, or a
-   portfolio-wide view.
-4. Before planning an ambiguous product or technical change, run `/polaris-grill`: it checks live
-   repo evidence, durable decisions, backend/schema contracts and, when available, versioned docs,
-   then hands off a testable brief without implementing or creating tracker work.
-5. Run `/update` after real progress or a real blocker.
+3. Run `/status` when you need the full repository or portfolio pulse, team collisions or the
+   decisions still not done.
+4. For anything that touches code, a plan or the tracker, let `base-workflow` route it: an idea goes
+   to `grill`, a bug to `bugfix`, finished work to `ship`. How the whole cycle works:
+   [delivery-cycle.md](delivery-cycle.md).
+5. Run `/end checkpoint` after real progress or a real blocker.
 6. Run `/end` when you stop: leave one concrete next action.
 
 ## 5. The week
 
-- Each contributor runs `/plan-week` for **their own** week — a focus grounded in real issues/PRs
+- Each contributor runs `/week` for **their own** week — a focus grounded in real issues/PRs
   and capacity. Commit it and let it travel into your PRs: a plan visible in the repo is reviewable
   whenever the lead wants, which is the point.
 - **It does not wait for a signature.** The lead reads it and may reorder or correct the scope —
@@ -98,7 +99,7 @@ repository owner — do not create the contract yourself.
   audited production promotion, material outcome/architecture change). If your repo ships a workflow
   charter (`profile.yml` → `workflow:`), that charter's boundaries win over this list.
 - Each person maintains their own plan in the repo as reality changes.
-- At week end, `/report` compares plan versus reality: deliveries, proof, blockers, next priority.
+- At week end, `/week` reports plan versus reality: deliveries, proof, blockers, next priority.
   Run it on the Friday of the week you are reporting (or set `WEEK` explicitly for a past week).
 
 ### Minimal example

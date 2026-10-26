@@ -1,0 +1,61 @@
+[
+  {
+    "id": "p07",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "verdict \u00b7 explicit \u00b7 en",
+    "prompt": "here is last night's crasher run record \u2014 read it and tell me whether the no-crash verdict actually stands"
+  },
+  {
+    "id": "p09",
+    "should_trigger": true,
+    "kind": "contextual",
+    "tuple": "verdict \u00b7 contextual \u00b7 en",
+    "prompt": "the hang on the generate route came back this morning, same as the one we saw last week with a different timing. Before anything else I want to be sure we are not about to open a second ticket for it.",
+    "note": "the dedup promise, arriving as a worry rather than a command"
+  },
+  {
+    "id": "p02",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "smoke \u00b7 implicit \u00b7 it",
+    "prompt": "abbiamo deployato ieri sera e nessuno ha guardato niente. l'app sta ancora in piedi? girala tu schermata per schermata invece di fidarti dei log."
+  },
+  {
+    "id": "p01",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "smoke \u00b7 explicit \u00b7 en",
+    "prompt": "run the crasher against staging and tell me whether the app still works end to end"
+  },
+  {
+    "id": "p06",
+    "should_trigger": true,
+    "kind": "contextual",
+    "tuple": "hunt \u00b7 contextual \u00b7 it",
+    "prompt": "il loop notturno resta fermo perch\u00e9 non ha issue da prendere: nessuno ne scrive. serve qualcosa che le trovi da solo sull'app che gira, con la prova che si riproducono, altrimenti l'automazione non parte mai.",
+    "note": "the door as a SOURCE for the unattended loop \u2014 if this routes to the loop itself instead, the description's afk sentence is not carrying"
+  },
+  {
+    "id": "p04",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "hunt \u00b7 explicit \u00b7 it",
+    "prompt": "vai a caccia di crash sull'app deployata con un budget di dodici percorsi e aprimi una issue riproducibile se ne trovi uno"
+  },
+  {
+    "id": "n03",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "near-miss \u00b7 issue-contract owns filing a bug that is already known",
+    "prompt": "apri una issue per il totale sbagliato quando lo sconto \u00e8 zero: sappiamo dov'\u00e8, sappiamo come si riproduce, va solo tracciato.",
+    "note": "nothing is being discovered \u2014 going through the crasher to file a known bug is pure ceremony"
+  },
+  {
+    "id": "n02",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "near-miss \u00b7 bugfix owns the fix for a finding this door already filed",
+    "prompt": "issue #412 has the reproducing command in it and it still exits 1. Go fix it and open the PR."
+  }
+]

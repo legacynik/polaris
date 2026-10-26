@@ -1,0 +1,93 @@
+[
+  {
+    "id": "p07",
+    "should_trigger": true,
+    "kind": "contextual",
+    "tuple": "subagent · contextual · improve",
+    "prompt": "the agents I dispatch keep asserting state they never measured — fix the dispatch text"
+  },
+  {
+    "id": "p12",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "product · explicit · improve",
+    "prompt": "/prompt-engineering audit the mission prompts for dated MUST/NEVER walls"
+  },
+  {
+    "id": "p04",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "injected · explicit · write",
+    "prompt": "scrivi il messaggio di deny dell'hook che blocca grep sugli identificatori"
+  },
+  {
+    "id": "p05",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "product · implicit · improve",
+    "prompt": "il prompt della cerimonia calendario allucina date, sistemiamolo"
+  },
+  {
+    "id": "p01",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "subagent · explicit · write",
+    "prompt": "scrivimi il prompt per il breaker a contesto fresco della PR #32"
+  },
+  {
+    "id": "p02",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "product · explicit · write",
+    "prompt": "serve il system prompt del classificatore email del tool di preventivazione, output JSON"
+  },
+  {
+    "id": "n05",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "meta · meta",
+    "prompt": "quante skill di prompting abbiamo installate?"
+  },
+  {
+    "id": "n02",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "adjacent-door · instruction file",
+    "prompt": "riscrivi il CLAUDE.md del repo prodotto, è a 300 righe"
+  },
+  {
+    "id": "n07",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "plain-task · config",
+    "prompt": "sposta i prompt template da yaml a json nel repo"
+  },
+  {
+    "id": "n08",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "status · status",
+    "prompt": "a che punto è la lane del ContextPack?"
+  },
+  {
+    "id": "n01",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "adjacent-door · skill standard",
+    "prompt": "scrivi la SKILL.md della porta blast-radius"
+  },
+  {
+    "id": "n09",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "adjacent-door · eval (judge + calibration)",
+    "prompt": "write an LLM judge for 'the answer only uses facts from the sources' and tell me how often it is right"
+  },
+  {
+    "id": "n11",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "adjacent-door · eval (compare arms)",
+    "prompt": "confrontiamo i due modelli candidati sul prompt di dedup, chi vince?"
+  }
+]

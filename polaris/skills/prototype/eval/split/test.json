@@ -1,0 +1,30 @@
+[
+  {
+    "id": "p02",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "UI / explicit",
+    "prompt": "Fammi un prototipo usa e getta di tre layout diversi per la pagina del preventivo."
+  },
+  {
+    "id": "p04",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "logic / implicit",
+    "prompt": "The plan says assumption A2 is still assumed: can the importer handle 10k rows in memory? Spike it."
+  },
+  {
+    "id": "n01",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "tdd-dev",
+    "prompt": "Implement the discount rules from the accepted plan, test-first."
+  },
+  {
+    "id": "n03",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "architecture",
+    "prompt": "Should we put the pricing engine behind its own service or keep it in the monolith?"
+  }
+]

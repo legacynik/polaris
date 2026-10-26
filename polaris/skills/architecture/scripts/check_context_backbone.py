@@ -58,6 +58,9 @@ DECISION_REQUIRED = {
     "closure_check",
     "review_trigger",
 }
+# `accepted` is an agreement, `executed` a fact its probe proved (check_decision_execution.py):
+# both are in force, and every reader of a Decision asks this, never `status == "accepted"`.
+IN_FORCE = frozenset({"accepted", "executed"})
 MODULE_REQUIRED = {
     "schema_version",
     "module_id",
@@ -446,7 +449,7 @@ def audit_authorities(root: Path) -> dict[str, Any]:
             "default_context_eligible": not excluded
             and (
                 role in {"technical-authority", "company-os-authority"}
-                or (role == "decision" and record.get("status") == "accepted")
+                or (role == "decision" and record.get("status") in IN_FORCE)
             ),
         }
         sources.append(source)
@@ -951,7 +954,7 @@ def _validate_landing(
         isinstance(item, str) and item for item in call_sites
     ):
         raise ContractError("DECISION_LANDING_INVALID", f"{path}: call_sites")
-    if record["status"] == "accepted" and not call_sites:
+    if record["status"] in IN_FORCE and not call_sites:
         raise ContractError("DECISION_LANDING_INVALID", f"{path}: call_sites empty")
     if not isinstance(prerequisites, list) or not all(
         isinstance(item, str) and item for item in prerequisites
@@ -967,7 +970,7 @@ def _validate_landing(
         if relative in gone:
             continue
         resolved = target.resolve()
-        if record["status"] == "accepted" and not any(
+        if record["status"] in IN_FORCE and not any(
             resolved == scope or scope in resolved.parents for scope in governed
         ):
             raise ContractError(
@@ -1066,7 +1069,7 @@ def validate(root: Path, at_head: bool = False, *, degrade: bool = False) -> dic
     decisions: list[dict[str, Any]] = []
     legacy_sources: dict[str, str] = {}
     ids: set[str] = set()
-    accepted_keys: set[tuple[str, tuple[str, ...], str]] = set()
+    in_force_keys: set[tuple[str, tuple[str, ...], str]] = set()
     for path in decision_paths:
         record = _frontmatter_at(root, path, at_head)
         _require(record, DECISION_REQUIRED, path)
@@ -1093,7 +1096,7 @@ def validate(root: Path, at_head: bool = False, *, degrade: bool = False) -> dic
             raise ContractError(
                 "UNKNOWN_COMPONENT", f"{decision_id}: {','.join(unknown_components)}"
             )
-        if record["status"] == "accepted":
+        if record["status"] in IN_FORCE:
             legacy_review = record.get("legacy_review")
             legacy_scope = legacy_review.get("scope") if isinstance(legacy_review, dict) else None
             governed_components = set(governs.get("components", []))
@@ -1108,24 +1111,24 @@ def validate(root: Path, at_head: bool = False, *, degrade: bool = False) -> dic
             for path in components[component_id]["paths"]
         ]
         gone = _validate_landing(record, path, root, governed_paths, at_head=at_head)
-        if record["status"] != "accepted":
+        if record["status"] not in IN_FORCE:
             gone = []  # a superseded record's call sites are history, not a claim about now
         if gone and not degrade:
             raise ContractError("DECISION_CALL_SITE_MISSING", gone[0])
         for relative in gone:
             stale_missing.setdefault(relative, {"code": "DECISION_CALL_SITE_MISSING",
                                                 "detail": f"{decision_id}: {relative}"})
-        if record["status"] == "accepted":
+        if record["status"] in IN_FORCE:
             key = (
                 record["workspace"],
                 tuple(sorted(record["repos"])),
                 record["decision_key"],
             )
-            if key in accepted_keys:
+            if key in in_force_keys:
                 raise ContractError(
                     "CONTEXT_CONFLICT", "|".join((key[0], *key[1], key[2]))
                 )
-            accepted_keys.add(key)
+            in_force_keys.add(key)
         relative = str(path.relative_to(root))
         source_hashes[relative] = _source_hash(root, path, at_head)
         for legacy_path in record.get("legacy_review", {}).get("sources", []):
@@ -1140,7 +1143,7 @@ def validate(root: Path, at_head: bool = False, *, degrade: bool = False) -> dic
             legacy_sources[legacy_path] = source_hashes[legacy_path]
         decisions.append({"path": relative, "record": record})
 
-    if not accepted_keys:
+    if not in_force_keys:
         raise ContractError("ACCEPTED_DECISION_SET_EMPTY", str(decision_dir))
 
     by_id = {item["record"]["decision_id"]: item["record"] for item in decisions}
@@ -1178,7 +1181,7 @@ def validate(root: Path, at_head: bool = False, *, degrade: bool = False) -> dic
         ]
     for item in decisions:
         record = item["record"]
-        if record["status"] != "accepted":
+        if record["status"] not in IN_FORCE:
             continue
         for call_site in record["call_sites"]:
             target = _safe_path(root, call_site)

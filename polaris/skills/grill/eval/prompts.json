@@ -1,0 +1,76 @@
+{
+  "skill": "grill",
+  "method": "ARRIVAL (explicit | implicit | negative) x SIZE the idea turns out to be (Large | Medium | Tiny | Bug). Positives are new ideas, vague requests and spec drafts before any plan exists; negatives are the doors next to it: a bug with a reproduction (bugfix), a plan already accepted (plan), status (status), opening an issue (issue-contract).",
+  "cases": [
+    {
+      "id": "p01",
+      "should_trigger": true,
+      "kind": "explicit",
+      "tuple": "Medium / explicit",
+      "prompt": "Grill this idea: let customers export their quotes as Excel, with our price breakdown."
+    },
+    {
+      "id": "p02",
+      "should_trigger": true,
+      "kind": "explicit",
+      "tuple": "Large / explicit",
+      "prompt": "Fammi il grill su questa idea: spostare i job schedulati da cron a Temporal."
+    },
+    {
+      "id": "p03",
+      "should_trigger": true,
+      "kind": "implicit",
+      "tuple": "Large / implicit",
+      "prompt": "Vorrei che il preventivo si aggiornasse da solo quando cambia il listino del fornitore. Come la vedi?"
+    },
+    {
+      "id": "p04",
+      "should_trigger": true,
+      "kind": "implicit",
+      "tuple": "Medium / implicit",
+      "prompt": "Here's a rough spec for the onboarding wizard — poke holes in it before we plan anything."
+    },
+    {
+      "id": "p05",
+      "should_trigger": true,
+      "kind": "implicit",
+      "tuple": "Large / implicit",
+      "prompt": "Ho un'idea vaga: un cruscotto per vedere quali clienti stanno per abbandonarci. Da dove partiamo?"
+    },
+    {
+      "id": "p06",
+      "should_trigger": true,
+      "kind": "explicit",
+      "tuple": "Tiny / explicit",
+      "prompt": "Challenge this: we want to add a dark mode toggle to the settings page."
+    },
+    {
+      "id": "n01",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "Bug / bugfix",
+      "prompt": "Il calcolo IVA restituisce 0 sulle fatture estere, ecco il traceback: ..."
+    },
+    {
+      "id": "n02",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "plan-area",
+      "prompt": "The plan for the export feature is accepted — break it into phases and tasks in Beads."
+    },
+    {
+      "id": "n03",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "status",
+      "prompt": "A che punto siamo con le PR aperte oggi?"
+    },
+    {
+      "id": "n04",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "issue-contract",
+      "prompt": "Apri una issue per il bottone di stampa che non funziona su Safari."
+    }
+  ]
+}

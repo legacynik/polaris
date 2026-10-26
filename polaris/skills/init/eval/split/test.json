@@ -1,0 +1,26 @@
+[
+  {
+    "id": "p04",
+    "should_trigger": true,
+    "kind": "implicit",
+    "prompt": "I want every teammate on this repo to get the same Polaris version automatically when they open a session."
+  },
+  {
+    "id": "p06",
+    "should_trigger": true,
+    "kind": "explicit",
+    "prompt": "Make Polaris optional for this repo's team: just nudge people who don't have it installed."
+  },
+  {
+    "id": "n02",
+    "should_trigger": false,
+    "kind": "negative",
+    "prompt": "Install the Polaris suite and its MCP servers on my machine, and tell me what deps are missing."
+  },
+  {
+    "id": "n04",
+    "should_trigger": false,
+    "kind": "negative",
+    "prompt": "Il backbone di questo repo sigilla già READY: aggiorna solo la sezione Active Priorities del cockpit."
+  }
+]

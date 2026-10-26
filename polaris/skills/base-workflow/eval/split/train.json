@@ -1,0 +1,41 @@
+[
+  {
+    "id": "p01",
+    "should_trigger": true,
+    "kind": "explicit",
+    "prompt": "Use the base workflow to add CSV export to the reports page."
+  },
+  {
+    "id": "p03",
+    "should_trigger": true,
+    "kind": "implicit",
+    "prompt": "Add a retry with exponential backoff to the webhook sender."
+  },
+  {
+    "id": "p05",
+    "should_trigger": true,
+    "kind": "implicit",
+    "prompt": "refactorizza il modulo pricing, le funzioni sono troppo lunghe e nessuno ci capisce più niente"
+  },
+  {
+    "id": "p07",
+    "should_trigger": true,
+    "kind": "implicit",
+    "prompt": "We are halfway through the import feature and I lost track of which phase we are in. Pick it up and carry on.",
+    "note": "resuming: the method finds the phase from the plan file's status before acting"
+  },
+  {
+    "id": "n01",
+    "should_trigger": false,
+    "kind": "negative",
+    "prompt": "Commit what I have on this branch and open the PR.",
+    "note": "git-power / ship own branch, commit and PR"
+  },
+  {
+    "id": "n03",
+    "should_trigger": false,
+    "kind": "negative",
+    "prompt": "Should we move from REST to tRPC between the web app and the API? Decide it and record the decision.",
+    "note": "an architectural commitment: architecture"
+  }
+]

@@ -8,7 +8,7 @@ could, `apply` pointed the host repository at the skill folder:
 
 ```text
 ImportError: check_context_backbone: the architecture skill's copy is missing; looked at
-.../skills/init/architecture/scripts/check_context_backbone.py,
+.../skills/init/skills-suite/architecture/scripts/check_context_backbone.py,
 .../skills/init/skills/architecture/scripts/check_context_backbone.py
 ```
 

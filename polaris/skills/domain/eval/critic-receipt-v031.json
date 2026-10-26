@@ -1,0 +1,215 @@
+{
+  "agent_type": "critic",
+  "fork_turns": "none",
+  "review_lanes": [
+    "critic"
+  ],
+  "reviewed_diff_sha256": "d12e200c724dcd6e4ed622b888af4a270aa360e8d6d10e0f5fccbc879056ccf7",
+  "transcript_sha256": "aea0d4ac4a559c8a5e87e83b002a23445f6f5313aa4bfb02d102647fa8e99654",
+  "graded_checks": [
+    {
+      "id": "c1",
+      "passed": true,
+      "evidence": "[step 0] Step 0 fired: artifact line names the decision resolved and closes the halt explicitly. Not a DOMAIN.md run, so the component-path binding clause does not apply. [modalita, merged from former c9] Ran the cmd extracted from checks.json against the golden artifact: exit 0. Its single anchored line matches the ridotta branch and terminates in declared tags."
+    },
+    {
+      "id": "c2",
+      "passed": true,
+      "evidence": "Ran c2's cmd against the golden artifact: exit 0. No group name used as a pattern."
+    },
+    {
+      "id": "c3",
+      "passed": true,
+      "evidence": "VACUOUS. Artifact emits zero pattern rows, so no row lacks a stated cost. Satisfied but unexercised by this transcript."
+    },
+    {
+      "id": "c4",
+      "passed": true,
+      "evidence": "VACUOUS. No core/supporting/generic classification appears in the artifact, so no type ships without its sourcing consequence."
+    },
+    {
+      "id": "c5",
+      "passed": true,
+      "evidence": "The unclosed name is marked ASSUMED with its reason; the verify leg is declared not run with a stated reason."
+    },
+    {
+      "id": "c6",
+      "passed": true,
+      "evidence": "N.A. on this transcript \u2014 the run answered a glossary/term question, not a boundary-LOCATING or granularity one, and the halt line is correct."
+    },
+    {
+      "id": "c7",
+      "passed": true,
+      "evidence": "No design vocabulary (seam/depth/module shape/adapter) appears in the golden artifact."
+    },
+    {
+      "id": "c8",
+      "passed": true,
+      "evidence": "cmd requires a $TRACE arm not supplied; artifact evidence is stronger: the rule library is declared not found at either resolution, zero chapter files and zero extracts read."
+    }
+  ],
+  "attacks": {
+    "sibling_branches": {
+      "inventory": [
+        "c9:piena-branch -> exact match only, rejects trailing free text",
+        "c9:ridotta-branch -> must terminate in the declared tag list",
+        "c9:sibling-architecture -> shared anchor, domain drops the 4th tag",
+        "SKILL.md:location-naming -> free-text line below, not inside the field"
+      ],
+      "probes": [
+        {
+          "target": "c9:piena-branch -> exact match only, rejects trailing free text",
+          "passed": true,
+          "evidence": "modalita: piena exit 0; modalita: piena perche tutto ok exit 1; modalita: piena with location inline exit 1. Branch is strict as the assertion claims."
+        },
+        {
+          "target": "c9:ridotta-branch -> must terminate in the declared tag list",
+          "passed": true,
+          "evidence": "Bare ridotta exit 1; empty missing: exit 1; unbounded tail exit 1; three valid tags exit 0."
+        },
+        {
+          "target": "c9:sibling-architecture -> shared anchor, domain drops the 4th tag",
+          "passed": true,
+          "evidence": "domain's alternation is exactly the three tags: missing: decisions exit 1, confirming the sibling's 4th tag is gone from this skill."
+        },
+        {
+          "target": "SKILL.md:location-naming -> free-text line below, not inside the field",
+          "passed": true,
+          "evidence": "SKILL.md now reads 'name that location in the free-text line below modalita -- never in the structured first line itself'. Two-line artifact (piena + location line) exits 0."
+        }
+      ]
+    },
+    "claim_code_mismatch": {
+      "inventory": [
+        "assertion:three-tags -> alternation contains exactly rule-library/glossary/graph-verify",
+        "SKILL.md:33-34 -> vocabulary text lists the same three tags as the code",
+        "bypass-test:B5 -> EVERY anchored line checked, not just first or last",
+        "assertion:declared-residual -> false piena claim is not caught",
+        "checks.json:c9-cmd -> extracted and executed, not read only"
+      ],
+      "probes": [
+        {
+          "target": "assertion:three-tags -> alternation contains exactly rule-library/glossary/graph-verify",
+          "passed": true,
+          "evidence": "Code alternation is exactly the three tags. decisions rejected alone and mixed with a valid tag."
+        },
+        {
+          "target": "SKILL.md:33-34 -> vocabulary text lists the same three tags as the code",
+          "passed": true,
+          "evidence": "SKILL.md text lists the same three tags, no decisions. Text and regex agree."
+        },
+        {
+          "target": "bypass-test:B5 -> EVERY anchored line checked, not just first or last",
+          "passed": true,
+          "evidence": "Confirmed both directions: piena-then-bare-ridotta exit 1, and bare-ridotta-then-piena exit 1."
+        },
+        {
+          "target": "assertion:declared-residual -> false piena claim is not caught",
+          "passed": true,
+          "evidence": "Confirmed honest: a bare piena on a run that actually degraded exits 0, declared openly rather than hidden."
+        },
+        {
+          "target": "checks.json:c9-cmd -> extracted and executed, not read only",
+          "passed": true,
+          "evidence": "Loaded checks.json, wrote c9's cmd verbatim, ran every probe through it."
+        }
+      ]
+    },
+    "bypasses": {
+      "inventory": [
+        "bypass:missing-decisions -> the prior round's exact bypass string",
+        "bypass:bare-declaration -> ridotta with no tags named",
+        "bypass:markup-wrapping -> heading/bullet/blockquote/bold/backtick",
+        "bypass:line-masking -> a good line masking a bad one either direction",
+        "bypass:unbounded-tail -> free text after the missing: tag list",
+        "bypass:italian-synonyms -> completa and parziale",
+        "bypass:glossary-row-collision -> a modalita: <definition> business row",
+        "bypass:greedy-star -> a repeated missing: clause on one line"
+      ],
+      "probes": [
+        {
+          "target": "bypass:missing-decisions -> the prior round's exact bypass string",
+          "passed": true,
+          "evidence": "modalita: ridotta -- missing: decisions exit 1 (was exit 0 before the fix). Finding 1 is closed."
+        },
+        {
+          "target": "bypass:bare-declaration -> ridotta with no tags named",
+          "passed": true,
+          "evidence": "Bare ridotta exit 1; missing: with nothing exit 1."
+        },
+        {
+          "target": "bypass:markup-wrapping -> heading/bullet/blockquote/bold/backtick",
+          "passed": true,
+          "evidence": "Bare declarations under heading/bullet/blockquote markup exit 1; honest declarations under the same markup exit 0."
+        },
+        {
+          "target": "bypass:line-masking -> a good line masking a bad one either direction",
+          "passed": true,
+          "evidence": "piena-then-bare exit 1; bare-then-piena exit 1. Neither position masks the other."
+        },
+        {
+          "target": "bypass:unbounded-tail -> free text after the missing: tag list",
+          "passed": true,
+          "evidence": "Free text after the tag list exit 1. Tag list anchored to end-of-line."
+        },
+        {
+          "target": "bypass:italian-synonyms -> completa and parziale",
+          "passed": true,
+          "evidence": "completa exit 1; parziale exit 1. Only piena/ridotta accepted."
+        },
+        {
+          "target": "bypass:glossary-row-collision -> a modalita: <definition> business row",
+          "passed": true,
+          "evidence": "A raw definition row cannot mask a dishonest declaration; the skill's own term: convention does not collide."
+        },
+        {
+          "target": "bypass:greedy-star -> a repeated missing: clause on one line",
+          "passed": true,
+          "evidence": "NEW, non-blocking. Repeated missing: clause exits 0 via greedy .*, but the line must still terminate in a declared tag, so a real degraded leg is always named."
+        }
+      ]
+    },
+    "false_green_selfchecks": {
+      "inventory": [
+        "selfcheck:golden-must-pass -> an honest artifact is not falsely rejected",
+        "selfcheck:no-field-present -> absent field fails closed, not open",
+        "selfcheck:empty-artifact -> a zero-byte file exits 1",
+        "selfcheck:LC_ALL=C -> UTF-8 anchor under a POSIX locale",
+        "selfcheck:unset-ARTIFACT -> harness arm-gating skip"
+      ],
+      "probes": [
+        {
+          "target": "selfcheck:golden-must-pass -> an honest artifact is not falsely rejected",
+          "passed": true,
+          "evidence": "Golden artifact exit 0; the finding-2 shape (piena + free-text location below) also exit 0."
+        },
+        {
+          "target": "selfcheck:no-field-present -> absent field fails closed, not open",
+          "passed": true,
+          "evidence": "A file with no modalita field exits 1."
+        },
+        {
+          "target": "selfcheck:empty-artifact -> a zero-byte file exits 1",
+          "passed": true,
+          "evidence": "Empty file exit 1."
+        },
+        {
+          "target": "selfcheck:LC_ALL=C -> UTF-8 anchor under a POSIX locale",
+          "passed": true,
+          "evidence": "NEW, non-blocking. Fails CLOSED under LC_ALL=C; no runner executes checks.json cmds, real environment is UTF-8."
+        },
+        {
+          "target": "selfcheck:unset-ARTIFACT -> harness arm-gating skip",
+          "passed": true,
+          "evidence": "Vacuous when unset, same suite-wide arm-gating convention as architecture's checks."
+        }
+      ]
+    }
+  },
+  "verdict": "PASS",
+  "findings": [],
+  "model": "claude-opus-5[1m]",
+  "input_tokens": "UNKNOWN",
+  "output_tokens": "UNKNOWN",
+  "wall_ms": 367921
+}

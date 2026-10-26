@@ -1,0 +1,38 @@
+[
+  {
+    "id": "c1",
+    "category": "outcome",
+    "assertion": "the duplicate search runs before anything is created, and the run either reuses the twin it found or names the search that found none",
+    "cmd": null
+  },
+  {
+    "id": "c2",
+    "category": "outcome",
+    "assertion": "work the request leaves to a person is filed with the repository's human AFK label (from _polaris/config.yml tracker.afk_human, else the repository's own labels) and never with an agent label; a repository with no such label gets no issue until one exists; the script half is proved by the pytest file",
+    "cmd": "python3 -m pytest -q tests/test_afk_label.py"
+  },
+  {
+    "id": "c3",
+    "category": "outcome",
+    "assertion": "the created issue is read back and afk_label.py verify exits 0 on its labels before the link is returned",
+    "cmd": "python3 scripts/afk_label.py --selfcheck"
+  },
+  {
+    "id": "c4",
+    "category": "outcome",
+    "assertion": "the issue body carries a short description, a DoD with observable results and regression checks, and invents no numbers, commands or paths the request did not supply",
+    "cmd": null
+  },
+  {
+    "id": "c5",
+    "category": "process",
+    "assertion": "opening the issue starts no implementation, assigns nobody new and asks for no second confirmation",
+    "cmd": null
+  },
+  {
+    "id": "c6",
+    "category": "outcome",
+    "assertion": "when the request offers a file-content, name or config-value check as the proof (a script contains a flag, a function has a name, a config holds a value), «Come si prova» does not copy it: every bullet states behaviour a user or caller can observe — output, side effect, exit code — and none depends on real timing",
+    "cmd": null
+  }
+]

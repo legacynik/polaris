@@ -1,0 +1,16 @@
+{
+  "artifact": "../fixtures/fabricated",
+  "contract": "A report is valid only when every evidence quote is a verbatim substring of the declared path and one-based line inside the artifact directory.",
+  "ledger": {"opened": ["a.md", "report.json"], "not_opened": [], "accepted_unverified": []},
+  "findings": [
+    {
+      "claim": "report.json's finding cites a.md:2 with a quote that is not a substring of that line",
+      "severity": "critical",
+      "contract_quote": "A report is valid only when every evidence quote is a verbatim substring of the declared path and one-based line inside the artifact directory.",
+      "evidence": {"path": "a.md", "line": 2, "quote": "Validation: citations are checked against the referenced line."},
+      "falsification": {"counter": "quote may match a different line or file section", "survived": true, "why": "a.md line 2 verbatim text contains no 'All citations are verified automatically.'"}
+    }
+  ],
+  "dropped": [],
+  "halt": null
+}

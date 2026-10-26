@@ -1,0 +1,78 @@
+{
+  "agent_type": "critic",
+  "fork_turns": "none",
+  "review_lanes": ["critic"],
+  "reviewed_diff_sha256": "7960c590733b2fc87439c33672bebad70562b2729532a833fd9194b78c473bed",
+  "transcript_sha256": "eb3e36006a4e4e11370912a8ff2029e7f857eea8bc671a0e654acc8bd470d918",
+  "graded_checks": [
+    {"id": "c1", "passed": true, "evidence": "Relocated guard, fabricated and clean reports all replayed successfully."},
+    {"id": "c2", "passed": true, "evidence": "Fabricated evidence and path traversal probes are rejected by live reread."},
+    {"id": "c3", "passed": true, "evidence": "The runtime prompt remains ARTIFACT plus CONTRACT only."},
+    {"id": "c4", "passed": true, "evidence": "All committed reports retain complete opened, not_opened and accepted_unverified ledgers."},
+    {"id": "c5", "passed": true, "evidence": "Surviving findings retain citations and falsification; killed candidates remain dropped."},
+    {"id": "c6", "passed": true, "evidence": "Report-relative artifacts resolve from the report file after worktree removal; absolute artifacts still pass."},
+    {"id": "c7", "passed": true, "evidence": "The unchanged runtime cohort remains zero-tool, zero-repeat and 3/3 consistent."},
+    {"id": "c8", "passed": true, "evidence": "The identical three-arm cohort preserves donor checks and the candidate strict quality win."}
+  ],
+  "verdict": "PASS",
+  "findings": [],
+  "attacks": {
+    "sibling_branches": {
+      "inventory": ["skills-suite/critic/eval/fixtures/guard/guard.py:missing destructive siblings"],
+      "probes": [
+        {"target": "skills-suite/critic/eval/fixtures/guard/guard.py:missing destructive siblings", "passed": true, "evidence": "Guard report still identifies checkout, restore, stash and clean omissions."}
+      ]
+    },
+    "claim_code_mismatch": {
+      "inventory": ["skills-suite/critic/SKILL.md:artifact path contract -> scripts/critic_gate.py:run"],
+      "probes": [
+        {"target": "skills-suite/critic/SKILL.md:artifact path contract -> scripts/critic_gate.py:run", "passed": true, "evidence": "Docs and run() agree on report-relative and absolute artifact resolution."}
+      ]
+    },
+    "bypasses": {
+      "inventory": [
+        "skills-suite/critic/scripts/critic_rules.py:evidence path traversal",
+        "skills-suite/critic/scripts/critic_gate_selfcheck.py:caller cwd contamination"
+      ],
+      "probes": [
+        {"target": "skills-suite/critic/scripts/critic_rules.py:evidence path traversal", "passed": true, "evidence": "A ../outside.md citation is rejected as unreadable."},
+        {"target": "skills-suite/critic/scripts/critic_gate_selfcheck.py:caller cwd contamination", "passed": true, "evidence": "The candidate passes from an empty sibling cwd; origin/main fails the same branch."}
+      ]
+    },
+    "false_green_selfchecks": {
+      "inventory": ["skills-suite/critic/scripts/critic_gate.py:portable artifact selfcheck"],
+      "probes": [
+        {"target": "skills-suite/critic/scripts/critic_gate.py:portable artifact selfcheck", "passed": true, "evidence": "Candidate passes 24 branches and origin/main fails the added relocation branch."}
+      ]
+    }
+  },
+  "strongest_donor": {
+    "name": "Codex review-agent",
+    "reason": "It remains the strongest no-quota review donor; the runtime prompt and measured cohort are unchanged."
+  },
+  "arm_gradings": {
+    "baseline": [
+      {"id": "c1", "passed": true}, {"id": "c2", "passed": false},
+      {"id": "c3", "passed": false}, {"id": "c4", "passed": false},
+      {"id": "c5", "passed": false}, {"id": "c6", "passed": false},
+      {"id": "c7", "passed": true}, {"id": "c8", "passed": false}
+    ],
+    "donor": [
+      {"id": "c1", "passed": true}, {"id": "c2", "passed": false},
+      {"id": "c3", "passed": false}, {"id": "c4", "passed": false},
+      {"id": "c5", "passed": false}, {"id": "c6", "passed": false},
+      {"id": "c7", "passed": true}, {"id": "c8", "passed": false}
+    ],
+    "candidate": [
+      {"id": "c1", "passed": true}, {"id": "c2", "passed": true},
+      {"id": "c3", "passed": true}, {"id": "c4", "passed": true},
+      {"id": "c5", "passed": true}, {"id": "c6", "passed": true},
+      {"id": "c7", "passed": true}, {"id": "c8", "passed": true}
+    ]
+  },
+  "model": "gpt-5.5",
+  "input_tokens": "UNKNOWN",
+  "output_tokens": "UNKNOWN",
+  "wall_ms": 180000,
+  "telemetry_note": "Exact runtime telemetry was unavailable; wall_ms is the observed orchestration upper bound, not an exact duration."
+}

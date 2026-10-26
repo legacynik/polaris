@@ -1,0 +1,13 @@
+{
+  "checks": [
+    {"id":"c1","assertion":"across the defect cases, every known contract violation is found and no clean-case defect is invented","passed":true,"evidence":"Codex found all four guard omissions, rejected the fabricated quote, and returned no clean finding; it also raised one unstated guard concern."},
+    {"id":"c2","assertion":"a fabricated evidence quote is rejected by rereading its materialized path and line","passed":false,"evidence":"Codex detects the mismatch in prose but has no deterministic reread gate."},
+    {"id":"c3","assertion":"the reviewer receives ARTIFACT plus CONTRACT without the author's claim, reasoning or session transcript","passed":false,"evidence":"review-agent does not enforce the critic ARTIFACT+CONTRACT-only boundary."},
+    {"id":"c4","assertion":"the report declares opened, not_opened and accepted_unverified before findings","passed":false,"evidence":"Codex output has no opened/not_opened/accepted_unverified ledger."},
+    {"id":"c5","assertion":"each surviving finding has a verbatim citation and a substantive counter-argument; killed candidates are recorded","passed":false,"evidence":"Codex has citations but no required falsification and dropped-candidate record."},
+    {"id":"c6","assertion":"the emitted report is valid JSON and critic_gate.py accepts it after the checkout or worktree moves","passed":false,"evidence":"Codex emits prose outside the critic schema and has no portable replay."},
+    {"id":"c7","assertion":"the run uses no repeated command and no more tool calls than the strongest donor envelope","passed":true,"evidence":"Three safe-mode runs used zero tools and zero repeated commands."},
+    {"id":"c8","assertion":"candidate adds a strict quality win without regressing donor-passed checks or consistency, stays inside predeclared cost limits, and reports token/latency/tool deltas","passed":false,"evidence":"The donor is the comparison arm and has no strongest-donor promotion verdict."}
+  ],
+  "metrics": {"model":"claude-sonnet-5","input_tokens":8698,"output_tokens":1500,"wall_ms":23356,"tool_calls":0,"repeated_commands":0,"consistent_runs":3,"runs":3,"context_reuse":"not_available"}
+}

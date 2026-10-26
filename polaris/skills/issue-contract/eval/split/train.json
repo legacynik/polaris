@@ -1,0 +1,51 @@
+[
+  {
+    "id": "p09",
+    "should_trigger": true,
+    "kind": "contextual",
+    "tuple": "group / contextual",
+    "prompt": "Abbiamo sei issue aperte che sono la stessa capability spezzata male: triage e rimettile in ordine sul tracker."
+  },
+  {
+    "id": "p03",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "new / implicit",
+    "prompt": "Track this so it does not get lost: the worktree cleanup never runs when the PR is closed unmerged."
+  },
+  {
+    "id": "p06",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "extend / explicit",
+    "prompt": "Aggiorna la issue #321: l'acceptance sulla reciprocit\u00e0 va riscritta con la misura che abbiamo appena preso."
+  },
+  {
+    "id": "p01",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "new / explicit",
+    "prompt": "Apri una issue su polaris-os per il gate che non legge la reciprocit\u00e0 della catena."
+  },
+  {
+    "id": "p02",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "new / explicit",
+    "prompt": "File an issue for this: the reseal step runs before the commit, so the sealed tree is always one commit behind."
+  },
+  {
+    "id": "n01",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "wayfinder \u2014 nebulous, not decomposed",
+    "prompt": "Non so ancora cosa sia questo lavoro: ci sono almeno due incognite aperte e non riesco a scrivere un solo ticket. Aiutami a capire la forma."
+  },
+  {
+    "id": "n03",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "non-GitHub tracker",
+    "prompt": "Create a ticket for this in our Linear workspace, under the Platform team."
+  }
+]

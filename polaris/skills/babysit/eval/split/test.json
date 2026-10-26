@@ -1,0 +1,30 @@
+[
+  {
+    "id": "p03",
+    "should_trigger": true,
+    "kind": "contextual",
+    "tuple": "moved head / contextual",
+    "prompt": "Someone pushed to the branch after you labelled it ready-for-owner. Sort it out."
+  },
+  {
+    "id": "p06",
+    "should_trigger": true,
+    "kind": "contextual",
+    "tuple": "waiting / contextual",
+    "prompt": "I just pushed the fix for the flaky test, keep watching the checks and reply to the bot comments."
+  },
+  {
+    "id": "n01",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "merge",
+    "prompt": "The PR is labelled and green: merge it and deploy to production."
+  },
+  {
+    "id": "n03",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "real-testing",
+    "prompt": "Serve this commit on staging and let a fresh agent try to break it."
+  }
+]

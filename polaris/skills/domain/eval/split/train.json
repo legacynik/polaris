@@ -1,0 +1,82 @@
+[
+  {
+    "id": "i01",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "integrate \u00b7 en \u00b7 implicit",
+    "prompt": "every time Odoo renames a field our CRM dispatch breaks and their model keeps leaking into our quote code. What's the right way for these two to talk?"
+  },
+  {
+    "id": "m03",
+    "should_trigger": true,
+    "kind": "contextual",
+    "tuple": "map \u00b7 it \u00b7 contextual",
+    "prompt": "mi sono accorto che tre servizi diversi si sono scritti ognuno il proprio strato di traduzione sopra la stessa api di pricing. tre volte lo stesso lavoro. secondo me ci sta dicendo qualcosa ma non so cosa",
+    "note": "rule 30: every consumer of one upstream building an ACL is a finding about the upstream's model, not about the consumers"
+  },
+  {
+    "id": "c01",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "classify \u00b7 en \u00b7 implicit",
+    "prompt": "pydantic-ai already ships AgentSpec in the venv \u2014 capabilities, model, model_settings, instructions, output_schema, retries, metadata, custom_types. We hand-maintain MODULE.md which duplicates nearly the same fields; ADR-007 rejected the native one because 'our fields have no native equivalent', but metadata and custom_types are demonstrably there. Do we keep building ours?",
+    "note": "fixture 11, the canonical anti-overengineering case: building a generic subdomain in-house is the named failure"
+  },
+  {
+    "id": "c02",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "classify \u00b7 en \u00b7 explicit",
+    "prompt": "is the onboarding document importer a core thing or a supporting thing? I'm trying to work out how much to invest in it"
+  },
+  {
+    "id": "t01",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "term \u00b7 en \u00b7 implicit",
+    "prompt": "are 'case' and 'claim' the same thing in our model or two different concepts? the code uses both and I can't tell",
+    "note": "verbatim the negative control n04 of `architettura` \u2014 the seam read from the other side"
+  },
+  {
+    "id": "t02",
+    "should_trigger": true,
+    "kind": "contextual",
+    "tuple": "term \u00b7 it \u00b7 contextual",
+    "prompt": "nel codice abbiamo 'preventivo' e 'quote' dappertutto e sembrano la stessa cosa, ma il frontend li tratta come due stati diversi e il PDF ne stampa solo uno. ogni volta che ne parlo con il mio socio devo chiedere quale intende"
+  },
+  {
+    "id": "m02",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "map \u00b7 en \u00b7 implicit",
+    "prompt": "I've inherited this backend and I'm not touching it until I know which components actually have decoupled lifecycles and how each pair integrates. Can you produce that?"
+  },
+  {
+    "id": "n04",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "out of scope \u00b7 tactical DDD, nobody owns it",
+    "prompt": "should Quote be an aggregate root with Voce as an entity inside it, or two aggregates referencing each other by id?"
+  },
+  {
+    "id": "n05",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "near-miss \u00b7 code-graph and the navigation skills",
+    "prompt": "walk me through how this codebase is structured, I've never seen it before"
+  },
+  {
+    "id": "n06",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "out of scope \u00b7 strategy",
+    "prompt": "what do we ship next quarter \u2014 the CRM integration or the mobile app? I can only fund one"
+  },
+  {
+    "id": "n01",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "near-miss \u00b7 architettura \u00b7 boundary LOCATING",
+    "prompt": "where exactly should the service boundary go between pricing and listino? they always end up changing together"
+  }
+]

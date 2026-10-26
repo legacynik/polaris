@@ -77,6 +77,18 @@ as the keys `reversibilita`, `options` (`[{"name": …, "cost": …}]`), `rules`
 
 ## 4. Write it where the repository keeps its decisions
 
+**Which home — operating model §6, no room for interpretation.** Decisions have two homes; lessons
+go to `records/` through `scripts/lesson_record.py` and are never decisions.
+
+| Home | Write it when |
+|---|---|
+| **Ledger entry** in `decisions.md` (chose · over · because · evidence · supersedes · impact) | the choice could be questioned later, enacting it takes no change a probe could check, and it fails at least one ADR test |
+| **DEC file** `decisions/DEC-<ws>-<key>-NNN.md` (JSON frontmatter) with `call_sites`, `probe` — the exact command that proves it is in effect — and `probe_kills` — one of its own `call_sites`, without which the probe must fail — plus one ledger line pointing to it | the choice must be **enacted**: code, config, infra, or a process a command can check — `kind: process` unless it is also an ADR |
+| **DEC file with `kind: architecture`** — an ADR | all three ADR tests pass: hard to reverse · surprising without the context · the fruit of a real trade-off — a DEC file even when nothing must be built. Any test failing → `kind: process` (enacted) or a ledger entry (not enacted) |
+
+A probe that cannot fail is not a probe: the gate re-runs it against a copy of HEAD with the
+`probe_kills` call site removed, and it must fail there.
+
 The output map (`outputs.decision`) names the place: an append-only decisions log, a folder of
 typed records, or a folder of prose records. **The repository's own convention wins**: write in
 the shape its existing records use, name the location in `modalità`, and leave existing records in
@@ -95,14 +107,19 @@ Where the repository has no shape yet, use these parts, in this order, on about 
 6. **Check** — the enforcement: the command or test that fails when the decision is violated, or
    the named reviewer.
 7. **Rules** — the `<file>:<rule-id>` list.
-8. Metadata: `status`, `kind: decision`, and the paths it governs — only paths that exist and
+8. Metadata: `status`, `kind` (`architecture` or `process` for a DEC file, per the table above),
+   `probe` and `probe_kills` for a DEC file, and the paths it governs — only paths that exist and
    that it really governs.
 
 The how — flow, fields, limits, tests — goes to the area's spec, and the record links it.
 
 **Lifecycle.** A record with Options or Evidence still unfilled is `status: proposed`, and the
 missing part says what is missing; ask for it in one line, as a trade-off ("we want X, but we
-lose Y: which matters more?"). It becomes `accepted` only when every part is filled. A decision
+lose Y: which matters more?"). It becomes `accepted` only when every part is filled and the founder says yes — this skill writes
+`proposed` and never sets `accepted` on its own. **`accepted` is not `executed`**: an accepted
+record is in force as direction, not yet a fact. `executed` is written
+only by `plan close`, when the decision gate (`scripts/check_decision_execution.py`) reports the
+probe passing and failing once the `probe_kills` call site is removed; this skill never writes it. A decision
 is never edited into another decision: write a new record whose Options include the old choice
 with what it cost, mark the old one `superseded`, link the two, and leave the old text otherwise
 untouched.
@@ -114,3 +131,6 @@ untouched.
 - A record longer than one screen.
 - A decision with neither a reopen condition nor a check.
 - A pick that reached the record without its challenge, when step 1 applied.
+- A DEC file without `probe`, a ledger entry for a choice that must be enacted, or
+  `kind: architecture` on a record that fails one of the three ADR tests.
+- `status: executed` written by hand.

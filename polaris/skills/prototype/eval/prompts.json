@@ -1,0 +1,69 @@
+{
+  "skill": "prototype",
+  "method": "ARRIVAL (explicit | implicit | negative) x QUESTION kind (logic | UI). Positives are one named design question that throwaway code can answer; negatives are building the real thing (tdd-dev), a reproducible bug (bugfix), a decision with no code question (architecture) and a vague idea with no question yet (grill).",
+  "cases": [
+    {
+      "id": "p01",
+      "should_trigger": true,
+      "kind": "explicit",
+      "tuple": "logic / explicit",
+      "prompt": "Prototype the quote approval state machine — I want to see if 'partially approved' even makes sense."
+    },
+    {
+      "id": "p02",
+      "should_trigger": true,
+      "kind": "explicit",
+      "tuple": "UI / explicit",
+      "prompt": "Fammi un prototipo usa e getta di tre layout diversi per la pagina del preventivo."
+    },
+    {
+      "id": "p03",
+      "should_trigger": true,
+      "kind": "implicit",
+      "tuple": "logic / implicit",
+      "prompt": "Non sono sicuro che il modello degli sconti regga il caso sconto su sconto. Posso cliccarci sopra prima di scriverlo?"
+    },
+    {
+      "id": "p04",
+      "should_trigger": true,
+      "kind": "implicit",
+      "tuple": "logic / implicit",
+      "prompt": "The plan says assumption A2 is still assumed: can the importer handle 10k rows in memory? Spike it."
+    },
+    {
+      "id": "p05",
+      "should_trigger": true,
+      "kind": "implicit",
+      "tuple": "UI / implicit",
+      "prompt": "What should the empty state of the dashboard look like? Show me a few options I can switch between."
+    },
+    {
+      "id": "n01",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "tdd-dev",
+      "prompt": "Implement the discount rules from the accepted plan, test-first."
+    },
+    {
+      "id": "n02",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "bugfix",
+      "prompt": "La pagina del preventivo va in errore 500 quando il cliente non ha indirizzo."
+    },
+    {
+      "id": "n03",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "architecture",
+      "prompt": "Should we put the pricing engine behind its own service or keep it in the monolith?"
+    },
+    {
+      "id": "n04",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "grill",
+      "prompt": "Ho un'idea per un'area clienti, ma non so ancora cosa debba fare."
+    }
+  ]
+}

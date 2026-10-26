@@ -1,0 +1,93 @@
+[
+ {
+  "id": "p01",
+  "should_trigger": true,
+  "kind": "explicit",
+  "tuple": "explicit / landed",
+  "prompt": "/end"
+ },
+ {
+  "id": "p03",
+  "should_trigger": true,
+  "kind": "implicit",
+  "tuple": "implicit / half-done",
+  "prompt": "per oggi basta, lascia tutto pronto per domani"
+ },
+ {
+  "id": "p04",
+  "should_trigger": true,
+  "kind": "implicit",
+  "tuple": "implicit / half-done",
+  "prompt": "I'm off for three days — leave a handoff the next panel can resume from"
+ },
+ {
+  "id": "p06",
+  "should_trigger": true,
+  "kind": "explicit",
+  "tuple": "explicit / half-done",
+  "prompt": "end session, the PR is still open"
+ },
+ {
+  "id": "p07",
+  "should_trigger": true,
+  "kind": "explicit",
+  "tuple": "checkpoint / explicit / half-done",
+  "prompt": "fai un checkpoint e continuiamo"
+ },
+ {
+  "id": "p09",
+  "should_trigger": true,
+  "kind": "explicit",
+  "tuple": "checkpoint / explicit / half-done",
+  "prompt": "save progress"
+ },
+ {
+  "id": "p10",
+  "should_trigger": true,
+  "kind": "explicit",
+  "tuple": "checkpoint / explicit / half-done",
+  "prompt": "salva i progressi prima che perdiamo il contesto"
+ },
+ {
+  "id": "p12",
+  "should_trigger": true,
+  "kind": "contextual",
+  "tuple": "checkpoint / contextual / half-done",
+  "prompt": "sono bloccato: il deploy aspetta una firma che non arriva. Registra il blocker."
+ },
+ {
+  "id": "n03",
+  "should_trigger": false,
+  "kind": "negative",
+  "tuple": "weekly",
+  "prompt": "weekly report"
+ },
+ {
+  "id": "n04",
+  "should_trigger": false,
+  "kind": "negative",
+  "tuple": "plan close",
+  "prompt": "the PR merged, close the plan file and squash the epic"
+ },
+ {
+  "id": "n06",
+  "should_trigger": false,
+  "kind": "negative",
+  "tuple": "read · same noun · start",
+  "prompt": "continua prendendo checkpoint skill architetturali e dimmi che ne pensi"
+ },
+ {
+  "id": "n08",
+  "should_trigger": false,
+  "kind": "negative",
+  "tuple": "read · same noun · session log",
+  "prompt": "prendi il checkpoint di ieri sera e leggimi cosa diceva su #94"
+ },
+ {
+  "id": "n10",
+  "should_trigger": false,
+  "kind": "negative",
+  "tuple": "read · status question · status",
+  "prompt": "a che punto sta il lavoro sulle skill architetturali?"
+ }
+]

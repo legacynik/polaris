@@ -1,0 +1,155 @@
+{
+ "skill": "domain",
+ "dimensions": {
+  "arm": [
+   "term",
+   "classify",
+   "integrate",
+   "map",
+   "repo-map"
+  ],
+  "arrival": [
+   "explicit",
+   "implicit",
+   "contextual"
+  ],
+  "language": [
+   "en",
+   "it"
+  ]
+ },
+ "dimension_note": "Three cases per arm, because the sibling door's slice 0 measured that one case per arm makes a holdout meaningless. The negatives are the point of this corpus: five of six are near-misses of `architettura`, because the A/B collision is the most expensive failure available here — a boundary-LOCATING question answered from a reference that has no locator is the named failure mode of the Khononov acquisition (a third provenance on the boundary line). n01 and n02 are the two halves of that: where does the line go, and how granular. Symmetrically, t01 is `architettura`'s own negative n04 reused verbatim as a positive, so the seam is tested from both sides with the same sentence.",
+ "cases": [
+  {
+   "id": "t01",
+   "should_trigger": true,
+   "kind": "implicit",
+   "tuple": "term · en · implicit",
+   "prompt": "are 'case' and 'claim' the same thing in our model or two different concepts? the code uses both and I can't tell",
+   "note": "verbatim the negative control n04 of `architettura` — the seam read from the other side"
+  },
+  {
+   "id": "t02",
+   "should_trigger": true,
+   "kind": "contextual",
+   "tuple": "term · it · contextual",
+   "prompt": "nel codice abbiamo 'preventivo' e 'quote' dappertutto e sembrano la stessa cosa, ma il frontend li tratta come due stati diversi e il PDF ne stampa solo uno. ogni volta che ne parlo con il mio socio devo chiedere quale intende"
+  },
+  {
+   "id": "t03",
+   "should_trigger": true,
+   "kind": "contextual",
+   "tuple": "term · en · contextual",
+   "prompt": "marketing says 'lead' meaning a single notification, the CRM people mean the whole lifecycle from first contact to signature. I keep having to ask which one. can we just call them MarketingLead and CrmLead in the code and move on?",
+   "note": "the prefix anti-pattern is the bait; the correct answer is that this is the context ceiling talking"
+  },
+  {
+   "id": "c01",
+   "should_trigger": true,
+   "kind": "implicit",
+   "tuple": "classify · en · implicit",
+   "prompt": "pydantic-ai already ships AgentSpec in the venv — capabilities, model, model_settings, instructions, output_schema, retries, metadata, custom_types. We hand-maintain MODULE.md which duplicates nearly the same fields; ADR-007 rejected the native one because 'our fields have no native equivalent', but metadata and custom_types are demonstrably there. Do we keep building ours?",
+   "note": "fixture 11, the canonical anti-overengineering case: building a generic subdomain in-house is the named failure"
+  },
+  {
+   "id": "c02",
+   "should_trigger": true,
+   "kind": "explicit",
+   "tuple": "classify · en · explicit",
+   "prompt": "is the onboarding document importer a core thing or a supporting thing? I'm trying to work out how much to invest in it"
+  },
+  {
+   "id": "i01",
+   "should_trigger": true,
+   "kind": "implicit",
+   "tuple": "integrate · en · implicit",
+   "prompt": "every time Odoo renames a field our CRM dispatch breaks and their model keeps leaking into our quote code. What's the right way for these two to talk?"
+  },
+  {
+   "id": "i03",
+   "should_trigger": true,
+   "kind": "explicit",
+   "tuple": "integrate · it · explicit",
+   "prompt": "usa dominio: listino e pricing sono due contesti separati e devono parlarsi. che pattern di integrazione usiamo fra i due?"
+  },
+  {
+   "id": "m01",
+   "should_trigger": true,
+   "kind": "explicit",
+   "tuple": "map · en · explicit",
+   "prompt": "map the contexts of this repo",
+   "note": "the baseline prompt: three naked runs on this sentence produced 25, 24 and 18 units"
+  },
+  {
+   "id": "m02",
+   "should_trigger": true,
+   "kind": "implicit",
+   "tuple": "map · en · implicit",
+   "prompt": "I've inherited this backend and I'm not touching it until I know which components actually have decoupled lifecycles and how each pair integrates. Can you produce that?"
+  },
+  {
+   "id": "m03",
+   "should_trigger": true,
+   "kind": "contextual",
+   "tuple": "map · it · contextual",
+   "prompt": "mi sono accorto che tre servizi diversi si sono scritti ognuno il proprio strato di traduzione sopra la stessa api di pricing. tre volte lo stesso lavoro. secondo me ci sta dicendo qualcosa ma non so cosa",
+   "note": "rule 30: every consumer of one upstream building an ACL is a finding about the upstream's model, not about the consumers"
+  },
+  {
+   "id": "r01",
+   "should_trigger": true,
+   "kind": "explicit",
+   "tuple": "repo-map · en · explicit",
+   "prompt": "update DOMAIN.md with stable domain and component IDs for the document backbone before the accepted Decision names them"
+  },
+  {
+   "id": "r02",
+   "should_trigger": true,
+   "kind": "contextual",
+   "tuple": "repo-map · it · contextual",
+   "prompt": "il checker dice UNKNOWN_SCOPE: il producer delle skill non ha ancora un component_id verificabile in DOMAIN.md. risolvi il nome e mappa i path reali prima di far atterrare la Decision"
+  },
+  {
+   "id": "n01",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "near-miss · architettura · boundary LOCATING",
+   "prompt": "where exactly should the service boundary go between pricing and listino? they always end up changing together"
+  },
+  {
+   "id": "n02",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "near-miss · architettura · granularity",
+   "prompt": "should the pricing waterfall become its own deployable service, or stay in the monolith? how granular do we go here"
+  },
+  {
+   "id": "n03",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "near-miss · architettura · published contract",
+   "prompt": "we're changing the response shape of the public quotes endpoint, three external integrators consume it"
+  },
+  {
+   "id": "n04",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "out of scope · tactical DDD, nobody owns it",
+   "prompt": "should Quote be an aggregate root with Voce as an entity inside it, or two aggregates referencing each other by id?"
+  },
+  {
+   "id": "n05",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "near-miss · code-graph and the navigation skills",
+   "prompt": "walk me through how this codebase is structured, I've never seen it before"
+  },
+  {
+   "id": "n06",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "out of scope · strategy",
+   "prompt": "what do we ship next quarter — the CRM integration or the mobile app? I can only fund one"
+  }
+ ]
+}

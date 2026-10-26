@@ -195,4 +195,7 @@ def _selfcheck() -> int:
 
 if __name__ == "__main__":
     import sys
+    if sys.argv[1:] not in ([], ["--selfcheck"]):   # no argument kept working: CI runs it bare
+        print("usage: merge_truth.py [--selfcheck]", file=sys.stderr)
+        sys.exit(2)
     sys.exit(_selfcheck())

@@ -1,0 +1,30 @@
+{
+  "checks": [
+    {"assertion": "c1 public commit-check reports exact staged counts and exit 3", "passed": true, "evidence": "public suite 12/12"},
+    {"assertion": "c2 size remains a concern signal, not semantic atomicity proof", "passed": true, "evidence": "SKILL and command retain concern-only contract"},
+    {"assertion": "c3 concern requires split or indivisible-boundary receipt", "passed": true, "evidence": "update requires exact staging, commit-check and Lore commit"},
+    {"assertion": "c4 destructive actions are guarded and receipts follow success", "passed": true, "evidence": "three public failure-receipt tests remain green"},
+    {"assertion": "c5 update routes exactly and cannot complete dirty", "passed": true, "evidence": "dirty public fixture exits 2 with BLOCKED_DIRTY and file intact; clean is the only exit-0 branch"},
+    {"assertion": "c6 phase-specific execution avoids census and repeated commands", "passed": true, "evidence": "fresh runner reported zero repeated commands"},
+    {"assertion": "c7 OPEN stays alive and remote MERGED finalizes despite dirty stale main", "passed": true, "evidence": "v0.4.0 lifecycle regression tests remain green"},
+    {"assertion": "c8 clean unmerged worktree close is refused", "passed": true, "evidence": "public refusal test remains green"}
+  ],
+  "metrics": {
+    "model": "claude-sonnet-5",
+    "input_tokens": 296471,
+    "output_tokens": 9901,
+    "wall_ms": 114154,
+    "tool_calls": 7,
+    "repeated_commands": 0,
+    "consistent_runs": 1,
+    "runs": 1,
+    "context_reuse": "reused"
+  },
+  "limits": {
+    "max_total_tokens": 900000,
+    "max_wall_ms": 180000,
+    "max_tool_calls": 10,
+    "max_repeated_commands": 0,
+    "min_consistency": 1.0
+  }
+}

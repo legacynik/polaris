@@ -7,8 +7,8 @@
 set -uo pipefail
 SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"   # the polaris/ package dir
 W="$(mktemp -d)"; FAKE_HOME="$W/home"
-mkdir -p "$FAKE_HOME/.agents/skills/update" "$FAKE_HOME/.agents/skills/start"
-cp -R "$SRC/skills/update/scripts" "$FAKE_HOME/.agents/skills/update/scripts"   # simulate `npx skills` install
+mkdir -p "$FAKE_HOME/.agents/skills/end" "$FAKE_HOME/.agents/skills/start"
+cp -R "$SRC/skills/end/scripts" "$FAKE_HOME/.agents/skills/end/scripts"   # simulate `npx skills` install
 cp -R "$SRC/skills/start/scripts" "$FAKE_HOME/.agents/skills/start/scripts"
 
 # --- a real repo with the contract layout, a feature branch, and a linked worktree
@@ -32,8 +32,8 @@ cd "$W/wt-x" || exit 1
 MAIN_WT="$(git worktree list --porcelain | head -1 | sed 's|^worktree ||')"
 ROOT="$MAIN_WT/_polaris"; [ -f "$ROOT/config.yml" ] || ROOT="$MAIN_WT"
 HOME="$FAKE_HOME"; unset CLAUDE_PLUGIN_ROOT
-SC="${CLAUDE_PLUGIN_ROOT:-}/skills/update/scripts/session_commit.sh"
-[ -x "$SC" ] || SC="$HOME/.agents/skills/update/scripts/session_commit.sh"
+SC="${CLAUDE_PLUGIN_ROOT:-}/skills/end/scripts/session_commit.sh"
+[ -x "$SC" ] || SC="$HOME/.agents/skills/end/scripts/session_commit.sh"
 [ "$(cd "$MAIN_WT" && pwd -P)" = "$(cd "$R" && pwd -P)" ] && ck ok "One home resolves the main worktree from a linked one" || ck no "MAIN_WT=$MAIN_WT"
 [ -x "$SC" ] && ck ok "resolver finds the script on a skills-CLI (npx) machine, PLUGIN_ROOT unset" || ck no "resolver empty"
 
@@ -118,7 +118,7 @@ U="$W/unborn"; mkdir -p "$U/_polaris/team/acme-dev/sessions"
 git checkout -q feat/z
 
 # R7 a spool left by an older version is counted by `checkpoint.sh prepare` and never touched.
-CK="$HOME/.agents/skills/update/scripts/checkpoint.sh"
+CK="$HOME/.agents/skills/end/scripts/checkpoint.sh"
 mkdir -p "$(git rev-parse --git-common-dir)/polaris-deferred/_polaris"
 echo old > "$(git rev-parse --git-common-dir)/polaris-deferred/_polaris/old.md"
 OUT="$(bash "$CK" prepare 2>&1)"
@@ -154,8 +154,8 @@ echo "$OUT" | grep -q "git refuses .*(nested repo)" && ck ok "R10 the refusal na
 git show --name-only --format= HEAD | grep -qx _polaris/lessons.md && ck ok "R10 the other paths still landed" || ck no "R10 the whole handoff died with one path"
 
 # R8 neither install path present → resolver empty, so the skill must fall back to the manual rule
-SC2="${CLAUDE_PLUGIN_ROOT:-}/skills/update/scripts/session_commit.sh"
-[ -x "$SC2" ] || SC2="$W/nonexistent-home/.agents/skills/update/scripts/session_commit.sh"
+SC2="${CLAUDE_PLUGIN_ROOT:-}/skills/end/scripts/session_commit.sh"
+[ -x "$SC2" ] || SC2="$W/nonexistent-home/.agents/skills/end/scripts/session_commit.sh"
 [ -x "$SC2" ] && ck no "R8 resolver found a phantom script" || ck ok "R8 resolver honestly empty (manual-rule branch)"
 
 cd /; rm -rf "$W"

@@ -1,0 +1,25 @@
+{
+  "skill": "review",
+  "measured_at": "2026-08-31",
+  "runner": "addyosmani/agent-skills scripts/run-evals.js (deterministic arm, no LLM calls)",
+  "arena": "63 skills — the real installed corpus across the four harnesses, not the fork alone",
+  "corpus": "skills-suite/review/eval/prompts.json converted to the runner's trigger format",
+  "before": {
+    "rank1_rate": "63% (64/101)",
+    "errors": 54,
+    "note": "measured with the descriptions as they were before this change"
+  },
+  "after": {
+    "rank1_rate": "trigger rank-1 rate: 73% (74/101 positive prompts rank their skill first)",
+    "errors_total": "160 checks passed — 45 error(s), 0 warning(s)",
+    "rank1_this_skill": "71% (5/7) — up from 57% after strengthening the drift vocabulary"
+  },
+  "routing_errors_for_this_skill": [
+    "✗  review: below required minimums (7 positive/5 negative/0 behavioral; need 3/2/1)"
+  ],
+  "owed": "behavioral eval (>=1 with a fixture, via claude -p) — the metered arm, not run here",
+  "structural_misses_not_wording": [
+    "'Review the staged diff ... standards and spec as two separate reports' ties with code-review (0.30 vs 0.30): a real door collision, and the first hard evidence for declared gap #4 (review vs code-review-and-quality). Not fixable by rewording — one of the two doors has to win on a cohort.",
+    "'Sweep picked this PR up on its cron pass ...' ties with sweep (0.17 vs 0.17). Arguably correct routing: sweep owns the cron pass and calls review. The corpus case is mis-specified, and is left in rather than removed after seeing the result."
+  ]
+}

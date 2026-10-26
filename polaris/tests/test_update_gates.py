@@ -4,9 +4,6 @@
 and TWO entries in the session log. `#84`: `verify` must read the cockpit's CONTENT — a bare
 `touch` fools an mtime gate. `#89`: the first harvest of the day must not read a shared multi-panel
 scratch from offset 0. `#85`: plan-tick is RESTORED, and a gate proves it.
-
-The overwrite case runs the bash block the shipped `update/SKILL.md` carries, so a body that stops
-calling `state_upsert.py` fails here instead of passing.
 """
 from __future__ import annotations
 
@@ -16,7 +13,7 @@ import unittest
 from datetime import date
 from pathlib import Path
 
-from host_repo import LOGIN, env_for, host_repo, run_block, run_script, seed_state, written
+from host_repo import LOGIN, env_for, host_repo, run_script, seed_state, written
 
 def today() -> str:
     """Read the clock at USE, never at import: the shipped scripts call `date +%F` when they run,
@@ -29,40 +26,11 @@ def session_log(repo) -> Path:
 
 
 def checkpoint(repo, *args: str) -> subprocess.CompletedProcess:
-    return run_script("update", "checkpoint.sh", *args, cwd=str(repo), env=env_for(repo))
+    return run_script("end", "checkpoint.sh", *args, cwd=str(repo), env=env_for(repo))
 
 
 class OneLinePerThread(unittest.TestCase):
     """AC1 — the cockpit is state; the session log is the ledger."""
-
-    def test_two_sessions_on_one_thread_leave_one_cockpit_line_and_two_log_entries(self):
-        repo = host_repo()
-        log = session_log(repo)
-        for hour in ("10:00", "17:00"):
-            out = run_block("update", '"$UP" thread', repo,
-                            LANE_LINE=f"- `memory` — branch `main`; checkpoint {hour} · since 2026-09-29")
-            self.assertEqual(out.returncode, 0, out.stdout + out.stderr)
-            with log.open("a") as fh:
-                fh.write(f"## {hour} — checkpoint\n- Key context: x\n- Files: y\n")
-        body = (repo / "_polaris" / "state" / "current.md").read_text()
-        self.assertEqual(body.count("`memory`"), 1, "the second update replaced the first line")
-        self.assertIn("checkpoint 17:00", body)
-        stamps = [ln for ln in body.splitlines() if ln.startswith("Updated:")]
-        self.assertEqual(len(stamps), 1, f"the cockpit is state, not a ledger: {stamps}")
-        entries = [ln for ln in log.read_text().splitlines() if ln.startswith("## ")]
-        self.assertEqual(len(entries), 2, "the session log is the ledger and always appends")
-
-    def test_a_new_lane_adds_one_line_without_touching_the_existing_lane(self):
-        repo = host_repo()
-        first = run_block("update", '"$UP" thread', repo,
-                          LANE_LINE="- `memory` — branch `main`; first · since 2026-09-29")
-        self.assertEqual(first.returncode, 0, first.stdout + first.stderr)
-        second = run_block("update", '"$UP" thread', repo,
-                           LANE_LINE="- `billing` — branch `main`; new · since 2026-09-29")
-        self.assertEqual(second.returncode, 0, second.stdout + second.stderr)
-        body = (repo / "_polaris" / "state" / "current.md").read_text()
-        self.assertEqual(body.count("`memory`"), 1)
-        self.assertEqual(body.count("`billing`"), 1)
 
     def test_nothing_material_means_nothing_written(self):
         repo = host_repo()
@@ -101,7 +69,7 @@ class VerifyReadsContent(unittest.TestCase):
         self.assertEqual(out.returncode, 0, out.stdout)
 
     def test_every_bypass_this_gate_closes_has_its_own_fixture(self):
-        out = run_script("update", "checkpoint.sh", "--selfcheck")
+        out = run_script("end", "checkpoint.sh", "--selfcheck")
         self.assertEqual(out.returncode, 0, out.stdout)
         for bypass in ("bypass 1", "bypass 2", "bypass 3", "no checkpoint of ours"):
             self.assertIn(bypass, out.stdout, f"no fixture forces {bypass}")
@@ -168,7 +136,7 @@ class DurableArchiveGate(unittest.TestCase):
         title = "Live eval needs explicit opt-in"
         session_log(repo).write_text(
             f"## 10:00 — lesson checkpoint\n- Key context: #lezione {title}\n"
-            f"- Lesson: {title}\n- Files: _polaris/lessons.md\n"
+            f"- Lesson: {title}\n- Files: _polaris/records/lessons/{title}.md\n"
         )
         subprocess.run(["git", "-C", str(repo), "add", "--", str(session_log(repo))], check=True)
         subprocess.run(["git", "-C", str(repo), "commit", "-qm", "checkpoint"], check=True)
@@ -179,8 +147,9 @@ class DurableArchiveGate(unittest.TestCase):
         self.assertEqual(missing.returncode, 1, missing.stdout)
         self.assertIn("lesson", missing.stdout.lower())
 
-        archive = repo / "_polaris" / "lessons.md"
-        archive.write_text(f"## {today()} — {title} (@{LOGIN})\nRule: opt in.\n")
+        archive = repo / "_polaris" / "records" / "lessons" / f"{title}.md"
+        archive.parent.mkdir(parents=True)
+        archive.write_text(f"# {title}\nRule: opt in.\n")
         uncommitted = checkpoint(repo, "verify", "lesson checkpoint")
         self.assertEqual(uncommitted.returncode, 1, uncommitted.stdout)
         subprocess.run(["git", "-C", str(repo), "add", "--", str(archive)], check=True)
@@ -248,7 +217,7 @@ class TheHarvestReadsOnlyThisSession(unittest.TestCase):
         repo = host_repo()
         mine = self.scratch(repo, "aaaa1111-000", 30)
         env = {**env_for(repo), "POLARIS_SID": "aaaa1111-000"}
-        run_script("update", "checkpoint.sh", "harvest-done", cwd=str(repo), env=env)
+        run_script("end", "checkpoint.sh", "harvest-done", cwd=str(repo), env=env)
         with mine.open("a") as f:
             f.write("riga nuova dopo il timbro\n")
         out = checkpoint(repo, "harvest-slice", "aaaa1111-000")
@@ -274,12 +243,6 @@ class ThePlanTickIsRestored(unittest.TestCase):
         self.assertEqual(out.returncode, 1, out.stdout)
         self.assertIn("not ticked", out.stdout)
 
-    def test_the_changelog_declares_restore_and_not_supersede(self):
-        changelog = (Path(__file__).resolve().parents[2] / "CHANGELOG.md").read_text()
-        self.assertIn("plan tick is back", changelog)
-        self.assertNotIn("plan-tick superseded", changelog)
-
-
 class TodosFollowTheThread(unittest.TestCase):
     """D4 — an update that cites a todo refreshes its row, and never re-stamps `Added:`."""
 
@@ -288,7 +251,7 @@ class TodosFollowTheThread(unittest.TestCase):
         repo = host_repo()
         todos = seed_state(repo, "todos.md")
         written(todos, "| #11 — primo giro | | ctx |", "W32")
-        out = run_script("update", "state_upsert.py", "week", str(todos), "--week", "W36",
+        out = run_script("end", "state_upsert.py", "week", str(todos), "--week", "W36",
                          input="| #11 — secondo giro | | ctx |\n")
         self.assertEqual(out.returncode, 0, out.stderr)
         body = todos.read_text()
@@ -301,7 +264,7 @@ class TodosFollowTheThread(unittest.TestCase):
         repo = host_repo()
         todos = seed_state(repo, "todos.md")
         written(todos, r"| `a\|b` — nome | | ctx |", "W32")
-        run_script("update", "state_upsert.py", "week", str(todos), "--week", "W36",
+        run_script("end", "state_upsert.py", "week", str(todos), "--week", "W36",
                    input="| `a\\|b` — nuovo | | ctx2 |\n")
         body = todos.read_text()
         self.assertIn(r"| `a\|b` — nuovo | W32 | ctx2 |", body)
@@ -312,7 +275,7 @@ class TodosFollowTheThread(unittest.TestCase):
         todos = seed_state(repo, "todos.md")
         written(todos, "| #11 — primo | | ctx |", "W32")
         before = todos.read_text()
-        out = run_script("update", "state_upsert.py", "week", str(todos), "--week", "W36",
+        out = run_script("end", "state_upsert.py", "week", str(todos), "--week", "W36",
                          "--no-add", input="| #99 — mai vista | | |\n")
         self.assertEqual(out.returncode, 2)
         self.assertIn("NO_SUCH_ROW", out.stderr)

@@ -1,0 +1,10 @@
+{
+  "date": "2026-10-25",
+  "check": "c6",
+  "judge": "fresh-context agent, fast model; each transcript judged alone against the c6 assertion",
+  "verdicts": {
+    "baseline.md (2.5.0)": {"answer": "no", "why": "«Come si prova» copies the requested file checks: «deploy.sh contiene --dry-run», «esiste la funzione run_dry», «config.yml contiene DEPLOY_TIMEOUT: 300»"},
+    "after-draft1.md (2.6.0 first draft)": {"answer": "no", "why": "«Simulare un passo del deploy che non termina mai» can only be checked by waiting for the real 300-second timeout"},
+    "after.md (2.6.0)": {"answer": "yes", "why": "observable behaviour only; the timeout is simulated «abbassando temporaneamente DEPLOY_TIMEOUT a pochi secondi, senza aspettare i 300 reali»"}
+  }
+}

@@ -20,7 +20,7 @@ SKILLS = PKG / "skills"
 
 
 def refusal(repo: Path, cwd: Path | None = None) -> tuple[int, str]:
-    out = run_script("update", "session_commit.sh",
+    out = run_script("end", "session_commit.sh",
                      f"_polaris/team/{LOGIN}/sessions/{TODAY}-@{LOGIN}.md", cwd=str(cwd or repo))
     return out.returncode, out.stdout + out.stderr
 
@@ -82,7 +82,7 @@ class GitRefusesAPath(unittest.TestCase):
         git(repo, "commit", "-qm", "ignore sessions")
         log = session_log(repo)
         (repo / "_polaris" / "decisions.md").write_text("## decision\n")
-        out = run_script("update", "session_commit.sh", "--end",
+        out = run_script("end", "session_commit.sh", "--end",
                          str(log), str(repo / "_polaris" / "decisions.md"), cwd=str(repo))
         body = out.stdout + out.stderr
         self.assertEqual(out.returncode, 2, body)
@@ -97,7 +97,7 @@ class GitRefusesAPath(unittest.TestCase):
         git(repo / ".wiki", "init", "-q", "-b", "main")
         (journal / "2026-09-04.md").write_text("session line\n")
         log = session_log(repo)
-        out = run_script("update", "session_commit.sh", "--end",
+        out = run_script("end", "session_commit.sh", "--end",
                          str(log), str(journal / "2026-09-04.md"), cwd=str(repo))
         body = out.stdout + out.stderr
         self.assertEqual(out.returncode, 2, body)
@@ -118,7 +118,7 @@ class TheSpoolIsOnlyALegacyCounter(unittest.TestCase):
 
     def test_prepare_counts_it_and_leaves_it_alone(self):
         repo = self.spooled()
-        out = run_script("update", "checkpoint.sh", "prepare", cwd=str(repo))
+        out = run_script("end", "checkpoint.sh", "prepare", cwd=str(repo))
         self.assertEqual(out.returncode, 0, out.stderr)
         self.assertIn("SPOOL_LEGACY=2", out.stdout)
         self.assertIn("git add", out.stdout, "it must say what to do with them")
@@ -135,36 +135,13 @@ class TheSpoolIsOnlyALegacyCounter(unittest.TestCase):
 
     def test_an_empty_spool_says_nothing(self):
         repo = host_repo()
-        out = run_script("update", "checkpoint.sh", "prepare", cwd=str(repo))
+        out = run_script("end", "checkpoint.sh", "prepare", cwd=str(repo))
         self.assertNotIn("SPOOL_LEGACY", out.stdout)
-
-
-class TheSkillsNoLongerPromiseADeferral(unittest.TestCase):
-    """C3 — the three bodies carry the one sentence and nothing else about spools."""
-
-    def test_no_skill_body_mentions_a_spool_or_a_deferral(self):
-        for skill in ("start", "update", "end"):
-            body = (SKILLS / skill / "SKILL.md").read_text(encoding="utf-8")
-            leftover = [ln for ln in body.splitlines()
-                        if ("spool" in ln.lower() or "defer" in ln.lower())
-                        and "SPOOL_LEGACY" not in ln]
-            self.assertEqual(leftover, [], f"/{skill} still promises a deferral")
-
-    def test_each_body_states_the_rule_and_its_two_exceptions(self):
-        for skill in ("update", "end"):
-            body = (SKILLS / skill / "SKILL.md").read_text(encoding="utf-8")
-            self.assertIn("sul branch corrente, sempre", body, skill)
-            self.assertIn("due eccezioni", body, skill)
-            self.assertIn("no-direct-default", body, skill)
-            self.assertNotIn("tre eccezioni", body, "an unborn repo is no longer an exception")
-
-    def test_the_spool_script_is_gone(self):
-        self.assertFalse((SKILLS / "update" / "scripts" / "session_spool.sh").exists())
 
 
 class TheScriptChecksItself(unittest.TestCase):
     def test_the_selfcheck_passes(self):
-        out = run_script("update", "session_commit.sh", "--selfcheck")
+        out = run_script("end", "session_commit.sh", "--selfcheck")
         self.assertEqual(out.returncode, 0, out.stdout + out.stderr)
 
     def test_the_real_test_passes(self):

@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # polaris/scripts/check_skills.sh — shipped skill-surface gate.
 #
-# Two surfaces, two contracts. The session commands are a small closed set, named here.
-# The Polaris doors are synced in from the suite and mark themselves with a diamond in
-# their own description, so they are READ, not listed: a hand list of doors is a door
-# promoted upstream and forgotten here, green all the way to the release.
+# Every skill is promoted from the lab and marks itself with a diamond in its own
+# description (`◇ Polaris — `), so skills are READ, not listed: a hand list is a skill
+# promoted upstream and forgotten here, green all the way to the release. Since 0.33.0 the
+# session commands carry the same mark; the separate `Polaris skill — ` contract is retired.
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 fail=0
@@ -13,13 +13,8 @@ for f in skills/*/SKILL.md; do
   name=$(basename "$(dirname "$f")")
   # A quoted scalar is its content (YAML needs the quotes when the text holds ": ").
   desc=$(sed -n 's/^description: //p' "$f" | head -1 | sed -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'$/\1/")
-  case "$name" in
-    start|polaris-status|polaris-grill|update|end|plan-week|report)
-      [[ "$desc" == "Polaris skill — "* ]] || { echo "FAIL desc prefix: $name"; fail=1; };;
-    *)
-      if [[ "$desc" == "◇ "* ]]; then doors=$((doors + 1))
-      else echo "FAIL unknown skill (no command, no door marker): $name"; fail=1; fi;;
-  esac
+  if [[ "$desc" == "◇ "* ]]; then doors=$((doors + 1))
+  else echo "FAIL unknown skill (no ◇ marker in its description): $name"; fail=1; fi
   BANNED='POLARIS_VAULT|Desktop/All Vibe Proj|pol-bootstrap|pol-report|pol-base-workflow'
   if grep -nE "$BANNED" "$f"; then
     echo "FAIL legacy or founder-vault reference: $name"; fail=1

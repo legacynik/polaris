@@ -1,0 +1,37 @@
+[
+  {
+    "id": "p03",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "new / implicit",
+    "prompt": "Abbiamo chiarito lo scope del nuovo export PDF con grill, ora serve il documento con DoD e approccio prima di toccare il codice."
+  },
+  {
+    "id": "p05",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "close / explicit",
+    "prompt": "La PR #2101 è mergiata: chiudi il piano, sposta il file in done e promuovi i DEC."
+  },
+  {
+    "id": "p08",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "new / explicit",
+    "prompt": "Make a plan for the webhook retry rework, area billing, and gate its phases."
+  },
+  {
+    "id": "n02",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "bug",
+    "prompt": "Questo traceback in produzione: KeyError 'um' in pricing/compute.py:88. Sistemalo."
+  },
+  {
+    "id": "n04",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "vague idea",
+    "prompt": "Ho un'idea vaga su un assistente vocale per gli ordini, non so ancora cosa voglio: aiutami a capirlo."
+  }
+]

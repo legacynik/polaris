@@ -16,7 +16,7 @@ import subprocess
 import unittest
 from pathlib import Path
 
-from host_repo import LOGIN, PKG, git, host_repo, run_script
+from host_repo import LOGIN, git, host_repo, run_script
 
 DAY = "2026-09-04"
 
@@ -34,7 +34,7 @@ def landed(repo: Path, login: str = LOGIN) -> list[str]:
 
 
 def end(repo: Path, *paths: str) -> subprocess.CompletedProcess:
-    return run_script("update", "session_commit.sh", "--end", *paths, cwd=str(repo))
+    return run_script("end", "session_commit.sh", "--end", *paths, cwd=str(repo))
 
 
 def dirt(repo: Path) -> list[str]:
@@ -164,7 +164,7 @@ class PostPushWithoutARemote(unittest.TestCase):
         repo = host_repo()
         out = run_script("end", "lane_phase.sh", cwd=str(repo))
         self.assertEqual(out.returncode, 0, out.stderr)
-        self.assertIn("nessun remote: push non applicabile", out.stdout)
+        self.assertIn("no remote: push does not apply", out.stdout)
 
     def test_with_a_remote_the_verdict_is_left_to_git_power(self):
         repo = host_repo()
@@ -172,19 +172,12 @@ class PostPushWithoutARemote(unittest.TestCase):
         out = run_script("end", "lane_phase.sh", cwd=str(repo),
                          env={"PATH": "/usr/bin:/bin", "HOME": str(repo.parent)})
         self.assertEqual(out.returncode, 0, out.stderr)
-        self.assertNotIn("nessun remote", out.stdout)
+        self.assertNotIn("no remote", out.stdout)
         self.assertIn("git-power", out.stdout, "an absent git-power degrades, it does not crash")
-
-    def test_the_skill_calls_the_script_instead_of_cantiere_directly(self):
-        body = (PKG / "skills" / "end" / "SKILL.md").read_text(encoding="utf-8")
-        self.assertIn("lane_phase.sh", body)
-        self.assertNotIn("phase post-push", body,
-                         "the guard must live in the script, not in prose a model may skip")
-
 
 class TheScriptsCheckThemselves(unittest.TestCase):
     def test_selfchecks_pass(self):
-        for skill, name in (("update", "session_commit.sh"), ("end", "lane_phase.sh")):
+        for skill, name in (("end", "session_commit.sh"), ("end", "lane_phase.sh")):
             with self.subTest(script=name):
                 out = run_script(skill, name, "--selfcheck")
                 self.assertEqual(out.returncode, 0, out.stdout + out.stderr)

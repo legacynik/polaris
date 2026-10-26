@@ -1,0 +1,26 @@
+[
+  {
+    "id": "c1",
+    "category": "outcome",
+    "assertion": "the body answers every checkbox of every linked issue in a numbered row, ✅ with a proof link or ❌ with a reason, and an issue with any ❌ is under Refs, never Closes",
+    "cmd": "python3 -m pytest -q tests/test_controlla_pr.py"
+  },
+  {
+    "id": "c2",
+    "category": "outcome",
+    "assertion": "the unfilled template from references/template.md is refused by the checker as placeholders",
+    "cmd": "python3 -m pytest -q tests/test_controlla_pr.py::test_c1_the_unfilled_template_fails"
+  },
+  {
+    "id": "c3",
+    "category": "process",
+    "assertion": "the body is published only after controlla_pr.py exits 0 or 3 on the current head, and the published closing links are re-verified after the edit",
+    "cmd": "grep -qF -- '--verifica-pubblicato' SKILL.md && grep -qF -- '--head <sha>' SKILL.md"
+  },
+  {
+    "id": "c4",
+    "category": "outcome",
+    "assertion": "a gate that did not run is written under the merge risk, never marked passed",
+    "cmd": null
+  }
+]

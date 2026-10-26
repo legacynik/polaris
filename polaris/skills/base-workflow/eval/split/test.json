@@ -1,0 +1,34 @@
+[
+  {
+    "id": "p02",
+    "should_trigger": true,
+    "kind": "explicit",
+    "prompt": "Segui il base-workflow: devo aggiungere un filtro per data alla lista offerte."
+  },
+  {
+    "id": "p04",
+    "should_trigger": true,
+    "kind": "implicit",
+    "prompt": "make the invoice total round half-up instead of truncating"
+  },
+  {
+    "id": "p06",
+    "should_trigger": true,
+    "kind": "implicit",
+    "prompt": "TypeError: Cannot read properties of undefined (reading 'id')\n    at QuoteList (QuoteList.tsx:42)\nfix it"
+  },
+  {
+    "id": "n02",
+    "should_trigger": false,
+    "kind": "negative",
+    "prompt": "Fix the typo 'recieve' in README.md.",
+    "note": "a doc line with no behaviour: edit it directly"
+  },
+  {
+    "id": "n04",
+    "should_trigger": false,
+    "kind": "negative",
+    "prompt": "Bozza veloce usa e getta per vedere se l'idea della mappa funziona, non va in main.",
+    "note": "a throwaway spike: prototype"
+  }
+]

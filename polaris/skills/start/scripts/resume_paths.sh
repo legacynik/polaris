@@ -9,7 +9,30 @@
 # Shared by /start and /end so the rule has one implementation, not three copies.
 #
 # Prints MAIN_WT, ROOT, LOGIN, CURRENT, RADAR. Exits 2 rather than guessing.
+#   resume_paths.sh | resume_paths.sh --selfcheck
 set -uo pipefail
+
+# The fixtures: a checkout whose path holds a space and an apostrophe (polaris#14), the cockpit
+# fallback, and the two refusals — no contract, no checkout — each exiting 2.
+selfcheck() {
+  local self d repo out fail=0
+  self="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
+  d="$(mktemp -d)"; repo="$d/Team's \$repo"
+  mkdir -p "$repo/_polaris" && git -C "$repo" init -q && git -C "$repo" config polaris.login ada
+  ( cd "$repo" && bash "$self" >/dev/null 2>&1 ); [ $? -eq 2 ] || { echo "FAIL: no contract must exit 2"; fail=1; }
+  : > "$repo/_polaris/config.yml"
+  out="$(cd "$repo" && bash "$self")" || { echo "FAIL: a valid checkout exited non-zero"; fail=1; }
+  ( eval "$out"
+    top="$(cd "$repo" && git rev-parse --show-toplevel)"
+    [ "$ROOT" = "$top/_polaris" ] && [ "$LOGIN" = ada ] \
+      && [ "$CURRENT" = "$top/_polaris/state/current.md" ] && [ -f "$RADAR" ] ) \
+    || { echo "FAIL: eval did not round-trip ROOT/LOGIN/CURRENT/RADAR: $out"; fail=1; }
+  ( cd "$d" && bash "$self" >/dev/null 2>&1 ); [ $? -eq 2 ] || { echo "FAIL: outside a checkout must exit 2"; fail=1; }
+  rm -rf "$d"
+  [ "$fail" = 0 ] && echo "resume_paths selfcheck: ok (quoted paths · cockpit fallback · no contract · no checkout)"
+  return "$fail"
+}
+[ "${1:-}" = "--selfcheck" ] && { selfcheck; exit; }
 
 MAIN_WT="$(git worktree list --porcelain 2>/dev/null | head -1 | sed 's|^worktree ||')"
 [ -n "${MAIN_WT:-}" ] || { echo "resume_paths: not a git checkout — stop, do not guess a path" >&2; exit 2; }

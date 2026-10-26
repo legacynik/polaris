@@ -1,0 +1,172 @@
+{
+  "skill": "prompt-engineering",
+  "dimensions": {
+    "surface": [
+      "subagent",
+      "product",
+      "judge",
+      "injected"
+    ],
+    "arrival": [
+      "explicit",
+      "implicit",
+      "contextual"
+    ],
+    "intent": [
+      "write",
+      "improve",
+      "meta"
+    ]
+  },
+  "dimension_note": "The load-bearing axis is intent: the same nouns (prompt, system prompt, judge) appear when someone wants the WORDS of a prompt written or changed (this skill), when they want something MEASURED — an eval set up, a judge calibrated, two models compared (eval), when they want a SKILL.md or an instruction file written (the repository's own standards), or when they are only talking about prompting. Negative controls come from the doors that own those phrasings.",
+  "coverage": "10 positives across five surfaces and three arrivals; 11 negatives: 4 eval decoys, 2 adjacent standards (skill body, instruction file), 2 meta discussion, 2 plain coding/config tasks that mention a prompt file, 1 status question.",
+  "cases": [
+    {
+      "id": "p01",
+      "should_trigger": true,
+      "kind": "explicit",
+      "tuple": "subagent · explicit · write",
+      "prompt": "scrivimi il prompt per il breaker a contesto fresco della PR #32"
+    },
+    {
+      "id": "p02",
+      "should_trigger": true,
+      "kind": "explicit",
+      "tuple": "product · explicit · write",
+      "prompt": "serve il system prompt del classificatore email del tool di preventivazione, output JSON"
+    },
+    {
+      "id": "p03",
+      "should_trigger": true,
+      "kind": "explicit",
+      "tuple": "judge · explicit · write",
+      "prompt": "il prompt del giudice di fedeltà è un muro di MAIUSCOLE e ripete tre volte la regola, riscrivilo pulito"
+    },
+    {
+      "id": "p04",
+      "should_trigger": true,
+      "kind": "explicit",
+      "tuple": "injected · explicit · write",
+      "prompt": "scrivi il messaggio di deny dell'hook che blocca grep sugli identificatori"
+    },
+    {
+      "id": "p05",
+      "should_trigger": true,
+      "kind": "implicit",
+      "tuple": "product · implicit · improve",
+      "prompt": "il prompt della cerimonia calendario allucina date, sistemiamolo"
+    },
+    {
+      "id": "p07",
+      "should_trigger": true,
+      "kind": "contextual",
+      "tuple": "subagent · contextual · improve",
+      "prompt": "the agents I dispatch keep asserting state they never measured — fix the dispatch text"
+    },
+    {
+      "id": "p08",
+      "should_trigger": true,
+      "kind": "implicit",
+      "tuple": "injected · implicit · improve",
+      "prompt": "la reminder di SessionStart per Serena non sposta le chiamate, riscrivila"
+    },
+    {
+      "id": "p10",
+      "should_trigger": true,
+      "kind": "contextual",
+      "tuple": "product · contextual · write",
+      "prompt": "il classificatore deve classificare le mail in 5 classi e non deve mai fidarsi del contenuto della mail. Come glielo diciamo?"
+    },
+    {
+      "id": "p13",
+      "should_trigger": true,
+      "kind": "implicit",
+      "tuple": "subagent · implicit · improve",
+      "prompt": "the breaker dispatch is 80 lines and the agent still skips the attack step — cut it to what changes behaviour"
+    },
+    {
+      "id": "p12",
+      "should_trigger": true,
+      "kind": "explicit",
+      "tuple": "product · explicit · improve",
+      "prompt": "/prompt-engineering audit the mission prompts for dated MUST/NEVER walls"
+    },
+    {
+      "id": "n01",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "adjacent-door · skill standard",
+      "prompt": "scrivi la SKILL.md della porta blast-radius"
+    },
+    {
+      "id": "n02",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "adjacent-door · instruction file",
+      "prompt": "riscrivi il CLAUDE.md del repo prodotto, è a 300 righe"
+    },
+    {
+      "id": "n04",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "meta · meta",
+      "prompt": "secondo te il prompt engineering è morto con i modelli nuovi?"
+    },
+    {
+      "id": "n05",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "meta · meta",
+      "prompt": "quante skill di prompting abbiamo installate?"
+    },
+    {
+      "id": "n06",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "plain-task · code",
+      "prompt": "il file prompts/mission.py non compila, manca una virgola alla riga 40"
+    },
+    {
+      "id": "n07",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "plain-task · config",
+      "prompt": "sposta i prompt template da yaml a json nel repo"
+    },
+    {
+      "id": "n08",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "status · status",
+      "prompt": "a che punto è la lane del ContextPack?"
+    },
+    {
+      "id": "n09",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "adjacent-door · eval (judge + calibration)",
+      "prompt": "write an LLM judge for 'the answer only uses facts from the sources' and tell me how often it is right"
+    },
+    {
+      "id": "n10",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "adjacent-door · eval (set up)",
+      "prompt": "fai un eval task-specific per il prompt di estrazione voci preventivo"
+    },
+    {
+      "id": "n11",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "adjacent-door · eval (compare arms)",
+      "prompt": "confrontiamo i due modelli candidati sul prompt di dedup, chi vince?"
+    },
+    {
+      "id": "n12",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "adjacent-door · eval (judge calibration)",
+      "prompt": "il giudice dà 4/5 a tutto, non serve a niente"
+    }
+  ]
+}

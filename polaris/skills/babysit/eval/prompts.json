@@ -1,0 +1,76 @@
+{
+  "skill": "babysit",
+  "method": "STATE (red CI | open threads | stale label or moved head | waiting) x ARRIVAL (explicit | implicit | contextual). Negatives are the adjacent doors: merging (ship / merge_gate), writing the body from scratch (pr), judging merge-readiness on the product (real-testing), opening the PR (ship).",
+  "cases": [
+    {
+      "id": "p01",
+      "should_trigger": true,
+      "kind": "explicit",
+      "tuple": "red CI / explicit",
+      "prompt": "Babysit PR #1942 until it has the owner label."
+    },
+    {
+      "id": "p02",
+      "should_trigger": true,
+      "kind": "implicit",
+      "tuple": "threads / implicit",
+      "prompt": "There are three unresolved review comments on my PR and a failing lint check, handle them."
+    },
+    {
+      "id": "p03",
+      "should_trigger": true,
+      "kind": "contextual",
+      "tuple": "moved head / contextual",
+      "prompt": "Someone pushed to the branch after you labelled it ready-for-owner. Sort it out."
+    },
+    {
+      "id": "p04",
+      "should_trigger": true,
+      "kind": "implicit",
+      "tuple": "waiting / implicit",
+      "prompt": "Tienimi d'occhio la PR finché non è verde e pronta per me."
+    },
+    {
+      "id": "p05",
+      "should_trigger": true,
+      "kind": "explicit",
+      "tuple": "red CI / explicit",
+      "prompt": "Check on PR #210 and get it green."
+    },
+    {
+      "id": "p06",
+      "should_trigger": true,
+      "kind": "contextual",
+      "tuple": "waiting / contextual",
+      "prompt": "I just pushed the fix for the flaky test, keep watching the checks and reply to the bot comments."
+    },
+    {
+      "id": "n01",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "merge",
+      "prompt": "The PR is labelled and green: merge it and deploy to production."
+    },
+    {
+      "id": "n02",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "pr",
+      "prompt": "Write the PR description for this branch from the issue criteria."
+    },
+    {
+      "id": "n03",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "real-testing",
+      "prompt": "Serve this commit on staging and let a fresh agent try to break it."
+    },
+    {
+      "id": "n04",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "ship",
+      "prompt": "The branch is done, open the PR the way this repo expects."
+    }
+  ]
+}

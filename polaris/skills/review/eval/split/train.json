@@ -1,0 +1,82 @@
+[
+  {
+    "id": "p03",
+    "should_trigger": true,
+    "kind": "contextual",
+    "tuple": "diff / contextual",
+    "prompt": "The last three commits drifted from the issue without anyone noticing until the PR. Catch it at commit time this time."
+  },
+  {
+    "id": "p07",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "docs-only / implicit",
+    "prompt": "This diff touches only markdown. Take the declared fast path but still scan it for anything that should never be committed."
+  },
+  {
+    "id": "p01",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "diff / explicit",
+    "prompt": "Review the staged diff before I commit: the Standards findings and the Spec findings as two separate files, not one merged ranking."
+  },
+  {
+    "id": "p06",
+    "should_trigger": true,
+    "kind": "contextual",
+    "tuple": "sweep / contextual",
+    "prompt": "Sweep picked this PR up on its cron pass. Run the pre-merge quality gate on it and leave the findings where the hook can drain them."
+  },
+  {
+    "id": "p10",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "release / implicit",
+    "prompt": "It is approved. Bump the version, write the changelog entry, open the PR and land it.",
+    "why_negative": "adjacent-ship"
+  },
+  {
+    "id": "p08",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "execute / explicit",
+    "prompt": "Don't read the diff — run it. Deploy to staging, hit the endpoints the change crosses, and tell me if it actually works.",
+    "why_negative": "adjacent-real-testing"
+  },
+  {
+    "id": "p09",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "prove-behaviour / explicit",
+    "prompt": "Prove this fix with a test that fails before it and passes after, with the red recorded.",
+    "why_negative": "adjacent-tdd-dev"
+  },
+  {
+    "id": "p13",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "phase diff / implicit",
+    "prompt": "Phase 2 of the plan is coded. Before I close it, audit the phase diff against its DoD: no less, no more, and tell me which findings block it."
+  },
+  {
+    "id": "p14",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "PR / second opinion",
+    "prompt": "Get a second opinion on PR #318 from another model family before merge; I want only findings that were checked against the source."
+  },
+  {
+    "id": "p15",
+    "should_trigger": true,
+    "kind": "contextual",
+    "tuple": "diff / simplicity",
+    "prompt": "This change adds a retry helper and a new dependency. I think we already have one in utils and the stdlib covers the rest — audit it before it lands."
+  },
+  {
+    "id": "n13",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "near-miss: critic on a plan",
+    "prompt": "The plan file is complete and about to be accepted. Attack it once from fresh context and drop anything you cannot quote."
+  }
+]

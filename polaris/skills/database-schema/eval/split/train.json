@@ -1,0 +1,44 @@
+[
+  {
+    "id": "p01",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "query / explicit",
+    "prompt": "Before you write the query, check the real schema of orders and invoices."
+  },
+  {
+    "id": "p02",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "query / implicit",
+    "prompt": "Aggiungi un filtro per stato sulla lista ordini, la colonna dovrebbe chiamarsi status."
+  },
+  {
+    "id": "p04",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "question / implicit",
+    "prompt": "Perché il campo trace_id è sempre null nelle fatture?"
+  },
+  {
+    "id": "p05",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "RLS / implicit",
+    "prompt": "Add an RLS policy so users only update their own quotes."
+  },
+  {
+    "id": "n02",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "no database",
+    "prompt": "Change the button color on the settings page to our brand blue."
+  },
+  {
+    "id": "n03",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "architecture",
+    "prompt": "Plan the expand/contract order for renaming customer to client across three services."
+  }
+]

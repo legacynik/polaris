@@ -1,0 +1,83 @@
+{
+ "skill": "start",
+ "method": "ARRIVAL (explicit | implicit | after-compaction) x STATE (handoff present | first use). Negatives are the doors that pay network or write: status, update, end, week.",
+ "cases": [
+  {
+   "id": "p01",
+   "should_trigger": true,
+   "kind": "explicit",
+   "tuple": "explicit / handoff",
+   "prompt": "/start"
+  },
+  {
+   "id": "p02",
+   "should_trigger": true,
+   "kind": "explicit",
+   "tuple": "explicit / handoff",
+   "prompt": "start the session"
+  },
+  {
+   "id": "p03",
+   "should_trigger": true,
+   "kind": "implicit",
+   "tuple": "implicit / handoff",
+   "prompt": "dove eravamo rimasti?"
+  },
+  {
+   "id": "p04",
+   "should_trigger": true,
+   "kind": "implicit",
+   "tuple": "implicit / handoff",
+   "prompt": "riprendiamo da dove ha lasciato il pannello di ieri"
+  },
+  {
+   "id": "p05",
+   "should_trigger": true,
+   "kind": "implicit",
+   "tuple": "implicit / first use",
+   "prompt": "first time in this repo, set me up and tell me what's next"
+  },
+  {
+   "id": "p06",
+   "should_trigger": true,
+   "kind": "implicit",
+   "tuple": "implicit / handoff",
+   "prompt": "What was the next action from the last handoff?"
+  },
+  {
+   "id": "n01",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "portfolio",
+   "prompt": "polaris status, everything across the repos"
+  },
+  {
+   "id": "n02",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "write",
+   "prompt": "save progress, the migration test is green"
+  },
+  {
+   "id": "n03",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "close",
+   "prompt": "chiudiamo la sessione, scrivi l'handoff"
+  },
+  {
+   "id": "n04",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "weekly",
+   "prompt": "plan my week"
+  },
+  {
+   "id": "n05",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "implement-plan",
+   "prompt": "start implementing issue 412"
+  }
+ ]
+}

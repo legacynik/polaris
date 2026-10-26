@@ -1,0 +1,82 @@
+[
+  {
+    "id": "p08",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "adversarial / implicit",
+    "prompt": "Try to break this change every way you can before we merge it, and don't let the person who wrote it design the attempts."
+  },
+  {
+    "id": "p03",
+    "should_trigger": true,
+    "kind": "contextual",
+    "tuple": "diff / contextual",
+    "prompt": "Last time we validated against the function that had already been replaced and it sat broken in prod for three days. Don't let that happen here."
+  },
+  {
+    "id": "p06",
+    "should_trigger": true,
+    "kind": "contextual",
+    "tuple": "PR / contextual",
+    "prompt": "Everything is green but every green test here mocks the database and the LLM. I don't believe it."
+  },
+  {
+    "id": "p01",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "diff / explicit",
+    "prompt": "Real-test this staged diff before I commit: derive the perimeter from the change itself, not from memory."
+  },
+  {
+    "id": "p02",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "diff / implicit",
+    "prompt": "I fixed the newline collapse. Before this goes anywhere, check that the branch I actually added is exercised and not just the line I edited."
+  },
+  {
+    "id": "p11",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "release / explicit",
+    "prompt": "Merge the approved PR, deploy it, and watch the canary against the baseline.",
+    "why_negative": "adjacent-ship"
+  },
+  {
+    "id": "p13",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "no-git / contextual",
+    "prompt": "This folder is not under version control at all — there is no commit to hash. Review it by hand.",
+    "why_negative": "declared-not-for"
+  },
+  {
+    "id": "p09",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "prove-behaviour / explicit",
+    "prompt": "Write the failing test for this acceptance criterion first, prove its red, then implement the minimum that makes it pass.",
+    "why_negative": "adjacent-tdd-dev"
+  },
+  {
+    "id": "p14",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "phase / per-phase local",
+    "prompt": "Phase 3 changes what the quote page shows. Run it locally against the phase DoD before I close the phase; no staging."
+  },
+  {
+    "id": "p15",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "production / production check",
+    "prompt": "Testa l'app: fai il giro del cliente in produzione col profilo di prova e dimmi se qualcosa si è rotto."
+  },
+  {
+    "id": "n14",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "near-miss: critic",
+    "prompt": "Attack this decision record from fresh context before the founder accepts it."
+  }
+]

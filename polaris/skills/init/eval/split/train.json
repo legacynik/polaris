@@ -1,0 +1,38 @@
+[
+  {
+    "id": "p01",
+    "should_trigger": true,
+    "kind": "explicit",
+    "prompt": "Run init on this repo: it has no CONTEXT.md or ARCHITECTURE.md yet."
+  },
+  {
+    "id": "p02",
+    "should_trigger": true,
+    "kind": "explicit",
+    "prompt": "Lancia init --team required su acme-api, pinnando l'ultima release di Polaris."
+  },
+  {
+    "id": "p03",
+    "should_trigger": true,
+    "kind": "implicit",
+    "prompt": "Il context pack qui non emette niente: il repo non è mai stato portato nell'harness. Allinealo."
+  },
+  {
+    "id": "p05",
+    "should_trigger": true,
+    "kind": "implicit",
+    "prompt": "This old repo has prose docs but no typed backbone; audit it and propose what to write before touching anything."
+  },
+  {
+    "id": "n01",
+    "should_trigger": false,
+    "kind": "negative",
+    "prompt": "Refactor the folder layout of this repo and move the CI config under ci/."
+  },
+  {
+    "id": "n03",
+    "should_trigger": false,
+    "kind": "negative",
+    "prompt": "Create a new documentation area for the billing module with its dossier."
+  }
+]

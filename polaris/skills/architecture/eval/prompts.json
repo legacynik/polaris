@@ -1,0 +1,353 @@
+{
+ "skill": "architecture",
+ "dimensions": {
+  "arm": [
+   "audit",
+   "decision",
+   "feature",
+   "framework",
+   "repo-migration",
+   "db-expand",
+   "db-reshape",
+   "db-tune",
+   "backend-hotpath",
+   "doc",
+   "design",
+   "land",
+   "doctor"
+  ],
+  "reversibility": [
+   "OWNED",
+   "PUBLISHED",
+   "n/a"
+  ],
+  "arrival": [
+   "explicit",
+   "implicit",
+   "contextual"
+  ],
+  "naming": [
+   "category",
+   "symptom"
+  ]
+ },
+ "dimension_note": "The fourth axis was added at slice 0.5 and is the reason the corpus was expanded: `naming` is whether the message names the CATEGORY the arm is filed under ('optimise the backend', 'adopt a framework') or the SYMPTOM the founder actually feels ('the turn is slow because it waits on X', 'this looks more solid but I don't know how much it ties us in'). Slice 0 measured 50% rank-1 and both misses were the two most symptom-phrased cases in the set, while every category-phrased case fired — so this is where failure was found, not where it was guessed. The second axis stays for the reason it was written: the same request about the same interface has two correct and opposite answers depending on it, and p10/p11 are the pair the census named as deciding whether this stays one door. Negative controls are drawn from the seven navigation skills that hold this trigger today, plus the adjacent doors of the suite, plus (n06/n07) the two doors a symptom-rich description is most likely to steal from.",
+ "coverage": "13 arms, 39 cases -- the band's ceiling. `doctor` is the 1.0.0 addition: p27 is the naked invocation (the menu, which must measure and never execute), p28 and p29 the symptom phrasings, p29 specifically the repository where no checker is installed. Three cases were retired to stay inside the band, and each was a BEHAVIOUR claim wearing a trigger case's clothes: p01 (explicit + category on `decide`, the easy shape every measured run already fired on), p30 (`decide` arriving with no measurement) and p31 (the bare-reseal rationalization). The last two are now checks c5 and c6, where a claim about what the run DOES belongs. `land` keeps its explicit work-packet case plus p32; its behaviour is additionally covered by the deterministic Decision landing fixtures.",
+ "fixtures_consumed": {
+  "source": "audit/2026-08-17-estratti-architettura/fixtures-realcases.md",
+  "note": "Symptom vocabulary for the 8 new cases was drawn from these real fixtures. A fixture used here as a TRIGGER case must not be reused as a slice-2 T3 BEHAVIOUR case: the trigger corpus would then be teaching the behaviour rubric its own answer. Fixture 6 was already spent as a behaviour case (bypass-test.md B3) and was deliberately NOT used here.",
+  "spent_as_trigger": {
+   "p12": 1,
+   "p13": 11,
+   "p14": 15,
+   "p15": 9,
+   "p16": 13,
+   "p17": 14,
+   "p18": 12
+  },
+  "spent_as_behaviour": {
+   "B3": 6
+  },
+  "free_for_slice_2": [
+   2,
+   3,
+   4,
+   5,
+   7,
+   8,
+   10
+  ]
+ },
+ "cases": [
+  {
+   "id": "p02",
+   "should_trigger": true,
+   "kind": "implicit",
+   "tuple": "feature · OWNED · implicit · category",
+   "prompt": "I need to add batch export to the reports module. It'll need a new dependency on the storage layer, which nothing in reports touches today. What's the right shape?"
+  },
+  {
+   "id": "p03",
+   "should_trigger": true,
+   "kind": "contextual",
+   "tuple": "framework · n/a · contextual · symptom",
+   "prompt": "senti, stavo guardando temporal.io per i workflow degli scheduled job invece del nostro scheduler.py fatto a mano. mi sembra molto piu solido ma non so quanto ci lega. che dici, lo adottiamo?"
+  },
+  {
+   "id": "p04",
+   "should_trigger": true,
+   "kind": "implicit",
+   "tuple": "repo-migration · PUBLISHED · implicit · category",
+   "prompt": "There's a separate repo with the invoice generator we want to fold into the main backend. It has its own DB and two external consumers hitting it directly. How do we bring it in?"
+  },
+  {
+   "id": "p05",
+   "should_trigger": true,
+   "kind": "contextual",
+   "tuple": "db-expand · PUBLISHED · contextual · symptom",
+   "prompt": "devo aggiungere due colonne a quote_versions (tenant_id NOT NULL e una status enum) ma quella tabella la leggono anche il worker e il dashboard che deployano separati. come lo faccio senza rompere niente"
+  },
+  {
+   "id": "p06",
+   "should_trigger": true,
+   "kind": "implicit",
+   "tuple": "db-reshape · OWNED · implicit · category",
+   "prompt": "The alert summary table is denormalised and drifts from the source events. I want to rebuild it as a derived view instead. Right call?"
+  },
+  {
+   "id": "p07",
+   "should_trigger": true,
+   "kind": "implicit",
+   "tuple": "db-tune · n/a · implicit · category",
+   "prompt": "The merchant listing query takes 4 seconds. I was going to add a composite index on (tenant_id, created_at, status). Sound?"
+  },
+  {
+   "id": "p08",
+   "should_trigger": true,
+   "kind": "contextual",
+   "tuple": "backend-hotpath · n/a · contextual · symptom",
+   "prompt": "the assistant turn is slow because it waits on the sanctions screen call. thinking of moving that call onto a queue so it doesn't block — 20 min of work, want to ship it today",
+   "note": "the answer is protocol-change-is-not-decoupling; the caller still needs the result"
+  },
+  {
+   "id": "p09",
+   "should_trigger": true,
+   "kind": "explicit",
+   "tuple": "doc · n/a · explicit · category",
+   "prompt": "use architettura to write the ARCHITECTURE.md for this repo"
+  },
+  {
+   "id": "p10",
+   "should_trigger": true,
+   "kind": "contextual",
+   "tuple": "decision · OWNED-looking but PUBLISHED · contextual · symptom",
+   "prompt": "pricing/resolver.py is internal, non e' esposto da nessuna parte, quindi posso semplificarne la firma liberamente giusto? lo importano tipo 40 posti fra backend worker e gli script in infra/",
+   "note": "the two-bad-cases pair, half one: inside the code, callers enumerable, but not landable in one commit"
+  },
+  {
+   "id": "p11",
+   "should_trigger": true,
+   "kind": "implicit",
+   "tuple": "decision · PUBLISHED · implicit · symptom",
+   "prompt": "We published the team-memory bundle on npm last month. Only one repo of ours consumes it so far, so renaming the recall() parameters is basically free, right?",
+   "note": "the two-bad-cases pair, half two: one known consumer, unknown set"
+  },
+  {
+   "id": "p12",
+   "should_trigger": true,
+   "kind": "contextual",
+   "tuple": "feature · OWNED · contextual · symptom",
+   "prompt": "da quando abbiamo messo i bottoni inline l'esito viene risolto nel webhook, fuori dal giro dell'agente, e il modello continua a chiedere 'l'hai fatto?'. sto per aggiungere un forward automatico dell'esito nel turno dopo — e' la quarta pezza su questa cosa. mezz'ora di lavoro, procedo?",
+   "note": "fixture 1. the boundary moved and nobody wrote the invariant down; the symptom is the model asking, the commitment is the 29th compensating layer"
+  },
+  {
+   "id": "p13",
+   "should_trigger": true,
+   "kind": "implicit",
+   "tuple": "framework · PUBLISHED · implicit · symptom",
+   "prompt": "We hand-maintain a MODULE.md schema for every agent we run, and someone pointed out the library we already depend on ships a spec type carrying most of the same fields. Do we move onto theirs or keep ours?",
+   "note": "fixture 11. never phrased as 'framework adoption' — the founder describes maintaining a parallel format by hand"
+  },
+  {
+   "id": "p14",
+   "should_trigger": true,
+   "kind": "contextual",
+   "tuple": "repo-migration · PUBLISHED · contextual · symptom",
+   "prompt": "gli script del prezzario stanno in una repo loro e girano da crontab sulla box vecchia. da quando l'app e' stata spostata meta' di quelli puntano ancora al DSN sbagliato e ce ne accorgiamo solo quando i numeri non tornano. me li porto dentro il repo principale o li lascio li'?",
+   "note": "fixture 15. the symptom is stray consumers discovered the hard way, not 'we want to migrate a repository'"
+  },
+  {
+   "id": "p15",
+   "should_trigger": true,
+   "kind": "implicit",
+   "tuple": "db-expand · PUBLISHED · implicit · symptom",
+   "prompt": "The table the dashboard reads shows every scheduled run as successful while the raw runs table has fifteen failures sitting in it. I want to start writing the real outcome onto the row the dashboard reads, and it has to be filled in on every row including the old ones. What breaks?",
+   "note": "fixture 9. hits the arm's halt directly — the new field must be mandatory, which is not an additive expansion"
+  },
+  {
+   "id": "p16",
+   "should_trigger": true,
+   "kind": "contextual",
+   "tuple": "db-reshape · PUBLISHED · contextual · symptom",
+   "prompt": "il watchdog legge i report di qualita' da un database e scrive l'error_log su un altro, due passi separati senza niente attorno. se muore in mezzo l'alert o sparisce o esce doppio, ed e' gia' successo due volte. sposto l'error_log di la' o tengo i due e ci metto una chiave di idempotenza?",
+   "note": "fixture 13. two concrete options, no transaction boundary, and the arm's own never-dual-write rule is the adjudication"
+  },
+  {
+   "id": "p17",
+   "should_trigger": true,
+   "kind": "contextual",
+   "tuple": "db-tune · n/a · contextual · symptom",
+   "prompt": "pricing lookups come back in 2ms most of the time and then take anywhere from 4 to 37 seconds under load, and when they time out we fall back to an estimate — same input quoted 52k on one run and 18k on the next. I was going to raise the timeout and retry once. good enough?",
+   "note": "fixture 14. no vendor knob named on purpose (n05 owns that boundary); the halt is that the measurement the rule needs does not exist yet"
+  },
+  {
+   "id": "p18",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "near-miss · claude-api owns prompt caching",
+   "prompt": "ogni turno ci ripaghiamo 8-12k token di prompt perche' la cache non e' mai stata accesa. accendo i tre flag e via, o c'e' altro?",
+   "note": "fixture 12. a second hot-path symptom vocabulary, disjoint from p08: cost per turn and a config flag rather than latency and a queue",
+   "reclassification_proof": "reclassified 2026-08-19 with routing proof: measured on the v0.5.1 test split, this case fired `claude-api` in 2 of 3 runs and architecture in 0 of 3. `claude-api` claims the territory in its own description — \"the user asks about an LLM (pricing/model choice/limits/caching) - never answer from memory\" - and it is declared mandatory-read. The case asks how to switch on prompt-caching flags; the API door wins it correctly. Kept as a negative control rather than deleted, because a rival that legitimately outranks us is the most valuable kind of near-miss."
+  },
+  {
+   "id": "p19",
+   "should_trigger": true,
+   "kind": "contextual",
+   "tuple": "doc · n/a · contextual · symptom",
+   "prompt": "ho un contractor che entra lunedi e l'unica cosa scritta e' un README di marzo che descrive tre servizi che abbiamo cancellato. riesci a mettere giu' qualcosa che corrisponda davvero all'albero com'e' adesso?",
+   "note": "the doc arm phrased as staleness, never as 'write the architecture doc'. Deliberately near document-generate — if it lands there the arm's wording is the problem"
+  },
+  {
+   "id": "n01",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "near-miss · code-graph and the six other navigation skills",
+   "prompt": "walk me through how this codebase is structured, I've never seen it before"
+  },
+  {
+   "id": "n02",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "near-miss · piano-spec",
+   "prompt": "write the spec for the new bulk-upload endpoint, acceptance criteria included"
+  },
+  {
+   "id": "n03",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "near-miss · bugfix",
+   "prompt": "POST /quotes returns 500 when the items array is empty instead of a 422, fix it"
+  },
+  {
+   "id": "n04",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "out of scope · the language-and-boundaries door",
+   "prompt": "are 'case' and 'claim' the same thing in our model or two different concepts? the code uses both and I can't tell"
+  },
+  {
+   "id": "n05",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "out of scope · maintained vendor skill",
+   "prompt": "what should work_mem and max_parallel_workers be on a 15GB 8-core Postgres box?"
+  },
+  {
+   "id": "n06",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "near-miss · measurement with no commitment (the theft a symptom-rich description invites)",
+   "prompt": "profilami l'endpoint /quotes e dimmi dove se ne vanno i 300ms — per ora voglio solo il numero, non cambiare niente",
+   "note": "carries every hot-path symptom word and commits to nothing. If this fires, the description bought its symptom coverage by stealing measurement requests"
+  },
+  {
+   "id": "n07",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "near-miss · document-generate / code-documentation",
+   "prompt": "write the README for the team's memory CLI — install, the four commands, and what each flag does",
+   "note": "documentation that is not the architecture doc; the near-miss p19 sits next to from the other side"
+  },
+  {
+   "id": "p20",
+   "should_trigger": true,
+   "kind": "implicit",
+   "tuple": "audit · n/a · contextual · symptom",
+   "prompt": "backend/app/services e' una cartella sola con ottantasette file dentro e non capisco piu' cosa ci fa `category_guard.py` accanto a `dxf_reader.py`. prima di metterci mano voglio sapere com'e' messa."
+  },
+  {
+   "id": "p21",
+   "should_trigger": true,
+   "kind": "implicit",
+   "tuple": "audit · n/a · contextual · symptom",
+   "prompt": "There's a module in the pricing path nobody wants to touch — every time someone changes it something unrelated breaks a couple of weeks later. I'm scared to go near it. I want to know what's actually wrong with it before I plan the refactor."
+  },
+  {
+   "id": "p22",
+   "should_trigger": true,
+   "kind": "explicit",
+   "tuple": "audit · n/a · explicit · category",
+   "prompt": "com'e' messa l'architettura di questo repo? fammi un audit architetturale prima che decidiamo cosa rifattorizzare."
+  },
+  {
+   "id": "n08",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "near-miss · bugfix with a named root cause",
+   "prompt": "il totale del preventivo viene sbagliato quando lo sconto e' 0: `computo_pricing.py` ritorna None invece di 0.0 perche' il check e' `if discount:` invece di `if discount is not None:`. fixalo."
+  },
+  {
+   "id": "p23",
+   "should_trigger": true,
+   "kind": "explicit",
+   "tuple": "design · n/a · explicit · category",
+   "prompt": "run architettura design on the export-pipeline module — nothing exists yet, I want a few different shapes before I commit to one"
+  },
+  {
+   "id": "p24",
+   "should_trigger": true,
+   "kind": "contextual",
+   "tuple": "design · n/a · contextual · symptom",
+   "prompt": "sto partendo da zero sul modulo di notifiche, non esiste ancora niente. che struttura gli do?"
+  },
+  {
+   "id": "p25",
+   "should_trigger": true,
+   "kind": "contextual",
+   "tuple": "backend-hotpath · n/a · contextual · symptom",
+   "prompt": "the notification worker looks up the customer's org settings from the CRM on every single message it processes, even when fifty messages in a row belong to the same org -- feels like we're paying that round trip way more than we need to. worth caching it or is this overthinking it?"
+  },
+  {
+   "id": "pc03",
+   "should_trigger": true,
+   "kind": "contextual",
+   "tuple": "classify · it · contextual · moved from domain",
+   "prompt": "il watchdog che ricontrolla le offerte generate ce lo stiamo scrivendo da zero e ci sta mangiando due settimane. secondo te ha senso, o esiste roba pronta che fa la stessa cosa e ci attacchiamo a quella?",
+   "reclassification_proof": "moved from `domain` 2026-08-19: measured on domain's own test split this case fired `architecture` first, i02 in 3 runs of 3 and c03 in 1 of 3 with the rest exploring. The fusion experiment confirmed the direction — under a merged description both became hits (3/3 and 2/3) — while the three cases domain handled correctly collapsed. So these two were misfiled, not evidence of a wrong boundary."
+  },
+  {
+   "id": "pi02",
+   "should_trigger": true,
+   "kind": "contextual",
+   "tuple": "integrate · en · contextual · moved from domain",
+   "prompt": "Lifecycle wants to react to what happens in quoting. Quoting already emits domain events internally — can Lifecycle just subscribe to those directly? seems like free plumbing",
+   "note": "rule 28: private domain events published outward couple the subscriber to the producer's implementation model",
+   "reclassification_proof": "moved from `domain` 2026-08-19: measured on domain's own test split this case fired `architecture` first, i02 in 3 runs of 3 and c03 in 1 of 3 with the rest exploring. The fusion experiment confirmed the direction — under a merged description both became hits (3/3 and 2/3) — while the three cases domain handled correctly collapsed. So these two were misfiled, not evidence of a wrong boundary."
+  },
+  {
+   "id": "p26",
+   "should_trigger": true,
+   "kind": "explicit",
+   "tuple": "land · PUBLISHED · explicit · category",
+   "prompt": "run architecture land on DEC-polaris-context-backbone-001: resolve its call sites and prerequisites, execute the closure check, and block if the live document scopes are stale"
+  },
+  {
+   "id": "p27",
+   "should_trigger": true,
+   "kind": "explicit",
+   "tuple": "doctor · n/a · explicit · category",
+   "prompt": "/architecture — cosa c'e' da fare qui?"
+  },
+  {
+   "id": "p28",
+   "should_trigger": true,
+   "kind": "implicit",
+   "tuple": "doctor · n/a · implicit · symptom",
+   "prompt": "non ho idea se la documentazione architetturale di questo repo sia ancora vera. c'e' un modo di misurarlo invece di leggerla tutta?"
+  },
+  {
+   "id": "p29",
+   "should_trigger": true,
+   "kind": "contextual",
+   "tuple": "doctor · n/a · contextual · symptom",
+   "prompt": "ho appena clonato questo repo di prodotto, non ha nessuno script Polaris dentro. dimmi cosa e' fuori sesto a livello architetturale"
+  },
+  {
+   "id": "p32",
+   "should_trigger": true,
+   "kind": "contextual",
+   "tuple": "land · PUBLISHED · contextual · symptom",
+   "prompt": "questa decisione risulta accepted da tre settimane ma il vecchio path gira ancora in produzione"
+  }
+ ]
+}

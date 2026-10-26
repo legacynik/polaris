@@ -1,0 +1,62 @@
+[
+  {
+    "id": "c1",
+    "category": "outcome",
+    "assertion": "the perimeter is derived from the diff against the base the PR declares, never assumed from a branch named main, and an unresolvable base is announced on stderr rather than silently guessed",
+    "cmd": "python3 scripts/perimeter.py --selfcheck"
+  },
+  {
+    "id": "c2",
+    "category": "outcome",
+    "assertion": "every new if/elif/else/except/case/match in the diff must appear in branches_exercised; a verdict missing one is rejected by the validator, not warned about",
+    "cmd": "python3 scripts/branches.py --selfcheck && python3 scripts/verdict.py --selfcheck"
+  },
+  {
+    "id": "c3",
+    "category": "outcome",
+    "assertion": "content_hash is recomputed at every validation, so a verdict written for a different tree cannot pass — including a renamed or stale verdict whose filename still matches",
+    "cmd": "python3 scripts/verdict_checks.py --selfcheck"
+  },
+  {
+    "id": "c4",
+    "category": "process",
+    "assertion": "the gate refuses to be bypassed silently: REAL_TEST_BYPASS_GATE always passes but always writes a line to .real-test/bypass.log",
+    "cmd": "sh scripts/gate.sh --selfcheck"
+  },
+  {
+    "id": "c5",
+    "category": "process",
+    "assertion": "installed is not active: install-hook --verify checks both that the hook is wired and that the gate's own selfcheck passes",
+    "cmd": "sh scripts/install-hook.sh --selfcheck"
+  },
+  {
+    "id": "c6",
+    "category": "outcome",
+    "assertion": "the adversarial pass is dispatched to a fresh-context agent on the strongest model the harness has, never designed by the session that wrote the diff, and the skill names no model",
+    "cmd": "grep -q 'fresh-context agent from your harness' SKILL.md && ! grep -niE '\\b(haiku|sonnet|opus|gpt-[0-9])' SKILL.md"
+  },
+  {
+    "id": "c7",
+    "category": "outcome",
+    "assertion": "the breaker receives the URL with a verified SHA, the promises and the contract — never the diff, the session, or the author's reasoning",
+    "cmd": "grep -q 'never the diff or' SKILL.md"
+  },
+  {
+    "id": "c8",
+    "category": "process",
+    "assertion": "a breaker that found nothing must list what it tried; an unexplained zero is not evidence",
+    "cmd": "grep -q 'Zero findings from the breaker' references/merge.md"
+  },
+  {
+    "id": "c9",
+    "category": "outcome",
+    "assertion": "in a production check whose browser profile session has expired, the run types no password and fills no login form, stops, reports 'session expired, log in again in profile <X>' and returns an inconclusive result rather than an API-only pass presented as the walk",
+    "cmd": null
+  },
+  {
+    "id": "c10",
+    "category": "outcome",
+    "assertion": "in per-phase local mode, a DoD line the served product does not meet becomes one rewrite bead labelled src:real-test,kind:finding that blocks the phase, and the phase is not closed",
+    "cmd": null
+  }
+]

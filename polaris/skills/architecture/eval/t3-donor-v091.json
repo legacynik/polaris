@@ -1,0 +1,63 @@
+{
+  "checks": [
+    {
+      "id": "c1",
+      "assertion": "the emitted artifact carries its fixed fields, including the degraded-mode field, on ALL FOUR arms it can be emitted on -- the decision record, the landing receipt, ARCHITECTURE.md and the audit report (critic round-2 F3). The modalita field's first line is a structured, self-contained declaration -- `modalita: piena` or `modalita: ridotta ... missing: <tag>[, <tag>...]$` -- and EVERY such line in the artifact must be exactly well-formed, independent of position or markup. Text inside a fenced code block is not scanned (critic round-2 F9). Full hardening history and the declared residual: bypass-test.md B8",
+      "passed": false,
+      "evidence": "Generic ADR schema \u2014 no 'modalit\u00e0' field, no Polaris fixed fields, not filed under decisions/."
+    },
+    {
+      "id": "c2",
+      "assertion": "the reversibility verdict OWNED or PUBLISHED appears before any rule-derived advice in the transcript, and names which of the three conditions decided it",
+      "passed": false,
+      "evidence": "No OWNED/PUBLISHED reversibility verdict anywhere."
+    },
+    {
+      "id": "c3",
+      "assertion": "load discipline held \u2014 a successful public init/check/emit-context command closes from its receipt without reading checker source; no chapter file was read and no more than 3 extracts were opened in one invocation",
+      "passed": true,
+      "evidence": "No mention of company-os-book-library/chapters/extracts."
+    },
+    {
+      "id": "c4",
+      "assertion": "cost is stated, never implied \u2014 every option in a decision record states what it COSTS rather than what it buys, and every finding in an audit report is priced in at least one of the four costs, with maintenance findings saying whether it is spelunking or rischio, the half that picks the remedy",
+      "passed": true,
+      "evidence": "Prices the rejected option explicitly and prices the chosen option's downside in Consequences -> Negative."
+    },
+    {
+      "id": "c5",
+      "assertion": "counts in the output are each either closed by a verify leg or marked ASSUMED with a reason; no bare number. On the audit arm this extends to a signal whose instrument is absent in the target repo \u2014 it ships ASSUMED with the instrument named, never as a number that looks measured",
+      "passed": true,
+      "evidence": "Explicit '# ASSUMED'/'# UNKNOWN' tagging; repo counts backed by the inspection list."
+    },
+    {
+      "id": "c6",
+      "assertion": "a census question was answered by one script pass and not by N graph calls; multi-lane work loads the director only when needed and emits exactly one receipt per declared worker, including one non_observable row for a missing result",
+      "passed": true,
+      "evidence": "'No other callers of place() found' \u2014 a single sweep claim, no repeated graph-tool calls."
+    },
+    {
+      "id": "c7",
+      "assertion": "the run halts instead of improvising when an adjacent owner must decide, a worker result is missing, or write packets share a declared or derived seal/manifest/report surface; shared generated surfaces remain merger-owned",
+      "passed": false,
+      "evidence": "Repo confirmed to have no decisions/ directory, yet emits a full formal ADR under a convention the target repo doesn't have \u2014 improvises a new documentary authority instead of halting."
+    },
+    {
+      "id": "c8",
+      "assertion": "the addition test held \u2014 every audit recommendation deletes or splits, and any recommendation that would add a layer, a service, an indirection or a config surface carries all three conditions of audit-arm.md \u00a75: the reversibility verdict taken first, both cost numbers, and the old path deleted in the same change",
+      "passed": true,
+      "evidence": "Decision explicitly rejects the Saga/orchestrator layer, only adds typed exceptions + inline compensation."
+    }
+  ],
+  "metrics": {
+    "model": "claude-sonnet-5",
+    "input_tokens": 85869,
+    "output_tokens": "UNKNOWN",
+    "wall_ms": 64587,
+    "tool_calls": 3,
+    "repeated_commands": 0,
+    "consistent_runs": 1,
+    "runs": 1,
+    "context_reuse": "not_available"
+  }
+}

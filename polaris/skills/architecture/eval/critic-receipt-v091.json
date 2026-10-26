@@ -1,0 +1,245 @@
+{
+  "agent_type": "critic",
+  "fork_turns": "none",
+  "review_lanes": [
+    "critic"
+  ],
+  "reviewed_diff_sha256": "52c7df613d1bd77fc1eefe623ba290b9ed17accde08e72f9ad1abd78785769bc",
+  "transcript_sha256": "4916df392d87661f66ce26f17624ca0d25ba8a0f3af4ab005095728f9ee598ec",
+  "graded_checks": [
+    {
+      "id": "c1",
+      "passed": true,
+      "evidence": "Extracted c1.cmd verbatim from checks.json via json.load and ran it under /bin/sh with RECORD=architecture-record-verbatim.txt -> exit 0. The record carries reversibilit\u00e0/opzioni/costo per opzione/scelta/enforcement/verifica di chiusura and the line '**modalit\u00e0:** ridotta \u2014 missing: rule-library, decisions, glossary', which sp() accepts as the ridotta form. 20 mutation fixtures of the same record covering every prior-round bypass class all returned exit 1."
+    },
+    {
+      "id": "c2",
+      "passed": true,
+      "evidence": "The transcript's '**reversibilit\u00e0:** OWNED' block appears immediately after the question and before opzioni/costo/scelta \u2014 i.e. before any advice \u2014 and names all three Step 0 conditions individually."
+    },
+    {
+      "id": "c3",
+      "passed": true,
+      "evidence": "Ran the c3 cmd with TRACE=architecture-trace.txt -> exit 0. No 'company-os-book-library/_extract/*/chapters/' path appears in the trace, and the count of distinct '_extract/<name>/DECISION-RULES.md' opens is 0 (<= 3)."
+    },
+    {
+      "id": "c4",
+      "passed": true,
+      "evidence": "Both options in 'costo per opzione' lead with what they COST before 'Buys:' appears."
+    },
+    {
+      "id": "c5",
+      "passed": true,
+      "evidence": "Every count is closed or marked ASSUMED with reasons; no bare number appears."
+    },
+    {
+      "id": "c6",
+      "passed": true,
+      "evidence": "The census question was closed by script passes with the symbol graph used as the verify leg only, not N graph calls; no director was loaded for a single serial decision."
+    },
+    {
+      "id": "c7",
+      "passed": true,
+      "evidence": "No adjacent owner or worker result was in play; the run refused to present from-headings reasoning as rule-derived and refused to claim a live enforcement hook where none exists."
+    },
+    {
+      "id": "c8",
+      "passed": true,
+      "evidence": "Vacuously held and positively consistent: the decision itself rejects the addition (Saga/orchestrator layer) via depth reasoning and picks the option that adds no layer, service, indirection or config surface."
+    }
+  ],
+  "attacks": {
+    "sibling_branches": {
+      "inventory": [
+        "skills-suite/architecture/eval/checks.json:c1-cmd -> $RECORD arm",
+        "skills-suite/architecture/eval/checks.json:c1-cmd -> $AUDIT_REPORT arm",
+        "skills-suite/architecture/eval/checks.json:c1-cmd -> $LANDING arm",
+        "skills-suite/architecture/eval/checks.json:c1-cmd -> $ARCHITECTURE_DOC arm",
+        "skills-suite/architecture/eval/checks.json:c1-cmd -> sp() piena vs ridotta branches",
+        "skills-suite/domain/eval/checks.json:c9-cmd -> identical sp() on the sibling skill"
+      ],
+      "probes": [
+        {
+          "target": "skills-suite/architecture/eval/checks.json:c1-cmd -> $RECORD arm",
+          "passed": true,
+          "evidence": "RECORD=golden -> exit 0; RECORD=golden with any of the six keyword fields removed or with a malformed modalit\u00e0 line -> exit 1 (20 fixtures)."
+        },
+        {
+          "target": "skills-suite/architecture/eval/checks.json:c1-cmd -> $AUDIT_REPORT arm",
+          "passed": true,
+          "evidence": "AUDIT_REPORT fixture with scope/perimetro/strumentazione plus a well-formed modalit\u00e0 line -> exit 0; bare modalit\u00e0 -> exit 1; absent modalit\u00e0 -> exit 1; missing perimetro/strumentazione -> exit 1."
+        },
+        {
+          "target": "skills-suite/architecture/eval/checks.json:c1-cmd -> $LANDING arm",
+          "passed": true,
+          "evidence": "LANDING fixture with call_sites/prerequisites/closure_check -> exit 0; dropping closure_check -> exit 1."
+        },
+        {
+          "target": "skills-suite/architecture/eval/checks.json:c1-cmd -> $ARCHITECTURE_DOC arm",
+          "passed": true,
+          "evidence": "ARCHITECTURE_DOC fixture with all five frontmatter fields -> exit 0; dropping review_trigger -> exit 1. Unchanged from the pre-image."
+        },
+        {
+          "target": "skills-suite/architecture/eval/checks.json:c1-cmd -> sp() piena vs ridotta branches",
+          "passed": true,
+          "evidence": "Both branches exercised independently and correctly; a single malformed line fails the whole file regardless of position."
+        },
+        {
+          "target": "skills-suite/domain/eval/checks.json:c9-cmd -> identical sp() on the sibling skill",
+          "passed": true,
+          "evidence": "Compared the sp() function text: byte-identical except domain drops the decisions tag, appropriately."
+        }
+      ]
+    },
+    "claim_code_mismatch": {
+      "inventory": [
+        "skills-suite/architecture/SKILL.md:215 -> checks.json:c1 tag vocabulary",
+        "skills-suite/architecture/references/audit-arm.md:225 -> checks.json:c1 $AUDIT_REPORT sp() call",
+        "skills-suite/architecture/references/bypass-test.md:B8 -> checks.json:c1 EVERY-anchored-line claim",
+        "skills-suite/architecture/eval/checks.json:c1-assertion -> conflicting-legacy-authority leg",
+        "skills-suite/architecture/eval/checks.json:c1-assertion -> live-document frontmatter leg"
+      ],
+      "probes": [
+        {
+          "target": "skills-suite/architecture/SKILL.md:215 -> checks.json:c1 tag vocabulary",
+          "passed": true,
+          "evidence": "All four documented tags accepted; a tag outside the family is rejected."
+        },
+        {
+          "target": "skills-suite/architecture/references/audit-arm.md:225 -> checks.json:c1 $AUDIT_REPORT sp() call",
+          "passed": true,
+          "evidence": "audit-arm.md states the audit report carries the same field; verified behaviourally, a bare declaration in an audit report fails exactly as it does in a record."
+        },
+        {
+          "target": "skills-suite/architecture/references/bypass-test.md:B8 -> checks.json:c1 EVERY-anchored-line claim",
+          "passed": true,
+          "evidence": "Verified in both positions: honest line + trailing bare line -> exit 1; leading bare or malformed line + honest line -> exit 1."
+        },
+        {
+          "target": "skills-suite/architecture/eval/checks.json:c1-assertion -> conflicting-legacy-authority leg",
+          "passed": true,
+          "evidence": "Partial mechanisation, not a false claim; unchanged from the pre-image assertion."
+        },
+        {
+          "target": "skills-suite/architecture/eval/checks.json:c1-assertion -> live-document frontmatter leg",
+          "passed": true,
+          "evidence": "Same partial-mechanisation status as above, unchanged from the pre-image."
+        }
+      ]
+    },
+    "bypasses": {
+      "inventory": [
+        "bypass class: bare declaration -> fx/B_bare_ridotta.txt, fx/B2_bare_label.txt",
+        "bypass class: wrong markup heading/bullet/quote/backtick -> fx/C_heading.txt, C2, C3, C4",
+        "bypass class: whole-file keyword collision -> fx/D_keyword_collision.txt",
+        "bypass class: multi-line prose degradation -> fx/E_prose_only.txt",
+        "bypass class: trailing line overriding an honest one -> fx/F2_trailing_bare.txt",
+        "bypass class: leading bare/malformed line -> fx/G_leading_bare_before_honest.txt, G2",
+        "bypass class: unbounded text after missing: -> fx/H_unbounded_after_missing.txt, H3",
+        "bypass class: fabricated tag vocabulary -> fx/H2_fake_tag.txt, fx/N12_empty_taglist.txt",
+        "bypass class: incidental mention in another field -> fx/I_incidental_mention.txt",
+        "bypass class: field absent entirely -> fx/K_no_field_at_all.txt, fx/Q3_no_field_no_mention.txt"
+      ],
+      "probes": [
+        {
+          "target": "bypass class: bare declaration -> fx/B_bare_ridotta.txt, fx/B2_bare_label.txt",
+          "passed": true,
+          "evidence": "Both the round-4/5 defect are closed: exit 1 in both cases."
+        },
+        {
+          "target": "bypass class: wrong markup heading/bullet/quote/backtick -> fx/C_heading.txt, C2, C3, C4",
+          "passed": true,
+          "evidence": "All four markup wrappers of a bare declaration -> exit 1."
+        },
+        {
+          "target": "bypass class: whole-file keyword collision -> fx/D_keyword_collision.txt",
+          "passed": true,
+          "evidence": "Record with 'decisione'/'decisions/' elsewhere, modalit\u00e0 bare -> exit 1 still; F2 defect cannot recur."
+        },
+        {
+          "target": "bypass class: multi-line prose degradation -> fx/E_prose_only.txt",
+          "passed": true,
+          "evidence": "Prose-only degradation with no anchored line -> exit 1."
+        },
+        {
+          "target": "bypass class: trailing line overriding an honest one -> fx/F2_trailing_bare.txt",
+          "passed": true,
+          "evidence": "Honest line followed by a bare one -> exit 1; take-the-last-line defect closed."
+        },
+        {
+          "target": "bypass class: leading bare/malformed line -> fx/G_leading_bare_before_honest.txt, G2",
+          "passed": true,
+          "evidence": "Leading bare or out-of-vocabulary line before an honest one -> exit 1 both cases."
+        },
+        {
+          "target": "bypass class: unbounded text after missing: -> fx/H_unbounded_after_missing.txt, H3",
+          "passed": true,
+          "evidence": "Free prose after the tag list -> exit 1; tag list anchored to end-of-line."
+        },
+        {
+          "target": "bypass class: fabricated tag vocabulary -> fx/H2_fake_tag.txt, fx/N12_empty_taglist.txt",
+          "passed": true,
+          "evidence": "Unrecognised tag or empty tag list -> exit 1 both cases."
+        },
+        {
+          "target": "bypass class: incidental mention in another field -> fx/I_incidental_mention.txt",
+          "passed": true,
+          "evidence": "Mid-sentence mention of modalit\u00e0 elsewhere -> ignored, honest declaration unaffected."
+        },
+        {
+          "target": "bypass class: field absent entirely -> fx/K_no_field_at_all.txt, fx/Q3_no_field_no_mention.txt",
+          "passed": true,
+          "evidence": "No field, no mention -> exit 1 both variants; fail-open-on-no-match defect closed."
+        }
+      ]
+    },
+    "false_green_selfchecks": {
+      "inventory": [
+        "skills-suite/architecture/eval/checks.json:c1-cmd -> golden record must exit 0",
+        "skills-suite/architecture/eval/checks.json:c1-cmd -> unbound arm vars exit 0",
+        "skills-suite/architecture/eval/checks.json:c1-cmd -> quoted-example line satisfies presence",
+        "skills-suite/architecture/eval/checks.json:c1-cmd -> rule-librar[a-z]* suffix laxness",
+        "skills-suite/architecture/eval/checks.json:c1-cmd -> duplicate contradictory well-formed lines",
+        "skills-suite/architecture/eval/checks.json:c1-cmd -> locale sensitivity of the [a\u00e0] anchor"
+      ],
+      "probes": [
+        {
+          "target": "skills-suite/architecture/eval/checks.json:c1-cmd -> golden record must exit 0",
+          "passed": true,
+          "evidence": "Golden record exit 0, not green-by-accident: 20+ mutations return exit 1."
+        },
+        {
+          "target": "skills-suite/architecture/eval/checks.json:c1-cmd -> unbound arm vars exit 0",
+          "passed": true,
+          "evidence": "Vacuous by design, same shape as the pre-image and c3; non-blocking, documented nit."
+        },
+        {
+          "target": "skills-suite/architecture/eval/checks.json:c1-cmd -> quoted-example line satisfies presence",
+          "passed": true,
+          "evidence": "A fenced example quoting the field passes as if real; dominated by the declared false-piena residual, non-blocking nit."
+        },
+        {
+          "target": "skills-suite/architecture/eval/checks.json:c1-cmd -> rule-librar[a-z]* suffix laxness",
+          "passed": true,
+          "evidence": "Suffix wildcard accepts run-on tokens, can only over-declare, never conceal; cosmetic non-blocking nit."
+        },
+        {
+          "target": "skills-suite/architecture/eval/checks.json:c1-cmd -> duplicate contradictory well-formed lines",
+          "passed": true,
+          "evidence": "Faithful to the stated assertion (every line well-formed), dominated by the declared false-claim residual."
+        },
+        {
+          "target": "skills-suite/architecture/eval/checks.json:c1-cmd -> locale sensitivity of the [a\u00e0] anchor",
+          "passed": true,
+          "evidence": "Fails closed under LC_ALL=C (false RED never false GREEN); non-blocking portability nit, graders run UTF-8 shells."
+        }
+      ]
+    }
+  },
+  "verdict": "PASS",
+  "findings": [],
+  "model": "claude-opus-5[1m]",
+  "input_tokens": "UNKNOWN",
+  "output_tokens": "UNKNOWN",
+  "wall_ms": 609097
+}

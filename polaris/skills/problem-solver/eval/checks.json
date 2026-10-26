@@ -1,0 +1,23 @@
+[
+ {
+  "id": "c1",
+  "category": "process",
+  "assertion": "before proposing any new fix, the reply lists the attempts already made and names an assumption they share",
+  "cmd": null,
+  "task": "We tried three fixes for the nightly import job timing out: a bigger timeout, batching rows by 500, and an index on the source table. It still times out. What do we do?"
+ },
+ {
+  "id": "c2",
+  "category": "process",
+  "assertion": "the reply produces at least ten distinct hypotheses before ranking or recommending any of them",
+  "cmd": null,
+  "task": "Our PDF parser keeps breaking on new supplier formats; each fix for one format breaks another. We are out of ideas."
+ },
+ {
+  "id": "c3",
+  "category": "outcome",
+  "assertion": "the reply proposes one or two experiments, each with a time box, and states for each of the top hypotheses what result that experiment would show, so the result tells the hypotheses apart",
+  "cmd": null,
+  "task": "Prices in the cache go stale after a deploy and four attempted fixes did not hold. Help us get unstuck."
+ }
+]

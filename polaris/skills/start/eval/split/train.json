@@ -1,0 +1,51 @@
+[
+ {
+  "id": "p01",
+  "should_trigger": true,
+  "kind": "explicit",
+  "tuple": "explicit / handoff",
+  "prompt": "/start"
+ },
+ {
+  "id": "p03",
+  "should_trigger": true,
+  "kind": "implicit",
+  "tuple": "implicit / handoff",
+  "prompt": "dove eravamo rimasti?"
+ },
+ {
+  "id": "p04",
+  "should_trigger": true,
+  "kind": "implicit",
+  "tuple": "implicit / handoff",
+  "prompt": "riprendiamo da dove ha lasciato il pannello di ieri"
+ },
+ {
+  "id": "p06",
+  "should_trigger": true,
+  "kind": "implicit",
+  "tuple": "implicit / handoff",
+  "prompt": "What was the next action from the last handoff?"
+ },
+ {
+  "id": "n01",
+  "should_trigger": false,
+  "kind": "negative",
+  "tuple": "portfolio",
+  "prompt": "polaris status, everything across the repos"
+ },
+ {
+  "id": "n03",
+  "should_trigger": false,
+  "kind": "negative",
+  "tuple": "close",
+  "prompt": "chiudiamo la sessione, scrivi l'handoff"
+ },
+ {
+  "id": "n04",
+  "should_trigger": false,
+  "kind": "negative",
+  "tuple": "weekly",
+  "prompt": "plan my week"
+ }
+]

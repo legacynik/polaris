@@ -48,7 +48,7 @@ uvx --with pyyaml pytest polaris/tests -q
 
 | Gate | Fails when |
 |---|---|
-| `check_skills.sh` | a skill is neither a session command (`Polaris skill — ` description) nor a door (`◇ ` description), names a retired or private path, or the `start` settings hook fails its selfcheck |
+| `check_skills.sh` | a skill's description lacks the `◇ ` mark, it names a retired or private path, or the `start` settings hook fails its selfcheck |
 | `check_skill_versions.py` | a skill changed against the base without raising its `version:` |
 | `pytest polaris/tests` | a shipped script, template or contract test breaks |
 

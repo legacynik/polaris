@@ -1,0 +1,30 @@
+[
+  {
+    "id": "p03",
+    "should_trigger": true,
+    "kind": "contextual",
+    "tuple": "rewrite / contextual",
+    "prompt": "controlla_pr.py just exited 1 on my body: the criteria table has 4 rows and the issue has 5 checkboxes. Fix it."
+  },
+  {
+    "id": "p06",
+    "should_trigger": true,
+    "kind": "contextual",
+    "tuple": "rewrite / contextual",
+    "prompt": "La PR chiude #1719 ma due criteri sono ancora aperti: sistema il corpo, Closes non va bene."
+  },
+  {
+    "id": "n02",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "real-testing",
+    "prompt": "Is this branch mergeable? Serve it and try to break the checkout flow."
+  },
+  {
+    "id": "n04",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "ship",
+    "prompt": "Ho finito il lavoro sul branch: fammi tutto il giro fino al merge."
+  }
+]

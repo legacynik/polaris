@@ -1,0 +1,18 @@
+{
+  "skill": "tdd-dev",
+  "method": "BRANCH (feature red | regression red | proof review) x ARRIVAL (explicit | implicit | contextual). Positives cover the three branches and all arrival styles; negatives are adjacent testing jobs where red_check cannot judge the result.",
+  "cases": [
+    {"id": "p01", "should_trigger": true, "kind": "explicit", "tuple": "feature / explicit", "prompt": "Use tdd-dev for the first acceptance criterion of this approved feature before you write production code."},
+    {"id": "p02", "should_trigger": true, "kind": "implicit", "tuple": "feature / implicit", "prompt": "We have three acceptance criteria and no code yet. Drive the first vertical slice test-first, prove its red, and run the relevant regression suite before moving on."},
+    {"id": "p03", "should_trigger": true, "kind": "contextual", "tuple": "feature / contextual", "prompt": "The API plan is approved. Start with the public CLI contract, not the parser internals, and prove the missing behaviour before implementing it."},
+    {"id": "p04", "should_trigger": true, "kind": "explicit", "tuple": "regression / explicit", "prompt": "Run tdd-dev: the fix already exists, but I need evidence that the regression test catches the old defect and the relevant suite remains green."},
+    {"id": "p05", "should_trigger": true, "kind": "implicit", "tuple": "regression / implicit", "prompt": "This test is green after my patch. Show that it fails when the bug is safely reintroduced, then verify the repaired tree."},
+    {"id": "p06", "should_trigger": true, "kind": "contextual", "tuple": "regression / contextual", "prompt": "The PR is ready and tests pass, but none of the new tests was ever observed failing. Close that evidence gap without touching unrelated dirty work."},
+    {"id": "p07", "should_trigger": true, "kind": "implicit", "tuple": "proof review / implicit", "prompt": "Does this passing parser test prove the contract, or is it mirroring the same branches and fixtures as the implementation?"},
+    {"id": "p08", "should_trigger": true, "kind": "contextual", "tuple": "proof review / contextual", "prompt": "Before calling the bug done, inspect the recorded red reason and reject it if the failure was only a missing fixture or environment error."},
+    {"id": "n01", "should_trigger": false, "kind": "negative", "tuple": "performance threshold", "prompt": "Build a load test and define the p95 latency budget for this endpoint."},
+    {"id": "n02", "should_trigger": false, "kind": "negative", "tuple": "third-party workaround", "prompt": "The upstream SDK crashes internally and we cannot reproduce it in our code; document a pinned workaround and upstream issue."},
+    {"id": "n03", "should_trigger": false, "kind": "negative", "tuple": "test review only", "prompt": "Review this existing test suite for naming consistency and duplicated fixtures; do not change product behaviour."},
+    {"id": "n04", "should_trigger": false, "kind": "negative", "tuple": "observability probe", "prompt": "Add a production health probe for the queue and alert when no jobs complete for ten minutes."}
+  ]
+}

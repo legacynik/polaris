@@ -1,0 +1,56 @@
+[
+  {
+    "id": "c1",
+    "category": "outcome",
+    "assertion": "Standards and Spec stay two separate findings files and are never fused into one ranking, so a plan drift cannot be buried under style noise; plan-adherence findings go to the Spec file",
+    "cmd": "grep -q 'never merge into one ranking' references/protocol.md && grep -q 'plan. findings to' SKILL.md"
+  },
+  {
+    "id": "c2",
+    "category": "outcome",
+    "assertion": "the approval is a real artifact drained by a PreToolUse hook at commit/merge time, not a sentence in the transcript",
+    "cmd": "python3 scripts/gate_hook.py --selfcheck"
+  },
+  {
+    "id": "c3",
+    "category": "outcome",
+    "assertion": "the approval is bound to the tree it reviewed, so an approval cannot survive a later edit",
+    "cmd": "python3 scripts/finalize_review.py --selfcheck"
+  },
+  {
+    "id": "c4",
+    "category": "process",
+    "assertion": "the docs-only fast path is a declared route, not a judgment call, and scan_blockers still runs on it — a docs-only commit that adds an untracked secret still blocks",
+    "cmd": "python3 scripts/scan_blockers.py --selfcheck"
+  },
+  {
+    "id": "c5",
+    "category": "outcome",
+    "assertion": "review never performs the merge: ship calls it and owns the merge proposal, so the chain runs ship -> review and never back",
+    "cmd": "grep -qE '^invoked-by: \\[.*ship' SKILL.md && ! grep -qE '^invokes: .*ship' SKILL.md"
+  },
+  {
+    "id": "c6",
+    "category": "outcome",
+    "assertion": "on a diff with a structural finding (a test that only mocks the function it claims to test), the run opens one bead labelled src:review,kind:finding that blocks the phase, records the finding as CRITICAL with quoted evidence, and does not close the phase",
+    "cmd": null
+  },
+  {
+    "id": "c7",
+    "category": "outcome",
+    "assertion": "on a diff with only a taste finding (a naming preference) and one mechanical fix (an unused import), the import is removed and listed under fixed, the naming note is INFORMATIONAL, no bead is opened and the approval is PASS",
+    "cmd": null
+  },
+  {
+    "id": "c8",
+    "category": "process",
+    "assertion": "the second-opinion mode pins no model, closes stdin and runs under a timeout, and reports only findings verified against the source",
+    "cmd": "! grep -niE '\\b(haiku|sonnet|opus|gpt-[0-9])' SKILL.md references/second-opinion.md && grep -q '< /dev/null' references/second-opinion.md"
+  },
+  {
+    "id": "c9",
+    "category": "process",
+    "assertion": "findings are kept as an audit trail until an explicit prune, never deleted as a side effect of approving",
+    "cmd": null
+  }
+]

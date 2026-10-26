@@ -1,0 +1,44 @@
+# The feature workflow (operating model §3, §10). Poured, never a wisp: a wisp step takes no
+# lease, so a crashed loop would leave its phase stuck (adoption tests §2.4).
+# Each step closes only through `skills-suite/plan-area/scripts/feature_gate.py close`, which runs the
+# stage named by `metadata.step` and diffs the live `blocks` edges against `needs` below.
+# Phases are added by `feature_gate.py pour` from the plan file: phase 1 needs `critic`, phase N
+# needs phase N-1, and `implement` needs the last phase. So `implement` declares no `needs` here:
+# its edge comes from the plan's phase chain, and the gate checks both sets.
+formula = "feature"
+description = "Medium/large work: plan accepted -> critic -> phases -> ship. Closed only through feature_gate.py."
+version = 1
+
+[vars.plan]
+description = "plan file name (the date-name stem), stamped on every step"
+required = true
+
+[[steps]]
+id = "plan"
+title = "plan {{plan}}"
+description = "Plan file in open/ with area, DoD and status accepted; the epic poured."
+labels = ["kind:stage"]
+metadata = { step = "plan" }
+
+[[steps]]
+id = "critic"
+title = "critic {{plan}}"
+description = "critic on the plan: a valid report with no blocking finding."
+needs = ["plan"]
+labels = ["kind:stage"]
+metadata = { step = "critic" }
+
+[[steps]]
+id = "implement"
+title = "implement {{plan}}"
+description = "Every phase bead of this molecule closed through the phase stage."
+labels = ["kind:stage"]
+metadata = { step = "implement" }
+
+[[steps]]
+id = "ship"
+title = "ship {{plan}}"
+description = "The PR is merged through ship's receipts; then plan close burns this molecule."
+needs = ["implement"]
+labels = ["kind:stage"]
+metadata = { step = "ship" }

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Polaris Grill"
+  short_description: "Discover an idea and open its plan file"
+  default_prompt: "Use $grill to grill this idea against the repository's docs, decisions and prior art, list each assumption with how to test it, propose the size, and open the plan file at status discovery — one question at a time."

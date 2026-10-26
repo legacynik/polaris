@@ -1,0 +1,60 @@
+[
+  {
+    "id": "p02",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "diff / implicit",
+    "prompt": "Before this commit goes in, check it against our conventions and against what issue #212 actually asked for."
+  },
+  {
+    "id": "p04",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "PR / explicit",
+    "prompt": "Is this branch mergeable from a code-quality standpoint? Give me the blockers before I take it to ship."
+  },
+  {
+    "id": "p05",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "PR / implicit",
+    "prompt": "Read this PR the way a senior reviewer would and tell me what would make you refuse to approve it."
+  },
+  {
+    "id": "p12",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "commitment / contextual",
+    "prompt": "Should we adopt this framework? It would tie us in, and I want the trade-off recorded before anyone writes code.",
+    "why_negative": "adjacent-architecture"
+  },
+  {
+    "id": "p11",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "artifact / implicit",
+    "prompt": "Attack this spec from fresh context before we promote it, and drop any finding you cannot quote against the contract.",
+    "why_negative": "adjacent-critic"
+  },
+  {
+    "id": "p16",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "diff / tests and security",
+    "prompt": "Do these new tests prove behaviour or just mock the function they test? And is the webhook input validated before it hits the SQL?"
+  },
+  {
+    "id": "p17",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "PR / second opinion, Italian",
+    "prompt": "Fammi fare una review incrociata con codex su questa PR, e verifica ogni finding sul codice prima di riportarlo."
+  },
+  {
+    "id": "n14",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "near-miss: production check",
+    "prompt": "Testa l'app in produzione con l'account di prova e dimmi se il preventivo si genera."
+  }
+]

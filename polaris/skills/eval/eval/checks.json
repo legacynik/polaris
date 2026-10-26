@@ -1,0 +1,52 @@
+[
+ {
+  "id": "c1",
+  "category": "process",
+  "assertion": "before any metered judge call the run preregistered its question, bar, arms, decoys and stop rules, ran --dry-run, then --pilot 3; a full paid run without a matching pilot receipt is refused",
+  "cmd": "python3 -m pytest -q ../_standard/tests/test_eval_run.py -k pilot"
+ },
+ {
+  "id": "c2",
+  "category": "outcome",
+  "assertion": "a judge's result is reported with TPR and TNR measured on a held-out labelled split, and the observed rate is corrected, never reported raw",
+  "cmd": null
+ },
+ {
+  "id": "c3",
+  "category": "process",
+  "assertion": "in skill-tdd mode the new case is shown failing on today's skill (report kept) before the skill changes, and passing after with no other flip",
+  "cmd": null
+ },
+ {
+  "id": "c4",
+  "category": "outcome",
+  "assertion": "an OpenRouter judge in the GPT family, a bare id or a router is refused before any call, and a missing key names its variable without printing any key",
+  "cmd": "python3 -m pytest -q ../_standard/tests/test_eval_run.py -k 'openrouter or key'"
+ },
+ {
+  "id": "c5",
+  "category": "outcome",
+  "assertion": "a stub run, a harness run still waiting for answers, or a run with judge errors is reported as STUB, NOT_RUN or ERROR, never as PASS or KEEP",
+  "cmd": null
+ },
+ {
+  "id": "c6",
+  "category": "process",
+  "assertion": "new or changed prompt words were requested from prompt-engineering, not written inside the measuring run, and the judge was not edited in the campaign it grades",
+  "cmd": null
+ },
+ {
+  "id": "c7",
+  "category": "outcome",
+  "assertion": "every run leaves run.json, cases.jsonl and one index.jsonl line under eval/experiments/<category>/, with pinned models (requested and served), dataset hash, commit and a trace id per case; a run without its record is reported NOT_RUN",
+  "cmd": null,
+  "task": "We just ran an eval of our retrieval prompt. What do we keep from this run so someone can rebuild the verdict in six months?"
+ },
+ {
+  "id": "c8",
+  "category": "process",
+  "assertion": "asked to choose a grader, the answer applies the order code check → golden comparison → reference-free check → binary judge → person, and uses a golden set only where a single right answer exists",
+  "cmd": null,
+  "task": "We have 300 extraction outputs with a known right answer, and chat replies where tone matters. How do we grade each kind in our eval?"
+ }
+]

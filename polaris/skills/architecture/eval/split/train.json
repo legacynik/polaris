@@ -1,0 +1,164 @@
+[
+ {
+  "id": "p04",
+  "should_trigger": true,
+  "kind": "implicit",
+  "tuple": "repo-migration · PUBLISHED · implicit · category",
+  "prompt": "There's a separate repo with the invoice generator we want to fold into the main backend. It has its own DB and two external consumers hitting it directly. How do we bring it in?"
+ },
+ {
+  "id": "p03",
+  "should_trigger": true,
+  "kind": "contextual",
+  "tuple": "framework · n/a · contextual · symptom",
+  "prompt": "senti, stavo guardando temporal.io per i workflow degli scheduled job invece del nostro scheduler.py fatto a mano. mi sembra molto piu solido ma non so quanto ci lega. che dici, lo adottiamo?"
+ },
+ {
+  "id": "p12",
+  "should_trigger": true,
+  "kind": "contextual",
+  "tuple": "feature · OWNED · contextual · symptom",
+  "prompt": "da quando abbiamo messo i bottoni inline l'esito viene risolto nel webhook, fuori dal giro dell'agente, e il modello continua a chiedere 'l'hai fatto?'. sto per aggiungere un forward automatico dell'esito nel turno dopo — e' la quarta pezza su questa cosa. mezz'ora di lavoro, procedo?",
+  "note": "fixture 1. the boundary moved and nobody wrote the invariant down; the symptom is the model asking, the commitment is the 29th compensating layer"
+ },
+ {
+  "id": "p09",
+  "should_trigger": true,
+  "kind": "explicit",
+  "tuple": "doc · n/a · explicit · category",
+  "prompt": "use architettura to write the ARCHITECTURE.md for this repo"
+ },
+ {
+  "id": "p11",
+  "should_trigger": true,
+  "kind": "implicit",
+  "tuple": "decision · PUBLISHED · implicit · symptom",
+  "prompt": "We published the team-memory bundle on npm last month. Only one repo of ours consumes it so far, so renaming the recall() parameters is basically free, right?",
+  "note": "the two-bad-cases pair, half two: one known consumer, unknown set"
+ },
+ {
+  "id": "p07",
+  "should_trigger": true,
+  "kind": "implicit",
+  "tuple": "db-tune · n/a · implicit · category",
+  "prompt": "The merchant listing query takes 4 seconds. I was going to add a composite index on (tenant_id, created_at, status). Sound?"
+ },
+ {
+  "id": "p06",
+  "should_trigger": true,
+  "kind": "implicit",
+  "tuple": "db-reshape · OWNED · implicit · category",
+  "prompt": "The alert summary table is denormalised and drifts from the source events. I want to rebuild it as a derived view instead. Right call?"
+ },
+ {
+  "id": "p15",
+  "should_trigger": true,
+  "kind": "implicit",
+  "tuple": "db-expand · PUBLISHED · implicit · symptom",
+  "prompt": "The table the dashboard reads shows every scheduled run as successful while the raw runs table has fifteen failures sitting in it. I want to start writing the real outcome onto the row the dashboard reads, and it has to be filled in on every row including the old ones. What breaks?",
+  "note": "fixture 9. hits the arm's halt directly — the new field must be mandatory, which is not an additive expansion"
+ },
+ {
+  "id": "p08",
+  "should_trigger": true,
+  "kind": "contextual",
+  "tuple": "backend-hotpath · n/a · contextual · symptom",
+  "prompt": "the assistant turn is slow because it waits on the sanctions screen call. thinking of moving that call onto a queue so it doesn't block — 20 min of work, want to ship it today",
+  "note": "the answer is protocol-change-is-not-decoupling; the caller still needs the result"
+ },
+ {
+  "id": "n05",
+  "should_trigger": false,
+  "kind": "negative",
+  "tuple": "out of scope · maintained vendor skill",
+  "prompt": "what should work_mem and max_parallel_workers be on a 15GB 8-core Postgres box?"
+ },
+ {
+  "id": "n02",
+  "should_trigger": false,
+  "kind": "negative",
+  "tuple": "near-miss · piano-spec",
+  "prompt": "write the spec for the new bulk-upload endpoint, acceptance criteria included"
+ },
+ {
+  "id": "n07",
+  "should_trigger": false,
+  "kind": "negative",
+  "tuple": "near-miss · document-generate / code-documentation",
+  "prompt": "write the README for the team's memory CLI — install, the four commands, and what each flag does",
+  "note": "documentation that is not the architecture doc; the near-miss p19 sits next to from the other side"
+ },
+ {
+  "id": "n01",
+  "should_trigger": false,
+  "kind": "negative",
+  "tuple": "near-miss · code-graph and the six other navigation skills",
+  "prompt": "walk me through how this codebase is structured, I've never seen it before"
+ },
+ {
+  "id": "p20",
+  "should_trigger": true,
+  "kind": "implicit",
+  "tuple": "audit · n/a · contextual · symptom",
+  "prompt": "backend/app/services e' una cartella sola con ottantasette file dentro e non capisco piu' cosa ci fa `category_guard.py` accanto a `dxf_reader.py`. prima di metterci mano voglio sapere com'e' messa."
+ },
+ {
+  "id": "p21",
+  "should_trigger": true,
+  "kind": "implicit",
+  "tuple": "audit · n/a · contextual · symptom",
+  "prompt": "There's a module in the pricing path nobody wants to touch — every time someone changes it something unrelated breaks a couple of weeks later. I'm scared to go near it. I want to know what's actually wrong with it before I plan the refactor."
+ },
+ {
+  "id": "p22",
+  "should_trigger": true,
+  "kind": "explicit",
+  "tuple": "audit · n/a · explicit · category",
+  "prompt": "com'e' messa l'architettura di questo repo? fammi un audit architetturale prima che decidiamo cosa rifattorizzare."
+ },
+ {
+  "id": "n08",
+  "should_trigger": false,
+  "kind": "negative",
+  "tuple": "near-miss · bugfix with a named root cause",
+  "prompt": "il totale del preventivo viene sbagliato quando lo sconto e' 0: `computo_pricing.py` ritorna None invece di 0.0 perche' il check e' `if discount:` invece di `if discount is not None:`. fixalo."
+ },
+ {
+  "id": "p23",
+  "should_trigger": true,
+  "kind": "explicit",
+  "tuple": "design · n/a · explicit · category",
+  "prompt": "run architettura design on the export-pipeline module — nothing exists yet, I want a few different shapes before I commit to one"
+ },
+ {
+  "id": "p24",
+  "should_trigger": true,
+  "kind": "contextual",
+  "tuple": "design · n/a · contextual · symptom",
+  "prompt": "sto partendo da zero sul modulo di notifiche, non esiste ancora niente. che struttura gli do?"
+ },
+ {
+  "id": "p25",
+  "should_trigger": true,
+  "kind": "contextual",
+  "tuple": "backend-hotpath · n/a · contextual · symptom",
+  "prompt": "the notification worker looks up the customer's org settings from the CRM on every single message it processes, even when fifty messages in a row belong to the same org -- feels like we're paying that round trip way more than we need to. worth caching it or is this overthinking it?"
+ },
+ {
+  "id": "pc03",
+  "should_trigger": true,
+  "kind": "contextual",
+  "tuple": "classify · it · contextual · moved from domain",
+  "prompt": "il watchdog che ricontrolla le offerte generate ce lo stiamo scrivendo da zero e ci sta mangiando due settimane. secondo te ha senso, o esiste roba pronta che fa la stessa cosa e ci attacchiamo a quella?",
+  "reclassification_proof": "moved from `domain` 2026-08-19: measured on domain's own test split this case fired `architecture` first, i02 in 3 runs of 3 and c03 in 1 of 3 with the rest exploring. The fusion experiment confirmed the direction — under a merged description both became hits (3/3 and 2/3) — while the three cases domain handled correctly collapsed. So these two were misfiled, not evidence of a wrong boundary."
+ },
+ {
+  "id": "pi02",
+  "should_trigger": true,
+  "kind": "contextual",
+  "tuple": "integrate · en · contextual · moved from domain",
+  "prompt": "Lifecycle wants to react to what happens in quoting. Quoting already emits domain events internally — can Lifecycle just subscribe to those directly? seems like free plumbing",
+  "note": "rule 28: private domain events published outward couple the subscriber to the producer's implementation model",
+  "reclassification_proof": "moved from `domain` 2026-08-19: measured on domain's own test split this case fired `architecture` first, i02 in 3 runs of 3 and c03 in 1 of 3 with the rest exploring. The fusion experiment confirmed the direction — under a merged description both became hits (3/3 and 2/3) — while the three cases domain handled correctly collapsed. So these two were misfiled, not evidence of a wrong boundary."
+ }
+]
