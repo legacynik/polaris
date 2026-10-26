@@ -355,9 +355,10 @@ Sort each statement by one question: **what does it take to undo this?**
   a name, a count) is amended in place without changing what was decided; a reversal is a new ADR
   that supersedes the old one, linked both ways; overlapping or dead records are compacted from time
   to time, with git as the archive. An ADR never grows dated "update" sections.
-- **`ARCHITECTURE.md`**, one per repository, says how the system works today: components,
-  boundaries and the main flows end to end, by file name. It is a map, not an inventory: the detail
-  is the code. No other architecture document is written.
+- **How it works today** lives in two documents that already exist, never in a record:
+  `ARCHITECTURE.md`, a short map of the whole repository, and each area's main document
+  (`docs/areas/<area>/<area>.md`), which walks that area's flow step by step and is updated when a
+  plan closes. Both name files, not functions: the detail is the code.
 
 Records are written by `/architecture decide`, never by hand. Status runs `proposed` → `accepted`
 (the owner) → `executed` (only when the probe passes): `accepted` is the target, the code is reality.
