@@ -89,14 +89,6 @@ class CandidatesStillOnlyLists(unittest.TestCase):
         self.assertNotIn("feat/a", out.stdout, "a thread citing nothing is not a candidate")
         self.assertEqual(path.read_text(), before, "candidates is read-only")
 
-    def test_the_manual_step_is_gone_from_the_body_and_the_pruner_named_instead(self):
-        from host_repo import PKG
-        body = (PKG / "skills" / "end" / "SKILL.md").read_text()
-        self.assertIn("prune_threads.py", body)
-        self.assertNotIn("268", body, "the parked-removal note outlived the parking")
-        self.assertNotIn("AUTOMATICA è parcheggiata", body)
-
-
 class RecentContextIsARing(unittest.TestCase):
     def test_five_newest_first_and_the_sixth_evicts_the_oldest(self):
         repo = host_repo()

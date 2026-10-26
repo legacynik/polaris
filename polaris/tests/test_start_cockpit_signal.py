@@ -81,7 +81,7 @@ class TheQueueReachesTheBrief(unittest.TestCase):
         self.assertIn("Bando regionale", shown[2])
         self.assertIn("Job notturno", shown[3])
         self.assertIn("piano hosting", shown[4])
-        self.assertIn("QUEUE_MORE: +2 ok · +1 decisioni · +1 altro", lines)
+        self.assertIn("QUEUE_MORE: +2 ok · +1 decisions · +1 other", lines)
         self.assertNotIn("COCKPIT_REWRITE", "\n".join(lines))
 
     def test_every_security_item_is_printed_even_beyond_five(self):
@@ -108,7 +108,7 @@ class TheQueueReachesTheBrief(unittest.TestCase):
                f"Vecchia richiesta B · {day(-50)}, da log · tuo"]
         asks = [ln for ln in run(host_repo(), cockpit(old + FILLER)) if ln.startswith("QUEUE_ASK")]
         self.assertEqual(len(asks), 1, asks)
-        self.assertTrue(asks[0].startswith("QUEUE_ASK: avanti o scarto? Vecchia richiesta B"))
+        self.assertTrue(asks[0].startswith("QUEUE_ASK: keep or drop? Vecchia richiesta B"))
 
     def test_a_dormant_repo_costs_nothing(self):
         repo = host_repo()

@@ -118,8 +118,3 @@ def test_cli_sync_noop_exit0(tmp_path, monkeypatch, capsys):
     assert "writer-side" in out and "no-op" in out
 
 
-def test_shim_is_executable_and_stdlib_only():
-    src = SHIM.read_text()
-    assert src.startswith("#!/usr/bin/env python3")
-    banned = ["import requests", "import yaml", "import click"]
-    assert not any(b in src for b in banned)

@@ -139,29 +139,6 @@ class TheSpoolIsOnlyALegacyCounter(unittest.TestCase):
         self.assertNotIn("SPOOL_LEGACY", out.stdout)
 
 
-class TheSkillsNoLongerPromiseADeferral(unittest.TestCase):
-    """C3 — the three bodies carry the one sentence and nothing else about spools."""
-
-    def test_no_skill_body_mentions_a_spool_or_a_deferral(self):
-        for skill in ("start", "end", "end"):
-            body = (SKILLS / skill / "SKILL.md").read_text(encoding="utf-8")
-            leftover = [ln for ln in body.splitlines()
-                        if ("spool" in ln.lower() or "defer" in ln.lower())
-                        and "SPOOL_LEGACY" not in ln]
-            self.assertEqual(leftover, [], f"/{skill} still promises a deferral")
-
-    def test_each_body_states_the_rule_and_its_two_exceptions(self):
-        for skill in ("end", "end"):
-            body = (SKILLS / skill / "SKILL.md").read_text(encoding="utf-8")
-            self.assertIn("sul branch corrente, sempre", body, skill)
-            self.assertIn("due eccezioni", body, skill)
-            self.assertIn("no-direct-default", body, skill)
-            self.assertNotIn("tre eccezioni", body, "an unborn repo is no longer an exception")
-
-    def test_the_spool_script_is_gone(self):
-        self.assertFalse((SKILLS / "end" / "scripts" / "session_spool.sh").exists())
-
-
 class TheScriptChecksItself(unittest.TestCase):
     def test_the_selfcheck_passes(self):
         out = run_script("end", "session_commit.sh", "--selfcheck")

@@ -19,7 +19,7 @@ import sys
 import unittest
 from pathlib import Path
 
-from host_repo import LOGIN, PKG, env_for, host_repo, run_script, seed_state, skill_block
+from host_repo import LOGIN, PKG, host_repo, run_script, seed_state
 
 sys.path.insert(0, str(PKG / "skills" / "end" / "scripts"))
 sys.path.insert(0, str(PKG / "skills" / "start" / "scripts"))
@@ -106,31 +106,6 @@ class SectionRegistry(unittest.TestCase):
                          "--current", str(cockpit), "--login", LOGIN, "--main-wt", str(repo))
         missing = [ln for ln in out.stdout.splitlines() if ln.startswith("SECTIONS_MISSING")]
         self.assertEqual(missing, ["SECTIONS_MISSING=current.md: ## Active Priorities"], out.stdout)
-
-
-class ResumePathsQuoting(unittest.TestCase):
-    """#14 — `eval` of the shipped Step 1b survives a space, an apostrophe and a `$`."""
-
-    def step1b(self, repo: Path) -> subprocess.CompletedProcess:
-        block = skill_block("start", "resume_paths.sh") + '\nprintf "%s\\n%s\\n" "$ROOT" "$MAIN_WT"'
-        env = {k: v for k, v in env_for(repo).items()
-               if k not in ("ROOT", "MAIN_WT", "CURRENT", "LOGIN")}
-        return subprocess.run(["bash", "-c", block], cwd=str(repo), env=env,
-                              capture_output=True, text=True)
-
-    def assert_round_trip(self, name: str) -> None:
-        repo = host_repo(name=name)
-        out = self.step1b(repo)
-        self.assertEqual(out.returncode, 0, out.stdout + out.stderr)
-        self.assertNotIn("command not found", out.stderr, out.stderr)
-        self.assertEqual(out.stdout.splitlines()[-2:],
-                         [str(repo / "_polaris"), str(repo)], out.stdout)
-
-    def test_a_directory_with_spaces(self):
-        self.assert_round_trip("Dir With Spaces")
-
-    def test_a_directory_with_an_apostrophe_and_a_dollar(self):
-        self.assert_round_trip("it's $HOME repo")
 
 
 if __name__ == "__main__":

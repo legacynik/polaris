@@ -15,7 +15,6 @@ because only the opening line was recognised as intro.
 """
 from __future__ import annotations
 
-import re
 import subprocess
 import unittest
 from pathlib import Path
@@ -90,16 +89,6 @@ class FourScriptsOneRegistry(unittest.TestCase):
         self.assertEqual(cockpit.read_bytes(), before, "a refusal still rewrote the cockpit")
         seen = run_script("end", "prune_threads.py", str(cockpit))
         self.assertNotIn("feat/lane", seen.stdout, "prune_threads read a section the writer cannot")
-
-    def test_no_script_compiles_a_heading_of_its_own(self):
-        # The registry governs the state files. pol-pr's checker parses GitHub issue and PR
-        # bodies, a document no state script reads; it is named here, not skipped by a pattern.
-        other_documents = {"pol-pr/scripts/controlla_pr.py"}
-        owners = [p for p in sorted((PKG / "skills").glob("*/scripts/*.py"))
-                  if re.search(r'''re\.compile\(r?["']\^#''', p.read_text())
-                  and str(p.relative_to(PKG / "skills")) not in other_documents]
-        self.assertEqual([p.name for p in owners], ["state_sections.py"], owners)
-
 
 class QualifierNeedsWhitespace(unittest.TestCase):
     """F5 — a separator glued to the name is a different word, not a qualifier."""

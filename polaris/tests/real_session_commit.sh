@@ -7,7 +7,7 @@
 set -uo pipefail
 SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"   # the polaris/ package dir
 W="$(mktemp -d)"; FAKE_HOME="$W/home"
-mkdir -p "$FAKE_HOME/.agents/skills/update" "$FAKE_HOME/.agents/skills/start"
+mkdir -p "$FAKE_HOME/.agents/skills/end" "$FAKE_HOME/.agents/skills/start"
 cp -R "$SRC/skills/end/scripts" "$FAKE_HOME/.agents/skills/end/scripts"   # simulate `npx skills` install
 cp -R "$SRC/skills/start/scripts" "$FAKE_HOME/.agents/skills/start/scripts"
 

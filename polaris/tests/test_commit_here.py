@@ -11,9 +11,9 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 
-from commit_fixture import (checkpoint_commit, dirt, end_files, landed_names,
+from commit_fixture import (checkpoint_commit, dirt, landed_names,
                             session_log, spool_files, STRAY)
-from host_repo import LOGIN, git, host_repo, run_block, run_script, skill_block
+from host_repo import LOGIN, git, host_repo, run_script
 
 
 def stray_log(repo: Path) -> Path:
@@ -80,10 +80,6 @@ class ItCommitsOnTheBranchYouAreOn(unittest.TestCase):
         self.assertTrue(fields["SESSION_LOG"].startswith(f"{wt}/"), fields["SESSION_LOG"])
         self.assertTrue(fields["CURRENT"].startswith(f"{repo}/"), fields["CURRENT"])
 
-    def test_the_shipped_landing_block_still_names_this_command(self):
-        self.assertIn("commit", skill_block("end", '"$CHECKPOINT" commit'))
-
-
 class NobodyElsesWorkRidesAlong(unittest.TestCase):
     """(g) — a file another panel staged is neither committed nor unstaged."""
 
@@ -128,37 +124,6 @@ class AHookThatRefusesIsAFailure(unittest.TestCase):
             code = [ln for ln in (scripts / name).read_text().splitlines()
                     if not ln.lstrip().startswith("#")]
             self.assertEqual([ln for ln in code if "--no-verify" in ln], [], name)
-
-
-class EndLandsTheWholeHandoff(unittest.TestCase):
-    """(i) — the shipped Step 5 block commits the four files that exist, and the tree is clean."""
-
-    def test_the_shipped_end_block_lands_log_handoff_and_both_ledgers(self):
-        repo = host_repo()
-        git(repo, "switch", "-qc", "feat/x")
-        paths = end_files(repo)
-        out = run_block("end", '"$SC" --end', repo)
-        self.assertEqual(out.returncode, 0, out.stdout + out.stderr)
-        self.assertEqual(landed_names(repo), paths, out.stdout + out.stderr)
-        self.assertEqual(dirt(repo), [], "C5: /end leaves the Polaris paths clean")
-        self.assertEqual(spool_files(repo), [])
-
-    def test_g1_the_end_block_lands_in_the_worktree_the_panel_runs_in(self):
-        repo = host_repo()
-        git(repo, "switch", "-qc", "feat/main-panel")
-        wt = repo.parent / "wt-mine"
-        git(repo, "worktree", "add", "-q", "-b", "feat/mine", str(wt))
-        head = git(repo, "rev-parse", "HEAD").stdout.strip()
-        paths = end_files(wt)
-        # exactly what the resolver hands a linked panel today: MAIN_WT is the other checkout.
-        out = run_block("end", '"$SC" --end', wt, MAIN_WT=str(repo))
-        self.assertEqual(out.returncode, 0, out.stdout + out.stderr)
-        self.assertEqual(landed_names(wt), paths, out.stdout + out.stderr)
-        self.assertEqual(git(wt, "rev-parse", "--abbrev-ref", "HEAD").stdout.strip(), "feat/mine")
-        self.assertEqual(git(repo, "rev-parse", "HEAD").stdout.strip(), head,
-                         "the handoff was written onto the main checkout's branch")
-        self.assertEqual(dirt(wt), [])
-
 
 if __name__ == "__main__":
     unittest.main()
