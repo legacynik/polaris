@@ -29,7 +29,7 @@ def session_log(repo) -> Path:
 
 
 def checkpoint(repo, *args: str) -> subprocess.CompletedProcess:
-    return run_script("update", "checkpoint.sh", *args, cwd=str(repo), env=env_for(repo))
+    return run_script("end", "checkpoint.sh", *args, cwd=str(repo), env=env_for(repo))
 
 
 class OneLinePerThread(unittest.TestCase):
@@ -39,7 +39,7 @@ class OneLinePerThread(unittest.TestCase):
         repo = host_repo()
         log = session_log(repo)
         for hour in ("10:00", "17:00"):
-            out = run_block("update", '"$UP" thread', repo,
+            out = run_block("end", '"$UP" thread', repo,
                             LANE_LINE=f"- `memory` — branch `main`; checkpoint {hour} · since 2026-09-29")
             self.assertEqual(out.returncode, 0, out.stdout + out.stderr)
             with log.open("a") as fh:
@@ -54,10 +54,10 @@ class OneLinePerThread(unittest.TestCase):
 
     def test_a_new_lane_adds_one_line_without_touching_the_existing_lane(self):
         repo = host_repo()
-        first = run_block("update", '"$UP" thread', repo,
+        first = run_block("end", '"$UP" thread', repo,
                           LANE_LINE="- `memory` — branch `main`; first · since 2026-09-29")
         self.assertEqual(first.returncode, 0, first.stdout + first.stderr)
-        second = run_block("update", '"$UP" thread', repo,
+        second = run_block("end", '"$UP" thread', repo,
                            LANE_LINE="- `billing` — branch `main`; new · since 2026-09-29")
         self.assertEqual(second.returncode, 0, second.stdout + second.stderr)
         body = (repo / "_polaris" / "state" / "current.md").read_text()
@@ -101,7 +101,7 @@ class VerifyReadsContent(unittest.TestCase):
         self.assertEqual(out.returncode, 0, out.stdout)
 
     def test_every_bypass_this_gate_closes_has_its_own_fixture(self):
-        out = run_script("update", "checkpoint.sh", "--selfcheck")
+        out = run_script("end", "checkpoint.sh", "--selfcheck")
         self.assertEqual(out.returncode, 0, out.stdout)
         for bypass in ("bypass 1", "bypass 2", "bypass 3", "no checkpoint of ours"):
             self.assertIn(bypass, out.stdout, f"no fixture forces {bypass}")
@@ -248,7 +248,7 @@ class TheHarvestReadsOnlyThisSession(unittest.TestCase):
         repo = host_repo()
         mine = self.scratch(repo, "aaaa1111-000", 30)
         env = {**env_for(repo), "POLARIS_SID": "aaaa1111-000"}
-        run_script("update", "checkpoint.sh", "harvest-done", cwd=str(repo), env=env)
+        run_script("end", "checkpoint.sh", "harvest-done", cwd=str(repo), env=env)
         with mine.open("a") as f:
             f.write("riga nuova dopo il timbro\n")
         out = checkpoint(repo, "harvest-slice", "aaaa1111-000")
@@ -288,7 +288,7 @@ class TodosFollowTheThread(unittest.TestCase):
         repo = host_repo()
         todos = seed_state(repo, "todos.md")
         written(todos, "| #11 — primo giro | | ctx |", "W32")
-        out = run_script("update", "state_upsert.py", "week", str(todos), "--week", "W36",
+        out = run_script("end", "state_upsert.py", "week", str(todos), "--week", "W36",
                          input="| #11 — secondo giro | | ctx |\n")
         self.assertEqual(out.returncode, 0, out.stderr)
         body = todos.read_text()
@@ -301,7 +301,7 @@ class TodosFollowTheThread(unittest.TestCase):
         repo = host_repo()
         todos = seed_state(repo, "todos.md")
         written(todos, r"| `a\|b` — nome | | ctx |", "W32")
-        run_script("update", "state_upsert.py", "week", str(todos), "--week", "W36",
+        run_script("end", "state_upsert.py", "week", str(todos), "--week", "W36",
                    input="| `a\\|b` — nuovo | | ctx2 |\n")
         body = todos.read_text()
         self.assertIn(r"| `a\|b` — nuovo | W32 | ctx2 |", body)
@@ -312,7 +312,7 @@ class TodosFollowTheThread(unittest.TestCase):
         todos = seed_state(repo, "todos.md")
         written(todos, "| #11 — primo | | ctx |", "W32")
         before = todos.read_text()
-        out = run_script("update", "state_upsert.py", "week", str(todos), "--week", "W36",
+        out = run_script("end", "state_upsert.py", "week", str(todos), "--week", "W36",
                          "--no-add", input="| #99 — mai vista | | |\n")
         self.assertEqual(out.returncode, 2)
         self.assertIn("NO_SUCH_ROW", out.stderr)

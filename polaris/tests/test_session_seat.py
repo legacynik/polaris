@@ -133,7 +133,7 @@ class TheDoorsSurviveARealDay(unittest.TestCase):
         sid = opened(repo)
         handoff(repo)
         close(repo)
-        done = block("update", "session_gate.py", repo, ROOT=str(repo / "_polaris"))
+        done = block("end", "session_gate.py", repo, ROOT=str(repo / "_polaris"))
         self.assertEqual(done.returncode, 0)
         self.assertFalse((seat(repo, sid) / "events.jsonl").is_file(),
                          "a closed session still collected a checkpoint")

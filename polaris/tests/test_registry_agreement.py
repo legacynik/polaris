@@ -47,7 +47,7 @@ def cockpit_headed(repo: Path, open_heading: str) -> Path:
 
 
 def upsert_week(todos: Path) -> subprocess.CompletedProcess:
-    return run_script("update", "state_upsert.py", "week", str(todos), "--week", "W36",
+    return run_script("end", "state_upsert.py", "week", str(todos), "--week", "W36",
                       "--no-add", input=ROW + "\n")
 
 
@@ -59,7 +59,7 @@ def brief(repo: Path) -> subprocess.CompletedProcess:
 
 def close(cockpit: Path, todos: Path | None) -> subprocess.CompletedProcess:
     args = ["close", str(cockpit), "--key", "feat/lane", "--owner", LOGIN, "--now", "2026-09-04"]
-    return run_script("update", "state_close.py", *args, *(["--todos", str(todos)] if todos else []))
+    return run_script("end", "state_close.py", *args, *(["--todos", str(todos)] if todos else []))
 
 
 class FourScriptsOneRegistry(unittest.TestCase):
@@ -71,7 +71,7 @@ class FourScriptsOneRegistry(unittest.TestCase):
         written(seed_state(repo, "current.md"), "- `feat/lane` (acme-api) — viva · since 2026-09-04")
         self.assertEqual(upsert_week(todos).returncode, 0, "/update refused the qualified section")
         self.assertIn("TODOS_ACTIVE=1", brief(repo).stdout, brief(repo).stdout)
-        rolled = run_script("update", "todos_roll.py", str(todos), "--now", "2026-09-04")
+        rolled = run_script("end", "todos_roll.py", str(todos), "--now", "2026-09-04")
         self.assertEqual(rolled.returncode, 0, rolled.stderr)
         self.assertIn("feat/old", todos.read_text().split("## Completed")[0],
                       "plan-week promoted the due follow-up nowhere")
@@ -82,7 +82,7 @@ class FourScriptsOneRegistry(unittest.TestCase):
         repo = host_repo()
         cockpit = cockpit_headed(repo, "## Open threads")
         before = cockpit.read_bytes()
-        written = run_script("update", "state_upsert.py", "thread", str(cockpit),
+        written = run_script("end", "state_upsert.py", "thread", str(cockpit),
                              "--owner", LOGIN, "--now", "2026-09-04", input="- `feat/x` — y\n")
         self.assertEqual(written.returncode, 2, written.stdout)
         removed = close(cockpit, None)
@@ -106,7 +106,7 @@ class QualifierNeedsWhitespace(unittest.TestCase):
 
     def test_a_glued_separator_is_not_a_qualified_name(self):
         import sys
-        sys.path.insert(0, str(PKG / "skills" / "update" / "scripts"))
+        sys.path.insert(0, str(PKG / "skills" / "end" / "scripts"))
         from state_sections import heading
         for other in ("## Open-source backlog", "## Opened tickets", "## Open_threads"):
             self.assertIsNone(heading("## Open").match(other), other)
@@ -122,7 +122,7 @@ class CommentOnlySection(unittest.TestCase):
         cockpit = seed_state(repo, "current.md")
         cockpit.write_text("Updated: 2026-09-01 — @x\n\n## Open\n\n<!-- one lane per branch,\n"
                            "     closed only by /end -->\n\n## Recent Context\n")
-        out = run_script("update", "state_upsert.py", "thread", str(cockpit), "--owner", LOGIN,
+        out = run_script("end", "state_upsert.py", "thread", str(cockpit), "--owner", LOGIN,
                          "--now", "2026-09-04", input="- `feat/lane` — viva\n")
         self.assertEqual(out.returncode, 0, out.stderr)
         body = cockpit.read_text()

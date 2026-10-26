@@ -40,12 +40,12 @@ def cockpit(body: str = COCKPIT) -> Path:
 
 
 def put(path: Path, *items: str, now: str = "2026-09-23"):
-    return run_script("update", "state_priorities.py", "set", str(path), "--now", now,
+    return run_script("end", "state_priorities.py", "set", str(path), "--now", now,
                       input="\n".join(items) + "\n")
 
 
 def check(path: Path, now: str):
-    return run_script("update", "state_priorities.py", "check", str(path), "--now", now)
+    return run_script("end", "state_priorities.py", "check", str(path), "--now", now)
 
 
 class EndWritesThePriorities(unittest.TestCase):

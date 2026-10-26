@@ -60,7 +60,7 @@ def marks(path: Path) -> int:
 
 def checkpoint(repo: Path, *args: str, sid: str = ""):
     env = {**env_for(repo), "POLARIS_SID": sid}
-    return run_script("update", "checkpoint.sh", *args, cwd=str(repo), env=env)
+    return run_script("end", "checkpoint.sh", *args, cwd=str(repo), env=env)
 
 
 def stamped(path: Path) -> bool:
@@ -305,7 +305,7 @@ class OnlyTheHooksFilesCount(unittest.TestCase):
         with mine.open("a") as f:
             f.write("- LATE line after stamp\n")
         env = {**env_for(repo), "POLARIS_SID": MINE, "LC_ALL": "en_US.UTF-8"}
-        done = run_script("update", "checkpoint.sh", "harvest-slice", cwd=str(repo), env=env)
+        done = run_script("end", "checkpoint.sh", "harvest-slice", cwd=str(repo), env=env)
         self.assertIn("LATE line after stamp", done.stdout)
 
     def test_prepare_names_the_candidates_it_could_not_choose_between(self):

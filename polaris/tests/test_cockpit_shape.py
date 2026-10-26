@@ -70,7 +70,7 @@ class ClosingTakesTheWholeLane(unittest.TestCase):
     def test_the_child_lines_and_the_fence_go_with_the_thread(self):
         repo = host_repo()
         path = self.cockpit(repo)
-        out = run_script("update", "state_close.py", "close", str(path), "--key", "feat/a",
+        out = run_script("end", "state_close.py", "close", str(path), "--key", "feat/a",
                          "--owner", "acme-dev", "--now", "2026-09-03")
         self.assertEqual(out.returncode, 0, out.stderr)
         after = path.read_text()
@@ -86,7 +86,7 @@ class ClosingTakesTheWholeLane(unittest.TestCase):
         path.write_text(path.read_text().replace(
             "- `feat/b` (acme-api) — viva · since 2026-09-02",
             "- `feat/b` (acme-api) — viva · since 2026-09-02\n  - sub: non mia"))
-        run_script("update", "state_close.py", "close", str(path), "--key", "feat/a",
+        run_script("end", "state_close.py", "close", str(path), "--key", "feat/a",
                    "--owner", "acme-dev", "--now", "2026-09-03")
         self.assertIn("  - sub: non mia", path.read_text())
 

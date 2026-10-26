@@ -25,7 +25,7 @@ def run(script: str, week_start: str) -> subprocess.CompletedProcess:
 
 def resolved(week_start: str = "") -> str:
     """`WEEK|SINCE|UNTIL|PLANWEEK` as the shipped block leaves them in the shell."""
-    return run(skill_block("report", "read WEEK SINCE UNTIL PLANWEEK") + SHOW, week_start).stdout.strip()
+    return run(skill_block("week", "read WEEK SINCE UNTIL PLANWEEK") + SHOW, week_start).stdout.strip()
 
 
 class AFinishedWeekIsResolved(unittest.TestCase):
@@ -65,7 +65,7 @@ class AnythingElseIsRefused(unittest.TestCase):
         self.assertEqual(resolved(ahead.isoformat()), NOTHING)
 
     def test_the_block_itself_fails_so_no_query_runs_on_an_empty_window(self):
-        refused = run(skill_block("report", "read WEEK SINCE UNTIL PLANWEEK"), "2026-07-20")
+        refused = run(skill_block("week", "read WEEK SINCE UNTIL PLANWEEK"), "2026-07-20")
         self.assertNotEqual(refused.returncode, 0, refused.stdout + refused.stderr)
 
 

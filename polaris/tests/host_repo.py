@@ -56,7 +56,7 @@ def seed_state(repo: Path, name: str) -> Path:
 def written(path: Path, row: str, week: str = "") -> None:
     """Place a row with the SHIPPED writer: a hand-typed fixture only proves the reader
     agrees with itself. A `week` picks the todos door; without one it is a cockpit thread."""
-    script = PKG / "skills" / "update" / "scripts" / "state_upsert.py"
+    script = PKG / "skills" / "end" / "scripts" / "state_upsert.py"
     args = ["--week", week] if week else ["--owner", LOGIN, "--now", "2026-09-03"]
     done = subprocess.run([sys.executable, str(script), "week" if week else "thread",
                            str(path), *args], input=row + "\n", capture_output=True, text=True)
@@ -76,8 +76,11 @@ def env_for(repo: Path, login: str = LOGIN) -> dict:
 
 
 def skill_block(skill: str, needle: str) -> str:
-    """The shipped bash block that contains `needle`, verbatim from the SKILL.md."""
-    body = (PKG / "skills" / skill / "SKILL.md").read_text(encoding="utf-8")
+    """The shipped bash block that contains `needle`, verbatim from the SKILL.md or one of its
+    references (the 60-line form moved most commands there in 0.33.0)."""
+    d = PKG / "skills" / skill
+    body = "\n".join(f.read_text(encoding="utf-8")
+                     for f in [d / "SKILL.md", *sorted((d / "references").glob("*.md"))] if f.is_file())
     blocks = [textwrap.dedent(b) for b in
               re.findall(r"^[ \t]*```bash\n(.*?)^[ \t]*```", body, re.M | re.S)]
     hits = [b for b in blocks if needle in b]

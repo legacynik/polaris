@@ -30,7 +30,7 @@ class AQualifiedHeadingIsTheSection(unittest.TestCase):
     def test_the_qualified_h2_is_rewritten_and_no_second_section_is_added(self):
         path = Path(tempfile.mkdtemp(prefix="prio-q-")) / "current.md"
         path.write_text(VAULT)
-        done = run_script("update", "state_priorities.py", "set", str(path), "--now", "2026-09-24",
+        done = run_script("end", "state_priorities.py", "set", str(path), "--now", "2026-09-24",
                           input="#11 nuovo\n")
         text = path.read_text()
         self.assertEqual(done.returncode, 0, done.stderr)

@@ -21,7 +21,7 @@ from pathlib import Path
 
 from host_repo import LOGIN, PKG, env_for, host_repo, run_script, seed_state, skill_block
 
-sys.path.insert(0, str(PKG / "skills" / "update" / "scripts"))
+sys.path.insert(0, str(PKG / "skills" / "end" / "scripts"))
 sys.path.insert(0, str(PKG / "skills" / "start" / "scripts"))
 THREAD = "- `feat/lane` (acme-api) — la lane vive · since 2026-09-04"
 
@@ -38,7 +38,7 @@ def vault_shaped(repo: Path) -> Path:
 
 
 def upsert(path: Path, row: str = THREAD) -> subprocess.CompletedProcess:
-    return run_script("update", "state_upsert.py", "thread", str(path),
+    return run_script("end", "state_upsert.py", "thread", str(path),
                       "--owner", LOGIN, "--now", "2026-09-04", input=row + "\n")
 
 

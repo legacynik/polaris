@@ -74,14 +74,14 @@ class ItCommitsOnTheBranchYouAreOn(unittest.TestCase):
         repo = host_repo()
         wt = repo.parent / "wt-mine"
         git(repo, "worktree", "add", "-q", "-b", "feat/mine", str(wt))
-        out = run_script("update", "checkpoint.sh", "prepare", cwd=str(wt))
+        out = run_script("end", "checkpoint.sh", "prepare", cwd=str(wt))
         self.assertEqual(out.returncode, 0, out.stderr)
         fields = dict(ln.split("=", 1) for ln in out.stdout.splitlines() if "=" in ln)
         self.assertTrue(fields["SESSION_LOG"].startswith(f"{wt}/"), fields["SESSION_LOG"])
         self.assertTrue(fields["CURRENT"].startswith(f"{repo}/"), fields["CURRENT"])
 
     def test_the_shipped_landing_block_still_names_this_command(self):
-        self.assertIn("commit", skill_block("update", '"$CHECKPOINT" commit'))
+        self.assertIn("commit", skill_block("end", '"$CHECKPOINT" commit'))
 
 
 class NobodyElsesWorkRidesAlong(unittest.TestCase):
@@ -123,7 +123,7 @@ class AHookThatRefusesIsAFailure(unittest.TestCase):
 
     def test_the_scripts_never_pass_no_verify(self):
         """Comments may name the rule; no executable line may carry the flag."""
-        scripts = Path(__file__).resolve().parents[1] / "skills" / "update" / "scripts"
+        scripts = Path(__file__).resolve().parents[1] / "skills" / "end" / "scripts"
         for name in ("session_commit.sh", "checkpoint.sh"):
             code = [ln for ln in (scripts / name).read_text().splitlines()
                     if not ln.lstrip().startswith("#")]

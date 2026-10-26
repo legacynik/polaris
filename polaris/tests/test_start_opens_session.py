@@ -45,9 +45,9 @@ if not start.is_file():
     sys.stderr.write("SESSION_UNKNOWN: %s\n" % sid)
     sys.exit(2)
 rec = json.loads(start.read_text())
-if cmd == "update":
+if cmd == "end":
     with (seat / "events.jsonl").open("a") as fh:
-        fh.write(json.dumps({"phase": "update", "sid": sid, "prev": rec["receipt_hash"],
+        fh.write(json.dumps({"phase": "end", "sid": sid, "prev": rec["receipt_hash"],
                              "note": flag("--note")}) + "\n")
     sys.exit(0)
 if cmd == "end":
@@ -161,7 +161,7 @@ class TheCheckpointAndTheClose(unittest.TestCase):
     def test_e_update_writes_an_event_chained_to_the_start_receipt(self):
         repo = declaring()
         sid = sid_of(block("start", OPEN, repo).stdout)
-        done = block("update", "session_gate.py", repo, ROOT=str(repo / "_polaris"))
+        done = block("end", "session_gate.py", repo, ROOT=str(repo / "_polaris"))
         self.assertEqual(done.returncode, 0, done.stderr)
         rows = [json.loads(l) for l in (seat(repo, sid) / "events.jsonl").read_text().splitlines()]
         self.assertEqual(len(rows), 1, "one checkpoint, one event")
@@ -169,7 +169,7 @@ class TheCheckpointAndTheClose(unittest.TestCase):
 
     def test_e2_a_checkpoint_with_no_open_session_is_silent(self):
         repo = declaring()
-        done = block("update", "session_gate.py", repo, ROOT=str(repo / "_polaris"))
+        done = block("end", "session_gate.py", repo, ROOT=str(repo / "_polaris"))
         self.assertEqual(done.returncode, 0, done.stderr)
         self.assertEqual(done.stdout.strip(), "")
 

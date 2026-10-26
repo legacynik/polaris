@@ -16,7 +16,7 @@ class TheBriefNamesOldPriorities(unittest.TestCase):
     def test_an_order_written_ten_days_ago_is_named_and_a_fresh_one_is_silent(self):
         repo = host_repo()
         cockpit = seed_state(repo, "current.md")
-        run_script("update", "state_priorities.py", "set", str(cockpit), "--now", "2026-09-13",
+        run_script("end", "state_priorities.py", "set", str(cockpit), "--now", "2026-09-13",
                    input="#11 domande → prod\n")
         self.assertIn("PRIORITIES_STALE=10d", signals(repo, "--now", "2026-09-23"))
         self.assertNotIn("PRIORITIES_STALE", signals(repo, "--now", "2026-09-15"))

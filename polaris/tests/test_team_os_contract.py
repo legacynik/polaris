@@ -27,12 +27,12 @@ TEMPLATES = ROOT / "skills" / "start" / "templates" / "repo-contract"
 
 SESSION_COMMANDS = {
     "start",
-    "polaris-grill",
-    "polaris-status",
-    "update",
+    "grill",
+    "status",
     "end",
-    "plan-week",
-    "report",
+    "end",
+    "week",
+    "week",
 }
 # A Polaris door marks itself in its own description, and the door set is READ from the
 # tree rather than repeated here. A door promoted upstream and forgotten in a hand list
@@ -92,7 +92,7 @@ def test_polaris_grill_ships_a_reviewed_skillopt_benchmark() -> None:
     benchmark = json.loads((ROOT / "evals" / "polaris-grill-skillopt.tasks.json").read_text())
 
     assert benchmark["format"] == "skillopt_sleep.tasks.v1"
-    assert benchmark["target_skill_path"] == "polaris/skills/polaris-grill/SKILL.md"
+    assert benchmark["target_skill_path"] == "polaris/skills/grill/SKILL.md"
     assert benchmark["reviewed"] is True
     assert {task["split"] for task in benchmark["tasks"]} == {"train", "val"}
     assert len(benchmark["tasks"]) >= 4
@@ -194,19 +194,19 @@ def test_retired_conventions_do_not_come_back() -> None:
         "docs/TEAM-ONBOARDING.md": (REPO / "docs" / "TEAM-ONBOARDING.md").read_text(),
         "weekly-plan.md": (TEMPLATES / "weekly-plan.md").read_text(),
         "weekly-report.md": (TEMPLATES / "weekly-report.md").read_text(),
-        **{name: body(name) for name in ("start", "update", "plan-week", "report")},
+        **{name: body(name) for name in ("start", "end", "week", "week")},
     }
     retired = {
         # A second contract root: one repo ended up carrying both `polaris/` and `_polaris/`.
-        "`polaris/` or `_polaris/`": ("start", "update", "README.md", "docs/TEAM-ONBOARDING.md"),
-        "`polaris/` if": ("start", "update", "README.md", "docs/TEAM-ONBOARDING.md"),
+        "`polaris/` or `_polaris/`": ("start", "end", "README.md", "docs/TEAM-ONBOARDING.md"),
+        "`polaris/` if": ("start", "end", "README.md", "docs/TEAM-ONBOARDING.md"),
         # Worked examples with a placeholder login shipped a broken contract into a product repo.
-        "team/jeanpierre": ("plan-week", "report"),
-        "team/somebody-else": ("plan-week", "report"),
+        "team/jeanpierre": ("week", "week"),
+        "team/somebody-else": ("week", "week"),
         # Capacity as a hard cap turned an honesty device into a lid on output.
-        "Capacity rule (hard)": ("plan-week",),
+        "Capacity rule (hard)": ("week",),
         # Commits looked up by the noreply e-mail return nothing for squash merges.
-        "@users.noreply.github.com": ("report",),
+        "@users.noreply.github.com": ("week",),
         # The templates are English; these are the headers the Italian drafts carried.
         "Previsto vs consegnato": ("weekly-plan.md", "weekly-report.md"),
         "Lavoro proposto": ("weekly-plan.md", "weekly-report.md"),

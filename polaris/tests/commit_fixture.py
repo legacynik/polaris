@@ -41,7 +41,7 @@ def end_files(repo: Path, login: str = LOGIN) -> list[str]:
 
 def checkpoint_commit(cwd: Path) -> subprocess.CompletedProcess:
     """`checkpoint.sh commit` — the command the shipped `/update` Landing block names."""
-    return run_script("update", "checkpoint.sh", "commit", cwd=str(cwd))
+    return run_script("end", "checkpoint.sh", "commit", cwd=str(cwd))
 
 
 def dirt(repo: Path) -> list[str]:

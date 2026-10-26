@@ -33,7 +33,7 @@ def todos_of(repo):
 
 def close(repo, key: str, *args: str):
     path, todos = cockpit_of(repo), todos_of(repo)
-    return run_script("update", "state_close.py", "close", str(path), "--key", key,
+    return run_script("end", "state_close.py", "close", str(path), "--key", key,
                       "--todos", str(todos), "--owner", "acme-dev", "--now", "2026-09-03", *args)
 
 
@@ -83,7 +83,7 @@ class CandidatesStillOnlyLists(unittest.TestCase):
         repo = host_repo()
         path = cockpit_of(repo)
         before = path.read_text()
-        out = run_script("update", "state_close.py", "candidates", str(path))
+        out = run_script("end", "state_close.py", "candidates", str(path))
         self.assertEqual(out.returncode, 0, out.stderr)
         self.assertIn("feat/b", out.stdout)
         self.assertNotIn("feat/a", out.stdout, "a thread citing nothing is not a candidate")
@@ -102,7 +102,7 @@ class RecentContextIsARing(unittest.TestCase):
         repo = host_repo()
         path = cockpit_of(repo)
         for n in range(1, 7):
-            out = run_script("update", "recent_context.py", str(path),
+            out = run_script("end", "recent_context.py", str(path),
                              "--entry", f"### 2026-09-0{n} — sessione {n}")
             self.assertEqual(out.returncode, 0, out.stderr)
         body = path.read_text()
@@ -114,14 +114,14 @@ class RecentContextIsARing(unittest.TestCase):
         repo = host_repo()
         path = cockpit_of(repo)
         for _ in range(2):
-            run_script("update", "recent_context.py", str(path), "--entry", "### 2026-09-03 — una")
+            run_script("end", "recent_context.py", str(path), "--entry", "### 2026-09-03 — una")
         self.assertEqual(path.read_text().count("sessione") + path.read_text().count("— una"), 1)
 
     def test_everything_outside_the_section_comes_back_byte_identical(self):
         repo = host_repo()
         path = cockpit_of(repo)
         head, tail = path.read_text().split("## Recent Context")
-        run_script("update", "recent_context.py", str(path), "--entry", "### 2026-09-03 — una")
+        run_script("end", "recent_context.py", str(path), "--entry", "### 2026-09-03 — una")
         after = path.read_text()
         self.assertTrue(after.startswith(head), "the head of the file was re-rendered")
         self.assertTrue(after.rstrip().endswith(tail.split("---", 1)[1].rstrip()),
@@ -141,7 +141,7 @@ class TheWeekRolls(unittest.TestCase):
                                      "|------|-------------|------|\n"
                                      "| riprendi #9 | 2026-08-24 | nota |\n"
                                      "| dopo | 2999-01-01 | |"))
-        return path, run_script("update", "todos_roll.py", str(path), "--now", "2026-09-03")
+        return path, run_script("end", "todos_roll.py", str(path), "--now", "2026-09-03")
 
     def test_last_weeks_completed_is_dropped_and_followups_survive(self):
         path, out = self.rolled(host_repo())
@@ -165,7 +165,7 @@ class TheWeekRolls(unittest.TestCase):
     def test_selfcheck_is_a_real_check(self):
         for name in ("state_close.py", "recent_context.py", "todos_roll.py"):
             with self.subTest(script=name):
-                out = run_script("update", name, "--selfcheck")
+                out = run_script("end", name, "--selfcheck")
                 self.assertEqual(out.returncode, 0, out.stdout + out.stderr)
 
 
