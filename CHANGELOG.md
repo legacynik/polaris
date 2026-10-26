@@ -42,7 +42,7 @@ Changed
 - Every skill follows the 60-line form (What it does · When · Steps · Output · Not for), in English,
   with its own `CHANGELOG.md` and version.
 
-## Unreleased
+## 0.26.0 – 0.32.x — 2026-09-05 → 2026-10-25 — never tagged, shipped with 0.33.0
 
 ### The PR chain, review tiers, and a package that stands alone
 
@@ -120,7 +120,7 @@ Fixed
   lesson-consolidation modules, `token_count`) with the tests that build their own fixtures; the
   resolver and empty-repo test follow the no-stored-seals contract.
 
-### Earlier unreleased changes
+### Earlier changes in the same span
 
 - **Le porte installate da sole bastano a se stesse.** `architecture` 1.4.0 porta con sé il checker
   del backbone (`scripts/check_context_backbone.py`): `arch_doctor.py --which` stampa la copia della
