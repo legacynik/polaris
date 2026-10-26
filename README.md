@@ -174,7 +174,7 @@ Every phase ends on something a command can check:
 | 5 | Build | `implement-plan`, `tdd-dev` | closed phase beads, each with a test seen failing first | the feature gate closes each phase |
 | 6 | Correct course | `plan-area` | a dated *Trajectory change* in the plan, written before the code changes | the entry cites evidence |
 | 7 | Ship | `ship`, `pr`, `babysit` | a merged pull request | the owner approves on the PR |
-| 8 | Close | `plan-area close` | what the work proved, moved into the area's main document; the plan in `done/` | nothing of this work is left open |
+| 8 | Close | `plan-area close` | what the work proved, moved into the area's README; the plan in `done/` | nothing of this work is left open |
 
 An autonomous loop may take Tiny and Bug work labelled `afk:eligible`, and build a Medium plan once
 its owner set it to `accepted`. Work labelled `risk:high` (migrations, pricing, anything
@@ -223,7 +223,7 @@ run once, on the pull request, where a person judges.
    first, and closes each phase through the gate.
 5. `ship` runs the tests, `review` and `real-testing`, updates the docs the diff made stale, opens the
    PR with a body from `pr`, and `babysit` drives it to the owner's label. The owner merges.
-6. `plan-area close` moves what the plan proved into the area's main document.
+6. `plan-area close` moves what the plan proved into the area's README.
 
 **"This traceback appears when the customer has no VAT number."** `base-workflow` calls `bugfix`:
 twelve stages, each passed by an exit code. It reproduces without assuming the cause, writes the
@@ -244,8 +244,7 @@ your-repo/
 ├── ARCHITECTURE.md             # a high-level map: components, boundaries, invariants
 ├── DOMAIN.md                   # domains and components, with stable ids
 ├── docs/areas/<area>/          # one folder per stable part of the system
-│   ├── README.md               # where to start, what the area does not own
-│   ├── <area>.md               # the area's main document: how it works today
+│   ├── README.md               # the area's document: what it owns, how it works today
 │   ├── module-context.json     # the files an agent loads by default here
 │   ├── CHANGELOG.md            # accepted changes, linked to evidence
 │   └── plans/open/ · done/     # plan files; specs/, validation/, diagrams/, archive/ when needed
@@ -273,7 +272,7 @@ A skill that needs a key the file does not declare says so instead of guessing.
 
 **Areas.** An area is a stable part of the system that outlives any one piece of work; a feature, a
 bug or a mechanical change does not get one. **How documents age:** born in their area; when a plan
-closes, what it proved moves into the area's main document and the plan moves to `done/`; a document
+closes, what it proved moves into the area's README and the plan moves to `done/`; a document
 whose claims no longer hold moves to `archive/`, never deleted. A path a document cites must exist
 when it is read, or it is reported `STALE`.
 
@@ -339,7 +338,7 @@ Sort each statement by one question: **what does it take to undo this?**
 | Kind | The test | Where it goes |
 |---|---|---|
 | **Decision** | undoing it takes more than a commit: stored data, something a customer or another system relies on, money, a vendor; or it supersedes an earlier decision | `decisions.md`, a decision file, or an ADR |
-| **Spec** | how something works or must be built | the plan, or the area's main document |
+| **Spec** | how something works or must be built | the plan, or the area's README |
 | **Detail** | a real choice, cheap to undo: a name, a threshold, a tool | the PR, a CHANGELOG line, a code comment |
 
 - **A line in `decisions.md`** for most decisions, thresholds, methods and prompts included: chose ·
@@ -356,8 +355,8 @@ Sort each statement by one question: **what does it take to undo this?**
   that supersedes the old one, linked both ways; overlapping or dead records are compacted from time
   to time, with git as the archive. An ADR never grows dated "update" sections.
 - **How it works today** lives in two documents that already exist, never in a record:
-  `ARCHITECTURE.md`, a short map of the whole repository, and each area's main document
-  (`docs/areas/<area>/<area>.md`), which walks that area's flow step by step and is updated when a
+  `ARCHITECTURE.md`, a short map of the whole repository, and each area's README
+  (`docs/areas/<area>/README.md`), which walks that area's flow step by step and is updated when a
   plan closes. Both name files, not functions: the detail is the code.
 
 Records are written by `/architecture decide`, never by hand. Status runs `proposed` → `accepted`
