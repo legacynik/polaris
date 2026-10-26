@@ -3,6 +3,25 @@
 All notable changes to Polaris Team OS. The installed version is pinned in
 `polaris/.claude-plugin/plugin.json`.
 
+## 0.33.1 — 2026-10-27 — one command for the dependencies, a README that explains everything
+
+Added
+
+- `init` 0.7.0 ships `scripts/install_deps.py`. After `npx skills add`, run
+  `python3 ~/.agents/skills/init/scripts/install_deps.py deps` to see what it would install (Beads,
+  browser-harness, Serena; the Serena, Context7, Sequential Thinking and ai-memory MCP servers and
+  hooks, per agent CLI, through each CLI's own command), `deps --apply` to install, and `doctor` for
+  a read-only check. It never prints or writes a secret.
+
+Changed
+
+- The README explains the whole system on one page: the complete workflow as a diagram, what you
+  say and what runs, quick start with dependencies, every structure in collapsible sections, all 27
+  skills by phase, and how a skill is built.
+- Decisions: ADRs only for decisions that shape the system, in `docs/adr/NNNN-title.md`; ADR 0001
+  of a repository records how ADRs are written; drift is amended in place, reversals superseded,
+  the set compacted from time to time. Each area has one document, its README.
+
 ## 0.33.0 — 2026-10-26 — one operating model: size picks the path, a router, Beads for the work
 
 **Upgrading:** `npx skills update -g -y` does not delete retired skills. Remove them once:
