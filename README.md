@@ -346,9 +346,15 @@ Sort each statement by one question: **what does it take to undo this?**
   over · because · evidence · supersedes · impact.
 - **A decision file** when the choice must be enacted. It carries a `probe` (the command that proves
   it is in effect) and `probe_kills` (a call site whose removal must make the probe fail).
-- **An ADR** only for high-level architecture: it moves a component boundary, a public interface or
-  data contract, a dependency, or the shape of a pipeline. One decision, one page, never edited after
-  acceptance: a changed mind is a new ADR that supersedes it.
+- **An ADR** only for a decision that shapes the system: its structure, non-functional
+  characteristics, dependencies, interfaces or construction techniques. ADRs live in
+  `docs/adr/NNNN-title.md`, numbered in sequence, one or two pages each: Status · Context (the forces,
+  as facts) · Decision ("We will…") · Consequences (all of them, not only the good ones). ADR 0001 of
+  every repository is the one that records how ADRs are written.
+- **The ADR set stays small and current**, so each one describes the system as it is: drift (a path,
+  a name, a count) is amended in place without changing what was decided; a reversal is a new ADR
+  that supersedes the old one, linked both ways; overlapping or dead records are compacted from time
+  to time, with git as the archive. An ADR never grows dated "update" sections.
 - **The area's main document** says how the system works today, with a diagram, and links its few
   ADRs and ledger lines. History stays in the records and in git, never in the living document.
 
