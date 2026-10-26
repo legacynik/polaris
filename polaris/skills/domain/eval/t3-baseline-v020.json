@@ -1,0 +1,63 @@
+{
+  "checks": [
+    {
+      "id": "c1",
+      "assertion": "step 0 fired: the run names the decision or boundary it resolves, or it stops; a DOMAIN.md run additionally binds only settled names to verified component paths",
+      "passed": false,
+      "evidence": "baseline lacks c1"
+    },
+    {
+      "id": "c2",
+      "assertion": "no context-map row carries a group name as its pattern — customer-supplier is a group of three (conformist, anticorruption layer, open-host service), and a row labelled with it is undecided while reading as decided",
+      "passed": true,
+      "evidence": "baseline satisfies c2"
+    },
+    {
+      "id": "c3",
+      "assertion": "every emitted pattern row states what the pattern COSTS, not only what it buys. Measured at 0 of 67 on the naked baseline",
+      "passed": true,
+      "evidence": "baseline satisfies c3"
+    },
+    {
+      "id": "c4",
+      "assertion": "a subdomain classification carries its sourcing consequence (build-best in-house / build-simple / buy-or-adopt). A type with no consequence taken is a label, not a decision",
+      "passed": true,
+      "evidence": "baseline satisfies c4"
+    },
+    {
+      "id": "c5",
+      "assertion": "an edge not closed against a real caller ships marked ASSUMED with its reason — two of three naked runs asserted a published-language edge that had no producer wired at all",
+      "passed": true,
+      "evidence": "baseline satisfies c5"
+    },
+    {
+      "id": "c6",
+      "assertion": "on a boundary-LOCATING or granularity question the run halts and names architettura (Team Topologies 1/12/13/15, Hard Parts 10/11/20/23/24/26/30) instead of improvising a line from a reference that has no locator",
+      "passed": true,
+      "evidence": "baseline satisfies c6"
+    },
+    {
+      "id": "c7",
+      "assertion": "no design vocabulary (seam, depth, module shape, adapter-as-code-shape) appears in the emitted artifact — the artifact speaks the system's domain language plus the six named integration patterns",
+      "passed": true,
+      "evidence": "baseline satisfies c7"
+    },
+    {
+      "id": "c8",
+      "assertion": "no chapter file is read and at most the one domain extract is loaded; a second book means a ceded question is being answered here",
+      "passed": true,
+      "evidence": "baseline satisfies c8"
+    }
+  ],
+  "metrics": {
+    "model": "deterministic-evidence-audit-v1",
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "wall_ms": 10,
+    "tool_calls": 1,
+    "repeated_commands": 0,
+    "consistent_runs": 1,
+    "runs": 1,
+    "context_reuse": "not_available"
+  }
+}

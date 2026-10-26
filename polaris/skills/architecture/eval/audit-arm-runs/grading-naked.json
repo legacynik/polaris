@@ -1,0 +1,52 @@
+[
+  {
+    "assertion": "States perimeter: dirs read + commit SHA/ref, names what was NOT examined",
+    "passed": false,
+    "evidence": "Only: \"Metodo: census AST dell'intero grafo di import di `app/` (301 file), verifica dei sopravvissuti con grep repo-wide su `app/ eval/ scripts/ tests/`.\" No commit SHA/ref anywhere in the report, and no explicit list of what was NOT examined."
+  },
+  {
+    "assertion": "States an INSTRUMENTATION section before any finding: what signals could/could not be measured",
+    "passed": false,
+    "evidence": "No instrumentation section exists. The only measurement disclaimer is a single clause: \"Non ho eseguito test né misurato coverage — dove parlo di test parlo di conteggi, non di verde\" — not a section, and it does not enumerate measurable vs. unmeasurable signals."
+  },
+  {
+    "assertion": "Every finding names which COST it inflates (development/deploy/operation/maintenance)",
+    "passed": false,
+    "evidence": "None of the 7 findings carry an explicit cost-category tag from that fixed vocabulary; e.g. finding 2 (\"generator.py — il god-module\") states LOC/param counts but never labels a cost category (development/deploy/operation/maintenance)."
+  },
+  {
+    "assertion": "Every maintenance-cost finding says SPELUNKING vs RISK",
+    "passed": false,
+    "evidence": "No finding is tagged as a maintenance cost at all, so none is further classified as spelunking or risk. No occurrence of either term in the report."
+  },
+  {
+    "assertion": "Every finding states SEVERITY as a blast-radius COUNT, not an adjective",
+    "passed": false,
+    "evidence": "No per-finding \"severity\" field exists. Some findings mention counts inline (e.g. \"41 moduli importano app.db direttamente\") but this is embedded narrative, not a systematic blast-radius severity applied to every finding — most findings (e.g. #1, #4, #6, #7) have no such count at all."
+  },
+  {
+    "assertion": "Every finding names the SIMPLIFICATION it enables (delete/split, not add)",
+    "passed": false,
+    "evidence": "Simplifications are batched into a separate \"Cosa farei\" section rather than attached to each finding; several findings (e.g. #1 services namespace, #5 dependency inversions) state the problem but never name a specific delete/split for that finding within the finding itself."
+  },
+  {
+    "assertion": "Every finding carries a per-finding ASSUMED entry or explicitly says none",
+    "passed": false,
+    "evidence": "The word \"ASSUMED\" does not appear anywhere in the report; no finding has a verification-gap disclosure field."
+  },
+  {
+    "assertion": "Every finding names the DECISION it feeds, or says none",
+    "passed": false,
+    "evidence": "No finding contains a \"decisione\"/decision field or reference to a downstream decision arm/procedure; findings simply state the problem."
+  },
+  {
+    "assertion": "Any ADD recommendation carries cost-removed and cost-added as numbers, or is absent",
+    "passed": true,
+    "evidence": "No recommendation proposes a new layer, service, indirection, config surface, or tool. All actions are deletions (\"Cancella listino_storage.py, prezzario_pricer.py...\"), a config-list move (required_routers), a parameter reduction, or a module extraction (split), not an addition — so the assertion is satisfied by absence."
+  },
+  {
+    "assertion": "Where a metric can't be honestly computed, says so and names the closing instrument, not a fake number",
+    "passed": false,
+    "evidence": "Only a brief blanket disclaimer (\"Non ho eseguito test né misurato coverage\") with no naming of a specific closing instrument, and no systematic enumeration of which metrics were left uncomputed (e.g. no mention of LCOM, abstractness, chattiness, or what tool would close them)."
+  }
+]

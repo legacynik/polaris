@@ -1,0 +1,32 @@
+[
+ {
+  "id": "c1",
+  "category": "outcome",
+  "assertion": "in write mode the produced prompt states its decision in the first two sentences and carries a closed output contract",
+  "cmd": null
+ },
+ {
+  "id": "c2",
+  "category": "outcome",
+  "assertion": "in write mode the produced prompt ends every checklist box of the matching reference answered, and the reference file was read (visible in the trace)",
+  "cmd": null
+ },
+ {
+  "id": "c3",
+  "category": "process",
+  "assertion": "no prompt was proposed for a SKILL.md, AGENTS.md or CLAUDE.md body: those were routed to the repository's own skill and instruction standards",
+  "cmd": null
+ },
+ {
+  "id": "c4",
+  "category": "process",
+  "assertion": "before calling a change done, eval returned a verdict on frozen identities (model, prompt hash, dataset hash), or the reply says NOT_RUN",
+  "cmd": "grep -qE 'NOT_RUN|sha256:[0-9a-f]{8}' \"$REPLY\""
+ },
+ {
+  "id": "c5",
+  "category": "style",
+  "assertion": "the produced prompt has no repeated emphasis walls: no line with two or more of MUST/NEVER/ALWAYS in caps",
+  "cmd": "! grep -cE '(MUST|NEVER|ALWAYS).*(MUST|NEVER|ALWAYS)' \"$PROMPT_OUT\" | grep -qv '^0$'"
+ }
+]

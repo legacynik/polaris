@@ -1,0 +1,74 @@
+[
+ {
+  "id": "c1",
+  "category": "outcome",
+  "assertion": "the session log gains one '## HH:MM — session end' entry with all six fields, and session_gate.py close exits 0 or stops the run",
+  "cmd": null
+ },
+ {
+  "id": "c2",
+  "category": "outcome",
+  "assertion": "a lesson is written only through scripts/lesson_record.py (a records/lessons file or an occurrences.jsonl line), never into lessons.md; the vault gate proves it",
+  "cmd": "python3 scripts/record_gate.py --root ."
+ },
+ {
+  "id": "c3",
+  "category": "outcome",
+  "assertion": "a lesson that recurs (lesson_record prints OCCURRENCE) or cost an incident gets one bead with labels kind:followup,src:lesson naming the check to build",
+  "cmd": null
+ },
+ {
+  "id": "c4",
+  "category": "process",
+  "assertion": "end does not move or close any plan file: plan close runs from ship",
+  "cmd": null
+ },
+ {
+  "id": "c5",
+  "category": "outcome",
+  "assertion": "the handoff lands through session_commit.sh --end (pathspec-only, never pushed) and git status shows no Polaris path left",
+  "cmd": "bash skills-suite/end/scripts/session_commit.sh --selfcheck"
+ },
+ {
+  "id": "c6",
+  "category": "outcome",
+  "assertion": "a checkpoint: the session log gained exactly one new titled entry carrying a Files field",
+  "cmd": "test \"$(grep -c '^## .*—' \"$SESSION_LOG\")\" -eq \"$((BEFORE_ENTRIES + 1))\" && grep -q '^- Files' \"$SESSION_LOG\""
+ },
+ {
+  "id": "c7",
+  "category": "outcome",
+  "assertion": "the cockpit has exactly one line in `## Open` for this lane, one `Updated:` line, and one `## Open` heading — a checkpoint updates, never stacks",
+  "cmd": "test \"$(grep -c '^Updated:' \"$CURRENT\")\" -eq 1 && test \"$(grep -c '^## Open' \"$CURRENT\")\" -eq 1 && test \"$(grep -c \"^- \\`$BRANCH\\` ($REPO)\" \"$CURRENT\")\" -eq 1"
+ },
+ {
+  "id": "c8",
+  "category": "outcome",
+  "assertion": "a checkpoint leaves every cockpit line that is not this lane and not `Updated:` byte-identical",
+  "cmd": "diff <(grep -v -e '^Updated:' -e \"^- \\`$BRANCH\\` ($REPO)\" \"$CURRENT_BEFORE\") <(grep -v -e '^Updated:' -e \"^- \\`$BRANCH\\` ($REPO)\" \"$CURRENT\")"
+ },
+ {
+  "id": "c9",
+  "category": "process",
+  "assertion": "a checkpoint runs checkpoint.sh verify with the entry title after the commit, and it exits 0; the session stays open (no session_gate close, no prune)",
+  "cmd": null
+ },
+ {
+  "id": "c10",
+  "category": "style",
+  "assertion": "a checkpoint's final reply is one line starting with `Checkpointed:` — no summary, no next-action list",
+  "cmd": null
+ },
+ {
+  "id": "c11",
+  "category": "outcome",
+  "assertion": "a close writes team/<login>/handoff/<date>.md only while the lane is open; when lane_phase.sh printed READY_FINALIZE and In progress, Next session and Blocker are none, no handoff file exists and the output says `no handoff — lane closed`",
+  "cmd": null
+ },
+ {
+  "id": "c12",
+  "category": "process",
+  "assertion": "end writes no decision record by hand: every decision is listed with its home, and one without a home goes through /architecture decide",
+  "cmd": null
+ }
+]

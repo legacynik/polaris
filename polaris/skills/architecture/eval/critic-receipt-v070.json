@@ -1,0 +1,29 @@
+{
+  "agent_type": "critic",
+  "fork_turns": "none",
+  "review_lanes": ["critic"],
+  "reviewed_diff_sha256": "321bd3c3c595cc0ccd1726831e57f49c87443b4ceb9d579c8576d6f753d94b37",
+  "transcript_sha256": "4da5379cd223bc814e15f6ace4e8cdb58168de497a5ca3d622c8badf14af2c2e",
+  "graded_checks": [
+    {"id": "c1", "passed": true, "evidence": "t3-new-v070 c1 passed; check_context_backbone --check returned accepted_decisions=1; prerequisite issues are closed; closure command exited 0."},
+    {"id": "c2", "passed": true, "evidence": "t3-new-v070 c2 passed; SKILL Step 0 requires OWNED/PUBLISHED before rule-derived advice."},
+    {"id": "c3", "passed": true, "evidence": "t3-new-v070 c3 passed; routing text restricts loads to named DECISION-RULES extracts, no chapter files."},
+    {"id": "c4", "passed": true, "evidence": "t3-new-v070 c4 passed; fixed fields require cost per option and audit cost pricing."},
+    {"id": "c5", "passed": true, "evidence": "t3-new-v070 c5 passed; SKILL and doc-arm require every unclosed count/claim as ASSUMED with reason."},
+    {"id": "c6", "passed": true, "evidence": "t3-new-v070 c6 passed; census-then-verify section mandates one script pass before graph closure."},
+    {"id": "c7", "passed": true, "evidence": "t3-new-v070 c7 passed; domain boundary, strategy and vendor tuning are explicit halts/owners."},
+    {"id": "c8", "passed": true, "evidence": "t3-new-v070 c8 passed; audit addition test requires deletion/split or all three conditions."}
+  ],
+  "attacks": {
+    "sibling_branches": {"inventory": ["skills-suite/architecture/eval/prompts.json:n04 -> skills-suite/domain/eval/prompts.json:t01"], "probes": [{"target": "skills-suite/architecture/eval/prompts.json:n04 -> skills-suite/domain/eval/prompts.json:t01", "passed": true, "evidence": "The same case/claim prompt is architecture negative n04 and domain positive t01, proving the producer boundary is tested from both sides."}]},
+    "claim_code_mismatch": {"inventory": ["skills-suite/architecture/SKILL.md:land -> scripts/check_context_backbone.py:call_sites/prerequisites/closure_check"], "probes": [{"target": "skills-suite/architecture/SKILL.md:land -> scripts/check_context_backbone.py:call_sites/prerequisites/closure_check", "passed": true, "evidence": "call_sites are in governed component paths, prerequisites are closed, and python3 -I scripts/check_context_backbone.py --check . exited 0."}]},
+    "bypasses": {"inventory": ["scripts/check_context_backbone.py:unknown/conflicting/stale-refusals"], "probes": [{"target": "scripts/check_context_backbone.py:unknown/conflicting/stale-refusals", "passed": true, "evidence": "--selfcheck passed 14 adversarial fixtures including UNKNOWN_COMPONENT, CONTEXT_CONFLICT, SOURCE_REF_STALE and DECISION_MANIFEST_TAMPERED."}]},
+    "false_green_selfchecks": {"inventory": ["ARCHITECTURE.md:same-change-contract -> foundation-148-reviewed.patch"], "probes": [{"target": "ARCHITECTURE.md:same-change-contract -> foundation-148-reviewed.patch", "passed": true, "evidence": "sealed patch includes live docs, decisions, manifest, checker, SPEC-MADRE, and producer skill changes; manifest check is green."}]}
+  },
+  "verdict": "PASS",
+  "findings": [],
+  "model": "gpt-5.5",
+  "input_tokens": "UNKNOWN",
+  "output_tokens": "UNKNOWN",
+  "wall_ms": 3614
+}

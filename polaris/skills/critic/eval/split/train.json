@@ -1,0 +1,65 @@
+[
+  {
+    "id": "p03",
+    "should_trigger": true,
+    "kind": "contextual",
+    "tuple": "claim / fabrication / buried",
+    "prompt": "The census row says the workflow validates every quoted source. Before I rely on it, independently open the artifact and prove or disprove that claim without reading the author's reasoning."
+  },
+  {
+    "id": "p07",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "clean artifact / false positive / names job",
+    "prompt": "Try to break this tiny configuration contract, but do not manufacture issues just to return a non-empty list; explain a genuine zero-finding result."
+  },
+  {
+    "id": "p01",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "diff / omission / explicit",
+    "prompt": "Run critic on this git safety guard before we promote it; use fresh context and try to find sibling destructive commands the tests forgot."
+  },
+  {
+    "id": "p06",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "skill / omission / explicit",
+    "prompt": "Use critic as the independent T3 reviewer for this SKILL.md and its eval transcript."
+  },
+  {
+    "id": "n03",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "near-miss: bugfix",
+    "prompt": "The upload endpoint returns 500. Reproduce the defect, patch it and add the regression test."
+  },
+  {
+    "id": "n01",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "near-miss: review",
+    "prompt": "Review the finished pull request and give the merge-blocking code findings."
+  },
+  {
+    "id": "n02",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "near-miss: real-testing",
+    "prompt": "All checks are green; decide whether this branch can merge and deploy."
+  },
+  {
+    "id": "p08",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "decision record / omission / explicit",
+    "prompt": "Run critic once on DEC-polaris-retrieval-002 before the founder accepts it: the CONTRACT is the three ADR tests and its probe."
+  },
+  {
+    "id": "n06",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "near-miss: tiny work",
+    "prompt": "It is a one-line typo fix in a log message. Run the full adversarial pass on it before I commit."
+  }
+]

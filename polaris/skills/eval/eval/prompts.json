@@ -1,0 +1,177 @@
+{
+  "skill": "eval",
+  "dimensions": {
+    "mode": [
+      "setup",
+      "audit",
+      "read",
+      "loop",
+      "judge",
+      "skill-tdd",
+      "release"
+    ],
+    "arrival": [
+      "explicit",
+      "implicit",
+      "contextual"
+    ]
+  },
+  "dimension_note": "The load-bearing axis is measure versus change: the same nouns (prompt, judge, skill, eval) appear when someone wants something MEASURED or compared (this skill), when they want the words changed (prompt-engineering), when they want product code proved mergeable (real-testing) or unit-tested (tdd-dev), or when they want work filed (issue-contract) or a box fixed (ops-infra).",
+  "coverage": "11 positives across the seven modes and three arrivals; 8 negatives: 2 prompt-engineering decoys, 5 other adjacent doors, 1 meta discussion. · 2026-10-26: p12 (golden set vs judge), p13 (run records and tracing), n09 (tracing product code is not an eval).",
+  "cases": [
+    {
+      "id": "p01",
+      "should_trigger": true,
+      "kind": "explicit",
+      "tuple": "setup · explicit",
+      "prompt": "set up an eval pipeline for the quote-extraction prompt: we have 200 traces in Langfuse"
+    },
+    {
+      "id": "p02",
+      "should_trigger": true,
+      "kind": "explicit",
+      "tuple": "judge · explicit",
+      "prompt": "write an LLM judge for 'the answer only uses facts from the sources' and tell me how often it is right"
+    },
+    {
+      "id": "p03",
+      "should_trigger": true,
+      "kind": "implicit",
+      "tuple": "loop · implicit",
+      "prompt": "confrontiamo i due modelli candidati sul prompt di dedup, chi vince?"
+    },
+    {
+      "id": "p04",
+      "should_trigger": true,
+      "kind": "implicit",
+      "tuple": "judge · implicit",
+      "prompt": "il giudice dà 4/5 a tutto, non serve a niente"
+    },
+    {
+      "id": "p05",
+      "should_trigger": true,
+      "kind": "implicit",
+      "tuple": "audit · implicit",
+      "prompt": "questi eval del classificatore passano sempre al 100%: stanno testando qualcosa?"
+    },
+    {
+      "id": "p06",
+      "should_trigger": true,
+      "kind": "explicit",
+      "tuple": "read · explicit",
+      "prompt": "ho 3000 risultati dell'eval di stanotte, dimmi quali failure mode ci sono dietro il 71%"
+    },
+    {
+      "id": "p07",
+      "should_trigger": true,
+      "kind": "explicit",
+      "tuple": "loop · explicit",
+      "prompt": "run a bounded improvement loop on the dedup prompt: five experiments at most, keep only what beats the baseline"
+    },
+    {
+      "id": "p08",
+      "should_trigger": true,
+      "kind": "contextual",
+      "tuple": "skill-tdd · contextual",
+      "prompt": "voglio cambiare la description di bugfix perché non scatta sui traceback: prima il caso che fallisce"
+    },
+    {
+      "id": "p09",
+      "should_trigger": true,
+      "kind": "explicit",
+      "tuple": "release · explicit",
+      "prompt": "before we publish the new real-testing, prove it does not regress against the published one"
+    },
+    {
+      "id": "p10",
+      "should_trigger": true,
+      "kind": "contextual",
+      "tuple": "skill-tdd · contextual",
+      "prompt": "the critic skill fires on routine code reviews; fix it and show me it no longer does"
+    },
+    {
+      "id": "p11",
+      "should_trigger": true,
+      "kind": "explicit",
+      "tuple": "setup · explicit",
+      "prompt": "fai un eval task-specific per il prompt di estrazione voci preventivo"
+    },
+    {
+      "id": "n01",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "adjacent-door · prompt-engineering",
+      "prompt": "riscrivi il system prompt del classificatore email, è confuso e mescola le regole"
+    },
+    {
+      "id": "n02",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "adjacent-door · prompt-engineering",
+      "prompt": "scrivi il messaggio di deny dell'hook che blocca grep sugli identificatori"
+    },
+    {
+      "id": "n03",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "adjacent-door · real-testing",
+      "prompt": "is this PR ready to merge? walk it on staging"
+    },
+    {
+      "id": "n04",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "adjacent-door · tdd-dev",
+      "prompt": "write the unit tests for parse_quote() first, then implement it"
+    },
+    {
+      "id": "n05",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "adjacent-door · bugfix / ops",
+      "prompt": "the Langfuse dashboard shows 401s since this morning, what broke?"
+    },
+    {
+      "id": "n06",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "meta · discussion",
+      "prompt": "cos'è un eval secondo te, in due parole?"
+    },
+    {
+      "id": "n07",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "adjacent-door · issue-contract",
+      "prompt": "apri una issue per il giudice che dà 4/5 a tutto"
+    },
+    {
+      "id": "n08",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "adjacent-door · ops-infra",
+      "prompt": "the cron that runs the nightly evals did not fire, check the box"
+    },
+    {
+      "id": "p12",
+      "should_trigger": true,
+      "kind": "implicit",
+      "tuple": "judge · implicit",
+      "prompt": "abbiamo 300 estrazioni con la risposta giusta e altre dove conta il tono: per quali uso un golden set e per quali un giudice?"
+    },
+    {
+      "id": "p13",
+      "should_trigger": true,
+      "kind": "contextual",
+      "tuple": "setup · contextual",
+      "prompt": "tra sei mesi voglio poter rispondere a 'cosa abbiamo provato sul retrieval e perché l'abbiamo scartato': come salviamo e tracciamo ogni run degli esperimenti?"
+    },
+    {
+      "id": "n09",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "decoy · observability code",
+      "prompt": "aggiungi il tracing Langfuse all'endpoint di checkout del backend, con lo span della chiamata a Stripe"
+    }
+  ]
+}

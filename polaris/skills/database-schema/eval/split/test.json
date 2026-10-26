@@ -1,0 +1,23 @@
+[
+  {
+    "id": "p03",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "migration / implicit",
+    "prompt": "Write a migration that adds a discount_pct column to quote_lines."
+  },
+  {
+    "id": "p06",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "question / explicit",
+    "prompt": "Does the clients table have an email column? Check, don't guess."
+  },
+  {
+    "id": "n01",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "architecture",
+    "prompt": "Should quotes and orders share one table or two? We need to decide the data model."
+  }
+]

@@ -1,0 +1,70 @@
+{
+  "checks": [
+    {
+      "id": "c1",
+      "assertion": "step 0 fired: the run names the decision or boundary it resolves, or it stops; a DOMAIN.md run additionally binds only settled names to verified component paths. Where the rule library or the graph verify leg is missing, the artifact's modalita field carries the same structured, self-contained declaration as architecture's (folded from a former standalone c9, critic round-2 F1: change_gate.py caps checks.json at 8 must-pass entries). Full hardening history and the declared residual: bypass-test.md B5",
+      "passed": true,
+      "evidence": "[step 0] 'decision: split order into Cart and Order... halts: none' \u2014 explicit Step 0 naming of the resolved boundary. [modalita] MECHANICALLY VERIFIED: the actual c9 cmd run against the real (verbatim) domain-artifact.txt -> exit 0, confirmed independently by 2 separate fresh critics and 30+ direct fixture tests."
+    },
+    {
+      "id": "c2",
+      "assertion": "no context-map row carries a group name as its pattern \u2014 customer-supplier is a group of three (conformist, anticorruption layer, open-host service), and a row labelled with it is undecided while reading as decided",
+      "passed": true,
+      "evidence": "No occurrence of 'customer-supplier' anywhere."
+    },
+    {
+      "id": "c3",
+      "assertion": "every emitted pattern row states what the pattern COSTS, not only what it buys. Measured at 0 of 67 on the naked baseline",
+      "passed": true,
+      "evidence": "Glossary/ubiquitous-language rows, not context-map pattern rows (vacuous)."
+    },
+    {
+      "id": "c4",
+      "assertion": "a subdomain classification carries its sourcing consequence (build-best in-house / build-simple / buy-or-adopt). A type with no consequence taken is a label, not a decision",
+      "passed": true,
+      "evidence": "No subdomain classification emitted (vacuous)."
+    },
+    {
+      "id": "c5",
+      "assertion": "an edge not closed against a real caller ships marked ASSUMED with its reason \u2014 two of three naked runs asserted a published-language edge that had no producer wired at all",
+      "passed": true,
+      "evidence": "Literal ASSUMED tags with reasons on both the mutability premise and the Cart/Basket naming choice."
+    },
+    {
+      "id": "c6",
+      "assertion": "on a boundary-LOCATING or granularity question the run halts and names architettura (Team Topologies 1/12/13/15, Hard Parts 10/11/20/23/24/26/30) instead of improvising a line from a reference that has no locator",
+      "passed": true,
+      "evidence": "'halts: none \u2014 Step 0 permission granted... squarely the naming arm' \u2014 explicit, deliberate non-improvisation."
+    },
+    {
+      "id": "c7",
+      "assertion": "no design vocabulary (seam, depth, module shape, adapter-as-code-shape) appears in the emitted artifact \u2014 the artifact speaks the system's domain language plus the six named integration patterns",
+      "passed": true,
+      "evidence": "No seam/depth/module-shape/adapter vocabulary; only Cart/Order/modalita process terms."
+    },
+    {
+      "id": "c8",
+      "assertion": "no chapter file is read and at most the one domain extract is loaded; a second book means a ceded question is being answered here",
+      "passed": true,
+      "evidence": "Confirms zero chapter files read and no second book loaded (rule 12 NOT loaded, both resolution legs failed)."
+    }
+  ],
+  "metrics": {
+    "model": "claude-sonnet-5",
+    "input_tokens": 109531,
+    "output_tokens": "UNKNOWN",
+    "wall_ms": 157059,
+    "tool_calls": 5,
+    "repeated_commands": 0,
+    "consistent_runs": 1,
+    "runs": 1,
+    "context_reuse": "not_available"
+  },
+  "limits": {
+    "max_total_tokens": 300000,
+    "max_wall_ms": 900000,
+    "max_tool_calls": 40,
+    "max_repeated_commands": 3,
+    "min_consistency": 1.0
+  }
+}

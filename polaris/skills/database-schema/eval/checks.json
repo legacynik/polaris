@@ -1,0 +1,26 @@
+[
+  {
+    "id": "c1",
+    "category": "process",
+    "assertion": "schema_scan.py locate runs before any database claim, and its exit code and any STALE line appear in the response",
+    "cmd": null
+  },
+  {
+    "id": "c2",
+    "category": "outcome",
+    "assertion": "every table.column the diff reads or writes is checked; without --db the run reports exit 3 (declared, not proven) and never claims the column exists",
+    "cmd": "python3 scripts/schema_scan.py --selfcheck"
+  },
+  {
+    "id": "c3",
+    "category": "outcome",
+    "assertion": "the schema-in-scope block cites migration or model files with file:line, never the schema reference alone",
+    "cmd": null
+  },
+  {
+    "id": "c4",
+    "category": "process",
+    "assertion": "a column dropped or renamed while another service reads it stops the run and routes to architecture",
+    "cmd": null
+  }
+]

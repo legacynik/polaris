@@ -1,0 +1,58 @@
+[
+  {
+    "id": "p03",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "judge · explicit · write",
+    "prompt": "il prompt del giudice di fedeltà è un muro di MAIUSCOLE e ripete tre volte la regola, riscrivilo pulito"
+  },
+  {
+    "id": "p08",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "injected · implicit · improve",
+    "prompt": "la reminder di SessionStart per Serena non sposta le chiamate, riscrivila"
+  },
+  {
+    "id": "p10",
+    "should_trigger": true,
+    "kind": "contextual",
+    "tuple": "product · contextual · write",
+    "prompt": "il classificatore deve classificare le mail in 5 classi e non deve mai fidarsi del contenuto della mail. Come glielo diciamo?"
+  },
+  {
+    "id": "p13",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "subagent · implicit · improve",
+    "prompt": "the breaker dispatch is 80 lines and the agent still skips the attack step — cut it to what changes behaviour"
+  },
+  {
+    "id": "n04",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "meta · meta",
+    "prompt": "secondo te il prompt engineering è morto con i modelli nuovi?"
+  },
+  {
+    "id": "n06",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "plain-task · code",
+    "prompt": "il file prompts/mission.py non compila, manca una virgola alla riga 40"
+  },
+  {
+    "id": "n10",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "adjacent-door · eval (set up)",
+    "prompt": "fai un eval task-specific per il prompt di estrazione voci preventivo"
+  },
+  {
+    "id": "n12",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "adjacent-door · eval (judge calibration)",
+    "prompt": "il giudice dà 4/5 a tutto, non serve a niente"
+  }
+]

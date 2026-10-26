@@ -1,0 +1,80 @@
+[
+  {
+    "id": "c1",
+    "category": "outcome",
+    "assertion": "step 1 runs the contract's verify and the local scripts the contract declares (version bump, changelog), and step 6 runs the redaction scan before any push; each script stops the run on a non-zero exit",
+    "cmd": "python3 scripts/redact_scan.py --selfcheck && python3 scripts/version_bump.py --selfcheck && python3 scripts/changelog_edit.py --selfcheck"
+  },
+  {
+    "id": "c2",
+    "category": "outcome",
+    "assertion": "the real-test step INVOKES real-testing rather than reading a verdict somebody else happened to leave, and is done only when realtest_gate.py accepts the current tree",
+    "cmd": "grep -q '^invokes: \\[real-testing' SKILL.md && grep -qF 'realtest_gate.py --root .' SKILL.md"
+  },
+  {
+    "id": "c3",
+    "category": "outcome",
+    "assertion": "a repository without the real_test contract is recorded as mode: reduced naming the missing field, never skipped in silence",
+    "cmd": "grep -q 'mode: reduced' SKILL.md && grep -q 'mode: reduced' references/contract.md"
+  },
+  {
+    "id": "c4",
+    "category": "outcome",
+    "assertion": "the deploy step reads the workflow named by the repo contract (_polaris/config.yml real_test.deploy_prod_workflow) instead of hardcoding a per-platform command",
+    "cmd": "grep -q 'deploy_prod_workflow' SKILL.md && grep -q 'deploy_prod_workflow' references/contract.md"
+  },
+  {
+    "id": "c5",
+    "category": "process",
+    "assertion": "the real-test verdict is re-checked against the current tree by content hash, so a renamed or stale verdict cannot pass on its filename",
+    "cmd": "python3 scripts/realtest_gate.py --selfcheck"
+  },
+  {
+    "id": "c6",
+    "category": "outcome",
+    "assertion": "Phase B requeries the live PR state before acting and merges at most once; a non-zero exit triggers a requery, never a second gh pr merge",
+    "cmd": "python3 scripts/merge_gate.py --selfcheck"
+  },
+  {
+    "id": "c7",
+    "category": "process",
+    "assertion": "when every gate holds on the current head the run stops at ONE proposal (plain first line, linked evidence, rollback plan, pre-deploy check, UNKNOWN for missing data) and nothing merges or deploys before the owner's yes",
+    "cmd": "grep -qF 'nothing runs until the owner says' SKILL.md && grep -qF 'nothing runs until the owner says' references/merge-and-deploy.md && grep -qF 'Rollback plan:' references/merge-and-deploy.md"
+  },
+  {
+    "id": "c8",
+    "category": "outcome",
+    "assertion": "the canary alerts on change from the captured baseline with a debounce, not on an absolute value: an already-erroring page stays silent, a new error alerts on the second consecutive check",
+    "cmd": "python3 scripts/canary_check.py --selfcheck"
+  },
+  {
+    "id": "c9",
+    "category": "outcome",
+    "assertion": "the post-deploy verification window advances, holds or proposes a rollback from baseline-relative metrics, and a missing metric holds instead of advancing",
+    "cmd": "python3 -m pytest -q tests/test_canary_verdict.py"
+  },
+  {
+    "id": "c10",
+    "category": "process",
+    "assertion": "the steps run in this order: local tests, the review audit (no separate simplify or security pass), local real-testing with a fresh-context breaker, the DoD, the docs step, push and draft PR, staging once, pr, babysit, then merge and plan close",
+    "cmd": "python3 -c \"import re,sys; s=open('SKILL.md').read(); keys=['Local tests','Review.','Real-test locally','DoD.','Docs.','Push and PR','Staging, once','Body.','Owner','Merge and close']; idx=[s.index('**'+k) for k in keys]; sys.exit(0 if idx==sorted(idx) else 1)\""
+  },
+  {
+    "id": "c11",
+    "category": "outcome",
+    "assertion": "before the PR, every doc whose claim the diff changed is either fixed on the branch or named under «Still open» in the PR body; none is left stale and unnamed",
+    "cmd": "grep -qF 'Still open' SKILL.md"
+  },
+  {
+    "id": "c12",
+    "category": "outcome",
+    "assertion": "Tiny and Bug work skips staging; Medium and Large work holds staging exactly once, and a second round happens only after a code push voids the receipt",
+    "cmd": "grep -qF '**Tiny** and **Bug** skip step 7' SKILL.md && grep -qF 'Staging, once' SKILL.md"
+  },
+  {
+    "id": "c13",
+    "category": "process",
+    "assertion": "after the merge the run converges Git (git-power phase finalize) and runs phase 8 (plan close) when a plan file exists; it never leaves closing to the end of the session",
+    "cmd": "grep -qF 'phase finalize' SKILL.md && grep -qF 'plan_close.py --record' SKILL.md"
+  }
+]

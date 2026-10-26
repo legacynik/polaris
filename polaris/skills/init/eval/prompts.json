@@ -1,0 +1,66 @@
+{
+  "skill": "init",
+  "method": "ARRIVAL (explicit | implicit) x ARM (bring a repo in | team pin). Six positives cover the backbone audit and the --team modes; four negatives are the doors it must not absorb — a refactor, installing the suite on one machine (install.sh --deps/--doctor), creating a documentation area, and a repo already sealed READY.",
+  "cases": [
+    {
+      "id": "p01",
+      "should_trigger": true,
+      "kind": "explicit",
+      "prompt": "Run init on this repo: it has no CONTEXT.md or ARCHITECTURE.md yet."
+    },
+    {
+      "id": "p02",
+      "should_trigger": true,
+      "kind": "explicit",
+      "prompt": "Lancia init --team required su acme-api, pinnando l'ultima release di Polaris."
+    },
+    {
+      "id": "p03",
+      "should_trigger": true,
+      "kind": "implicit",
+      "prompt": "Il context pack qui non emette niente: il repo non è mai stato portato nell'harness. Allinealo."
+    },
+    {
+      "id": "p04",
+      "should_trigger": true,
+      "kind": "implicit",
+      "prompt": "I want every teammate on this repo to get the same Polaris version automatically when they open a session."
+    },
+    {
+      "id": "p05",
+      "should_trigger": true,
+      "kind": "implicit",
+      "prompt": "This old repo has prose docs but no typed backbone; audit it and propose what to write before touching anything."
+    },
+    {
+      "id": "p06",
+      "should_trigger": true,
+      "kind": "explicit",
+      "prompt": "Make Polaris optional for this repo's team: just nudge people who don't have it installed."
+    },
+    {
+      "id": "n01",
+      "should_trigger": false,
+      "kind": "negative",
+      "prompt": "Refactor the folder layout of this repo and move the CI config under ci/."
+    },
+    {
+      "id": "n02",
+      "should_trigger": false,
+      "kind": "negative",
+      "prompt": "Install the Polaris suite and its MCP servers on my machine, and tell me what deps are missing."
+    },
+    {
+      "id": "n03",
+      "should_trigger": false,
+      "kind": "negative",
+      "prompt": "Create a new documentation area for the billing module with its dossier."
+    },
+    {
+      "id": "n04",
+      "should_trigger": false,
+      "kind": "negative",
+      "prompt": "Il backbone di questo repo sigilla già READY: aggiorna solo la sezione Active Priorities del cockpit."
+    }
+  ]
+}

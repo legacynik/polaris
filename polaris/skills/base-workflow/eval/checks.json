@@ -1,0 +1,26 @@
+[
+  {
+    "id": "c1",
+    "category": "outcome",
+    "assertion": "before the first production edit the run states the size of the work (Large, Medium, Tiny or Bug, by operating model §2) and the path it implies; a Tiny change goes bead -> tdd-dev -> ship with no plan file, a bug goes to bugfix",
+    "cmd": null
+  },
+  {
+    "id": "c2",
+    "category": "process",
+    "assertion": "every caller of each changed function is listed before the edit, and the thresholds applied are cited by file from the repository's declared rules, never quoted from memory",
+    "cmd": null
+  },
+  {
+    "id": "c3",
+    "category": "outcome",
+    "assertion": "no production line changes before a RED is recorded through tdd-dev: the run's rosso_log exists and red_check.py verify exits 0 on it",
+    "cmd": "test -z \"$LOG\" || python3 ../tdd-dev/scripts/red_check.py verify --log \"$LOG\" --test \"$TEST\""
+  },
+  {
+    "id": "c4",
+    "category": "process",
+    "assertion": "a change that moves a boundary, an interface, a data contract or a dependency direction is sent to architecture before any code lands",
+    "cmd": null
+  }
+]

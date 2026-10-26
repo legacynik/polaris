@@ -1,104 +1,75 @@
 ---
 name: issue-contract
-description: ◇ Create or update GitHub issues with a clear definition of done and regression checks. Use when asked to open an issue, track a bug, or hand work to another lane.
-version: 2.3.0
+description: ◇ Polaris — Create or update GitHub issues with a clear definition of done and regression checks, and route operational work to a Beads bead instead. Use when asked to open an issue, track a bug or finding, promote a bead, or hand work to another lane. Requires bd (Beads), gh and python 3.
+version: 2.6.3
 user-invocable: true
 auto: true
 job: record the requested work in the tracker without starting implementation
 when_not: implementation, code review, or speculative roadmap decomposition
-lifecycle: GitHub issue or update; no duplicate local brief
-invokes: [bugfix, git-power, ambitious-goal]
-invoked-by: [start, cron-sweep, crasher, human]
-io: request and existing evidence -> issue URL carrying its AFK label, with branch link when supplied
+lifecycle: GitHub issue or update, or a bead; no duplicate local brief, never a GitHub-Beads mirror
+invokes: [bugfix, git-power, plan-area]
+invoked-by: [cron-sweep, crasher, ship, human]
+io: request and existing evidence -> issue URL carrying its AFK label, with branch link when supplied; or a bead id and the one-line reason
 status: active
 ---
 
 # Issue Contract
 
-Make the ticket useful and easy to read. The required content is a short description, a
-definition of done, what to test to avoid regressions, and who may pick the work up. Write in
-the language the repository's existing issues use unless the user asks for another. Technical
-names and commands belong only where they help someone execute or verify the work.
+## What it does
 
-## Default flow
+The only door to the tracker. A GitHub issue only when a human must schedule or approve the work,
+it falls outside the current PR or phase, it has «Come si prova» and an area, and no open issue
+twins it; everything else becomes a Beads bead, with the reason in one line. The ticket is short:
+what and why, a DoD, «Come si prova», and who may pick it up, in the language of the
+repository's issues. Never a mirror between GitHub and Beads.
 
-`invokes` lists available routes, not mandatory steps; use the conditions below.
+## When
 
-1. **Search once for duplicates.** `gh issue list --state all --search "<key words>"`. Reuse a
-   clearly matching issue; otherwise create one. Inspect code only to resolve a concrete
-   uncertainty, through the code graph or LSP if available. Done when you hold either the twin's
-   number or the search that found none.
-2. **Refine a feature only when needed.** For a feature or feature epic whose outcome, scope or
-   DoD is unclear, use `ambitious-goal`: pass the evidence and constraints, take back the
-   contract, publish it here. Bugs and mechanical tickets skip this step; no mandatory interview.
-3. **Decide who may pick it up, before writing.** The work is for a **person** when any holds:
-   the request says to leave it to a person, keep it, not hand it to an agent, or not auto-claim
-   it; it needs an access, credential or authority an agent does not hold; it waits on a
-   product, business, legal or owner decision; the repository's own policy reserves that kind of
-   work. Otherwise follow the repository's AFK policy. Then let the script name the label:
+- Someone asks to open an issue, track a bug or a finding, or hand work to another lane.
+- A bead grew into a delivery and must be promoted (`--bead`).
 
-   ```bash
-   gh label list --json name --limit 500 > /tmp/labels.json
-   python3 scripts/afk_label.py pick --human yes --labels /tmp/labels.json   # or --human no
-   ```
+## Steps
 
-   It reads `tracker.afk_human` / `tracker.afk_agent` from the product repository's
-   `_polaris/config.yml` when present, else the repository's own labels (`afk:human`,
-   `ready-for-human`, `needs-human` for a person; `afk:eligible`, `ready-for-agent`,
-   `agent-ready` for an agent). Exit 2 means work for a person has no label to carry it: tell the
-   user which label to create or configure, and do not file the issue without it. Done when you
-   hold the label name (empty only for agent work in a repository with no AFK labels).
-4. **Write the short ticket below**, then pick routine labels (type, area, priority) from the
-   repository's existing labels and its issue templates. Preserve existing assignees and state
-   unless asked to change them.
-5. **Create or update directly** with the connected GitHub tools or `gh` with a body file and
-   `--label <the step-3 label>`. A request to open an issue already authorizes creation: no
-   second confirmation or dry-run handoff.
+1. **Search once for duplicates:** `gh issue list --state all --search "<key words>"`. Reuse a
+   clear twin. *Done when you hold its number or the search that found none.*
+2. **Route.** `command -v bd`, else stop: install Beads (`brew install beads`). Then
+   `python3 scripts/route.py --human yes|no --in-current-work yes|no --test-section yes|no
+   --area <area> --dup <twin|none> --src <who found it> --kind <what it is>` (flags in
+   `references/flow.md`). `beads` → run its `next` with a real title, give the reason, return
+   the bead id, stop. `github` → continue. Exit 2 names a missing fact.
+3. **Refine a feature only when its outcome or DoD is unclear:** it is medium or large work,
+   hand it to `plan-area`; the issue links its plan file. Bugs and mechanical tickets skip this.
+4. **Who picks it up.** A person when the request says so, or it needs access, a decision or an
+   authority an agent lacks. Then `gh label list --json name --limit 500 > /tmp/labels.json` and
+   `python3 scripts/afk_label.py pick --human yes|no --labels /tmp/labels.json`; exit 2 = no label to
+   carry work for a person: say which to create, file nothing.
+5. **Write and file** the ticket below with `gh issue create --body-file … --label <step-4
+   label>` plus routine labels from the repository's own; preserve assignees and state. With
+   `--bead`, run route's `next` with the issue number. No second confirmation.
+6. **Read back:** `gh issue view <N> --json labels > /tmp/issue.json` and
+   `python3 scripts/afk_label.py verify --human yes|no --issue /tmp/issue.json --labels /tmp/labels.json`
+   must exit 0; fix the labels and verify again.
 
 ```markdown
-<What is wrong or needed, why it matters, and any relevant branch or evidence link.>
+<What is wrong or needed, why it matters, branch or evidence link.>
 
 ## DoD
 - <Observable result that makes the work complete.>
 
-## Regression checks
-- <The normal behavior to preserve and the failure or edge case to exercise.>
+## Come si prova
+- <How to see it done, the behaviour to preserve, the failure or edge case to exercise.>
 ```
+«Come si prova» says what a user or caller observes, never "file X contains", "function is named Y",
+"config says Z" or a real wait (lower the limit), even if asked (`tdd-dev` → *How tests are written*).
 
-Use as many bullets as the actual work needs. Do not invent numeric targets, commands, file
-paths, or a test implementation merely to fill a template. Distinguish tests still to run from
-evidence already collected. Add reproduction steps only when they help.
+## Output
 
-## When NOT to use
+The issue URL carrying its AFK label (and the branch link when supplied), or a bead id plus the
+one-line reason. Selfcheck: `python3 scripts/route.py --selfcheck && python3 scripts/afk_label.py --selfcheck`.
+**Next:** STOP — filing authorizes nothing; offer the options: start now (`bugfix` · `plan-area` · `tdd-dev`) or later.
 
-- Opening an issue does not authorize implementation, assigning it to yourself, or launching
-  an agent. A handoff stays with the receiving lane; do not fix it while preparing the ticket.
-- Link existing branches, PRs and evidence. Do not create a plan, ADR, local dossier, patch
-  archive or review process just to open an issue. Create a branch only when requested.
-- No mandatory multi-field contract, score, cost estimate, executive section, dedup essay,
-  minimum test count or measurable-signal regex. Honor any genuinely enforced repository
-  requirement without turning optional issue-form fields into another interview.
-- Do not promote or dispatch work merely because an issue was created.
+## Not for
 
-## Before returning
-
-Read the issue back and check its labels carry the step-3 decision:
-
-```bash
-gh issue view <N> --json labels > /tmp/issue.json
-python3 scripts/afk_label.py verify --human yes --issue /tmp/issue.json --labels /tmp/labels.json
-```
-
-Exit 0 is required: exit 1 names the missing label, or an agent label on work for a person;
-fix it with `gh issue edit <N> --add-label/--remove-label` and verify again. Then check the DoD
-and regression checks match the request and any supplied branch link is present. Return the
-link without replaying the workflow.
-
-## Selfcheck
-
-```bash
-python3 scripts/afk_label.py --selfcheck
-python3 -m pytest -q tests/test_afk_label.py
-```
-
-Bypass cases: `references/bypass-test.md`.
+- Implementation, self-assignment or launching an agent: opening an issue authorizes none.
+- Plans, ADRs, dossiers or review processes created just to open an issue.
+- Invented numbers, commands or paths to fill the template. Limits in full: `references/flow.md`.

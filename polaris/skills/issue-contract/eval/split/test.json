@@ -1,0 +1,37 @@
+[
+  {
+    "id": "p04",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "new / implicit",
+    "prompt": "Questo va messo a tracker con criteri di accettazione veri, non una riga di TODO."
+  },
+  {
+    "id": "p07",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "extend / implicit",
+    "prompt": "Questo difetto \u00e8 lo stesso perimetro di #302 \u2014 non aprirne una nuova, estendi quella e promuovila di stato."
+  },
+  {
+    "id": "p08",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "group / explicit",
+    "prompt": "Accorpa queste quattro task sotto un epic e collega le figlie."
+  },
+  {
+    "id": "p05",
+    "should_trigger": true,
+    "kind": "contextual",
+    "tuple": "new / contextual",
+    "prompt": "wayfinder ha chiuso la mappa e le tre slice sono decomposte: portale al tracker."
+  },
+  {
+    "id": "n02",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "review \u2014 judging code on an approved PR",
+    "prompt": "Leggimi il diff di questa PR e dimmi se rispetta le convenzioni del repo e quello che la issue chiedeva."
+  }
+]

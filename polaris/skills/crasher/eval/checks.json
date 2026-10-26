@@ -1,0 +1,44 @@
+[
+  {
+    "id": "c1",
+    "category": "outcome",
+    "assertion": "the verdict came from the gate, not from prose: a run record exists, it declares target/budget/surface/attempted/findings, and crash_report.py was actually executed against it — a report written straight into the transcript with no record behind it is the failure this door was rebuilt to stop",
+    "cmd": "test -z \"$RUN\" || { python3 -c \"import json,sys;d=json.load(open(sys.argv[1]));sys.exit(0 if all(k in d for k in ('target','budget','surface','attempted','findings')) else 1)\" \"$RUN\" && grep -q 'crash_report.py' \"$TRACE\"; }"
+  },
+  {
+    "id": "c2",
+    "category": "outcome",
+    "assertion": "a 'no crash found' verdict names every path it visited and states its coverage as attempted/surface; it is never reported bare, and never at all when the attempted list is empty, the surface undeclared, or the run beyond its budget (crash_report.py exits 1 there and the run is not reported). Only 0 and 3 are verdicts: exit 1 is a refusal and exit 2 an unusable record, and neither may score PASS",
+    "cmd": "test -z \"$RUN\" || { python3 scripts/crash_report.py --run \"$RUN\" >/dev/null; rc=$?; [ \"$rc\" = 0 ] || [ \"$rc\" = 3 ]; }"
+  },
+  {
+    "id": "c3",
+    "category": "outcome",
+    "assertion": "the run files nothing by itself: it ends with a proposal (one entry per fingerprint, with title, repro command and any open twin) and only the entries a person picked reach the tracker, through issue-contract; no `gh issue create` and no build_issue.py appear anywhere in the crasher's own trace",
+    "cmd": "test -z \"$TRACE\" || { ! grep -qE 'gh issue create|build_issue' \"$TRACE\"; }"
+  },
+  {
+    "id": "c4",
+    "category": "process",
+    "assertion": "the order held — the surface was enumerated from the repository and capped at the declared budget BEFORE the drive started, never after, so coverage is a bounded claim rather than a number invented at report time",
+    "cmd": null
+  },
+  {
+    "id": "c5",
+    "category": "process",
+    "assertion": "every finding passed the classify step against the noise classes (flaky timing, expected validation error, test-account or environment quirk, stale stream, duplicate of an open issue) before it was proposed, and a finding with no reproducing command is proposed for a person rather than dressed up as claimable by an unattended agent",
+    "cmd": null
+  },
+  {
+    "id": "c6",
+    "category": "style",
+    "assertion": "the honest limits are stated where they apply rather than implied: coverage is self-reported by the driver and unproven here, the fingerprint collapses numbers so two failures that read alike will share one issue, and classification is judgement that no script in this bundle can refuse",
+    "cmd": null
+  },
+  {
+    "id": "c7",
+    "category": "process",
+    "assertion": "before the first probe the run record declares the surface, the tools per surface and the writes it may make (QA without a webpage); an API or CLI surface is probed without a browser; a browser surface uses the logged-in profile from real_test.browser_profile, the agent never types a credential, and an expired session stops the run with 'log in again in profile <X>' instead of a login attempt",
+    "cmd": "test -z \"$RUN\" || python3 -c \"import json,sys;d=json.load(open(sys.argv[1]));sys.exit(0 if d.get('tools') and d.get('writes') else 1)\" \"$RUN\""
+  }
+]

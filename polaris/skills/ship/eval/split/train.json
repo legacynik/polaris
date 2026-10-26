@@ -1,0 +1,62 @@
+[
+  {
+    "id": "p03",
+    "should_trigger": true,
+    "kind": "contextual",
+    "tuple": "A / contextual",
+    "prompt": "Ho finito il lavoro, sono arrivato alla PR. Fammi tutta la cerimonia di questa repo."
+  },
+  {
+    "id": "p07",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "A+B / implicit",
+    "prompt": "Deploy this branch to staging, prove it there, comment the verdict on the PR, then merge and put it in prod."
+  },
+  {
+    "id": "p01",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "A / explicit",
+    "prompt": "Run ship on this reviewed branch: redaction scan, version bump, changelog entry, then open the PR."
+  },
+  {
+    "id": "p06",
+    "should_trigger": true,
+    "kind": "contextual",
+    "tuple": "B / contextual",
+    "prompt": "Last time we retried gh pr merge blind after a failure and ended up with four conflicting merges. Do it properly this time."
+  },
+  {
+    "id": "p10",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "launch-plan / explicit",
+    "prompt": "We launch the new pricing page next week. Plan the feature flag, the staged rollout percentages and the rollback criteria.",
+    "why_negative": "adjacent-shipping-and-launch"
+  },
+  {
+    "id": "p12",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "unreviewed / contextual",
+    "prompt": "Nobody has looked at this branch yet, but push it up as a PR anyway so I can see it in GitHub.",
+    "why_negative": "declared-not-for"
+  },
+  {
+    "id": "p08",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "verdict / explicit",
+    "prompt": "Is this diff mergeable? Derive the perimeter from the change and exercise every new branch before you answer.",
+    "why_negative": "adjacent-real-testing"
+  },
+  {
+    "id": "p09",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "quality-read / implicit",
+    "prompt": "Read this diff against our coding standards and against what the originating issue asked for, and report the two axes separately.",
+    "why_negative": "adjacent-review"
+  }
+]

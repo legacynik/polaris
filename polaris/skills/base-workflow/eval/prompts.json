@@ -1,0 +1,76 @@
+{
+  "skill": "base-workflow",
+  "cases": [
+    {
+      "id": "p01",
+      "should_trigger": true,
+      "kind": "explicit",
+      "prompt": "Use the base workflow to add CSV export to the reports page."
+    },
+    {
+      "id": "p02",
+      "should_trigger": true,
+      "kind": "explicit",
+      "prompt": "Segui il base-workflow: devo aggiungere un filtro per data alla lista offerte."
+    },
+    {
+      "id": "p03",
+      "should_trigger": true,
+      "kind": "implicit",
+      "prompt": "Add a retry with exponential backoff to the webhook sender."
+    },
+    {
+      "id": "p04",
+      "should_trigger": true,
+      "kind": "implicit",
+      "prompt": "make the invoice total round half-up instead of truncating"
+    },
+    {
+      "id": "p05",
+      "should_trigger": true,
+      "kind": "implicit",
+      "prompt": "refactorizza il modulo pricing, le funzioni sono troppo lunghe e nessuno ci capisce più niente"
+    },
+    {
+      "id": "p06",
+      "should_trigger": true,
+      "kind": "implicit",
+      "prompt": "TypeError: Cannot read properties of undefined (reading 'id')\n    at QuoteList (QuoteList.tsx:42)\nfix it"
+    },
+    {
+      "id": "p07",
+      "should_trigger": true,
+      "kind": "implicit",
+      "prompt": "We are halfway through the import feature and I lost track of which phase we are in. Pick it up and carry on.",
+      "note": "resuming: the method finds the phase from the plan file's status before acting"
+    },
+    {
+      "id": "n01",
+      "should_trigger": false,
+      "kind": "negative",
+      "prompt": "Commit what I have on this branch and open the PR.",
+      "note": "git-power / ship own branch, commit and PR"
+    },
+    {
+      "id": "n02",
+      "should_trigger": false,
+      "kind": "negative",
+      "prompt": "Fix the typo 'recieve' in README.md.",
+      "note": "a doc line with no behaviour: edit it directly"
+    },
+    {
+      "id": "n03",
+      "should_trigger": false,
+      "kind": "negative",
+      "prompt": "Should we move from REST to tRPC between the web app and the API? Decide it and record the decision.",
+      "note": "an architectural commitment: architecture"
+    },
+    {
+      "id": "n04",
+      "should_trigger": false,
+      "kind": "negative",
+      "prompt": "Bozza veloce usa e getta per vedere se l'idea della mappa funziona, non va in main.",
+      "note": "a throwaway spike: prototype"
+    }
+  ]
+}

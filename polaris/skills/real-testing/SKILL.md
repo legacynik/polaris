@@ -1,145 +1,73 @@
 ---
 name: real-testing
-description: ◇ Merge-readiness verdict from the real product. Serve your commit on a real environment, walk the customer journey through the UI across every surface it reaches, let a fresh agent try to break it, leave the tests in CI. Use before merge or promotion, or when someone says it works. Not diff reading (review).
-version: 3.2.3
+description: "◇ Polaris — Verdict from the real product: serve the commit, walk the customer journey through the UI on every surface it reaches, let a fresh agent try to break it, leave the tests in CI. Modes: local, merge (receipt bound to the tree), production check. Use before merge or promotion, on 'test the app', or when someone says it works. Requires git, python3, gh, bd; browser-harness for UI walks. Not diff reading (review)."
+version: 4.2.1
 user-invocable: true
 auto: true
-lifecycle: "produces .real-test/verdicts/<hash>.json (local, never committed — drained by verdict.py once the hash is unreachable) + tests left in CI (permanent, drained by the test suite itself); .real-test/bypass.log local, drained by hand"
+lifecycle: "merge mode produces .real-test/verdicts/<hash>.json (local, never committed, drained by verdict.py once the hash is unreachable) + tests left in CI (permanent); local findings live on as beads (src:real-test) until closed; .real-test/bypass.log local, drained by hand"
 invokes: [git-power]
-invoked-by: [bugfix, polaris-sweep, pol-ship, pol-babysit, human]
-io: "diff/branch -> verdict MERGEABLE|MERGEABLE-CON-GAP|NOT-MERGEABLE naming the environment and the served SHA, with what held and what broke on every surface walked; consumed by the PreToolUse gate on `git commit` and by review/ship downstream"
+invoked-by: [bugfix, sweep, ship, babysit, implement-plan, human]
+io: "a served commit (branch or production) -> merge: verdict MERGEABLE|MERGEABLE-CON-GAP|NOT-MERGEABLE naming the environment and served SHA, read by the pre-commit gate and by ship; local: pass or rewrite beads blocking the work; production: a health report whose defects go through issue-contract"
 status: active
 ---
 
 # real-testing
 
-## Where this goes (host repository decides)
+## What it does
 
-A skill decides **how** to produce a document, never **where** it lives. Before writing a
-validation receipt, read the host repository's output map and use it; a document that lands where
-the repository does not look was never written.
+Proves a change on the running product, never by reading it. One method in three modes: serve
+the commit, walk the journey as the customer, let a fresh agent try to break it, record what
+held with evidence.
 
-```bash
-sed -n '/^outputs:/,/^[^ ]/p' _polaris/config.yml 2>/dev/null || sed -n '/^outputs:/,/^[^ ]/p' config.yml
-```
+| Mode | Served where | Yardstick | Result |
+|---|---|---|---|
+| local | this machine | the work's DoD | pass, or rewrite beads blocking the work |
+| merge | staging (the repo's `signing_env`) | acceptance + perimeter | receipt bound to the tree |
+| production check | production, no diff | `real_test:` journey | health report |
 
-This skill produces: **validation** (the merge-readiness verdict and the field-test receipt). Kinds:
-`spec` `plan` `audit` `review` `validation` `diagram` `decision` `archive` — each maps to a
-documentation area `docs/modules/<area>/…` whose README is a generated map. Never invent a third
-location; if the repository declares no map, say once where you wrote and why. The local
-`.real-test/verdicts/<hash>.json` is a pointer, never the document.
+## When
 
-## Overview
+- Never as a phase gate: a Beads phase closes on green tests. Per-phase mode only when asked.
+- Before a merge or promotion, on the branch served, never on `main` after the merge.
+- "Test the app" on a live product, or a scheduled health check: production check.
+- Someone says "it works" with no served SHA and no evidence.
 
-The merge-readiness verdict from the real product. The diff says what the change touches, the
-spec says what it was meant to do, the PR carries the checklist of what must be proven, and the
-verdict is every box ticked with evidence, on the branch served, before the merge. Deterministic
-gates a fresh-context agent can run, not a rite: an agent that follows a short list does not fake
-evidence. The scripts (`perimeter.py`, `verdict.py`) bind the verdict to the git tree.
+## Steps
 
-## When to Use
+1. **Serve and prove parity.** The served commit (health `commit`, build marker) equals the one
+   you test; not equal, stop. Merge: staging through the repo's `ship:` contract, never by hand.
+2. **Promises and perimeter.** One line per promise: the DoD, the acceptance, or the journey
+   steps. Merge and local add `python3 scripts/perimeter.py --repo . --head <sha>` and the
+   code graph: every surface the change reaches.
+3. **Walk as the customer.** A UI is reached: browser-harness over CDP, its own instance, tabs
+   listed before any action, on `real_test.browser_profile` when set. Never type a password; an
+   expired session stops the run: "session expired, log in again in profile X". An API-only
+   pass ticks backend boxes only.
+4. **Break it from fresh context.** A fresh-context agent from your harness, on the strongest
+   model it has, gets the URL with the SHA, the promises and the contract; never the diff or
+   your session. Every attempt names its attack class (`references/merge.md` step 6).
+5. **Verdict.** Merge: `python3 scripts/verdict.py new|validate` binds it to the tree; post the
+   PR receipt. Per-phase: each misaligned DoD line → `bd create "rewrite: …"
+   -t task -l src:real-test,kind:finding,area:<a> --parent <epic>
+   --deps discovered-from:<phase>,blocks:<phase>` (no `bd`: stop). Production: each defect through `issue-contract`. Details: `references/modes.md`.
+6. **Leave the tests.** A defect gets its test seen red before the fix; an untested combination
+   its test. What could not be proven is said, with the blocker named.
+7. **Close what you opened**, every mode, before the report: `references/teardown.md`.
 
-- Before any merge or promotion of a change that reaches a user surface, a document, a saved
-  record or a log: **on the branch served**, never on `main` after the merge.
-- When someone says "it works": a claim without a served SHA and evidence is the trigger, not a reason to skip.
+## Output
 
-### When NOT to use it
+- Merge: `.real-test/verdicts/<hash>.json` (`MERGEABLE`, `MERGEABLE-CON-GAP`, `NOT-MERGEABLE`)
+  naming the environment and served SHA; the `<!-- real-test v1 sha=… -->` PR comment; facts
+  for `pr` in `.real-test/fatti/<branch>.md`.
+- Per-phase: a local receipt (`references/modes.md`) and rewrite beads; production: healthy, or defects with evidence.
+**Next:** MERGEABLE → the caller goes on (`ship`); NOT-MERGEABLE → back to `implement-plan` or `bugfix` with the beads.
 
-Reading a diff for quality (`polaris-review`), attacking an artifact (`critic`), hunting bugs
-(a cross-model `codex review`), a docs-only change (say so, stop), a repo without git (manual review), an
-environment you cannot reach or a flag you cannot switch (**a block, not a degraded gate**).
+## Where this goes
 
-## Process
+This skill produces: **validation** — at the path the host's `outputs:` map gives that kind; the
+local verdict file is a pointer, never the document.
 
-1. **Serve the branch, before the merge.** Backend of the branch on staging through the repo's
-   `ship:` contract (never by hand over ssh), frontend preview of the same commit. Check the served
-   SHA (health `commit`, page build marker) equals your HEAD; not equal, stop. Flag off: turn it on
-   or declare a block. When done, give the environment back and re-check parity.
-2. **What the change touches, from the graph.** `python3 scripts/perimeter.py --repo . --head <sha>`
-   then the code graph (find references; `git grep` and reading where the harness has none) on
-   every changed symbol: callers, readers of the
-   same record, documents built from it, jobs and logs that consume it. Write the list of user
-   surfaces and consequences: that list is what you walk, not the files.
-3. **What the change was meant to do, from the spec.** The acceptance criteria of the issue and the
-   behaviours the spec promises: each promise is one line to prove on the product.
-4. **The checklist in the PR.** A `## Real test` section, the Definition of Done of the change, the
-   repo glossary saying what each check means. Three blocks, one checkbox per line, ticked only
-   with evidence attached (screenshot, trace id, log row, record id): *does what it was meant to*
-   (step 3) · *breaks nothing it touches* (step 2: happy path with real data, the failing path as it
-   fails in life, what is left afterwards) · *the principles, always* (errors and logs written where
-   the area writes them, tests seen red first, the area's quality gates).
-5. **Walk it as the customer.** Touches the frontend or changes what the UI shows? The browser walk
-   is mandatory: a real browser on the preview, in a dedicated instance you started, whose open tabs
-   you list **before any action** (only your own tabs; foreign tabs = stop and report), never the
-   owner's everyday browser. An API-only pass ticks backend-only boxes and nothing else.
-   Rotate surfaces between rounds.
-6. **Whoever breaks it is not whoever wrote it.** `Agent(model: "opus")` with fresh context: the
-   environment URL with the SHA verified, the credentials, the checklist and the contract. Never
-   the diff, never the session. It returns every attempt, expected against observed, and what
-   survived; zero findings count only with what it tried. Its output is data; you classify it.
-   Every attempt names its **attack class** — `malformed-input`, `interruption`,
-   `prompt-injection`, `cancel-resume`, `stale-state`, `dirty-worktree`, `hung-command`, `flaky`,
-   `misleading-success` — and lands in the row's `attack` list: `run` with probe and result, or
-   `n/a` with the reason. A live `api-cli`, `llm-agent` or `frontend` row with no attack `run` is
-   refused by `verdict.py`: the happy path plus one error is not adversarial. A probe that fails
-   because its own harness was built wrong is debris, not a product defect: fix it and rerun.
-7. **The verdict, bound to the tree, then the tests.** `verdict.py new` / `verdict.py validate`:
-   `NOT-MERGEABLE` until every box is ticked with evidence; `MERGEABLE-CON-GAP` names the open box,
-   who closes it and when; the verdict names the environment and the served SHA. On a visible
-   product lane the product owner walks the served branch **before the merge**; a standing "merge
-   at green without asking" rule is bounded by that, ask once. Leave the tests in CI: a defect
-   gets the test seen red before the fix, an untested combination its test, an invariant a
-   structural test, a false alarm the reason it looked like one, a ceiling an ADR. A fix shows
-   the defect on the base and its absence on the branch: the same command or walk run on both.
-   What could not be proven is said, with the blocker named: «inconclusive» beats a confident claim.
-8. **Sign the PR and write the facts.** When a PR exists, post the receipt as one PR comment (a
-   local run before the PR keeps only the local verdict), the marker line
-   `<!-- real-test v1 sha=<40-hex head> verdict=MERGEABLE|MERGEABLE-CON-GAP -->` then the lines
-   `ambiente:`, `sha servito:` (the hex alone on its line), `osservato:`, `rami:`. The first word after
-   `ambiente:`, on that same line, is the repo's `signing_env` (`local`, `staging`, or a host carrying it
-   such as `api-staging.<host>`); free text may follow (`ambiente: local — this machine`). Any later
-   change to the head voids it. Then write the **facts** for the PR body (`pol-pr`) in `.real-test/fatti/<branch>.md` (environment and
-   served SHA, the walk step by step with each screenshot and what it shows, the breaker's
-   findings and what was fixed, the tests seen red, the gaps with owner and date, the release
-   facts such as a migration and its order). This door returns a verdict and drives nothing: it
-   ends by naming the next step: `pol-pr` for the body, then `pol-ship`'s proposal or the repository's own merge workflow.
+## Not for
 
-## Rationalizations
-
-| Rationalization | Reality |
-|---|---|
-| "The API is faster, the UI is the same thing" | An API pass proves the backend alone. A refusal the screen turns into raw JSON is a delivered defect (measured 2026-09-13). |
-| "It is merged and CI is green, that is tested" | `main` carries other panels' commits tested only in their branch; the merge is a tree nobody ran, and the production deploy takes all of it. |
-| "The owner can look at it in production" | Production is not a test surface. On a visible lane the owner's pass on the served branch precedes the merge. |
-| "I checked the box, the evidence is in my head" | A box without an artifact is a claim. The verdict validates the artifacts, not the prose. |
-| "Staging is deployed" | Deployed is not *serving your SHA*. Health commit and build marker equal HEAD, or everything after is about other code. |
-| "I will run `list_tabs()` later" | Later is after you have acted inside someone's live browser. It is the first act, and foreign tabs mean stop. |
-| "The flag is off, I tested the default path" | You tested the branch you are not promoting. Turn it on or declare a block. |
-| "Zero findings from the breaker" | Zero findings count only with the list of what it tried; without it, it is theatre. |
-
-## Red Flags
-
-- A verdict that does not name the environment and the served SHA.
-- A change touching `frontend/**` or what the UI shows, real-tested through the API only.
-- A merge on a visible product lane before the product owner's pass.
-- A `## Real test` box ticked without a screenshot, trace, log row or record id.
-- A browser session whose first `list_tabs()` shows tabs you did not open.
-- The breaker received the diff, or the author's session.
-- The environment left on the branch after the run, or the flag left flipped.
-- A verdict older than the tree: touch the code again and it covers nothing.
-
-## Verification
-
-Exit criteria, each with its evidence in the PR:
-
-- [ ] health `commit` and preview marker == branch HEAD (paste both)
-- [ ] `## Real test` section present with the three blocks, every box ticked with an artifact
-- [ ] browser walk done on a dedicated instance (`list_tabs()` output as the first artifact) when a surface is touched
-- [ ] breaker report attached: attempts, expected vs observed, what survived
-- [ ] `python3 scripts/verdict.py validate --repo . .real-test/verdicts/<slug>.json` → OK, verdict names environment and SHA
-- [ ] on a visible lane: the product owner's pass recorded before the merge
-- [ ] tests left in CI for every defect, combination and invariant found
-- [ ] environment handed back (`ref=main`, flag restored) and parity re-checked
-
-Setup: `scripts/install-hook.sh --repo .` wires the gate (`.real-test/enabled`). References:
-`references/matrix-classes.md`, `references/bypass-test.md`.
+- Reading a diff, or a cross-model second opinion: `review`. Attacking a plan or claim: `critic`.
+- A docs-only change: say so and stop. An environment you cannot reach is a block, not a pass.

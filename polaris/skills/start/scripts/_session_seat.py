@@ -113,3 +113,43 @@ def work_item(root: Path) -> str:
         return ""
     remote = git(root, "config", "--get", "remote.origin.url") or str(top_of(root))
     return f"issue:{remote.rstrip('/').split('/')[-1].removesuffix('.git')}#{found.group(1)}"
+
+
+def _selfcheck() -> int:
+    """The seat rules the three doors share, on a real checkout: derive, skip a closed seat,
+    find the open one, name a stranger's, read the issue off the branch, ignore itself."""
+    import os
+    import subprocess
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        root = Path(d).resolve()
+        env = {**os.environ, "GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1"}
+        for args in (["init", "-q", "-b", "main"], ["config", "polaris.login", "ada"],
+                     ["config", "remote.origin.url", "git@github.com:acme/api.git"],
+                     ["-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q",
+                      "--allow-empty", "-m", "base"]):   # an unborn HEAD names no branch
+            subprocess.run(["git", "-C", str(root), *args], check=True, env=env)
+        base = sid_for(root, "")
+        ok = [bool(SEAT.match(base)) and SEAT.match(base).group(1) == "ada",
+              free_sid(root, "") == base, open_seat(root, "") is None]
+        (seats(root) / base).mkdir(parents=True)
+        (seats(root) / base / "start.json").write_text("{}")
+        ok += [open_seat(root, "") == seats(root) / base, other_login(root, "") == "",
+               other_login(root, "bob") == "ada"]       # the seat is ada's, not bob's
+        (seats(root) / base / "end.json").write_text("{}")
+        ok += [open_seat(root, "") is None, free_sid(root, "") == f"{base}-2",
+               work_item(root) == ""]                   # `main` carries no issue
+        subprocess.run(["git", "-C", str(root), "checkout", "-q", "-b", "feat/123-x"], check=True,
+                       env=env)
+        ok.append(work_item(root) == "issue:api#123")
+        ignore_itself(root)
+        ok.append((seats(root) / ".gitignore").read_text() == "*\n")
+    print(f"_session_seat selfcheck: {sum(ok)}/{len(ok)} branches OK")
+    return 0 if all(ok) else 1
+
+
+if __name__ == "__main__":
+    if sys.argv[1:] not in ([], ["--selfcheck"]):
+        print("usage: _session_seat.py [--selfcheck]", file=sys.stderr)
+        sys.exit(2)
+    sys.exit(_selfcheck())

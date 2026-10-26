@@ -1,7 +1,7 @@
 {
   "name": "polaris-team-os",
-  "version": "0.32.0",
-  "description": "Polaris Team OS: seven repository-first session commands, /pol-ship, /pol-pr and /pol-babysit for pull requests, /retro for session retrospectives, plus the shared engineering doors. Start with docs/TEAM-ONBOARDING.md.",
+  "version": "0.33.0",
+  "description": "Polaris: 26 skills for the delivery cycle — base-workflow routes each request to grill, prototype, plan-area, implement-plan, tdd-dev, bugfix, review, real-testing, ship and the rest; start and end keep the session. Start with docs/TEAM-ONBOARDING.md.",
   "author": {
     "name": "Niccolò Franzin",
     "url": "https://github.com/legacynik"

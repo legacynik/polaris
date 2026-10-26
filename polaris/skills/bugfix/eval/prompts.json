@@ -1,0 +1,65 @@
+{
+  "skill": "bugfix",
+  "cases": [
+    {
+      "id": "p01",
+      "should_trigger": true,
+      "kind": "explicit",
+      "prompt": "There's a bug in checkout totals — run the bugfix skill on it: 4 gated phases, TDD, and a test that fails first."
+    },
+    {
+      "id": "p02",
+      "should_trigger": true,
+      "kind": "explicit",
+      "prompt": "Use bugfix to close this traceback properly, with a rewritten regression test collected by CI, not a quick patch."
+    },
+    {
+      "id": "p03",
+      "should_trigger": true,
+      "kind": "implicit",
+      "prompt": "This test used to pass and now fails on main after the last merge. Find the root cause and fix it so it can't come back."
+    },
+    {
+      "id": "p04",
+      "should_trigger": true,
+      "kind": "implicit",
+      "prompt": "A user reported the export button silently drops rows above 1000 — here is the stack trace from last night's log."
+    },
+    {
+      "id": "p05",
+      "should_trigger": true,
+      "kind": "contextual",
+      "prompt": "The retry loop spins forever in the staging environment, nothing customer-facing yet — go find why and rewrite the test so it can't regress."
+    },
+    {
+      "id": "p06",
+      "should_trigger": true,
+      "kind": "contextual",
+      "prompt": "CI shows a red smoke test on the nightly build for the pricing calculator; not urgent, but it should be closed with a reproducing test."
+    },
+    {
+      "id": "p07",
+      "should_trigger": true,
+      "kind": "implicit",
+      "prompt": "One assertion in our suite occasionally goes green even when the bug is still present — that test lied to us once already."
+    },
+    {
+      "id": "n01",
+      "should_trigger": false,
+      "kind": "negative",
+      "prompt": "Production is down right now and paying customers cannot check out — fix it immediately, we'll investigate root cause after."
+    },
+    {
+      "id": "n02",
+      "should_trigger": false,
+      "kind": "negative",
+      "prompt": "Rename this one local variable in a single file — five lines total, no behavior change at all."
+    },
+    {
+      "id": "n03",
+      "should_trigger": false,
+      "kind": "negative",
+      "prompt": "The bug lives inside the third-party payment SDK's compiled binary and we cannot write a test against its internals — what's our move?"
+    }
+  ]
+}

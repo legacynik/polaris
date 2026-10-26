@@ -2,8 +2,7 @@
 
 Team-shared operating state for this repository: who owns which outcome, weekly plans and
 reports, session handoffs, durable decisions and lessons. Markdown + git, no extra tooling —
-written and read by the polaris-team-os commands (`/start`, `/update`, `/end`, `/plan-week`,
-`/report`).
+written and read by the polaris-team-os commands (`start`, `end`, `week`).
 
 ## Structure (the contract)
 
@@ -14,9 +13,9 @@ written and read by the polaris-team-os commands (`/start`, `/update`, `/end`, `
 | `lessons.md` | durable lessons — a real mistake + the rule that prevents it | anyone, via `/end` proposal + human confirm |
 | `team/<login>/` | **your space** — created by your own first `/start` | only you |
 | `team/<login>/profile.yml` | capacity, assignment mode, preferred/excluded areas | you |
-| `team/<login>/weeks/YYYY-Www.md` | your weekly focus — yours to execute, not a permission request | you, via `/plan-week` |
-| `team/<login>/reports/YYYY-Www.md` | weekly report — planned versus actual, with evidence | you, via `/report` |
-| `team/<login>/sessions/` | daily session handoffs, committed shared history | you, via `/update` and `/end` |
+| `team/<login>/weeks/YYYY-Www.md` | your weekly focus — yours to execute, not a permission request | you, via `week` |
+| `team/<login>/reports/YYYY-MM-DD.md` | weekly report for the Sunday-start week — planned versus actual, with evidence | you, via `week report` |
+| `team/<login>/sessions/` | daily session handoffs, committed shared history | you, via `/end` (checkpoint and close) |
 | `team/<login>/handoff/` | optional: rich multi-session handoff docs | you |
 | `state/current.md` | ephemeral live pointer — **gitignored**, per checkout | whoever sits at the checkout |
 

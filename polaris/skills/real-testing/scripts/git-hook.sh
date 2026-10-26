@@ -1,26 +1,25 @@
 #!/usr/bin/env bash
-# git-hook.sh — installato da install-hook.sh come .git/hooks/pre-commit e
-# .git/hooks/pre-push REALI. Root-cause fix di EVAL-real-test-bypass.md §4
-# vie B e C: gate.sh da solo si aggira spoofando tool_name o incapsulando
-# "git commit" in un wrapper/alias, perche' fa pattern-matching su un PAYLOAD
-# di tool — un evento che l'ambiente PUO' falsificare. Questo script non
-# indovina niente dal comando: gira dentro la macchina hook di git stessa,
-# quindi git lo invoca SEMPRE quando avviene un commit/push reale, a
-# prescindere da quale tool/harness/terminale l'ha chiesto. Sintetizza il
-# payload che gate.sh si aspetta (lo sa gia' per certo, non lo deve sniffare)
-# e delega tutta la logica di decisione (marker/branch/hash/verdetto) a lui —
-# stessa regola, un solo posto, mai duplicata (root-cause fix, non un guard
-# per ogni chiamante).
+# git-hook.sh — installed by install-hook.sh as the REAL .git/hooks/pre-commit and
+# .git/hooks/pre-push. Root-cause fix for EVAL-real-test-bypass.md §4
+# routes B and C: gate.sh alone is bypassed by spoofing tool_name or wrapping
+# "git commit" in a wrapper/alias, because it pattern-matches a tool
+# PAYLOAD — an event the environment CAN forge. This script guesses nothing
+# from the command: it runs inside git's own hook machinery,
+# so git ALWAYS invokes it when a real commit/push happens, regardless of
+# which tool/harness/terminal asked for it. It synthesizes the payload gate.sh
+# expects (it knows for sure, it need not sniff) and delegates all the
+# decision logic (marker/branch/hash/verdict) to it — same rule, one place,
+# never duplicated (root-cause fix, not a guard per caller).
 #
-# ponytail: non difende da `git commit --no-verify` / `git push --no-verify`
-# — git stesso salta pre-commit/pre-push per contratto quando richiesto, nessun
-# hook puo' vedere un evento che gli viene esplicitamente nascosto. Upgrade
-# path: pre-receive lato server o branch-protection su un check CI che valida
-# il ref pushato indipendentemente da come e' stato creato (non costruito qui
-# — vedi SKILL.md "Quando NON usarla" e la nota in non_fatto della review).
+# ponytail: does not defend against `git commit --no-verify` / `git push --no-verify`
+# — git itself skips pre-commit/pre-push by contract when asked, no
+# hook can see an event that is explicitly hidden from it. Upgrade
+# path: server-side pre-receive or branch protection on a CI check that validates
+# the pushed ref regardless of how it was created (not built here
+# — see references/merge.md "Not for" and the note in the review's non_fatto).
 #
-# Uso: git-hook.sh <pre-commit|pre-push>   # installato da install-hook.sh
-#      git-hook.sh --selfcheck
+# Usage: git-hook.sh <pre-commit|pre-push>   # installed by install-hook.sh
+#        git-hook.sh --selfcheck
 
 set -eu
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -38,12 +37,12 @@ _selfcheck() {
   mkdir -p "$repo/.real-test"; touch "$repo/.real-test/enabled"
   git -C "$repo" checkout -q -b feat/x
 
-  # 1) nessun verdetto sul ramo non-default -> blocca, esattamente come gate.sh da solo
+  # 1) no verdict on a non-default branch -> block, exactly like gate.sh alone
   printf 'y=2\n' >> "$repo/a.py"; git -C "$repo" add a.py
   set +e; (cd "$repo" && "$DIR/git-hook.sh" pre-commit) >/dev/null 2>&1; rc=$?; set -e
-  [ "$rc" -ne 0 ] || { echo "FAIL: senza verdetto doveva bloccare"; exit 1; }
+  [ "$rc" -ne 0 ] || { echo "FAIL: without a verdict it must block"; exit 1; }
 
-  # 2) verdetto valido presente -> consente (stesso esito di gate.sh via CLI)
+  # 2) valid verdict present -> allow (same outcome as gate.sh via CLI)
   HASH=$(python3 "$DIR/perimeter.py" --repo "$repo" --head STAGED --hash-only)
   mkdir -p "$repo/.real-test/verdicts"
   python3 - "$repo" "$HASH" <<'PY'
@@ -55,13 +54,13 @@ json.dump({"verdetto": "NOT-MERGEABLE", "content_hash": h, "matrix": [
     open(f"{repo}/.real-test/verdicts/{h}.json", "w"))
 PY
   set +e; (cd "$repo" && "$DIR/git-hook.sh" pre-commit) >/dev/null 2>&1; rc=$?; set -e
-  [ "$rc" -ne 0 ] || { echo "FAIL: NOT-MERGEABLE doveva restare bloccato"; exit 1; }
+  [ "$rc" -ne 0 ] || { echo "FAIL: NOT-MERGEABLE must stay blocked"; exit 1; }
   python3 -c "import json; d=json.load(open('$repo/.real-test/verdicts/$HASH.json')); d['verdetto']='MERGEABLE-CON-GAP'; d['raccolto']=[{'tipo':'tetto','nota':'ok'}]; json.dump(d, open('$repo/.real-test/verdicts/$HASH.json','w'))"
   set +e; (cd "$repo" && "$DIR/git-hook.sh" pre-commit) >/dev/null 2>&1; rc=$?; set -e
-  [ "$rc" -eq 0 ] || { echo "FAIL: verdetto valido doveva consentire, rc=$rc"; exit 1; }
+  [ "$rc" -eq 0 ] || { echo "FAIL: a valid verdict must allow, rc=$rc"; exit 1; }
 
   rm -rf "$td"
-  echo "SELFCHECK OK — 2 rami provati (blocca senza verdetto/consente con verdetto valido)"
+  echo "SELFCHECK OK — 2 branches proven (blocks without verdict/allows with valid verdict)"
 }
 
 case "${1:-}" in

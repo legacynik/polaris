@@ -1,0 +1,66 @@
+{
+  "baseline": [
+    {
+      "assertion": "c1: the public commit-check reports exact staged file and line counts and exits 3 when the declared boundary is exceeded",
+      "passed": false,
+      "evidence": "Baseline transcript never invokes a 'commit-check' subcommand at all — its own inspection of cantiere.py (tool call toolu_012mxuE238hUb5cyeCjVqmgs) lists only census/close/reset-hard/selfcheck functions, no commit-check. It instead ran `census`, which returned exit 0 with empty rows/summary, never reporting staged file/line counts or exiting 3. No deterministic evidence key (e.g. 'baseline_public_test') was supplied for `python3 -m unittest scripts.test.test_git_power` against the baseline arm, and baseline's skill directory (skills/cantiere) has no such test file per the transcript's own directory listing."
+    },
+    {
+      "assertion": "c2: commit size is treated as a concern signal, never as proof that a change is semantically atomic",
+      "passed": false,
+      "evidence": "No tool in the baseline transcript ever surfaces size as a concern signal (census returned rows: [], summary: {} — unrelated to staged diff size). The agent explicitly says 'I didn't fall back to file-count heuristics... Instead I read the actual staged diff content directly... nothing in the contract's measurement seam or the diff content itself argues for splitting,' i.e. size was never used as a signal by the primitive at all, and the eventual decision to not split rested on ad hoc content inspection rather than any concern mechanism."
+    },
+    {
+      "assertion": "c3: a concern leads to a behavioral split or an explicit indivisible-boundary receipt before any calibrated rerun",
+      "passed": false,
+      "evidence": "Because no concern was ever raised (census exited 0 with an empty ledger), no split occurred and no indivisible-boundary receipt was produced; the agent's final text simply recommends committing as a single change with no artifact recording that determination."
+    },
+    {
+      "assertion": "c4: dirty or mid-operation destructive Git actions are refused inside the shared git primitive",
+      "passed": true,
+      "evidence": "Deterministic evidence 'baseline_selfcheck' (python3 .../cantiere/scripts/cantiere.py --selfcheck on the baseline path) exits 0 with 'SELFCHECK OK — 9 rami provati su fixture temporanee reali', including ok markers for _selfcheck_dirty_worktree_refused, _selfcheck_stash_blocked_during_merge, _selfcheck_reset_hard_guarded, and _selfcheck_direct_git_call_still_refuses."
+    },
+    {
+      "assertion": "c5: git-power is one transverse door invoked by issue-contract, bugfix, ship, start and end; no commit-hygiene door is created",
+      "passed": false,
+      "evidence": "Baseline's own file listing (toolu_012t9sgwFnNb9yxK5tNmL9P5) shows the skill directory is named 'skills/cantiere', not 'skills-suite/git-power' — no deterministic evidence (e.g. a baseline-side new_skill.py --check on skills-suite/git-power) is provided, and the check command `python3 skills-suite/skill-meta/scripts/new_skill.py --check skills-suite/git-power` would fail path resolution against the baseline arm, which predates the git-power rename entirely."
+    },
+    {
+      "assertion": "c6: commit-check reads one Git diff and does not run the worktree/PR census or repeat commands",
+      "passed": false,
+      "evidence": "Baseline transcript explicitly runs the worktree/PR census (`cantiere.py census --repo ... --out /tmp/cantiere-ledger.json`, tool call toolu_01WYQafLAMF3szcgEziGrSRs) — the exact operation this check says must not run — rather than a scoped commit-only diff read."
+    }
+  ],
+  "new": [
+    {
+      "assertion": "c1: the public commit-check reports exact staged file and line counts and exits 3 when the declared boundary is exceeded",
+      "passed": true,
+      "evidence": "Transcript tool call toolu_01CATysV1tYr5upmHqJMMfA9 runs `cantiere.py commit-check --repo ...` and returns 'CONCERN files=6 lines=6 added=6 deleted=0 binary=0 scope=staged' with EXIT_CODE=3, exactly matching staged file/line counts. Deterministic evidence 'candidate_public_test' (python3 -m unittest scripts.test.test_git_power) independently confirms exit 0, 'Ran 1 test in 0.242s ... OK', validating the public unit test for this behavior on the candidate arm."
+    },
+    {
+      "assertion": "c2: commit size is treated as a concern signal, never as proof that a change is semantically atomic",
+      "passed": true,
+      "evidence": "commit-check surfaced file/line counts as an explicit CONCERN (exit 3) rather than silently blocking or silently passing, and the agent's final summary states 'size alone (here, low line count) doesn't establish semantic atomicity — that's exactly the trap this case sets up (\"it's only 6 lines, must be fine\")', explicitly refusing to treat the small line count as proof of atomicity."
+    },
+    {
+      "assertion": "c3: a concern leads to a behavioral split or an explicit indivisible-boundary receipt before any calibrated rerun",
+      "passed": false,
+      "evidence": "After the CONCERN (exit 3), the agent performed no behavioral split (no commits were made, no files were grouped/committed separately) and wrote no indivisible-boundary receipt artifact — it only produced a text recommendation ('either commit these as separate atomic commits... or... record that justification explicitly before committing. I stopped before running git commit'), deferring the required action to the user rather than completing a split or receipt itself, and never reran commit-check to confirm resolution."
+    },
+    {
+      "assertion": "c4: dirty or mid-operation destructive Git actions are refused inside the shared git primitive",
+      "passed": true,
+      "evidence": "Deterministic evidence 'candidate_selfcheck' (python3 skills-suite/git-power/scripts/cantiere.py --selfcheck) exits 0 with 'SELFCHECK OK — 9 rami provati su fixture temporanee reali', including ok markers for _selfcheck_dirty_worktree_refused, _selfcheck_stash_blocked_during_merge, _selfcheck_reset_hard_guarded, and _selfcheck_direct_git_call_still_refuses."
+    },
+    {
+      "assertion": "c5: git-power is one transverse door invoked by issue-contract, bugfix, ship, start and end; no commit-hygiene door is created",
+      "passed": true,
+      "evidence": "Deterministic evidence 'candidate_t1' (python3 skills-suite/skill-meta/scripts/new_skill.py --check skills-suite/git-power) exits 0 with '1/1 skill conformi · 0 archi di catena', and 'candidate_callers' confirms exit 0 for 'frontmatter callers + no competing directory', together satisfying the architecture check's compound command for the candidate arm."
+    },
+    {
+      "assertion": "c6: commit-check reads one Git diff and does not run the worktree/PR census or repeat commands",
+      "passed": true,
+      "evidence": "The new transcript's only cantiere.py invocation (toolu_01CATysV1tYr5upmHqJMMfA9) is `commit-check`, never `census`; supporting calls are `git status --short`, `cat` of the six files, and `git log`/`git diff --staged --numstat` — no worktree/PR census was run and commit-check itself was invoked exactly once."
+    }
+  ]
+}

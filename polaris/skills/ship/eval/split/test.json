@@ -1,0 +1,39 @@
+[
+  {
+    "id": "p02",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "A / implicit",
+    "prompt": "The branch is reviewed and green. Get it to a PR the way this repo expects, and make sure the version and CHANGELOG are not left behind again."
+  },
+  {
+    "id": "p04",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "B / explicit",
+    "prompt": "PR #901 is approved and the checks are green. Merge it safely and deploy, then watch the canary."
+  },
+  {
+    "id": "p05",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "B / implicit",
+    "prompt": "This PR has been sitting for two days waiting on a click. Land it and get prod onto the new commit."
+  },
+  {
+    "id": "p11",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "git-hygiene / implicit",
+    "prompt": "I have 25 stale worktrees and a handful of branches nobody remembers. Clean them up without losing uncommitted work.",
+    "why_negative": "adjacent-git-power"
+  },
+  {
+    "id": "p13",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "mockup-deploy / explicit",
+    "prompt": "Put this static HTML mockup on a Vercel preview so the stakeholder can look at it tomorrow.",
+    "why_negative": "declared-not-for"
+  }
+]

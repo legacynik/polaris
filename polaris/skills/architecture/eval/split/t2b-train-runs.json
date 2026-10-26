@@ -1,0 +1,272 @@
+[
+ {
+  "id": "p06",
+  "should_trigger": true,
+  "runs": [
+   {
+    "first_tool": [
+     "Skill",
+     "architecture"
+    ],
+    "rank1": true
+   },
+   {
+    "first_tool": [
+     "Skill",
+     "architecture"
+    ],
+    "rank1": true
+   },
+   {
+    "first_tool": [
+     "Skill",
+     "architecture"
+    ],
+    "rank1": true
+   }
+  ]
+ },
+ {
+  "id": "p07",
+  "should_trigger": true,
+  "runs": [
+   {
+    "first_tool": [
+     "Skill",
+     "architecture"
+    ],
+    "rank1": true
+   },
+   {
+    "first_tool": [
+     "Skill",
+     "architecture"
+    ],
+    "rank1": true
+   },
+   {
+    "first_tool": [
+     "Skill",
+     "architecture"
+    ],
+    "rank1": true
+   }
+  ]
+ },
+ {
+  "id": "p10",
+  "should_trigger": true,
+  "runs": [
+   {
+    "first_tool": [
+     "Skill",
+     "architecture"
+    ],
+    "rank1": true
+   },
+   {
+    "first_tool": [
+     "Skill",
+     "architecture"
+    ],
+    "rank1": true
+   },
+   {
+    "first_tool": [
+     "Skill",
+     "architecture"
+    ],
+    "rank1": true
+   }
+  ]
+ },
+ {
+  "id": "p05",
+  "should_trigger": true,
+  "runs": [
+   {
+    "first_tool": [
+     "Skill",
+     "architecture"
+    ],
+    "rank1": true
+   },
+   {
+    "first_tool": [
+     "Skill",
+     "architecture"
+    ],
+    "rank1": true
+   },
+   {
+    "first_tool": [
+     "Skill",
+     "architecture"
+    ],
+    "rank1": true
+   }
+  ]
+ },
+ {
+  "id": "p01",
+  "should_trigger": true,
+  "runs": [
+   {
+    "first_tool": [
+     "Skill",
+     "architecture"
+    ],
+    "rank1": true
+   },
+   {
+    "first_tool": [
+     "Skill",
+     "architecture"
+    ],
+    "rank1": true
+   },
+   {
+    "first_tool": [
+     "Skill",
+     "architecture"
+    ],
+    "rank1": true
+   }
+  ]
+ },
+ {
+  "id": "p02",
+  "should_trigger": true,
+  "runs": [
+   {
+    "first_tool": [
+     "Skill",
+     "architecture"
+    ],
+    "rank1": true
+   },
+   {
+    "first_tool": [
+     "Skill",
+     "architecture"
+    ],
+    "rank1": true
+   },
+   {
+    "first_tool": [
+     "Skill",
+     "architecture"
+    ],
+    "rank1": true
+   }
+  ]
+ },
+ {
+  "id": "p11",
+  "should_trigger": true,
+  "runs": [
+   {
+    "first_tool": [
+     "Skill",
+     "architecture"
+    ],
+    "rank1": true
+   },
+   {
+    "first_tool": [
+     "Bash",
+     null
+    ],
+    "rank1": false
+   },
+   {
+    "first_tool": [
+     "Skill",
+     "architecture"
+    ],
+    "rank1": true
+   }
+  ]
+ },
+ {
+  "id": "n01",
+  "should_trigger": false,
+  "runs": [
+   {
+    "first_tool": [
+     "Bash",
+     null
+    ],
+    "rank1": false
+   },
+   {
+    "first_tool": [
+     "Bash",
+     null
+    ],
+    "rank1": false
+   },
+   {
+    "first_tool": [
+     "Bash",
+     null
+    ],
+    "rank1": false
+   }
+  ]
+ },
+ {
+  "id": "n04",
+  "should_trigger": false,
+  "runs": [
+   {
+    "first_tool": [
+     "Skill",
+     "domain-modeling"
+    ],
+    "rank1": false
+   },
+   {
+    "first_tool": [
+     "Skill",
+     "domain-modeling"
+    ],
+    "rank1": false
+   },
+   {
+    "first_tool": [
+     "Bash",
+     null
+    ],
+    "rank1": false
+   }
+  ]
+ },
+ {
+  "id": "n05",
+  "should_trigger": false,
+  "runs": [
+   {
+    "first_tool": [
+     "Skill",
+     "supabase-postgres-best-practices"
+    ],
+    "rank1": false
+   },
+   {
+    "first_tool": [
+     "Skill",
+     "supabase-postgres-best-practices"
+    ],
+    "rank1": false
+   },
+   {
+    "first_tool": [
+     "Skill",
+     "supabase-postgres-best-practices"
+    ],
+    "rank1": false
+   }
+  ]
+ }
+]

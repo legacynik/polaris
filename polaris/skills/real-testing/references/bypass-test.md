@@ -28,37 +28,37 @@ git -C "$REPO" checkout -q -b feat/issue-1
 payload() { printf '{"tool_name":"Bash","tool_input":{"command":"git commit -m x"}}'; }
 gate() { (cd "$REPO" && payload | bash "$SKILL/gate.sh"); }
 
-# --- introduce un ramo nuovo mai testato -----------------------------------
+# --- introduce a new, never-tested branch -----------------------------------
 printf 'def charge(amount):\n    if amount > 0:\n        return "ok"\n    elif amount < 0:\n        raise ValueError("neg")\n    return "zero"\n' > "$REPO/app.py"
 git -C "$REPO" add .
 HASH=$(python3 "$SKILL/perimeter.py" --repo "$REPO" --head STAGED --hash-only)
 VFILE="$REPO/.real-test/verdicts/$HASH.json"
 
-# 1) TENTATIVO: dichiarare MERGEABLE senza mai citare il ramo `elif` nuovo.
+# 1) ATTEMPT: declare MERGEABLE without ever citing the new `elif` branch.
 python3 "$SKILL/verdict.py" new --repo "$REPO" --out "$VFILE"
 python3 - "$VFILE" <<'PY'
 import json, sys
 v = json.load(open(sys.argv[1]))
 for row in v["matrix"]:
     row["exception_ticket"] = "N/A"
-v["verdetto"] = "MERGEABLE"                      # <-- dichiarazione bugiarda
-v["raccolto"] = [{"tipo": "falso-allarme", "nota": "sembrava a posto"}]
+v["verdetto"] = "MERGEABLE"                      # <-- lying declaration
+v["raccolto"] = [{"tipo": "falso-allarme", "nota": "looked fine"}]
 json.dump(v, open(sys.argv[1], "w"), indent=2)
 PY
 set +e; gate; rc=$?; set -e
-[ "$rc" -eq 2 ] || { echo "BYPASS-TEST FALLITO (1): MERGEABLE senza branches_exercised e' passato"; exit 1; }
-echo "1/5 bloccato: dichiarare MERGEABLE non basta, il ramo scoperto e' cercato da perimeter.py"
+[ "$rc" -eq 2 ] || { echo "BYPASS-TEST FAILED (1): MERGEABLE without branches_exercised went through"; exit 1; }
+echo "1/5 blocked: declaring MERGEABLE is not enough, the uncovered branch is found by perimeter.py"
 
-# 2) TENTATIVO: rinominare un vecchio verdetto passato col nome-hash nuovo
-#    (il content_hash INTERNO resta quello vecchio: il filename non e' la fonte di verita').
+# 2) ATTEMPT: rename an old, passed verdict to the new hash name
+#    (the INTERNAL content_hash stays the old one: the filename is not the source of truth).
 OLDV="$REPO/.real-test/verdicts/deadbeefdeadbeefdeadbeefdeadbeefdeadbeef.json"
 python3 -c "import json; d=json.load(open('$VFILE')); d['content_hash']='deadbeefdeadbeefdeadbeefdeadbeefdeadbeef'; json.dump(d, open('$OLDV','w'))"
-cp "$OLDV" "$VFILE"     # verdetto vecchio, rinominato col nome-file giusto
+cp "$OLDV" "$VFILE"     # old verdict, renamed to the right filename
 set +e; python3 "$SKILL/verdict.py" validate "$VFILE" --repo "$REPO"; rc=$?; set -e
-[ "$rc" -eq 1 ] || { echo "BYPASS-TEST FALLITO (2): content_hash interno disallineato e' passato"; exit 1; }
-echo "2/5 bloccato: il content_hash DENTRO il file conta, non il nome del file"
+[ "$rc" -eq 1 ] || { echo "BYPASS-TEST FAILED (2): misaligned internal content_hash went through"; exit 1; }
+echo "2/5 blocked: the content_hash INSIDE the file counts, not the filename"
 
-# 3) TENTATIVO: evidence=live su una classe live-required con artefatto vuoto.
+# 3) ATTEMPT: evidence=live on a live-required class with an empty artifact.
 python3 "$SKILL/verdict.py" new --repo "$REPO" --out "$VFILE"
 python3 - "$VFILE" "$REPO" <<'PY'
 import json, sys
@@ -67,19 +67,19 @@ for row in v["matrix"]:
     row["exception_ticket"] = "N/A"
     if row["file"] == "app.py":
         row["branches_exercised"] = ["app.py:4"]
-        row["class"] = "api-cli"          # forza live-required per il test
+        row["class"] = "api-cli"          # force live-required for the test
         row["evidence"] = "live"
         row["evidence_artifact"] = "empty.json"
 v["verdetto"] = "MERGEABLE"
 v["raccolto"] = [{"tipo": "difetto", "artifact": "tests/x.py::y"}]
 json.dump(v, open(sys.argv[1], "w"), indent=2)
-open(f"{repo}/empty.json", "w").close()   # artefatto VUOTO
+open(f"{repo}/empty.json", "w").close()   # EMPTY artifact
 PY
 set +e; python3 "$SKILL/verdict.py" validate "$VFILE" --repo "$REPO"; rc=$?; set -e
-[ "$rc" -eq 1 ] || { echo "BYPASS-TEST FALLITO (3): artefatto vuoto spacciato per prova live e' passato"; exit 1; }
-echo "3/5 bloccato: un artefatto vuoto non e' una prova"
+[ "$rc" -eq 1 ] || { echo "BYPASS-TEST FAILED (3): empty artifact passed off as live proof went through"; exit 1; }
+echo "3/5 blocked: an empty artifact is not proof"
 
-# 4) TENTATIVO: continuare a modificare il codice DOPO aver ottenuto un verdetto valido.
+# 4) ATTEMPT: keep modifying the code AFTER obtaining a valid verdict.
 python3 - "$VFILE" "$REPO" <<'PY'
 import json, sys, pathlib
 v, repo = json.load(open(sys.argv[1])), pathlib.Path(sys.argv[2])
@@ -89,22 +89,22 @@ row["evidence"], row["evidence_artifact"] = "assumed", None
 row["class"], row.pop("evidence_artifact", None)
 json.dump(v, open(sys.argv[1], "w"), indent=2)
 PY
-gate >/dev/null 2>&1 && echo "4a verdetto valido: commit consentito" || { echo "setup 4 rotto"; exit 1; }
-printf '\n# riga aggiunta DOPO il verdetto\n' >> "$REPO/app.py"
+gate >/dev/null 2>&1 && echo "4a valid verdict: commit allowed" || { echo "setup 4 broken"; exit 1; }
+printf '\n# line added AFTER the verdict\n' >> "$REPO/app.py"
 git -C "$REPO" add .
 set +e; gate; rc=$?; set -e
-[ "$rc" -eq 2 ] || { echo "BYPASS-TEST FALLITO (4): codice cambiato dopo il verdetto, gate non l'ha visto"; exit 1; }
-echo "4/5 bloccato: qualunque riga in piu' dopo il verdetto cambia l'hash e invalida la prova (G2.6)"
+[ "$rc" -eq 2 ] || { echo "BYPASS-TEST FAILED (4): code changed after the verdict, gate did not see it"; exit 1; }
+echo "4/5 blocked: any extra line after the verdict changes the hash and invalidates the proof (G2.6)"
 
-# 5) TENTATIVO: bypass esplicito — DEVE passare, ma DEVE lasciare traccia.
+# 5) ATTEMPT: explicit bypass — MUST pass, but MUST leave a trace.
 rm -f "$REPO/.real-test/bypass.log"
 set +e; REAL_TEST_BYPASS_GATE=1 gate >/dev/null 2>&1; rc=$?; set -e
-[ "$rc" -eq 0 ] || { echo "BYPASS-TEST FALLITO (5a): bypass esplicito doveva consentire"; exit 1; }
-[ -s "$REPO/.real-test/bypass.log" ] || { echo "BYPASS-TEST FALLITO (5b): bypass non ha lasciato traccia — e' esattamente R8 (208 bypass silenziosi misurati)"; exit 1; }
-echo "5/5 corretto: il bypass passa ma e' loggato, mai silenzioso"
+[ "$rc" -eq 0 ] || { echo "BYPASS-TEST FAILED (5a): explicit bypass must allow"; exit 1; }
+[ -s "$REPO/.real-test/bypass.log" ] || { echo "BYPASS-TEST FAILED (5b): bypass left no trace — this is exactly R8 (208 silent bypasses measured)"; exit 1; }
+echo "5/5 correct: the bypass passes but is logged, never silent"
 
 rm -rf "$REPO"
-echo "BYPASS-TEST OK — 5/5 tentativi si comportano come devono"
+echo "BYPASS-TEST OK — 5/5 attempts behave as they should"
 ```
 
 **If one day any of these 5 passes when it should block (except 5, which must exit

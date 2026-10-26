@@ -1,0 +1,49 @@
+{
+  "model": "claude-sonnet-5",
+  "effort": "medium",
+  "harness": "claude --safe-mode --tools '' --no-session-persistence; identical case prompts; arm-specific system prompt",
+  "source_runs": "t3-runs-v020.jsonl (runtime prompt unchanged; v0.2.1 adds deterministic relocation replay)",
+  "limits_predeclared": {
+    "max_total_tokens": 370000,
+    "max_wall_ms": 66000,
+    "max_tool_calls": 0,
+    "max_repeated_commands": 0,
+    "min_consistency": 1.0
+  },
+  "baseline": {
+    "metrics": {"input_tokens": 6127, "output_tokens": 456, "wall_ms": 13055, "tool_calls": 0, "repeated_commands": 0, "consistent_runs": 3, "runs": 3, "context_reuse": "not_available"},
+    "cases": {
+      "guard": "Found all four missing contract-required commands; no clean-path defect invented.",
+      "fabricated": "Rejected the fabricated a.md:2 quote.",
+      "clean": "No findings."
+    }
+  },
+  "donor": {
+    "name": "Codex review-agent",
+    "metrics": {"input_tokens": 8698, "output_tokens": 1500, "wall_ms": 23356, "tool_calls": 0, "repeated_commands": 0, "consistent_runs": 3, "runs": 3, "context_reuse": "not_available"},
+    "cases": {
+      "guard": "Found all four omissions, then also reported an unstated substring-robustness concern.",
+      "fabricated": "Rejected the fabricated a.md:2 quote.",
+      "clean": "No findings."
+    }
+  },
+  "candidate": {
+    "metrics": {"input_tokens": 11428, "output_tokens": 2408, "wall_ms": 29705, "tool_calls": 0, "repeated_commands": 0, "consistent_runs": 3, "runs": 3, "context_reuse": "not_available"},
+    "reports": [
+      "eval/final/guard-candidate.json",
+      "eval/final/fabricated-candidate.json",
+      "eval/final/clean-candidate.json"
+    ],
+    "cases": {
+      "guard": "Found all four omissions and explicitly dropped the unstated substring concern.",
+      "fabricated": "Rejected the fabricated a.md:2 quote with contract and artifact evidence.",
+      "clean": "No findings, one falsified candidate recorded, concrete halt reason emitted.",
+      "portability": "All committed reports replay after the original authoring worktree is removed."
+    }
+  },
+  "sessions": {
+    "baseline": ["c3215f9e-6058-4adb-b4c4-a431eed8af84", "9c28bf05-12de-4a4d-a2fd-fdd67e57616d", "ff9911d4-94e8-4553-a5f0-c42f39568bdf"],
+    "donor": ["b2e6bdb5-3bbf-4333-ba4d-d5fcc8109bde", "6f09600f-bdde-494a-b09d-7a2343fe5401", "ee20eeb7-f68a-4818-92ba-0c83d963a9ee"],
+    "candidate": ["b6c3f984-fef5-4bcf-9a79-5daf2c192cd9", "5adcaae1-13a2-4d1c-a4d9-43e74ca730cf", "4bf6b6a2-d78e-4bb7-9d23-b7a7da4018cc"]
+  }
+}

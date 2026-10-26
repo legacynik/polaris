@@ -1,0 +1,10 @@
+[
+  {"id": "c1", "category": "outcome", "assertion": "the gate scripts self-verify (contract, red run, blast-radius, recurrence, prod-observation stages all exercised)", "cmd": "python3 scripts/fix_gate.py --selfcheck"},
+  {"id": "c2", "category": "outcome", "assertion": "the emitted fix ships a reproducing test that goes red with the bug re-inserted and is collected by CI, not merely committed", "cmd": null},
+  {"id": "c3", "category": "process", "assertion": "the bug archive is searched before investigating (module+exception) and the outcome is declared even as '0 matches'", "cmd": null},
+  {"id": "c4", "category": "process", "assertion": "blast radius is proven with a code-graph verb (references / call hierarchy from the harness's graph tool), never grep alone", "cmd": null},
+  {"id": "c5", "category": "style", "assertion": "the record stays fail-closed: missing evidence or placeholder values never produce a pass", "cmd": null},
+  {"id": "c6", "category": "efficiency", "assertion": "a fourth fix attempt on the same failing test blocks and demands an architecture review instead of a fifth patch", "cmd": null},
+  {"id": "c7", "category": "process", "assertion": "the fix-loop breaker is scored before each new fix attempt and after any revert (+15 per revert, +20 per file outside the raggio perimeter, +5 for a fix touching more than 3 files); above 20 the run stops, writes the score and what was tried in the issue, sets stato: bloccato and asks the owner instead of trying again", "cmd": null},
+  {"id": "c8", "category": "outcome", "assertion": "a defect found while fixing that is not this bug is neither fixed in this PR nor filed as its own GitHub issue: it is handed to issue-contract and comes back as a bead with discovered-from this bug's bead, unless route.py says github", "cmd": null}
+]

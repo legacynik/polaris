@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
-"""branches.py — rileva rami condizionali NUOVI in un diff unificato (euristica).
+"""branches.py — detects NEW conditional branches in a unified diff (heuristic).
 
-Risponde a G1.6 (il real-test copre solo il ramo appena fixato): scandisce le
-righe aggiunte di un `git diff` e riconosce `if/elif/else/except/case/switch/
-match/catch` — usato da perimeter.py per popolare `new_branches`, che
-verdict.py poi pretende in `branches_exercised`.
+Answers G1.6 (the real-test only covers the branch just fixed): scans the
+added lines of a `git diff` and recognises `if/elif/else/except/case/switch/
+match/catch` — perimeter.py uses it to fill `new_branches`, which
+verdict.py then requires in `branches_exercised`.
 
-ponytail: regex sulle righe aggiunte, non un parser AST per linguaggio — falsi
-positivi su stringhe/commenti che assomigliano a `if ` sono il tetto noto.
-Il prefisso opzionale di parentesi graffe copre lo stile brace su una riga (`} else if (...) {`,
-`} catch (e) {` — Java/JS/TS/Go/C/Rust, trovato scoperto in
-EVAL-real-test-bypass.md via D). Resta un falso negativo noto: `}` e la
-keyword su due righe AGGIUNTE separate non consecutive nel diff (raro, lo
-stile Allman mette gia' `else`/`catch` a inizio riga e matcha da solo).
-Upgrade path: coverage tool nativi per stack quando flow-cli (job 7) li espone.
+ponytail: regex on added lines, not a per-language AST parser — false
+positives on strings/comments that look like `if ` are the known ceiling.
+The optional leading-brace prefix covers one-line brace style (`} else if (...) {`,
+`} catch (e) {` — Java/JS/TS/Go/C/Rust, found uncovered in
+EVAL-real-test-bypass.md via D). Known false negative: `}` and the
+keyword on two separate, non-consecutive ADDED lines in the diff (rare;
+Allman style already puts `else`/`catch` at line start and matches on its own).
+Upgrade path: native per-stack coverage tools once flow-cli (job 7) exposes them.
 
-Uso: branches.py --selfcheck
+Usage: branches.py --selfcheck
 """
 from __future__ import annotations
 
@@ -37,7 +37,7 @@ def _file_from_plus_marker(line: str, current: str | None) -> str | None:
 def _process_diff_line(
     line: str, current_file: str | None, newline: int
 ) -> tuple[str | None, int, dict | None]:
-    """Un passo dello state machine di parsing diff. Ritorna (file, newline, hit)."""
+    """One step of the diff-parsing state machine. Returns (file, newline, hit)."""
     if line.startswith("+++ "):
         return _file_from_plus_marker(line, current_file), newline, None
     m = HUNK_RE.match(line)
@@ -55,7 +55,7 @@ def _process_diff_line(
 
 
 def detect_new_branches(diff_text: str) -> list[dict]:
-    """Righe aggiunte che introducono un ramo condizionale nuovo (euristica)."""
+    """Added lines that introduce a new conditional branch (heuristic)."""
     found: list[dict] = []
     current_file: str | None = None
     newline = 0
@@ -79,14 +79,14 @@ def _selfcheck() -> int:
         "     return 0\n"
     )
     found = detect_new_branches(diff)
-    assert len(found) == 1, f"atteso 1 ramo nuovo, trovati {len(found)}: {found}"
+    assert len(found) == 1, f"expected 1 new branch, found {len(found)}: {found}"
     assert found[0] == {"file": "a.py", "line": 4, "snippet": "elif x < 0:"}, found
 
     no_branch_diff = "diff --git a/b.py b/b.py\n+++ b/b.py\n@@ -1,1 +1,2 @@\n x = 1\n+y = 2\n"
-    assert detect_new_branches(no_branch_diff) == [], "riga aggiunta senza ramo non deve matchare"
+    assert detect_new_branches(no_branch_diff) == [], "added line without a branch must not match"
 
     context_only = "diff --git a/c.py b/c.py\n+++ b/c.py\n@@ -1,2 +1,2 @@\n if x:\n     return 1\n"
-    assert detect_new_branches(context_only) == [], "righe di contesto (non aggiunte) non contano"
+    assert detect_new_branches(context_only) == [], "context lines (not added) do not count"
 
     brace_diff = (
         "diff --git a/a.js b/a.js\n"
@@ -100,11 +100,11 @@ def _selfcheck() -> int:
         " }\n"
     )
     brace_found = detect_new_branches(brace_diff)
-    assert len(brace_found) == 2, f"stile brace (D, EVAL-bypass): atteso 2 rami, trovati {brace_found}"
+    assert len(brace_found) == 2, f"brace style (D, EVAL-bypass): expected 2 branches, found {brace_found}"
     assert brace_found[0]["snippet"].startswith("else if"), brace_found
     assert brace_found[1]["snippet"].startswith("} catch"), brace_found
 
-    print("SELFCHECK OK — 5 asserzioni (ramo nuovo/nessun ramo/contesto ignorato/brace-style x2)")
+    print("SELFCHECK OK — 5 assertions (new branch/no branch/context ignored/brace-style x2)")
     return 0
 
 

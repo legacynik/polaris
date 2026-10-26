@@ -1,0 +1,26 @@
+[
+ {
+  "id": "c1",
+  "category": "outcome",
+  "assertion": "the reply opens with the NOT_DONE rows printed by check_decision_execution.py --not-done, verbatim and oldest first, or with the one 'skipped' line; the ordering is the script's, proved by its tests",
+  "cmd": "python3 -m pytest -q scripts/test/test_decision_execution.py -k OldestFirst"
+ },
+ {
+  "id": "c2",
+  "category": "outcome",
+  "assertion": "forward writes team/<login>/weeks/<ISO week>.md for the next Monday's week when run on a weekend, and state/todos.md keeps every carried row's Added stamp",
+  "cmd": "python3 skills-suite/end/scripts/state_upsert.py --selfcheck"
+ },
+ {
+  "id": "c3",
+  "category": "process",
+  "assertion": "report shows the resolved Sunday→Saturday window and waits for confirmation before the first gh query; a week not yet over is refused",
+  "cmd": null
+ },
+ {
+  "id": "c4",
+  "category": "outcome",
+  "assertion": "every merged PR row carries code +/− and docs +/− apart, and UNKNOWN (never 0) when it cannot be measured",
+  "cmd": null
+ }
+]

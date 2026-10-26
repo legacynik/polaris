@@ -1,13 +1,13 @@
 # bypass-test — crasher
 
 One criterion: **it passed before this door existed, and now it must fail.** Every case is one
-command. Run them from `crasher/`.
+command. Run them from `skills-suite/crasher/`.
 
 The baseline is the crasher as it stood on the abandoned `feat/crasher-skill` branch (closed): it drove the app and printed a transcript. Nothing in it refused a verdict, and nothing
 gave a finding a stable identity — so both of the failures below were legal.
 
 ```bash
-cd crasher
+cd skills-suite/crasher
 ```
 
 ## Case 1 — "no crash found" after visiting nothing

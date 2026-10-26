@@ -1,0 +1,52 @@
+{
+  "checks": [
+    {
+      "assertion": "c1: public commit-check reports exact staged file/line counts and exits 3 when boundary exceeded",
+      "passed": true,
+      "evidence": "Deterministic evidence `candidate_public_test` (`python3 -m unittest scripts.test.test_git_power`) exits 0 with 'Ran 1 test in 0.242s / OK'. Transcript also directly demonstrates the behavior: `commit-check --repo ...` returns `CONCERN files=6 lines=6 added=6 deleted=0 binary=0 scope=staged` with `EXIT_CODE=3`, i.e., exact counts plus a boundary-exceeded exit code."
+    },
+    {
+      "assertion": "c2: commit size treated as a concern signal, never as proof of semantic atomicity",
+      "passed": true,
+      "evidence": "Tool output is explicitly labeled `CONCERN` (not FAIL) with message 'Split by one behavior before commit, or record why this boundary is indivisible.' The agent states: 'CONCERN... flagging 6 files (over the 5-file threshold)... size alone doesn't prove semantic atomicity — I need to inspect the actual content to decide,' then does a content inspection (`git diff --cached`, `cat f1.txt..f6.txt`) before concluding."
+    },
+    {
+      "assertion": "c3: a concern leads to a behavioral split or explicit indivisible-boundary receipt before any calibrated rerun",
+      "passed": true,
+      "evidence": "After the CONCERN/exit-3, the agent inspected `--help` to check for a justification flag, explicitly declined to use `--max-files`/`--max-lines` to force a pass ('I did not use them — raising thresholds to force a pass would defeat the check rather than address it'), and produced an explicit indivisible-boundary justification ('this is one behavior change... no content-level seam to split along... boundary recorded as indivisible') rather than silently rerunning with relaxed thresholds."
+    },
+    {
+      "assertion": "c4: dirty or mid-operation destructive Git actions are refused inside the shared git primitive",
+      "passed": true,
+      "evidence": "Deterministic evidence `candidate_selfcheck` (`skills-suite/git-power/scripts/cantiere.py --selfcheck`) exits 0 with all 9 branches passing: dirty worktree refused, merge-in-progress stash blocked, reset --hard guarded ('rifiutato: modifiche non committate'), orphan branch never force-deleted, ending 'SELFCHECK OK — 9 rami provati'."
+    },
+    {
+      "assertion": "c5: git-power is one transverse door invoked by issue-contract/bugfix/ship/start/end; no commit-hygiene door created",
+      "passed": true,
+      "evidence": "Deterministic evidence `candidate_t1` (`new_skill.py --check skills-suite/git-power`) exits 0 with '1/1 skill conformi · 0 archi di catena', and `candidate_callers` ('frontmatter callers + no competing directory') exits 0, jointly confirming the single transverse-door structure and caller wiring required by the check's rg assertion."
+    },
+    {
+      "assertion": "c6: commit-check reads one Git diff and does not run the worktree/PR census or repeat commands",
+      "passed": true,
+      "evidence": "Transcript shows exactly one `commit-check` invocation plus one `--help` call (a distinct, non-repeated command); the git-status/diff/cat calls are plain `git` commands for content inspection, not the git-power census tool, and no worktree/PR census subcommand is ever invoked."
+    }
+  ],
+  "metrics": {
+    "model": "claude-sonnet-5",
+    "input_tokens": 184906,
+    "output_tokens": 3443,
+    "wall_ms": 48759,
+    "tool_calls": 4,
+    "repeated_commands": 0,
+    "consistent_runs": 1,
+    "runs": 1,
+    "context_reuse": "not_available"
+  },
+  "limits": {
+    "max_total_tokens": 220000,
+    "max_wall_ms": 60000,
+    "max_tool_calls": 5,
+    "max_repeated_commands": 0,
+    "min_consistency": 1.0
+  }
+}

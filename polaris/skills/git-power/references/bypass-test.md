@@ -49,21 +49,21 @@ comment that TALKS about it).
 > survives the attempt."
 
 ```bash
-# repo con uno stash preesistente E POI un merge che va in conflitto (mai creare lo stash
-# DURANTE il conflitto per costruire il test: quello è proprio il comando pericoloso)
+# a repo with a pre-existing stash AND THEN a merge that conflicts (never create the stash
+# DURING the conflict to build the test: that is exactly the dangerous command)
 tmp=$(mktemp -d) && cd "$tmp" && git init -q -b main repo && cd repo
 git config user.email t@t.t && git config user.name t
 echo x > g.txt && git add g.txt && git commit -q -m g
 echo y > g.txt && git stash push -q -m unrelated
 
-git checkout -q -b a && echo A > f.txt 2>/dev/null; : # setup abbreviato, vedi selfcheck per il reale
-# ... (il selfcheck costruisce il conflitto vero: due branch che modificano la stessa riga)
+git checkout -q -b a && echo A > f.txt 2>/dev/null; : # abbreviated setup, see the selfcheck for the real one
+# ... (the selfcheck builds the real conflict: two branches editing the same line)
 
 python3 /path/to/cantiere/scripts/cantiere.py close --repo "$tmp/repo" \
   --target "stash@{0}" --confirm "stash@{0}"
-echo "EXIT=$?"                       # DEVE essere 2
-test -f .git/MERGE_HEAD && echo "MERGE_HEAD sopravvive"   # DEVE stampare
-git stash list | grep 'stash@{0}'    # DEVE esistere ancora
+echo "EXIT=$?"                       # MUST be 2
+test -f .git/MERGE_HEAD && echo "MERGE_HEAD survives"   # MUST print
+git stash list | grep 'stash@{0}'    # MUST still exist
 ```
 
 **Must happen**: `EXIT=2`, `.git/MERGE_HEAD` intact, the stash NOT touched — even if the
@@ -80,12 +80,12 @@ repo is mid-merge, because it is the only way not to trust which stash is "harml
 tmp=$(mktemp -d) && git -C "$tmp" init -q -b main
 git -C "$tmp" config user.email t@t.t && git -C "$tmp" config user.name t
 echo 1 > "$tmp/f.txt" && git -C "$tmp" add . && git -C "$tmp" commit -q -m init
-# .git/HEAD è stato appena scritto dal commit — simula un pannello che sta operando ORA
+# .git/HEAD was just written by the commit — simulates a panel operating RIGHT NOW
 python3 -c "
 import sys; sys.path.insert(0, '/path/to/cantiere/scripts')
 import cantiere, pathlib
 print(cantiere.recent_activity_lock(pathlib.Path('$tmp')))"
-# DEVE stampare True subito dopo un commit; False se rilanciato dopo 180s
+# MUST print True right after a commit; False if rerun after 180s
 ```
 
 **Must happen**: `census`/`close` classify the worktree `pericoloso` with the note
@@ -130,7 +130,7 @@ same primitive, not by a wrapper the caller can skip. Selfcheck:
 ## 5 — `.method/ledger.md` open
 
 > "`cantiere` drains/removes [ledger.md + .polaris-owner] when the worktree or branch closes" —
-> declared by `metodologia/SKILL.md`, never implemented before this fix.
+> declared by `method/SKILL.md`, never implemented before this fix.
 
 ```bash
 tmp=$(mktemp -d) && cd "$tmp" && git init -q -b main repo && cd repo

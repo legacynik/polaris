@@ -1,0 +1,30 @@
+[
+ {
+  "id": "p02",
+  "should_trigger": true,
+  "kind": "explicit",
+  "tuple": "forward / explicit",
+  "prompt": "plan my week"
+ },
+ {
+  "id": "p05",
+  "should_trigger": true,
+  "kind": "explicit",
+  "tuple": "report / explicit",
+  "prompt": "weekly report for last week"
+ },
+ {
+  "id": "n02",
+  "should_trigger": false,
+  "kind": "negative",
+  "tuple": "checkpoint",
+  "prompt": "fai un checkpoint, ho chiuso il fix"
+ },
+ {
+  "id": "n05",
+  "should_trigger": false,
+  "kind": "negative",
+  "tuple": "tracker mutation",
+  "prompt": "assign these five issues to me on GitHub"
+ }
+]

@@ -1,0 +1,2 @@
+Audit report.json. A report is valid only when every evidence quote is a verbatim substring
+of the declared path and one-based line inside the artifact directory.

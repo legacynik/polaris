@@ -1,0 +1,65 @@
+[
+  {
+    "id": "p01",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "new / explicit",
+    "prompt": "Scrivimi il piano per l'import dei listini fornitori: area pricing, voglio le fasi in Beads."
+  },
+  {
+    "id": "p02",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "pour / explicit",
+    "prompt": "Il piano 2026-10-24-supplier-import è accepted: versa le fasi nell'epic."
+  },
+  {
+    "id": "p04",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "course change / implicit",
+    "prompt": "La fase 2 è partita ma il benchmark dice che Dolt embedded non regge 4 writer: il piano va corretto prima di cambiare codice."
+  },
+  {
+    "id": "p06",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "close / implicit",
+    "prompt": "Abbandoniamo il lavoro sul calendario condiviso, lo riassorbe un'altra area: archivia tutto lasciando traccia di dove eravamo."
+  },
+  {
+    "id": "p07",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "new / implicit",
+    "prompt": "This migration touches two areas and a public interface; before anyone codes, write it down with contracts and a falsifiable outcome."
+  },
+  {
+    "id": "n01",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "tiny work",
+    "prompt": "Cambia il testo del bottone 'Salva' in 'Salva bozza' nella pagina ordini."
+  },
+  {
+    "id": "n03",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "execution",
+    "prompt": "Esegui la fase 2 dell'epic pv-mol-a1b: prendi il prossimo task da bd ready."
+  },
+  {
+    "id": "n05",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "review",
+    "prompt": "Rivedi il diff di questo branch prima del merge."
+  },
+  {
+    "id": "n06",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "weekly plan",
+    "prompt": "Cosa facciamo questa settimana? Dammi le priorità."
+  }
+]

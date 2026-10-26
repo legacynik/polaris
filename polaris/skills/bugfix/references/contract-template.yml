@@ -1,52 +1,53 @@
-# .fix/contract.yml — la cerimonia di QUESTA repo.
+# .fix/contract.yml — THIS repository's ceremony.
 #
-# Il gate non contiene comandi, host o path: li legge da qui. È ciò che rende
-# la stessa skill usabile su repo con stack diversi.
+# The gate holds no commands, hosts or paths: it reads them from here. That is what makes the
+# same skill usable on repositories with different stacks. Keys stay as they are (the gate reads
+# them by name); only these comments are prose.
 #
-# Regola: un valore che non sai NON si inventa. Lascialo vuoto con un commento
-# che dice cosa manca — il gate fallirà su quella tappa, ed è corretto: un
-# contratto inventato è peggio di uno incompleto.
+# Rule: a value you do not know is NOT invented. Leave it empty with a comment saying what is
+# missing — the gate will fail on that stage, and that is correct: an invented contract is worse
+# than an incomplete one.
 
-# Vocabolario controllato di `dominio`. Per-repo, dal glossario del prodotto.
-# È la chiave di aggregazione: senza, i record non sono contabili e la query
-# cross-repo («quante volte si è rotto X») non esiste.
+# Controlled vocabulary of `dominio`. Per repository, from the product glossary.
+# It is the aggregation key: without it records cannot be counted and the cross-repo query
+# ("how many times did X break") does not exist.
 dominii: []
 
 test:
-  # Come si lancia la suite. Serve alla tappa 5 (verde).
+  # How the suite runs. Used by stage `verde`.
   suite: ""
-  # Un solo modulo. {modulo} viene sostituito dal gate.
+  # One module. The gate substitutes {modulo}.
   modulo: ""
 
 ci:
-  # Il comando con cui la CI RACCOGLIE i test (es. `pytest --collect-only -q <subset>`,
-  # lo stesso subset che il workflow esegue). Serve alla tappa `raccolto`: un test
-  # committato ma assente da questo output è ORFANO — la CI non lo eseguirà mai (R5).
+  # The command CI uses to COLLECT tests (e.g. `pytest --collect-only -q <subset>`, the same
+  # subset the workflow runs). Used by stage `raccolto`: a test committed but absent from this
+  # output is an ORPHAN — CI will never run it (R5).
   collect: ""
 
-# Il perimetro PROD di questa repo: i path (glob) il cui codice finisce deployato.
-# Lo legge sweep_gate.py: una PR FUORI da questi path si auto-fonde con solo
-# approve + SHA fresca; DENTRO serve risk:trivial + attestazione runtime.
-# Non dichiarato = via stretta per tutto: il gate non indovina cosa è prod.
+# This repository's PROD perimeter: the paths (globs) whose code gets deployed.
+# Read by sweep_gate.py: a PR OUTSIDE these paths self-merges with approve + a fresh SHA only;
+# INSIDE it needs risk:trivial + a runtime attestation.
+# Undeclared = the narrow path for everything: the gate does not guess what prod is.
 deployabili: []
 
 staging:
-  # Come ci si arriva. Serve alla tappa 7 (real-test olistico).
+  # How to get there. Used by stage `realtest` (holistic real test).
   deploy: ""
-  # Come si legge cosa è successo.
+  # How to read what happened.
   logs: ""
-  # Lo smoke test, se esiste.
+  # The smoke test, if one exists.
   smoke: ""
   url: ""
 
 prod:
   deploy: ""
-  # DEVE avere un exit code: serve alla tappa 9 (prod-verified).
-  # «Ho deployato» non è una prova; questo comando lo è.
+  # MUST have an exit code: used by stage `prod` (prod-verified).
+  # "I deployed" is not proof; this command is.
   osserva: ""
 
-# Path della porta tdd-dev, per la tappa 4 (ciclo test-first con rosso registrato).
-# `~` si espande: con `npx skills add ... -g` le skill stanno in ~/.agents/skills/.
+# Path of the tdd-dev skill, for stage `rosso` (test-first cycle with a recorded RED).
+# `~` expands: with `npx skills add ... -g` the skills live in ~/.agents/skills/.
 tdd_dev: "~/.agents/skills/tdd-dev"
-# Path della foglia real-testing, per la tappa 7.
+# Path of the real-testing skill, for stage `realtest`.
 real_test: "~/.agents/skills/real-testing"

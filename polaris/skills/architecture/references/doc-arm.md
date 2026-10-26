@@ -34,7 +34,7 @@ never introduce a second one.
 | `snapshot_scope` | the repository-relative paths the document cites, written from the repository root (`backend/app/main.py`, never a bare `main.py`). Each must exist: a cited path that is gone makes the document `STALE`. Symbols (functions, env vars) are not checked — a rename is invisible, which is what `review_trigger` is for |
 | `review_trigger` | observable structural changes that make the document stale — a module added or removed, a boundary moved, a store changing its system of record, a gate starting or stopping to block. Never a time interval, never "any change under `src/`" |
 | `related` | links to `CONTEXT.md`, `DOMAIN.md` and the Decision register |
-| `modalità` | the same structured first line `SKILL.md` uses — `piena`, or `ridotta — missing: <tag>[, <tag>…]` — with the prose reason after it |
+| `modalità` | the same structured first line `process.md` uses — `piena`, or `ridotta — missing: <tag>[, <tag>…]` — with the prose reason after it |
 
 ## 2. The sections
 
@@ -67,7 +67,7 @@ belong in this document.
 | roadmap, planned modules | the board and the plans; a module that does not exist yet is not on the map |
 
 Counts are not banned from the skill: `audit` and `decide` emit dated artifacts and still close
-every number through the census-then-verify shape in `SKILL.md`. They are banned from the one
+every number through the census-then-verify shape in `process.md`. They are banned from the one
 document that is meant to stay true between reviews.
 
 ## 4. The menu — content some repos need

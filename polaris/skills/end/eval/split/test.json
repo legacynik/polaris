@@ -1,0 +1,65 @@
+[
+ {
+  "id": "p02",
+  "should_trigger": true,
+  "kind": "explicit",
+  "tuple": "explicit / landed",
+  "prompt": "wrap up the session"
+ },
+ {
+  "id": "p05",
+  "should_trigger": true,
+  "kind": "implicit",
+  "tuple": "implicit / landed",
+  "prompt": "chiudi la sessione e committa l'handoff"
+ },
+ {
+  "id": "p08",
+  "should_trigger": true,
+  "kind": "explicit",
+  "tuple": "checkpoint / explicit / landed",
+  "prompt": "fai un checkpoint"
+ },
+ {
+  "id": "p11",
+  "should_trigger": true,
+  "kind": "explicit",
+  "tuple": "checkpoint / explicit / landed",
+  "prompt": "write a checkpoint for what we just landed"
+ },
+ {
+  "id": "p13",
+  "should_trigger": true,
+  "kind": "contextual",
+  "tuple": "checkpoint / contextual / half-done",
+  "prompt": "cambio repo, passo su acme-api — lascia il punto qui prima che switchi"
+ },
+ {
+  "id": "n02",
+  "should_trigger": false,
+  "kind": "negative",
+  "tuple": "resume",
+  "prompt": "dove eravamo?"
+ },
+ {
+  "id": "n05",
+  "should_trigger": false,
+  "kind": "negative",
+  "tuple": "meta",
+  "prompt": "how does the end skill decide which threads to prune?"
+ },
+ {
+  "id": "n07",
+  "should_trigger": false,
+  "kind": "negative",
+  "tuple": "read · same noun · start",
+  "prompt": "recupera l'ultimo checkpoint, dove eravamo rimasti?"
+ },
+ {
+  "id": "n09",
+  "should_trigger": false,
+  "kind": "negative",
+  "tuple": "meta · discussing the skill itself",
+  "prompt": "perché ogni volta che dico checkpoint mi parte /end? non deve partire così"
+ }
+]

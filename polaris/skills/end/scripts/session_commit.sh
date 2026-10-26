@@ -1,0 +1,189 @@
+#!/usr/bin/env bash
+# session_commit.sh — land session-state in git ON THE BRANCH YOU ARE ON, always.
+# Both an /end checkpoint and the /end close (--end) go through here: one guard, one implementation.
+#
+# Founder decision, 2026-09-04: *«il log di sessione si committa dove sei, sul branch corrente,
+# sempre. Niente spool, niente rinvii, niente worktree principale sul default»*. An `/end` that
+# postpones instead of committing is an `/end` that did not work — measured over three weeks of
+# deferral machinery whose only reliable output was a working tree left dirty and a reassuring
+# message. The spool, the sibling-worktree hand-off and the "wait for the next default-branch
+# session" rule are removed; a session log belongs to the branch the session happened on.
+#
+# Commit hygiene, enforced here so a model following the skill can't skip it:
+#   • pathspec-ONLY (never `git add -A`), absent paths dropped first because `git add -- a missing`
+#     stages NOTHING: parallel panels sharing one tree never drag each other's uncommitted work.
+#   • forbidden paths refused on input AND on the staged set: `state/current.md` and `.env*` in BOTH
+#     modes. Owned decisions/lessons may be promoted at the checkpoint, not deferred to `/end`.
+#   • `git commit -- <paths>`, never a commit of the index: what another panel pre-staged stays
+#     staged, exactly as it was, and never rides along.
+#   • branch reported, never changed; never a push; nothing ever left staged.
+# THREE declared exits with code 2, one line each, never silent and never a copy elsewhere: a
+# detached HEAD, `polaris.commit-policy no-direct-default` while sitting on the default branch, and
+# a path git itself refuses (gitignored, or inside a nested repo) — that last one still commits
+# every OTHER path of the set. In all three the files stay exactly where the session wrote them.
+# A repo with NO commit at all is not one of them: `git commit -- <path>` takes an unborn branch,
+# so the first checkpoint of a new repo lands.
+#   session_commit.sh <log> [<plan>] | --end <path>... | --selfcheck
+set -uo pipefail
+
+_forbidden() {
+    local path="$2"
+    case "$path" in *state/current.md) return 0 ;; *.env|*.env.*) return 0 ;; esac
+    return 1
+}
+
+_default_branch() {
+    local d c
+    d="$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||')"
+    if [ -z "$d" ]; then
+        for c in main master; do
+            git show-ref -q --verify "refs/heads/$c" && { d="$c"; break; }
+        done
+    fi
+    echo "${d:-main}"
+}
+
+# Which of these paths git will actually take, staged one by one. `git add -- a b missing` stages
+# NOTHING and exits 128, so one absent optional file landed the whole handoff nowhere — absent
+# paths are simply skipped. A path that EXISTS but git refuses — gitignored, or inside a nested
+# repo — is named with its reason and the others still land: a handoff must not die because the
+# journal happens to sit in an ignored directory. The caller turns a non-empty REFUSED into exit 2.
+ADDABLE=(); REFUSED=()
+_addable() {
+    ADDABLE=(); REFUSED=(); local p why
+    for p in "$@"; do
+        [ -e "$p" ] || continue
+        # `git add` alone is not the test: an ignored path makes it FAIL, but a path inside an
+        # untracked nested repo makes it succeed and stage nothing — and the pathspec then blew
+        # the whole commit up with "did not match any file(s) known to git". Ask the index.
+        if git add -- "$p" 2>/dev/null && git ls-files --error-unmatch -- "$p" >/dev/null 2>&1
+        then ADDABLE+=("$p"); continue; fi
+        git check-ignore -q -- "$p" && why=ignored || why="nested repo"
+        echo "session_commit: git refuses ${p} (${why}) — not committed" >&2
+        REFUSED+=("$p")
+    done
+    return 0
+}
+
+# `/end` names its files with ABSOLUTE paths and git refuses a pathspec it cannot resolve against
+# the worktree. Everything downstream assumes a repo-relative path, so it is normalised once, here,
+# at the only door in.
+_relativise() {
+    local top; top="$(git rev-parse --show-toplevel 2>/dev/null)"
+    local p; for p in "$@"; do
+        case "$p" in "$top"/*) printf '%s\n' "${p#"$top"/}" ;; *) printf '%s\n' "$p" ;; esac
+    done
+}
+
+# The two refusals. Prints the reason and returns 2; returns 0 when this tree may commit.
+# A repository may DECLARE that its default branch is never committed to directly (branch
+# protection, or a rule the contract states). Declared, never guessed: asking the remote would make
+# every offline run either hang or fail open.
+_refused() {
+    local branch="$1"
+    # An UNBORN branch also reports no symbolic ref target being resolvable to a commit, but it is
+    # not a detached HEAD: `git symbolic-ref HEAD` still answers, and the commit is the repo's first.
+    if git rev-parse -q --verify HEAD >/dev/null 2>&1 && ! git symbolic-ref -q HEAD >/dev/null 2>&1; then
+        echo "session_commit: NOT committed — HEAD is detached, a commit here would be reachable only through the reflog; switch to a branch and re-run. The files stay where you wrote them." >&2
+        return 2
+    fi
+    [ "$branch" = "$(_default_branch)" ] || return 0
+    case "$(git config --get polaris.commit-policy 2>/dev/null)" in
+        no-direct-default|no-direct|deferred)
+            echo "session_commit: NOT committed — this repo declares polaris.commit-policy against a direct commit on ${branch}; commit the session files from a branch. They stay where you wrote them." >&2
+            return 2 ;;
+    esac
+    return 0
+}
+
+# Take these paths back out of the index. When neither `restore` nor `reset` manages it (an index
+# lock, a broken git), the paths left staged are NAMED: the next commit without a pathspec would
+# carry them away, and only the person at the keyboard can unstage them. Returns 1 then.
+_unstage() {
+    git restore --staged -- "$@" 2>/dev/null || git reset -q -- "$@" 2>/dev/null
+    local left; left="$(git diff --cached --name-only -- "$@")" || {
+        echo "session_commit: cannot read the index — check \`git status\` before any other commit" >&2
+        return 1; }
+    [ -z "$left" ] && return 0
+    echo "session_commit: STILL STAGED — ${left//$'\n'/, } — run \`git restore --staged -- <path>\` before any other commit" >&2
+    return 1
+}
+
+# Stage exactly these paths, refuse a forbidden one that slipped in through a glob, commit with an
+# explicit pathspec so a foreign staged file cannot ride along, and never leave anything staged.
+_stage_and_commit() {
+    local mode="$1" branch="$2"; shift 2
+    local staged; staged="$(git diff --cached --name-only -- "$@")"
+    [ -n "$staged" ] || { echo "session_commit: no session-state change on ${branch}, skip"; return 0; }
+    local f; while IFS= read -r f; do
+        _forbidden "$mode" "$f" || continue
+        echo "session_commit: ABORT — forbidden file staged (${f})" >&2
+        _unstage "$@"; return 2
+    done <<< "$staged"
+    local login msg; login="$(git config --local --get polaris.login 2>/dev/null || echo session)"
+    [ "$mode" = end ] && msg="chore(polaris): session handoff $(date +%F) @${login}" \
+                      || msg="chore(session): checkpoint @${login} $(date +%F)"
+    if git commit -q -m "$msg" -- "$@"; then
+        echo "session_commit: committed on ${branch} — ${staged//$'\n'/, }"
+        return 0
+    fi
+    # Never claim success on a failed commit (a hook refusing, missing identity, an index lock). And
+    # never leave it STAGED either: the files our own `git add` staged would otherwise be swallowed
+    # by the next commit that carries no pathspec. Never `--no-verify`: a hook's veto is a veto.
+    if _unstage "$@"; then
+        echo "session_commit: commit REFUSED on ${branch} — index restored, the files are still in the working tree (${staged//$'\n'/, })" >&2
+    else
+        echo "session_commit: commit REFUSED on ${branch} — the files are still in the working tree, and staged (above)" >&2
+    fi
+    return 1
+}
+
+_commit() {
+    local mode="$1"; shift
+    local rel=() p
+    while IFS= read -r p; do [ -n "$p" ] && rel+=("$p"); done < <(_relativise "$@")
+    [ ${#rel[@]} -gt 0 ] && set -- "${rel[@]}"
+    for p in "$@"; do
+        _forbidden "$mode" "$p" && { echo "session_commit: refuse forbidden path ${p}" >&2; return 2; }
+    done
+    git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "session_commit: not a git repo, skip"; return 0; }
+    local branch; branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo '?')"
+    _refused "$branch" || return 2
+    # Archives are shared ledgers. A pre-staged archive may belong to another panel; refusing
+    # before `git add` preserves its index and prevents absorbing it into this checkpoint.
+    # `occurrences.jsonl` is the lesson ledger `lesson_record.py` appends to (operating model §7);
+    # a `records/lessons/<date>-<slug>-<hash6>.md` is one file per lesson, never shared.
+    for p in "$@"; do
+        case "$(basename "$p")" in decisions.md|lessons.md|occurrences.jsonl)
+            if [ -n "$(git diff --cached --name-only -- "$p")" ]; then
+                echo "session_commit: NOT committed — archive already staged ($p); resolve ownership first" >&2
+                return 2
+            fi ;;
+        esac
+    done
+    _addable "$@"      # stages what git will take, names what it refuses
+    [ ${#ADDABLE[@]} -gt 0 ] || { [ ${#REFUSED[@]} -gt 0 ] && return 2
+        echo "session_commit: none of the named files exist yet, skip"; return 0; }
+    _stage_and_commit "$mode" "$branch" "${ADDABLE[@]}" || return $?
+    [ ${#REFUSED[@]} -gt 0 ] && return 2
+    return 0
+}
+
+commit_checkpoint() { _commit checkpoint "$@"; }
+commit_end() { _commit end "$@"; }
+
+main() {
+    # The adversarial fixtures live in their own file: this one carries the guard, not its proof.
+    [ "${1:-}" = "--selfcheck" ] && {
+        exec bash "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/session_commit_selfcheck.sh" --selfcheck; }
+    if [ "${1:-}" = "--end" ]; then
+        shift
+        [ -n "${1:-}" ] || { echo "usage: session_commit.sh --end <path>..." >&2; return 1; }
+        commit_end "$@"; return
+    fi
+    [ -n "${1:-}" ] || { echo "usage: session_commit.sh <session_log> [<weekly_plan>] | --end <path>... | --selfcheck" >&2; return 1; }
+    commit_checkpoint "$@"
+}
+
+# Sourced as a library by its own selfcheck; run as a command by everyone else.
+[ "${SESSION_COMMIT_LIB:-}" = 1 ] || main "$@"

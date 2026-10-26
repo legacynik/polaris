@@ -1,0 +1,20 @@
+{
+  "skill": "git-power",
+  "method": "Dimension tuples: JOB (commit boundary | open-work census | guarded destructive action) x ARRIVAL (explicit | implicit | workflow-contextual). Fourteen hand-written cases: nine positives across all jobs and arrival styles, plus five near-miss negatives owned by ship, merge-conflict resolution, worktree creation, review, or generic Git help.",
+  "cases": [
+    {"id": "p01", "should_trigger": true, "kind": "explicit", "tuple": "commit boundary / explicit", "prompt": "run git-power commit hygiene on what I staged before I commit"},
+    {"id": "p02", "should_trigger": true, "kind": "implicit", "tuple": "commit boundary / implicit", "prompt": "I have 13 staged files and 480 changed lines; tell me whether this is still one reviewable commit and give me the measured boundary"},
+    {"id": "p03", "should_trigger": true, "kind": "contextual", "tuple": "commit boundary / workflow", "prompt": "the bug is fixed and tests are green; before closing the issue, measure the staged commit boundary and stop me if it needs splitting"},
+    {"id": "p04", "should_trigger": true, "kind": "contextual", "tuple": "commit boundary / release", "prompt": "Phase A is ready. Before opening the PR, compare this branch to origin/main and report files and changed lines"},
+    {"id": "p05", "should_trigger": true, "kind": "explicit", "tuple": "census / explicit", "prompt": "use git-power to census stale branches, worktrees, stashes and open PRs in this repo"},
+    {"id": "p06", "should_trigger": true, "kind": "implicit", "tuple": "census / implicit", "prompt": "how many abandoned worktrees and dangling stashes do I have, and which ones are safe to close?"},
+    {"id": "p07", "should_trigger": true, "kind": "contextual", "tuple": "census / start-end", "prompt": "I'm ending the session; inventory the parked Git work and show dangerous or merged items one by one"},
+    {"id": "p08", "should_trigger": true, "kind": "explicit", "tuple": "destructive / explicit", "prompt": "run the guarded reset-hard path to HEAD~1; refuse if this tree has unsaved work"},
+    {"id": "p09", "should_trigger": true, "kind": "implicit", "tuple": "destructive / implicit", "prompt": "remove this merged worktree safely, but do not use force and do not lose its ignored method ledger"},
+    {"id": "n01", "should_trigger": false, "kind": "negative", "tuple": "near-miss: ship", "prompt": "merge PR 184, deploy staging, and watch the canary for ten minutes"},
+    {"id": "n02", "should_trigger": false, "kind": "negative", "tuple": "near-miss: conflict resolution", "prompt": "resolve the merge conflicts between this branch and main and preserve both intended changes"},
+    {"id": "n03", "should_trigger": false, "kind": "negative", "tuple": "near-miss: worktree creation", "prompt": "create a new isolated worktree for issue 120 from origin/main"},
+    {"id": "n04", "should_trigger": false, "kind": "negative", "tuple": "near-miss: review", "prompt": "review this diff for correctness and security; the tests are already green"},
+    {"id": "n05", "should_trigger": false, "kind": "negative", "tuple": "adjacent: generic Git help", "prompt": "explain the difference between git merge and git rebase without changing anything"}
+  ]
+}

@@ -30,7 +30,7 @@ failure above, with exit 137 instead of 1: the runner spoke and the process was
 then killed (OOM killer, SIGKILL on timeout), so the output can be truncated
 mid-run and proves nothing. Same shape as the `verde_ma_exit_non_zero` pair.
 
-`shell__npm_ci_dentro_docker`, `shell__make_target`, `shell__git_push` — the
+`shell__npm_ci_in_docker`, `shell__make_target`, `shell__git_push` — the
 three shapes the critic used on `d6c1694` to break a bare `^FAILED `. Written by
 hand from the tools' real line shapes (buildkit's `FAILED [1/3] RUN npm ci`,
 make's failing target, a CI wrapper around a rejected push): they are hostile

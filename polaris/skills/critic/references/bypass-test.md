@@ -137,5 +137,5 @@ previous version looks for `artifact/` in the cwd and fails; the current gate re
   really executed the declared tool calls; the fresh T3 remains the authority on that step.
 
 ```bash
-python3 scripts/critic_gate.py --selfcheck   # 24 rami, inclusi ignoranza e rilocazione
+python3 scripts/critic_gate.py --selfcheck   # 24 branches, including ignorance and relocation
 ```

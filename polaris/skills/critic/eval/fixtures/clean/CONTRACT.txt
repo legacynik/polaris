@@ -1,0 +1,2 @@
+clamp returns lower when value is below lower, upper when value is above upper, and value
+inside the inclusive range. It raises ValueError when lower exceeds upper.

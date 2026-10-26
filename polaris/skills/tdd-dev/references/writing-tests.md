@@ -11,8 +11,18 @@ the break it catches**, and **every test exercises the real thing**. A test writ
 watched failing against real code has already proven it can fail; it earns a double only when the
 real dependency proves slow or external.
 
-Which test to write next, and through which seam, is decided in `test-admission.md`. This file is
-how to write its body.
+The hard rules are the first section of `SKILL.md`, *How tests are written*; this file is their
+detail. Which test to write next, and through which seam, is decided in `test-admission.md`. This
+file is how to write its body.
+
+**What unit tests are for.** They design one unit: written first, they specify its behaviour and
+let it be refactored safely. They are a poor way to find bugs or catch regressions of the whole,
+because each one sets its own preconditions and the parts are never run together. A break of the
+whole flow is caught by an integration test or by `real-testing`, which run the parts as
+production does; answering it with more unit tests adds maintenance without adding that proof.
+A test that sits between the two — several real units, some doubled — is the worst of both: it
+breaks on refactors and still proves nothing about the running system. (After Steve Sanderson;
+sources in `../CREDITS.md`.)
 
 ## 1. Name the break before the body
 
@@ -28,6 +38,13 @@ line of the output contract, and `red_check.py break` applies it.
 - **Behaviour, not text.** Asserting that a script, config or document contains a line proves
   only that the source is the source. Run the artifact against controlled input and assert its
   output, side effect or exit code.
+- **Configuration is not a unit.** A setting was moved out of the code so it can change without a
+  code change; a test that re-reads it (`config.yml has max_retries: 5`) only copies it to a second
+  place. Test the behaviour that reads the setting with a value the test hands it — `call_with_retry(
+  fail, {"max_retries": 2})` attempts three times — so editing the shipped file cannot turn the
+  test red. Whether the shipped file is wired in is an integration or `real-testing` check. The
+  same holds for declarative switches in code (a decorator, a route flag): test the effect they
+  have on a caller, never their presence.
 - **Your code, not the framework.** Test the contract your code makes at its boundary — the route
   it registers, the query it emits, the payload it produces. A router calling a registered handler
   is the framework's test. Constructors, getters and trivial forwarding earn a test only when they
@@ -187,15 +204,20 @@ point, is design: `test-admission.md` → *Oracle and seam*.
 ## 5. Shape: one story per test
 
 - **Arrange, Act, Assert**, in that order, visibly separated.
-- **One concept per test.** A test named "validates titles" with three unrelated asserts hides
-  which one failed; split it into "rejects empty titles", "trims whitespace", "enforces max length".
-  Several asserts on one result of one action are one concept.
+- **One behaviour per test, specified once.** A test named "validates titles" with three unrelated
+  asserts hides which one failed; split it into "rejects empty titles", "trims whitespace",
+  "enforces max length". Several asserts on one result of one action are one concept. Each
+  behaviour is asserted by one test only: an assertion another test already makes adds a second
+  place to fix when the behaviour changes, and catches nothing new. Do not assert what the code
+  happens to do beside the behaviour under test.
+- **No shared preconditions across unrelated tests.** A setup that runs before many tests hides
+  what each one relies on; share one only among a handful of tests that need all of it.
 - **DAMP over DRY.** Each test reads as a complete specification without tracing shared helpers.
   Repeat the input shape when that keeps the test self-explanatory; extract a helper only for
   mechanics (building a valid object), never for the values the assertion depends on.
-- **Names read as a spec**: `[unit] [expected behaviour] [condition]` —
-  `complete_task sets status and records the timestamp`, `throws NotFoundError for an unknown
-  id`. Never `works`, `handles errors`, `test 3`.
+- **Names read as a spec — subject, scenario, result**: `checkout_with_empty_cart_is_refused`,
+  `complete_task_on_open_task_records_the_timestamp`, `get_task_with_unknown_id_raises_not_found`.
+  Never `works`, `handles errors`, `test 3`.
 
 ```python
 def test_overdue_when_the_deadline_has_passed():
@@ -240,7 +262,11 @@ def test_overdue_when_the_deadline_has_passed():
 
 A test that sometimes fails is worse than none: people learn to rerun it.
 
-- **Clock**: inject the time or freeze it; never compare against the real `now()`.
+- **Clock**: pass the time in at the seam (`is_expired(session, now)`, or a clock the caller
+  injects); never compare against the real `now()`. Patching a name inside the module under test
+  (`monkeypatch.setattr(sessions, "datetime", Frozen)`) couples the test to how the module imports
+  the clock: rewriting the import breaks it with the behaviour unchanged. If the unit reads the
+  clock itself, that is the design finding — change its signature first.
 - **Randomness**: inject the generator or fix the seed, and print the seed on failure.
 - **Timezone and locale**: set them in the test (`TZ=UTC`), never inherit the machine's.
 - **Ordering**: do not assert the order of sets, of maps whose iteration order the language does
@@ -297,7 +323,7 @@ A test that sometimes fails is worse than none: people learn to rerun it.
   today on real inputs (characterisation tests, the current output as the literal), then change
   it. A characterisation test records behaviour, not correctness: mark the cases you believe
   wrong, and turn each into a proper test when you fix it.
-- **Isolation.** Every test builds and removes its own state; none depends on another having run
+- **Isolation.** Every test builds and removes its own state, and resets any global it touches; none depends on another having run
   first, and the suite passes in any order. Write files only under a temporary directory the test
   creates; never into the repository or the user's home.
 

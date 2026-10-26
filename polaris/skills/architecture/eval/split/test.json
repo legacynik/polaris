@@ -1,0 +1,95 @@
+[
+ {
+  "id": "p14",
+  "should_trigger": true,
+  "kind": "contextual",
+  "tuple": "repo-migration · PUBLISHED · contextual · symptom",
+  "prompt": "gli script del prezzario stanno in una repo loro e girano da crontab sulla box vecchia. da quando l'app e' stata spostata meta' di quelli puntano ancora al DSN sbagliato e ce ne accorgiamo solo quando i numeri non tornano. me li porto dentro il repo principale o li lascio li'?",
+  "note": "fixture 15. the symptom is stray consumers discovered the hard way, not 'we want to migrate a repository'"
+ },
+ {
+  "id": "p13",
+  "should_trigger": true,
+  "kind": "implicit",
+  "tuple": "framework · PUBLISHED · implicit · symptom",
+  "prompt": "We hand-maintain a MODULE.md schema for every agent we run, and someone pointed out the library we already depend on ships a spec type carrying most of the same fields. Do we move onto theirs or keep ours?",
+  "note": "fixture 11. never phrased as 'framework adoption' — the founder describes maintaining a parallel format by hand"
+ },
+ {
+  "id": "p02",
+  "should_trigger": true,
+  "kind": "implicit",
+  "tuple": "feature · OWNED · implicit · category",
+  "prompt": "I need to add batch export to the reports module. It'll need a new dependency on the storage layer, which nothing in reports touches today. What's the right shape?"
+ },
+ {
+  "id": "p19",
+  "should_trigger": true,
+  "kind": "contextual",
+  "tuple": "doc · n/a · contextual · symptom",
+  "prompt": "ho un contractor che entra lunedi e l'unica cosa scritta e' un README di marzo che descrive tre servizi che abbiamo cancellato. riesci a mettere giu' qualcosa che corrisponda davvero all'albero com'e' adesso?",
+  "note": "the doc arm phrased as staleness, never as 'write the architecture doc'. Deliberately near document-generate — if it lands there the arm's wording is the problem"
+ },
+ {
+  "id": "p10",
+  "should_trigger": true,
+  "kind": "contextual",
+  "tuple": "decision · OWNED-looking but PUBLISHED · contextual · symptom",
+  "prompt": "pricing/resolver.py is internal, non e' esposto da nessuna parte, quindi posso semplificarne la firma liberamente giusto? lo importano tipo 40 posti fra backend worker e gli script in infra/",
+  "note": "the two-bad-cases pair, half one: inside the code, callers enumerable, but not landable in one commit"
+ },
+ {
+  "id": "p17",
+  "should_trigger": true,
+  "kind": "contextual",
+  "tuple": "db-tune · n/a · contextual · symptom",
+  "prompt": "pricing lookups come back in 2ms most of the time and then take anywhere from 4 to 37 seconds under load, and when they time out we fall back to an estimate — same input quoted 52k on one run and 18k on the next. I was going to raise the timeout and retry once. good enough?",
+  "note": "fixture 14. no vendor knob named on purpose (n05 owns that boundary); the halt is that the measurement the rule needs does not exist yet"
+ },
+ {
+  "id": "p16",
+  "should_trigger": true,
+  "kind": "contextual",
+  "tuple": "db-reshape · PUBLISHED · contextual · symptom",
+  "prompt": "il watchdog legge i report di qualita' da un database e scrive l'error_log su un altro, due passi separati senza niente attorno. se muore in mezzo l'alert o sparisce o esce doppio, ed e' gia' successo due volte. sposto l'error_log di la' o tengo i due e ci metto una chiave di idempotenza?",
+  "note": "fixture 13. two concrete options, no transaction boundary, and the arm's own never-dual-write rule is the adjudication"
+ },
+ {
+  "id": "p05",
+  "should_trigger": true,
+  "kind": "contextual",
+  "tuple": "db-expand · PUBLISHED · contextual · symptom",
+  "prompt": "devo aggiungere due colonne a quote_versions (tenant_id NOT NULL e una status enum) ma quella tabella la leggono anche il worker e il dashboard che deployano separati. come lo faccio senza rompere niente"
+ },
+ {
+  "id": "p18",
+  "should_trigger": false,
+  "kind": "negative",
+  "tuple": "near-miss · claude-api owns prompt caching",
+  "prompt": "ogni turno ci ripaghiamo 8-12k token di prompt perche' la cache non e' mai stata accesa. accendo i tre flag e via, o c'e' altro?",
+  "note": "fixture 12. a second hot-path symptom vocabulary, disjoint from p08: cost per turn and a config flag rather than latency and a queue",
+  "reclassification_proof": "reclassified 2026-08-19 with routing proof: measured on the v0.5.1 test split, this case fired `claude-api` in 2 of 3 runs and architecture in 0 of 3. `claude-api` claims the territory in its own description — \"the user asks about an LLM (pricing/model choice/limits/caching) - never answer from memory\" - and it is declared mandatory-read. The case asks how to switch on prompt-caching flags; the API door wins it correctly. Kept as a negative control rather than deleted, because a rival that legitimately outranks us is the most valuable kind of near-miss."
+ },
+ {
+  "id": "n04",
+  "should_trigger": false,
+  "kind": "negative",
+  "tuple": "out of scope · the language-and-boundaries door",
+  "prompt": "are 'case' and 'claim' the same thing in our model or two different concepts? the code uses both and I can't tell"
+ },
+ {
+  "id": "n06",
+  "should_trigger": false,
+  "kind": "negative",
+  "tuple": "near-miss · measurement with no commitment (the theft a symptom-rich description invites)",
+  "prompt": "profilami l'endpoint /quotes e dimmi dove se ne vanno i 300ms — per ora voglio solo il numero, non cambiare niente",
+  "note": "carries every hot-path symptom word and commits to nothing. If this fires, the description bought its symptom coverage by stealing measurement requests"
+ },
+ {
+  "id": "n03",
+  "should_trigger": false,
+  "kind": "negative",
+  "tuple": "near-miss · bugfix",
+  "prompt": "POST /quotes returns 500 when the items array is empty instead of a 422, fix it"
+ }
+]

@@ -1,0 +1,23 @@
+[
+ {
+  "id": "p02",
+  "should_trigger": true,
+  "kind": "explicit",
+  "tuple": "both / explicit",
+  "prompt": "status completo"
+ },
+ {
+  "id": "p05",
+  "should_trigger": true,
+  "kind": "implicit",
+  "tuple": "portfolio / implicit",
+  "prompt": "which decisions did we take and never carry out?"
+ },
+ {
+  "id": "n02",
+  "should_trigger": false,
+  "kind": "negative",
+  "tuple": "weekly",
+  "prompt": "plan my week"
+ }
+]

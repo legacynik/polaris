@@ -1,0 +1,90 @@
+{
+  "skill": "issue-contract",
+  "method": "ARM (new issue | extend an existing issue | group under an epic) x ARRIVAL (explicit | implicit | contextual), in both languages the tracker is driven in. Nine positives span the three arms this door routes between after its mandatory search; three negatives are the doors it must not absorb — a nebulous effort that is not decomposed yet (wayfinder), judging code on an already-approved PR (review), and a tracker that is not GitHub (Linear).",
+  "cases": [
+    {
+      "id": "p01",
+      "should_trigger": true,
+      "kind": "explicit",
+      "tuple": "new / explicit",
+      "prompt": "Apri una issue su polaris-os per il gate che non legge la reciprocità della catena."
+    },
+    {
+      "id": "p02",
+      "should_trigger": true,
+      "kind": "explicit",
+      "tuple": "new / explicit",
+      "prompt": "File an issue for this: the reseal step runs before the commit, so the sealed tree is always one commit behind."
+    },
+    {
+      "id": "p03",
+      "should_trigger": true,
+      "kind": "implicit",
+      "tuple": "new / implicit",
+      "prompt": "Track this so it does not get lost: the worktree cleanup never runs when the PR is closed unmerged."
+    },
+    {
+      "id": "p04",
+      "should_trigger": true,
+      "kind": "implicit",
+      "tuple": "new / implicit",
+      "prompt": "Questo va messo a tracker con criteri di accettazione veri, non una riga di TODO."
+    },
+    {
+      "id": "p05",
+      "should_trigger": true,
+      "kind": "contextual",
+      "tuple": "new / contextual",
+      "prompt": "wayfinder ha chiuso la mappa e le tre slice sono decomposte: portale al tracker."
+    },
+    {
+      "id": "p06",
+      "should_trigger": true,
+      "kind": "explicit",
+      "tuple": "extend / explicit",
+      "prompt": "Aggiorna la issue #321: l'acceptance sulla reciprocità va riscritta con la misura che abbiamo appena preso."
+    },
+    {
+      "id": "p07",
+      "should_trigger": true,
+      "kind": "implicit",
+      "tuple": "extend / implicit",
+      "prompt": "Questo difetto è lo stesso perimetro di #302 — non aprirne una nuova, estendi quella e promuovila di stato."
+    },
+    {
+      "id": "p08",
+      "should_trigger": true,
+      "kind": "explicit",
+      "tuple": "group / explicit",
+      "prompt": "Accorpa queste quattro task sotto un epic e collega le figlie."
+    },
+    {
+      "id": "p09",
+      "should_trigger": true,
+      "kind": "contextual",
+      "tuple": "group / contextual",
+      "prompt": "Abbiamo sei issue aperte che sono la stessa capability spezzata male: triage e rimettile in ordine sul tracker."
+    },
+    {
+      "id": "n01",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "wayfinder — nebulous, not decomposed",
+      "prompt": "Non so ancora cosa sia questo lavoro: ci sono almeno due incognite aperte e non riesco a scrivere un solo ticket. Aiutami a capire la forma."
+    },
+    {
+      "id": "n02",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "review — judging code on an approved PR",
+      "prompt": "Leggimi il diff di questa PR e dimmi se rispetta le convenzioni del repo e quello che la issue chiedeva."
+    },
+    {
+      "id": "n03",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "non-GitHub tracker",
+      "prompt": "Create a ticket for this in our Linear workspace, under the Platform team."
+    }
+  ]
+}

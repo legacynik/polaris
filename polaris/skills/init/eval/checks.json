@@ -1,0 +1,14 @@
+[
+  {
+    "id": "c1",
+    "category": "outcome",
+    "assertion": "audit and propose write zero files; apply runs only after the repo owner answered, and the result is read from the values (READY, documents: 3 after the commit), never from exit 0",
+    "cmd": null
+  },
+  {
+    "id": "c2",
+    "category": "outcome",
+    "assertion": "--team writes the pin, the hourly silent fail-open session hook and one AGENTS.md section; re-running changes nothing; required denies skills while the pin is missing, optional only nudges; the script half is proved by the pytest file",
+    "cmd": "python3 -m pytest -q tests/test_polaris_team.py"
+  }
+]

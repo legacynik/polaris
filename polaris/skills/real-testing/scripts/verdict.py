@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""verdict.py — valida (o scaffolda) un verdetto real-test contro il perimetro reale.
+"""verdict.py — validates (or scaffolds) a real-test verdict against the real perimeter.
 
-Orchestra `verdict_checks.py` (regole pure) contro `perimeter.py` (perimetro
-reale ricalcolato ora da git) — vedi `verdict_checks.py` per il dettaglio
-delle regole e quale voce del registro chiude ognuna.
+Orchestrates `verdict_checks.py` (pure rules) against `perimeter.py` (the real
+perimeter, recomputed now from git) — see `verdict_checks.py` for the detail
+of the rules and which registry entry each one closes.
 
-Uso:
+Usage:
     verdict.py new      --repo R [--base REF] [--head REF|STAGED] [--out FILE]
     verdict.py validate <file> --repo R [--base REF] [--head REF|STAGED]
     verdict.py --selfcheck
@@ -25,9 +25,9 @@ import verdict_checks as vc  # noqa: E402
 from verdict_attack import check as check_attack  # noqa: E402
 
 def validate(verdict_path: Path, repo: Path, perim: dict) -> tuple[bool, list[str]]:
-    """Valida un verdetto GIA' scritto contro un perimetro GIA' calcolato (3 param, non 4:
-    chi chiama decide una volta sola base/head, poi puo' validare piu' verdetti sullo stesso
-    perimetro senza richiamare git ad ogni giro)."""
+    """Validates an ALREADY-written verdict against an ALREADY-computed perimeter (3 params, not 4:
+    the caller decides base/head once, then can validate several verdicts on the same
+    perimeter without calling git every time)."""
     try:
         v = vc.load_verdict(verdict_path)
     except ValueError as e:
@@ -95,7 +95,7 @@ def _fixture(repo: Path) -> str:
 def _live_row(tpl: dict) -> dict:
     return next(r for r in tpl["matrix"] if r["file"] == "migrations/001.sql")
 
-def _selfcheck() -> int:  # noqa: C901 — end-to-end fixture walk, sequenziale per natura
+def _selfcheck() -> int:  # noqa: C901 — end-to-end fixture walk, sequential by nature
     import os
     import time
 
@@ -103,59 +103,59 @@ def _selfcheck() -> int:  # noqa: C901 — end-to-end fixture walk, sequenziale 
         repo = Path(td)
         base = _fixture(repo)
         vpath = repo / "v.json"
-        perim = perimeter.build_perimeter(repo, base, "STAGED")  # costante: il tree non cambia oltre
+        perim = perimeter.build_perimeter(repo, base, "STAGED")  # constant: the tree does not change beyond this
 
         def check(expect_ok: bool, needle: str, msg: str) -> None:
             ok, errs = validate(vpath, repo, perim)
             assert ok == expect_ok and (expect_ok or any(needle in e for e in errs)), f"{msg}: {errs}"
 
         tpl = new_template(repo, base, "STAGED")
-        assert _live_row(tpl)["class"] == "db-migration", "classe db-migration non riconosciuta"
+        assert _live_row(tpl)["class"] == "db-migration", "db-migration class not recognised"
         vpath.write_text(json.dumps(tpl))
-        check(False, "rami nuovi", "else scoperto doveva bloccare")
+        check(False, "new branches", "uncovered else must block")
 
         for row in tpl["matrix"]:
             row["exception_ticket"] = "ISSUE-1"
         next(r for r in tpl["matrix"] if r["file"] == "a.py")["branches_exercised"] = ["a.py:4"]
         tpl["verdetto"] = "MERGEABLE"
         vpath.write_text(json.dumps(tpl))
-        check(False, "raccolto", "raccolto vuoto doveva bloccare")
+        check(False, "raccolto", "empty raccolto must block")
 
         tpl["raccolto"] = [{"tipo": "difetto", "artifact": "tests/test_migration.py::test_add_col"}]
         vpath.write_text(json.dumps(tpl))
-        check(True, "", "assumed+ticket deve bastare anche su live-required")
+        check(True, "", "assumed+ticket must suffice even on live-required")
 
         _live_row(tpl)["evidence"] = "not-applicable"
         vpath.write_text(json.dumps(tpl))
-        check(False, "not-applicable", "not-applicable su db-migration doveva bloccare")
+        check(False, "not-applicable", "not-applicable on db-migration must block")
 
         _live_row(tpl)["evidence"] = "live"
         vpath.write_text(json.dumps(tpl))
-        check(False, "senza evidence_artifact", "live senza artifact doveva bloccare")
+        check(False, "without evidence_artifact", "live without artifact must block")
 
         artifact = repo / "trace.json"
         artifact.write_text('{"call_id": "req-selfcheck-1", "query": "alter table t add column c int"}')
         os.utime(artifact, (time.time() - 3600, time.time() - 3600))
         _live_row(tpl)["evidence_artifact"] = "trace.json"
         vpath.write_text(json.dumps(tpl))
-        check(False, "stale", "artifact piu' vecchio del file doveva bloccare")
+        check(False, "stale", "artifact older than the file must block")
 
         os.utime(artifact, None)
-        artifact.write_text('{"note": "fabbricato a mano, nessuna chiamata reale - MagicMock in test"}')
+        artifact.write_text('{"note": "handmade, no real call - MagicMock in test"}')
         os.utime(artifact, None)
         vpath.write_text(json.dumps(tpl))
-        check(False, "call_id", "fresco+non-vuoto ma senza call_id (EVAL-copertura riga 3) doveva bloccare")
+        check(False, "call_id", "fresh+non-empty but without call_id (EVAL-copertura row 3) must block")
 
         artifact.write_text('{"call_id": "req-selfcheck-1", "query": "alter table t add column c int"}')
         os.utime(artifact, None)
         vpath.write_text(json.dumps(tpl))
-        check(True, "", "verdetto completo con prova live fresca e call_id doveva passare")
+        check(True, "", "complete verdict with fresh live proof and call_id must pass")
 
         stale = dict(tpl, content_hash="deadbeef")
         vpath.write_text(json.dumps(stale))
-        check(False, "stale", "hash stale doveva bloccare")
-    print("SELFCHECK OK — 9 stadi end-to-end (branch scoperto/raccolto vuoto/assumed-ok/"
-          "not-applicable-vietato/no-artifact/artifact-stale/fresco-senza-call_id/passa/hash-stale)")
+        check(False, "stale", "stale hash must block")
+    print("SELFCHECK OK — 9 end-to-end stages (uncovered-branch/empty-raccolto/assumed-ok/"
+          "not-applicable-forbidden/no-artifact/stale-artifact/fresh-without-call_id/pass/stale-hash)")
     return 0
 
 def _cmd_validate(a: argparse.Namespace) -> int:

@@ -10,3 +10,8 @@
   test sizes, state over interactions, DAMP over DRY, Arrange-Act-Assert, the double preference
   order, query by role); Matt Pocock, skills (`tdd`, `tests.md` and `mocking.md`: tautological
   tests, mock at system boundaries, dependency injection, SDK-style interfaces).
+- The purpose of unit tests (design, not regression catching), configuration is not a unit, one
+  behaviour asserted once, no shared preconditions and subject-scenario-result names: Steve
+  Sanderson, "Writing Great Unit Tests: Best and Worst Practices" (2009,
+  blog.stevensanderson.com; the copy the founder shared is gist `vadymhimself/763e96dd8495bb77325efd082e63c9f5`),
+  paraphrased in the first section of `SKILL.md` and in `references/writing-tests.md`.

@@ -1,0 +1,14 @@
+{
+  "checks": [
+    {"id":"c1","assertion":"across the defect cases, every known contract violation is found and no clean-case defect is invented","passed":true,"evidence":"Candidate found all four guard omissions, rejected the fabricated quote, and emitted zero clean findings."},
+    {"id":"c2","assertion":"a fabricated evidence quote is rejected by rereading its materialized path and line","passed":true,"evidence":"critic_gate selfcheck covers fabricated path-line quotes and all three final reports pass live reread validation."},
+    {"id":"c3","assertion":"the reviewer receives ARTIFACT plus CONTRACT without the author's claim, reasoning or session transcript","passed":true,"evidence":"The runtime input contract excludes author conclusion, reasoning and transcript."},
+    {"id":"c4","assertion":"the report declares opened, not_opened and accepted_unverified before findings","passed":true,"evidence":"All three final JSON reports carry the complete ledger before findings."},
+    {"id":"c5","assertion":"each surviving finding has a verbatim citation and a substantive counter-argument; killed candidates are recorded","passed":true,"evidence":"Guard and clean record falsified candidates; every finding has survived=true, contract quote and artifact citation."},
+    {"id":"c6","assertion":"the emitted report is valid JSON and critic_gate.py accepts it after the checkout or worktree moves","passed":true,"evidence":"All three committed reports use report-relative artifacts and pass after the original worktree was removed."},
+    {"id":"c7","assertion":"the run uses no repeated command and no more tool calls than the strongest donor envelope","passed":true,"evidence":"Three safe-mode runs used zero tools and zero repeated commands, equal to Codex."},
+    {"id":"c8","assertion":"candidate adds a strict quality win without regressing donor-passed checks or consistency, stays inside predeclared cost limits, and reports token/latency/tool deltas","passed":true,"evidence":"Candidate preserves Codex c1/c7, adds c2-c6, is 3/3 consistent, and remains under all predeclared limits."}
+  ],
+  "metrics": {"model":"claude-sonnet-5","input_tokens":11428,"output_tokens":2408,"wall_ms":29705,"tool_calls":0,"repeated_commands":0,"consistent_runs":3,"runs":3,"context_reuse":"not_available"},
+  "limits": {"max_total_tokens":370000,"max_wall_ms":66000,"max_tool_calls":0,"max_repeated_commands":0,"min_consistency":1.0}
+}

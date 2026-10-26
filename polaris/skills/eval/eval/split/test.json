@@ -1,0 +1,79 @@
+[
+  {
+    "id": "p03",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "loop · implicit",
+    "prompt": "confrontiamo i due modelli candidati sul prompt di dedup, chi vince?"
+  },
+  {
+    "id": "p04",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "judge · implicit",
+    "prompt": "il giudice dà 4/5 a tutto, non serve a niente"
+  },
+  {
+    "id": "p06",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "read · explicit",
+    "prompt": "ho 3000 risultati dell'eval di stanotte, dimmi quali failure mode ci sono dietro il 71%"
+  },
+  {
+    "id": "p09",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "release · explicit",
+    "prompt": "before we publish the new real-testing, prove it does not regress against the published one"
+  },
+  {
+    "id": "p10",
+    "should_trigger": true,
+    "kind": "contextual",
+    "tuple": "skill-tdd · contextual",
+    "prompt": "the critic skill fires on routine code reviews; fix it and show me it no longer does"
+  },
+  {
+    "id": "n02",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "adjacent-door · prompt-engineering",
+    "prompt": "scrivi il messaggio di deny dell'hook che blocca grep sugli identificatori"
+  },
+  {
+    "id": "n04",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "adjacent-door · tdd-dev",
+    "prompt": "write the unit tests for parse_quote() first, then implement it"
+  },
+  {
+    "id": "n06",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "meta · discussion",
+    "prompt": "cos'è un eval secondo te, in due parole?"
+  },
+  {
+    "id": "n08",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "adjacent-door · ops-infra",
+    "prompt": "the cron that runs the nightly evals did not fire, check the box"
+  },
+  {
+    "id": "p13",
+    "should_trigger": true,
+    "kind": "contextual",
+    "tuple": "setup · contextual",
+    "prompt": "tra sei mesi voglio poter rispondere a 'cosa abbiamo provato sul retrieval e perché l'abbiamo scartato': come salviamo e tracciamo ogni run degli esperimenti?"
+  },
+  {
+    "id": "n09",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "decoy · observability code",
+    "prompt": "aggiungi il tracing Langfuse all'endpoint di checkout del backend, con lo span della chiamata a Stripe"
+  }
+]

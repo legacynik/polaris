@@ -1,0 +1,38 @@
+[
+  {
+    "id": "p01",
+    "should_trigger": true,
+    "kind": "explicit",
+    "prompt": "There's a bug in checkout totals — run the bugfix skill on it: 4 gated phases, TDD, and a test that fails first."
+  },
+  {
+    "id": "p03",
+    "should_trigger": true,
+    "kind": "implicit",
+    "prompt": "This test used to pass and now fails on main after the last merge. Find the root cause and fix it so it can't come back."
+  },
+  {
+    "id": "p05",
+    "should_trigger": true,
+    "kind": "contextual",
+    "prompt": "The retry loop spins forever in the staging environment, nothing customer-facing yet — go find why and rewrite the test so it can't regress."
+  },
+  {
+    "id": "p07",
+    "should_trigger": true,
+    "kind": "implicit",
+    "prompt": "One assertion in our suite occasionally goes green even when the bug is still present — that test lied to us once already."
+  },
+  {
+    "id": "n01",
+    "should_trigger": false,
+    "kind": "negative",
+    "prompt": "Production is down right now and paying customers cannot check out — fix it immediately, we'll investigate root cause after."
+  },
+  {
+    "id": "n02",
+    "should_trigger": false,
+    "kind": "negative",
+    "prompt": "Rename this one local variable in a single file — five lines total, no behavior change at all."
+  }
+]

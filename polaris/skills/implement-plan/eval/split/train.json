@@ -1,0 +1,51 @@
+[
+  {
+    "id": "p01",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "build / explicit",
+    "prompt": "Implementa il piano accettato dell'area pricing: l'epic Beads è tst-mol-v6c, parti dalla fase 1."
+  },
+  {
+    "id": "p02",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "build / explicit",
+    "prompt": "Run implement on epic pv-mol-4qa: the plan file was accepted this morning and the epic is poured."
+  },
+  {
+    "id": "p04",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "resume / implicit",
+    "prompt": "The loop crashed halfway through phase 2 of the feature epic; pick up where it stopped."
+  },
+  {
+    "id": "p05",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "resume / implicit",
+    "prompt": "Riprendi il build: bd ready sull'epic mostra due task pronti della fase 3."
+  },
+  {
+    "id": "n01",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "tiny work",
+    "prompt": "Rename this one helper and fix its two callers, one PR."
+  },
+  {
+    "id": "n03",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "plan not accepted",
+    "prompt": "Write the plan for the new pricing area and break it into phases."
+  },
+  {
+    "id": "n05",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "review only",
+    "prompt": "Fai una review di questo diff e dimmi cosa non va."
+  }
+]

@@ -1,0 +1,56 @@
+[
+  {
+    "id": "c1",
+    "category": "outcome",
+    "assertion": "the emitted artifact carries its fixed fields, including the degraded-mode field, on ALL FOUR arms it can be emitted on -- the decision record, the landing receipt, ARCHITECTURE.md and the audit report (critic round-2 F3). The modalita field's first line is a structured, self-contained declaration -- `modalita: piena` or `modalita: ridotta ... missing: <tag>[, <tag>...]$` -- and EVERY such line in the artifact must be exactly well-formed, independent of position or markup. Text inside a fenced code block is not scanned (critic round-2 F9). Full hardening history and the declared residual: bypass-test.md B8 As of 1.0.0 the record also carries `prossimo` -- the next verb with its exact command, or an explicit `nessuno` -- because a record whose reader has to re-derive what happens next is where a signed decision stalls. `ASSUMED` is the ninth field and is greppped with the others: the claims the verify leg could not close are part of the record, not a footnote to it.",
+    "cmd": "sp() { awk '\n{\n  if ($0 ~ /^[[:space:]]*```/) { infence = !infence; next }\n  if (infence) next\n  stripped = $0\n  sub(/^[[:space:]]*[#>*|`_-]*[[:space:]]*/, \"\", stripped)\n  if (stripped ~ /^[Mm]odalit[aà][[:space:]]*:/) {\n    found = 1\n    if (stripped ~ /^[Mm]odalit[aà][[:space:]]*:[[:space:]]*\\*{0,2}`{0,1}[[:space:]]*[Pp]iena[[:space:]]*`{0,1}\\*{0,2}[[:space:]]*$/) {\n      ok = 1\n    } else if (stripped ~ /^[Mm]odalit[aà][[:space:]]*:[[:space:]]*\\*{0,2}`{0,1}[[:space:]]*[Rr]idotta.*[Mm]issing:[[:space:]]*(rule-librar[a-z]*|decisions|glossary|graph-verif[a-z]*)([,[:space:]]+(rule-librar[a-z]*|decisions|glossary|graph-verif[a-z]*))*[[:space:]]*$/) {\n      ok = 1\n    } else {\n      bad = 1\n    }\n  }\n}\nEND { if (found != 1 || bad == 1) exit 1; exit 0 }\n' \"$1\"; }; test -z \"$RECORD\" || { for f in reversibilit opzioni 'costo per opzione' scelta enforcement 'verifica di chiusura' prossimo ASSUMED; do grep -qi \"$f\" \"$RECORD\" || exit 1; done; sp \"$RECORD\" || exit 1; }; test -z \"$LANDING\" || { for f in call_sites prerequisites closure_check; do grep -qi \"$f\" \"$LANDING\" || exit 1; done; sp \"$LANDING\" || exit 1; }; test -z \"$ARCHITECTURE_DOC\" || { for f in schema_version document_type snapshot_ref snapshot_scope review_trigger; do grep -qi \"$f\" \"$ARCHITECTURE_DOC\" || exit 1; done; sp \"$ARCHITECTURE_DOC\" || exit 1; }; test -z \"$AUDIT_REPORT\" || { for f in scope perimetro strumentazione; do grep -qi \"$f\" \"$AUDIT_REPORT\" || exit 1; done; sp \"$AUDIT_REPORT\" || exit 1; }"
+  },
+  {
+    "id": "c2",
+    "category": "process",
+    "assertion": "the reversibility verdict OWNED or PUBLISHED appears before any rule-derived advice in the transcript, and names which of the three conditions decided it",
+    "cmd": null
+  },
+  {
+    "id": "c3",
+    "category": "process",
+    "assertion": "load discipline held — a successful public init/check/emit-context command closes from its receipt without reading checker source; no more than 3 rule files were opened in one invocation",
+    "cmd": "test \"$(grep -oE 'references/decision-rules/[a-z-]+\\.md' \"$TRACE\" | sort -u | wc -l)\" -le 3"
+  },
+  {
+    "id": "c4",
+    "category": "outcome",
+    "assertion": "cost is stated, never implied — every option in a decision record states what it COSTS rather than what it buys, and every finding in an audit report is priced in at least one of the four costs, with maintenance findings saying whether it is spelunking or rischio, the half that picks the remedy",
+    "cmd": null
+  },
+  {
+    "id": "c5",
+    "category": "style",
+    "assertion": "counts in the output are each either closed by a verify leg or marked ASSUMED with a reason; no bare number. On the audit arm this extends to a signal whose instrument is absent in the target repo — it ships ASSUMED with the instrument named, never as a number that looks measured no fabricated zero: every doctor row whose checker is absent, whose question is not repository-wide, or whose ledger was never recorded reads UNKNOWN with the reason, never GREEN -- and every RED row carries a realignment command.",
+    "cmd": "test -z \"$DOCTOR\" || { grep -qE 'UNKNOWN|GREEN|RED' \"$DOCTOR\" || exit 1; }"
+  },
+  {
+    "id": "c6",
+    "category": "efficiency",
+    "assertion": "a census question was answered by one script pass and not by N graph calls; multi-lane work loads the director only when needed and emits exactly one receipt per declared worker, including one non_observable row for a missing result the naked invocation MEASURES and does not EXECUTE: the transcript shows exactly one `arch_doctor.py ... --quick` call, then a menu of 3-5 verbs each carrying a reason line taken from that output -- and no verb that writes was run without an explicit argument. A menu that acted on one of its own suggestions fails this check even when the action was correct, because the founder never confirmed it. The forbidden thing is a reseal or a generator that was RUN, matched as an executed `python3 ...` invocation -- not the word `reseal`, which the doctor's own conditional realignment text necessarily contains and which check c5 requires it to contain. Matching the bare word made c5 and c6 mutually unsatisfiable on the transcript this door actually emits.",
+    "cmd": "test -z \"$TRACE\" || { grep -q -- '--quick' \"$TRACE\" || exit 1; test \"$(grep -c 'arch_doctor.py' \"$TRACE\")\" -le 2 || exit 1; grep -qE 'python3[^|]*(check_context_backbone\\.py[^|]*--reseal|--write-manifest|arch_diagram\\.py)' \"$TRACE\" && exit 1; exit 0; }"
+  },
+  {
+    "id": "c7",
+    "category": "process",
+    "assertion": "the run halts instead of improvising when an adjacent owner must decide, a worker result is missing, or write packets share a declared or derived seal/manifest/report surface; shared generated surfaces remain merger-owned",
+    "cmd": null
+  },
+  {
+    "id": "c8",
+    "category": "outcome",
+    "assertion": "the addition test held — every audit recommendation deletes or splits, and any recommendation that would add a layer, a service, an indirection or a config surface carries all three conditions of audit-arm.md §5: the reversibility verdict taken first, both cost numbers, and the old path deleted in the same change",
+    "cmd": null
+  },
+  {
+    "id": "c9",
+    "category": "outcome",
+    "assertion": "the record lands in the operating model §6 home: a DEC file carrying call_sites, probe and probe_kills when the choice must be enacted or passes all three ADR tests (hard to reverse, surprising without context, a real trade-off), kind: architecture only in the latter case; otherwise a ledger entry; status written as proposed, never as accepted or executed by the skill",
+    "cmd": null
+  }
+]

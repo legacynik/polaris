@@ -1,0 +1,53 @@
+[
+  {
+    "id": "p04",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "PR / explicit",
+    "prompt": "Give me a merge-readiness verdict on PR #901: MERGEABLE, MERGEABLE-CON-GAP or NOT-MERGEABLE, with the matrix per file."
+  },
+  {
+    "id": "p05",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "PR / implicit",
+    "prompt": "Deploy this branch to staging and actually interrogate it — the endpoints the diff crosses, the row in the DB, the provider trace — not the home page."
+  },
+  {
+    "id": "p07",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "claim-check / explicit",
+    "prompt": "Someone left a verdict saying this is mergeable. Check the claim instead of trusting it — the tree has moved since."
+  },
+  {
+    "id": "p12",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "docs-only / implicit",
+    "prompt": "I fixed a typo in the README. Do I need to spin up the whole stack for this?",
+    "why_negative": "declared-not-for"
+  },
+  {
+    "id": "p10",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "quality-read / implicit",
+    "prompt": "Read this diff for naming, structure and whether it follows our conventions, and rank what you find by severity.",
+    "why_negative": "adjacent-review"
+  },
+  {
+    "id": "p16",
+    "should_trigger": true,
+    "kind": "contextual",
+    "tuple": "production / expired session",
+    "prompt": "The scheduled health check of the live app is due; the test browser profile may have been logged out since last week."
+  },
+  {
+    "id": "n15",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "near-miss: review second opinion",
+    "prompt": "Ask another model family to read this diff and verify its findings against the source."
+  }
+]

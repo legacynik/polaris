@@ -1,0 +1,23 @@
+{
+  "checks": [
+    {"assertion": "c1 public commit-check reports exact staged counts and exit 3", "passed": true, "evidence": "reused sealed v0.4.0 candidate receipt on exact origin/main"},
+    {"assertion": "c2 size remains a concern signal, not semantic atomicity proof", "passed": true, "evidence": "unchanged from sealed v0.4.0 candidate"},
+    {"assertion": "c3 concern requires split or indivisible-boundary receipt", "passed": true, "evidence": "unchanged from sealed v0.4.0 candidate"},
+    {"assertion": "c4 destructive actions are guarded and receipts follow success", "passed": true, "evidence": "unchanged from sealed v0.4.0 candidate"},
+    {"assertion": "c5 update routes exactly and cannot complete dirty", "passed": false, "evidence": "origin/main phase checkpoint prints DIRTY_PRESERVED and exits 0 on an untracked dirty fixture"},
+    {"assertion": "c6 phase-specific execution avoids census and repeated commands", "passed": true, "evidence": "unchanged from sealed v0.4.0 candidate"},
+    {"assertion": "c7 OPEN stays alive and remote MERGED finalizes despite dirty stale main", "passed": true, "evidence": "unchanged from sealed v0.4.0 candidate"},
+    {"assertion": "c8 clean unmerged worktree close is refused", "passed": true, "evidence": "unchanged from sealed v0.4.0 candidate"}
+  ],
+  "metrics": {
+    "model": "claude-sonnet-5",
+    "input_tokens": 765244,
+    "output_tokens": 7547,
+    "wall_ms": 89445,
+    "tool_calls": 10,
+    "repeated_commands": 0,
+    "consistent_runs": 1,
+    "runs": 1,
+    "context_reuse": "reused"
+  }
+}

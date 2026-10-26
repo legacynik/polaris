@@ -195,13 +195,13 @@ def _guard(repo: Path, args: tuple[str, ...]) -> None:
 
 
 def _method_ledger_open(wt: Path) -> str | None:
-    """Contratto dichiarato da metodologia/SKILL.md ('cantiere drains/removes
+    """Contratto dichiarato da method/SKILL.md ('cantiere drains/removes
     them when the worktree closes') mai implementato (EVAL-cantiere-copertura
     §4). `.method/ledger.md` è git-ignored per design: `git status --porcelain`
     non lo vede (verificato, non assunto — vedi bypass-test.md §6), quindi
     `git worktree remove` senza --force lo cancella comunque senza controllo.
     Ritorna il motivo se un piano risulta ancora aperto (stesso formato letto
-    da metodologia/scripts/ledger.py: 'TASK n: stato', l'ultimo per numero
+    da method/scripts/ledger.py: 'TASK n: stato', l'ultimo per numero
     conta), None se non c'è ledger o è tutto 'complete'."""
     ledger = wt / ".method" / "ledger.md"
     if not ledger.exists():
@@ -710,7 +710,7 @@ def _print_danger_refusal(wt: Path, path: str, reason: str) -> int:
               "azione. NON usare `git stash` qui — durante un merge in conflitto può "
               "scartare MERGE_HEAD silenziosamente (misurato, registro G8#2).", file=sys.stderr)
     elif method_open:
-        print(f"piano .method/ledger.md ancora aperto: {method_open} — metodologia "
+        print(f"piano .method/ledger.md ancora aperto: {method_open} — method "
               "dichiara che git-power lo drena alla chiusura, non lo cancella con lavoro "
               "aperto dentro (git status non lo vede: è git-ignored per design).", file=sys.stderr)
     else:
@@ -1089,7 +1089,7 @@ def cmd_phase(args: argparse.Namespace) -> int:
     if args.phase == "checkpoint":
         branch = git(repo, "branch", "--show-current", check=False)
         if is_dirty(repo):
-            print(f"BLOCKED_DIRTY: branch={branch} — /update non è completo finché ogni "
+            print(f"BLOCKED_DIRTY: branch={branch} — il checkpoint (/end) non è completo finché ogni "
                   "modifica della lane non è committata con pathspec e commit-check.")
             return 2
         print(f"CHECKPOINT: branch={branch} CLEAN")
@@ -1374,7 +1374,7 @@ def _selfcheck_reset_hard_guarded(root: Path) -> None:
 
 
 def _selfcheck_method_ledger_blocks_close(root: Path) -> None:
-    """EVAL-cantiere-copertura §4: contratto dichiarato da metodologia mai
+    """EVAL-cantiere-copertura §4: contratto dichiarato da method mai
     implementato. `.method/` è git-ignored per design — verificato qui che
     is_dirty() da solo NON lo vede (il gap reale), quindi la guardia deve
     stare in un check dedicato, non riusare quello esistente per magia."""

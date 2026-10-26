@@ -126,23 +126,59 @@ def cmd_pack(script: Path, root: Path, opts: argparse.Namespace) -> int:
     """`reinsert` or `chain`, against the root the session actually lives under.
 
     One function for both because the mistake was shared: each asked `$ROOT`, and in a
-    product repository `<repo>/_polaris/state/session` is empty. `reinsert` swallows the
-    exit code — a pack that cannot come back is a cost, never a failed session — while
-    `chain` is a verification and its `CHAIN_BROKEN` must reach the caller."""
+    product repository `<repo>/_polaris/state/session` is empty. Both hand back the
+    reinserter's exit code. `reinsert` used to swallow it, and with the hook swallowing it
+    too a pack that could not come back was invisible. A SessionStart hook's non-zero exit never
+    blocks a session, so the code costs nothing and says what failed; `NO_OPEN_SESSION` is
+    the reinserter's own exit 0, and `chain`'s `CHAIN_BROKEN` reaches the caller as before."""
     args = [opts.command, "--root", str(top_of(root))]
     args += (["--sid", opts.sid] if opts.sid else []) + (["--area", opts.area] if opts.area else [])
     done = run(script, args)
     sys.stdout.write(done.stdout)
     sys.stderr.write(done.stderr)
-    return 0 if opts.command == "reinsert" else done.returncode
+    return done.returncode
 
 
 DOORS = {"open": (ENGINE, cmd_open), "note": (ENGINE, cmd_note), "close": (ENGINE, cmd_close),
          "reinsert": (REINSERT, cmd_pack), "chain": (REINSERT, cmd_pack)}
-NO_ENGINE = "NOTA: nessun gate del backbone in questo repo — le sei righe sopra sono la checklist"
+NO_ENGINE = "NOTE: no backbone gate in this repo — the six lines above are the checklist"
+
+
+def _selfcheck() -> int:
+    """The refusal reader, the log refusals, and the doors run as the host runs them: on a
+    checkout with no engine (silence, the close note) and with a reinserter that fails."""
+    import os
+    import tempfile
+    tb = subprocess.CompletedProcess([], 1, "", "Traceback (most recent call last):\n  x\nKeyError: 'k'\n")
+    coded = subprocess.CompletedProcess([], 2, "", "noise\nSCOPE_STALE: area x\n")
+    ok = [cause(tb) == "KeyError: 'k'", cause(coded) == "SCOPE_STALE: area x",
+          unreadable("").startswith("HANDOFF_MISSING"),
+          unreadable("/nonexistent/log.md").startswith("HANDOFF_UNREADABLE"),
+          unreadable(__file__) == ""]
+    env = {k: v for k, v in os.environ.items() if k != "POLARIS_VAULT"}
+    env.update(GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1")
+    with tempfile.TemporaryDirectory() as d:
+        root = Path(d)
+        subprocess.run(["git", "init", "-q", str(root)], check=True, env=env)
+
+        def door(*args: str) -> subprocess.CompletedProcess:
+            return subprocess.run([sys.executable, __file__, *args, "--root", str(root)],
+                                  capture_output=True, text=True, env=env)
+        opened, closed = door("open", "--login", "ada"), door("close", "--handoff", __file__)
+        ok += [(opened.returncode, opened.stdout) == (0, ""),     # #155: no engine, no line
+               closed.returncode == 0 and NO_ENGINE in closed.stdout]
+        (root / REINSERT).parent.mkdir(parents=True)
+        (root / REINSERT).write_text("import sys\nsys.stderr.write('RECEIPT_UNREADABLE: x\\n')\n"
+                                     "sys.exit(2)\n")
+        failed = door("reinsert")
+        ok.append(failed.returncode == 2 and "RECEIPT_UNREADABLE" in failed.stderr)
+    print(f"session_gate selfcheck: {sum(ok)}/{len(ok)} branches OK")
+    return 0 if all(ok) else 1
 
 
 def main() -> int:
+    if sys.argv[1:] == ["--selfcheck"]:
+        return _selfcheck()
     ap = argparse.ArgumentParser(description="#155 — the session the three doors share")
     ap.add_argument("command", choices=[*DOORS, "sid", "vault"])
     ap.add_argument("--root", default=".", help="the Polaris root of THIS worktree")

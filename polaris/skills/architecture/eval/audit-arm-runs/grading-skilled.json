@@ -1,0 +1,52 @@
+[
+  {
+    "assertion": "States perimeter: dirs read + commit SHA/ref, names what was NOT examined",
+    "passed": true,
+    "evidence": "\"`backend/app/**` @ `4f2eb5b1` (branch `main`) — 301 moduli Python, 18.070 statement... **Non esaminati** (non \\\"a posto\\\" — non guardati): `frontend/`, `frontend-old/`, `supabase/`, `odoo/`, `infra/`, `docker/`, `backend/migrations/`.\""
+  },
+  {
+    "assertion": "States an INSTRUMENTATION section before any finding: what signals could/could not be measured",
+    "passed": true,
+    "evidence": "Dedicated \"## `strumentazione`\" section precedes \"## Reperti\", with a \"Misurato\" table and a \"Non misurabile qui → `ASSUMED`, con lo strumento che lo chiuderebbe\" list."
+  },
+  {
+    "assertion": "Every finding names which COST it inflates (development/deploy/operation/maintenance)",
+    "passed": true,
+    "evidence": "Each reperto has an explicit `costo` line, e.g. R1: \"`manutenzione/rischio` (un ciclo di N è una unità deployabile di N...) + `sviluppo`\"; R2/R3/R4/R5 all tag `manutenzione/spelunking` and/or `sviluppo`."
+  },
+  {
+    "assertion": "Every maintenance-cost finding says SPELUNKING vs RISK",
+    "passed": true,
+    "evidence": "R2: \"`manutenzione/spelunking` (il costo dominante: dove va una modifica al CRM?...)\"; R3: \"`manutenzione/spelunking` come colonna dominante... Secondariamente `manutenzione/rischio`\" — every maintenance cost is explicitly classified."
+  },
+  {
+    "assertion": "Every finding states SEVERITY as a blast-radius COUNT, not an adjective",
+    "passed": true,
+    "evidence": "Each reperto has a `gravità` line with counts, e.g. R3: \"**3 file**: `generator.py` + `tests/test_step6_admit_gate.py` (13 test) + `tests/test_langfuse_trace_parent.py` (6 test). 0 unità di deploy\"; R4: \"3 moduli, 0 riferimenti da aggiornare.\""
+  },
+  {
+    "assertion": "Every finding names the SIMPLIFICATION it enables (delete/split, not add)",
+    "passed": true,
+    "evidence": "Each reperto has a `semplificazione` line naming CANCELLARE or SPLIT explicitly, e.g. R2: \"**SPLIT**, e passa il `leftover-naming-test` in entrambe le direzioni\"; R4: \"**CANCELLARE** 3 file, 100 statement.\""
+  },
+  {
+    "assertion": "Every finding carries a per-finding ASSUMED entry or explicitly says none",
+    "passed": true,
+    "evidence": "Each reperto ends with an `ASSUMED` line, e.g. R4: \"nessuno. Questa è la riga più chiusa del report.\"; R5: \"non ho valutato se il cluster pricing a 11 moduli sia il confine giusto... non va deciso a occhio.\""
+  },
+  {
+    "assertion": "Every finding names the DECISION it feeds, or says none",
+    "passed": true,
+    "evidence": "Each reperto has a `decisione` line, e.g. R1: \"braccio **decisione architetturale** per la collocazione dei 16 simboli spostati (è la sola scelta con più letture); i restanti 4 archi sono meccanici.\"; R3/R4: \"nessuna.\""
+  },
+  {
+    "assertion": "Any ADD recommendation carries cost-removed and cost-added as numbers, or is absent",
+    "passed": true,
+    "evidence": "\"L'unica addizione che si è affacciata — `import-linter` in R1 — **fallisce la clausola 2** (nessun before/after numerico) ed è marcata come ipotesi, con l'evidenza che la deciderebbe. Non è nel piano.\" — the one candidate addition is explicitly excluded for lacking the two numbers."
+  },
+  {
+    "assertion": "Where a metric can't be honestly computed, says so and names the closing instrument, not a fake number",
+    "passed": true,
+    "evidence": "\"**Abstractness `A` e quindi `D = |A+I−1|`.**... `D` risulterebbe dominato da `I` e **il numero sarebbe finto**. Non lo pubblico. Strumento: nessun equivalente JDepend/NDepend per Python...\"; \"**Copertura test.** CI non ha gate di coverage... Il numero non esiste.\""
+  }
+]

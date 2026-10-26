@@ -1,0 +1,90 @@
+{
+ "skill": "week",
+ "method": "MODE (forward | report) x ARRIVAL (explicit | implicit). Negatives are the session doors that own adjacent phrasings: resume (start), checkpoint (update), the portfolio view (status), and someone else's week.",
+ "cases": [
+  {
+   "id": "p01",
+   "should_trigger": true,
+   "kind": "explicit",
+   "tuple": "forward / explicit",
+   "prompt": "/week"
+  },
+  {
+   "id": "p02",
+   "should_trigger": true,
+   "kind": "explicit",
+   "tuple": "forward / explicit",
+   "prompt": "plan my week"
+  },
+  {
+   "id": "p03",
+   "should_trigger": true,
+   "kind": "implicit",
+   "tuple": "forward / implicit",
+   "prompt": "è lunedì, cosa prendo su questa settimana?"
+  },
+  {
+   "id": "p04",
+   "should_trigger": true,
+   "kind": "implicit",
+   "tuple": "forward / implicit",
+   "prompt": "Which issues should I commit to before Friday, given what slipped last week?"
+  },
+  {
+   "id": "p05",
+   "should_trigger": true,
+   "kind": "explicit",
+   "tuple": "report / explicit",
+   "prompt": "weekly report for last week"
+  },
+  {
+   "id": "p06",
+   "should_trigger": true,
+   "kind": "implicit",
+   "tuple": "report / implicit",
+   "prompt": "cosa ho spedito davvero la settimana scorsa rispetto a quello che avevo messo in piano?"
+  },
+  {
+   "id": "p07",
+   "should_trigger": true,
+   "kind": "implicit",
+   "tuple": "report / implicit",
+   "prompt": "Before Monday's review I need planned versus actual with the merged PRs."
+  },
+  {
+   "id": "n01",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "resume",
+   "prompt": "dove eravamo rimasti?"
+  },
+  {
+   "id": "n02",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "checkpoint",
+   "prompt": "fai un checkpoint, ho chiuso il fix"
+  },
+  {
+   "id": "n03",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "portfolio",
+   "prompt": "status completo di tutti i repo"
+  },
+  {
+   "id": "n04",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "someone else's week",
+   "prompt": "write Ada's weekly plan for her"
+  },
+  {
+   "id": "n05",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "tracker mutation",
+   "prompt": "assign these five issues to me on GitHub"
+  }
+ ]
+}

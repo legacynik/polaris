@@ -63,7 +63,7 @@ CHECKS = (
      "args": ("--ledger", "{ledger}", "--scope", "{root}"),
      "ledger": "test-drift.jsonl", "clean_line": r"^test-drift: clean\b",
      "fix": "write the test the changed symbol no longer has, through `tdd-dev`"},
-    {"check": "install-hygiene", "script": "_standard/check_install_hygiene.py",
+    {"check": "install-hygiene", "script": "skills-suite/_standard/check_install_hygiene.py",
      "args": ("--lockfile", "{home}/.agents/.skill-lock.json", "--roots",
               "{home}/.claude/skills", "{home}/.agents/skills", "{home}/.codex/skills"),
      "red_exits": (1,),

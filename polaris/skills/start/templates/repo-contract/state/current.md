@@ -11,18 +11,18 @@ Updated: YYYY-MM-DD — @<login>
 ## Recent Context
 
 <!-- Last 5 session summaries, newest first -->
-<!-- Written by /end only — /update never touches this section -->
+<!-- Written by the /end close only — a checkpoint never touches this section -->
 
 ---
 *Contract — this file is the CURRENT state: it is overwritten, never stacked. ONE `Updated:` line,
-date and owner only. `/update` adds and flags one line per thread; `/end` is the only command that
+date and owner only. an `/end` checkpoint adds and flags one line per thread; the `/end` close is the only move that
 closes. The history lives in `team/<login>/sessions/`, never here.*
 
 *Section names — the three headings above ARE the contract, and the package reads them from one
 registry. A heading may QUALIFY one of them with a SPACE and then a separator — a dash, a middot, a
 parenthesis, a colon — so `## Open — thread vivi` is the `## Open` section, while a glued separator
 or another word is not (`## Open-source backlog` and `## Active Priorities` are their own sections).
-Every script the package ships reads that one registry, so `/update`, `/start`, `plan-week` and
+Every script the package ships reads that one registry, so `/start`, `week` and
 `/end` can never disagree about which section a heading names. A renamed or translated heading
-is a different contract: `/start` reports it as `SECTIONS_MISSING`, and `/update` refuses with exit
+is a different contract: `/start` reports it as `SECTIONS_MISSING`, and an `/end` checkpoint refuses with exit
 2 and leaves the file byte-identical rather than inventing a place to write.*

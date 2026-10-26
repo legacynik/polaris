@@ -1,0 +1,1969 @@
+diff --git a/skills-suite/CHANGELOG.md b/skills-suite/CHANGELOG.md
+index bf933ff..ff405ae 100644
+--- a/skills-suite/CHANGELOG.md
++++ b/skills-suite/CHANGELOG.md
+@@ -6,6 +6,35 @@ retraceable ("vediamo tutto quanto che può essere ripercorso", founder 2026-08-
+ 
+ ---
+ 
++## 2026-08-23 — `critic` v0.2.0: fresh adversarial review becomes evidence-bound
++
++`critic` now accepts only a materialized artifact plus its contract. Every surviving finding must
++carry a contract quote, an artifact-relative path/line quote and a counter-argument that survived;
++dead candidates move to `dropped[]`, zero findings require a concrete halt, and the deterministic
++gate rereads every citation. The runtime prompt shrank to the decision surface instead of carrying
++donor history.
++
++TDD caught fabricated quotes, missing contract clauses, silent zero-finding reports and a real
++model failure that retained `survived=false`. Final safe-mode T3 is `8/8` against the strongest
++donor, Codex review-agent, at `2/8`: both find the known defects and keep the clean case clean;
++`critic` adds the sealed ledger/falsification/gate contract. Candidate cost is `13,836` token,
++`29,705 ms`, 0 tools, 0 repeats, consistency `3/3`; donor is `10,198` token, `23,356 ms`.
++
++## 2026-08-23 — `skill-meta` v0.8.0: promotion requires a strongest-donor win
++
++T3 is now one stable three-arm cohort: baseline, strongest applicable donor, candidate. Stable case
++IDs prevent assertion-text reuse across different contexts; donor-passed checks and consistency
++cannot regress, and cost alone cannot count as the strict win. Token, latency, tool, repeat and
++context receipts remain blocking against predeclared candidate limits. The old two-arm tests were
++updated and the isolated T1 check now resolves sibling skill edges without validating unrelated
++suite debt.
++
++RED evidence: old pytest callers failed `5/8`; assertion-only cohort reuse passed; the first fresh
++critic blocked both. GREEN: `8/8` pytest, both eval selfchecks, both isolated T1 checks, and final
++fresh critic PASS. Against `superpowers:writing-skills`, the deterministic gate audit is `8/8`
++versus `2/8`; the external donor still remains the stronger pressure-scenario authoring reference,
++while v0.8 adds Polaris-specific routing, receipts, donor parity and proportional ceremony.
++
+ ## 2026-08-22 — `git-power` v0.4.1: `/update` cannot succeed with uncommitted work
+ 
+ Founder correction: “open” means dirty. `phase checkpoint` no longer reports
+diff --git a/skills-suite/_standard/validate_suite.py b/skills-suite/_standard/validate_suite.py
+index ff421e9..801df79 100755
+--- a/skills-suite/_standard/validate_suite.py
++++ b/skills-suite/_standard/validate_suite.py
+@@ -173,12 +173,14 @@ def mermaid(skills, edges):
+ 
+ 
+ def run(root):
+-    skills = load(root)
+-    if not skills:
++    target_only = (root / "SKILL.md").exists()
++    skills = load(root.parent) if target_only else load(root)
++    selected = {root.name: skills[root.name]} if target_only and root.name in skills else skills
++    if not selected:
+         print(f"nessuna skill in {root} — niente da validare")
+         return 0
+     fails = {}
+-    for name, s in skills.items():
++    for name, s in selected.items():
+         e = check_one(s["dir"], s["fm"], s["body"])
+         if e:
+             fails[name] = e
+@@ -189,8 +191,8 @@ def run(root):
+             print(f"    {e}")
+     for e in chain_err:
+         print(f"✗ catena: {e}")
+-    ok = len(skills) - len(fails)
+-    print(f"\n{ok}/{len(skills)} skill conformi · {len(edges)} archi di catena")
++    ok = len(selected) - len(fails)
++    print(f"\n{ok}/{len(selected)} skill conformi · {len(edges)} archi di catena")
+     return 1 if (fails or chain_err) else 0
+ 
+ 
+diff --git a/skills-suite/critic/EVAL-REPORT.md b/skills-suite/critic/EVAL-REPORT.md
+new file mode 100644
+index 0000000..00e5200
+--- /dev/null
++++ b/skills-suite/critic/EVAL-REPORT.md
+@@ -0,0 +1,21 @@
++
++## REVIEW REPORT — skill-meta eval cieca — critic — 2026-08-23T19:26:58+00:00
++Baseline: 2/8 (25%)
++Donor Codex review-agent: 2/8 (25%)
++Nuovo:    8/8 (100%)
++Baseline cost: tokens=6583 (6127+456), wall_ms=13055, tool_calls=0, repeated=0, consistency=3/3, context=not_available, model=claude-sonnet-5
++Donor Codex review-agent cost: tokens=10198 (8698+1500), wall_ms=23356, tool_calls=0, repeated=0, consistency=3/3, context=not_available, model=claude-sonnet-5
++New cost: tokens=13836 (11428+2408), wall_ms=29705, tool_calls=0, repeated=0, consistency=3/3, context=not_available, model=claude-sonnet-5
++Delta: tokens=+7253, wall_ms=+16650, tool_calls=+0
++Donor delta: tokens=+3638, wall_ms=+6349, tool_calls=+0
++Critic: PASS, context=fresh, model=gpt-5.5, tokens=UNKNOWN, wall_ms=300000
++Findings:
++- a fabricated evidence quote is rejected by rereading its materialized path and line: baseline FAIL
++- the reviewer receives ARTIFACT plus CONTRACT without the author's claim, reasoning or session transcript: baseline FAIL
++- the report declares opened, not_opened and accepted_unverified before findings: baseline FAIL
++- each surviving finding has a verbatim citation and a substantive counter-argument; killed candidates are recorded: baseline FAIL
++- the emitted report is valid JSON and critic_gate.py accepts it against the materialized bundle: baseline FAIL
++- candidate adds a strict quality win without regressing donor-passed checks or consistency, stays inside predeclared cost limits, and reports token/latency/tool deltas: baseline FAIL
++- critic: Final EVAL-REPORT block is generated from this sealed receipt and receives a separate final review.
++VERDICT: PASS
++NO UNRESOLVED DECISIONS
+diff --git a/skills-suite/critic/SKILL.md b/skills-suite/critic/SKILL.md
+index 78c99bd..3e30ffe 100644
+--- a/skills-suite/critic/SKILL.md
++++ b/skills-suite/critic/SKILL.md
+@@ -1,148 +1,91 @@
+ ---
+ name: critic
+-description: "Use when an artifact must be attacked from a fresh context before anyone acts on it — a diff, a spec, a plan, a claim, a census row, another skill's output. Use before promoting a finding, before signing a document off, and whenever a skill owes an independent adversarial pass."
+-version: 0.1.0
++description: ◇ Use when a non-mechanical artifact must be attacked from fresh context before promotion or action, especially a diff, spec, plan, claim, census row, or another skill's output. Requires materialized evidence and falsification; do NOT use for routine code review, merge decisions, mechanical edits, or broad repository sweeps.
++version: 0.2.0
+ user-invocable: true
+ auto: false
+-lifecycle: "one .critic/<artifact-hash>.json report per pass, validated by critic_gate.py and read by whoever dispatched it; the caller drains it at its own gate, nothing here is append-only"
++lifecycle: one .critic/<artifact-hash>.json per pass → caller validates it with critic_gate.py and drains it at its own gate
+ invokes: []
+-invoked-by: [human]
+-io: "receives ARTIFACT + CONTRACT and nothing else — never the author's conclusion, never the session transcript. produces one JSON report: a ledger of what was opened versus accepted, and findings each carrying a verbatim quote and the counter-argument it survived. Refuses to emit rather than emit unverified."
+-status: draft
++invoked-by: [human, skill-meta]
++io: receives a materialized ARTIFACT directory plus CONTRACT, never the author's claim/reasoning/transcript → emits a validated JSON ledger with only quoted, falsified findings
++status: active
+ ---
+ 
+ # critic
+ 
+-## Overview
+-
+-A critic that cannot say what it did not read is producing commentary, not review.
+-Everything here exists to make one thing impossible: a plausible finding nobody checked.
+-
+-## Quando NON usarla
+-
+-- **Not to decide whether something merges.** `real-testing` owns that verdict; this door
+-  never emits `MERGEABLE` and never writes `.review-gate/approvals/`.
+-- **Not to review a finished PR by convention.** That job belongs to `review`'s two-pass gate.
+-  This door is meant to become the engine that gate dispatches — **oggi non lo è ancora**:
+-  nessuna porta della suite la invoca (vedi *Cablaggio*), quindi chi si affida a `review` per
+-  avere questo passaggio non lo riceve.
+-- **Not as a second finding contract.** `polaris-sweep` già spedisce il proprio schema di
+-  findings, la propria clausola di citazione verbatim e la propria scala di severità
+-  (`critical/high/medium/low`, incompatibile con quella qui). Finché le due non convergono, la
+-  suite mantiene **due contratti divergenti**: non dispacciare entrambe sullo stesso artefatto
+-  senza tradurre le severità a mano.
+-- **Not for mechanical edits** — a rename, a formatting pass, a one-line change whose
+-  correctness is visible in the diff. A critic spawned on a rename is theatre.
+-- **Not when the caller has already decided.** If the conclusion is fixed and the pass is for
+-  the record, do not run it: a critic handed a verdict returns the verdict.
+-
+-## Il contratto del passaggio
+-
+-```xml
+-<critic>
+-  <inputs>
+-    <input name="artifact" required="true"/>
+-    <input name="contract" required="true" desc="what the artifact must satisfy"/>
+-  </inputs>
+-  <never-passed>the author's claim · the author's reasoning · the session transcript</never-passed>
+-
+-  <flow>
+-    <step n="1" name="OPEN">Read the artifact and every source it names. Record each path in
+-      ledger.opened. Record in ledger.not_opened what you chose not to read, and in
+-      ledger.accepted_unverified every claim you took on faith and why.</step>
+-    <step n="2" name="ATTACK">Find what is wrong and what is missing. Unstated assumptions,
+-      edge cases, hidden coupling, ways the contract is violated, conventions broken.</step>
+-    <step n="3" name="QUOTE">For each candidate finding, quote the verbatim line that motivates
+-      it, with its path. A finding you cannot quote is not a finding — it is dropped, not
+-      demoted.</step>
+-    <step n="4" name="FALSIFY">Against each surviving candidate, state the strongest argument
+-      that it is wrong, then try to make that argument hold. Report only what survives, and
+-      report the attempt with it.</step>
+-    <step n="5" name="EMIT">Write the report and run the gate. A red gate is not a formatting
+-      complaint: it means the pass did not happen.</step>
+-  </flow>
+-
+-  <halt-conditions>
+-    <condition>Zero findings — permitted, but `halt.reason` must say why this artifact
+-      genuinely has none. Silence is not a verdict.</condition>
+-    <condition>The artifact does not fit one read — stop and ask for it decomposed. Do not
+-      review half of it and report as if you saw all of it.</condition>
+-    <condition>The contract is unclear — fix the contract and re-run. A finding caused by a
+-      bad contract is the contract's finding, not the artifact's.</condition>
+-  </halt-conditions>
+-</critic>
++Fresh-context adversarial review with one invariant: a plausible finding nobody verified does not
++exist. The caller passes only `ARTIFACT + CONTRACT`; never the author's conclusion, reasoning, or
++session transcript. Every outcome, including zero findings and early halt, is the exact JSON object
++defined below; prose, commentary and Markdown fences are invalid.
++
++## When not to use it
++
++- Merge/release verdicts (`real-testing`) or routine finished-PR review (`review`).
++- Mechanical edits whose correctness is visible directly in the diff.
++- Broad repository sweeps with their own finding schema (`polaris-sweep`).
++- A pass requested only to confirm a decision already made.
++
++## Flow
++
++1. **OPEN** — read the materialized artifact and every source it names. Record paths in
++   `ledger.opened`; declare deliberate omissions and accepted-but-unverified claims.
++2. **ATTACK** — seek contract violations, omissions, assumptions, edge cases, hidden coupling and
++   broken conventions.
++3. **QUOTE** — every candidate carries the exact `contract_quote` it violates plus an
++   artifact-relative `path`, one-based `line`, and verbatim `quote`. Never infer aliases, best
++   practices, or safety goals the contract does not state. If either quote cannot be verified, drop
++   the candidate.
++4. **FALSIFY** — state the strongest counter-argument, try to make it hold, and report only findings
++   that survive. Record killed candidates in `dropped[]`.
++5. **FILTER** — before emitting, move every candidate with `survived != true`, an unverifiable
++   artifact quote, or an unverifiable `contract_quote` to `dropped[]`; never retain it at a lower
++   severity. If no findings survive, set `halt` to `{"reason":"<concrete reason>"}`; otherwise set
++   `halt` to `null`.
++6. **EMIT** — write the JSON report and run `critic_gate.py --validate`; non-zero means the pass did
++   not happen.
++
++One invocation is one pass: never self-loop. Default to one root-cause finding; add another only
++when it is independent and its `survived` value is literally `true`. A candidate appears in exactly
++one of `findings[]` or `dropped[]`, never both. Emit at most three findings and one strongest dropped
++candidate; keep each textual field under 25 words and the JSON under 500 output tokens. The caller
++may open another pass, up to three total. If substantive findings remain after three, decompose the
++artifact. If two passes produce substantive findings and the caller accepts none, stop: that is
++validation theater.
++
++## Halt
++
++- Empty, unreadable, or non-materialized artifact: stop.
++- Unclear contract: repair it before review.
++- Zero findings: allowed only with a concrete `halt.reason`; never invent findings to fill a quota.
++- Artifact too large for one read: decompose it; never review a slice as if it were the whole.
++
++## Output
++
++```json
++{
++  "artifact": "/materialized/bundle",
++  "contract": "observable requirement",
++  "ledger": {"opened": ["a.md"], "not_opened": [], "accepted_unverified": []},
++  "findings": [{
++    "claim": "discrete actionable defect",
++    "severity": "critical|important|minor",
++    "contract_quote": "verbatim contract clause",
++    "evidence": {"path": "a.md", "line": 7, "quote": "verbatim excerpt"},
++    "falsification": {"counter": "strongest objection", "survived": true, "why": "probe"}
++  }],
++  "dropped": [{"candidate": "...", "counter": "...", "why_it_died": "..."}],
++  "halt": null
++}
+ ```
+ 
+-**Il ciclo, se il chiamante ne apre uno**: al massimo **3 passaggi**, e il tetto non si alza. Se
+-tre non bastano, l'artefatto è troppo grande — si decompone. Se in 2 o più cicli il critico
+-produce finding sostanziosi e il chiamante ne classifica **zero** come azionabili, il chiamante
+-sta validando, non dubitando: si ferma e si dichiara.
+-
+-## Il fallimento contro cui è scritta
+-
+-Tre run identiche di Opus nudo sullo stesso artefatto, 2026-08-21. Tutte e tre hanno trovato i
+-difetti veri — inclusi due che quattro passate di censimento avevano mancato. **Zero su tre**
+-hanno dichiarato spontaneamente cosa avevano aperto e cosa avevano solo accettato; tutte e tre
+-hanno preso per buono un riferimento citato senza controllarlo; e le tre uscite avevano **tre
+-forme diverse**. La competenza c'era, la forma no. Questa porta non rende il modello più bravo:
+-rende **non opzionale** ciò che oggi fa a volte.
+-
+-## Cablaggio — dichiarato, non ancora fatto
+-
+-`invoked-by` dice `[human]` perché **oggi è vero solo quello**. La catena della suite è
+-bidirezionale: finché `review`, `bugfix`, `real-testing`, `polaris-sweep`, `skill-meta` e
+-`architecture` non dichiarano `invokes: [critic]`, scriverli qui sarebbe un'affermazione falsa
+-nel frontmatter — lo stesso difetto che questa porta esiste per impedire.
++`artifact` must be a readable directory. Evidence paths stay inside it; the gate rereads the cited
++line and rejects fabricated artifact or contract quotes, missing files, invalid line numbers,
++placeholders, incomplete ledgers/falsification/dropped entries, and silent zero-finding reports.
+ 
+-Il conto del cablaggio, misurato prima di iniziarlo: per `change_gate.py` un movimento su
+-`invokes` è classe **BEHAVIOUR** → T1 + T3 su ciascuna delle sei.
+-
+-**Una citazione ritirata, e il motivo vale più della citazione.** Una versione precedente di
+-questa riga attribuiva a `skill-meta` la frase *«dispatch exactly one critic with no inherited
+-session context»*. Quella frase era nel contenuto servito dall'harness al momento della lettura,
+-ma **oggi non esiste in nessun `SKILL.md` del disco** — `skill-meta` è stata riscritta da un
+-altro pannello mentre questa porta veniva costruita (main a v0.6.0 con zero occorrenze di
+-«critic», il worktree installato a v0.7.0 con nove, i due branch divergenti 6/8). Una citazione
+-che non si può più verificare non è una citazione: si ritira. Quale porta debba dichiarare
+-`invokes: [critic]` resta una decisione da prendere sulla versione che atterra, non su quella
+-che ho letto io.
+-
+-## Quick reference
+-
+-| comando | quando | blocca? |
+-|---|---|---|
+-| `python3 scripts/critic_gate.py --validate <report.json>` | prima di consegnare il report | sì, exit 1 · exit 2 se l'input è illeggibile |
+-| `python3 scripts/critic_gate.py --selfcheck` | prima di promuovere una modifica | sì, 20 rami |
+-
+-Il gate rifiuta: ledger assente, `opened` vuoto **o pieno di segnaposto** · un finding senza
+-citazione verbatim · un finding senza falsificazione o che non le è sopravvissuto · zero finding
+-senza `halt.reason` reale · `artifact`/`contract` vuoti o segnaposto (`.`, `TODO`, stringa
+-vuota, testati **uniformemente** su ogni campo che porta significato) · una voce `dropped[]`
+-incompleta. I due flag sono **mutuamente esclusivi**: `--selfcheck --validate` insieme escono 2,
+-non 0.
+-
+-**`dropped[]` — il negativo onesto ha una casa.** Un candidato che è stato tentato e ucciso dalla
+-propria falsificazione si registra (`candidate`, `counter`, `why_it_died`) invece di essere
+-cancellato. Senza quel campo l'unica mossa che passava il gate era far sparire il lavoro:
+-il gate spingeva verso *meno* finding, che è l'opposto del mestiere.
+-
+-## Origine
+-
+-**ASSORBE**: la forma a tre step e l'halt-su-zero di `review-adversarial-general` (BMAD) · il
+-divieto di passare la CLAIM, la precedenza di classificazione e il tetto a 3 cicli di
+-`doubt-driven-development` (Osmani) · il `quota-la-riga-o-sospendi` di gstack `review`/`cso`
+-(**un solo sorgente generato in quattro copie**, non tre conferme indipendenti) · l'AND-gate di
+-ammissibilità e il *«do not invent a finding to fill the result»* di `.system/review-agent`
+-(Codex).
+-
+-**NON assorbe** la quota di dieci: nel donatore convive con zero obbligo di evidenza, quindi
+-non impedisce dieci speculazioni. Qui il pavimento sul conteggio è sostituito dal gate
+-sull'ammissibilità.
+-
+-**Corregge un difetto del donatore**: il gate di gstack declassa un finding non citato a
+-confidenza `4-5` dichiarandolo soppresso, ma la sua tabella mostra `5-6` «con caveat» — un
+-finding forzato a 5 viene mostrato lo stesso. Qui non esiste banda: senza citazione il finding
+-non esiste.
++```bash
++python3 scripts/critic_gate.py --validate <report.json>  # 0 pass · 1 invalid report · 2 unusable input
++python3 scripts/critic_gate.py --selfcheck               # 23 adversarial branches
++```
+ 
+-**Scritto da zero**: la falsificazione. Verificata assente su **2.672 contenuti distinti** —
+-nessun donatore chiede al critico di provare a smontare il proprio finding prima di riportarlo.
++The gate proves report structure and quote/location integrity. Runtime provenance still owns whether
++the declared files were genuinely opened; T3 judges whether falsification was substantive.
+diff --git a/skills-suite/critic/eval/checks.json b/skills-suite/critic/eval/checks.json
+new file mode 100644
+index 0000000..102f918
+--- /dev/null
++++ b/skills-suite/critic/eval/checks.json
+@@ -0,0 +1,10 @@
++[
++  {"id":"c1","category":"outcome","assertion":"across the defect cases, every known contract violation is found and no clean-case defect is invented","cmd":null},
++  {"id":"c2","category":"outcome","assertion":"a fabricated evidence quote is rejected by rereading its materialized path and line","cmd":"python3 scripts/critic_gate.py --selfcheck"},
++  {"id":"c3","category":"process","assertion":"the reviewer receives ARTIFACT plus CONTRACT without the author's claim, reasoning or session transcript","cmd":null},
++  {"id":"c4","category":"process","assertion":"the report declares opened, not_opened and accepted_unverified before findings","cmd":null},
++  {"id":"c5","category":"process","assertion":"each surviving finding has a verbatim citation and a substantive counter-argument; killed candidates are recorded","cmd":null},
++  {"id":"c6","category":"style","assertion":"the emitted report is valid JSON and critic_gate.py accepts it against the materialized bundle","cmd":null},
++  {"id":"c7","category":"efficiency","assertion":"the run uses no repeated command and no more tool calls than the strongest donor envelope","cmd":null},
++  {"id":"c8","category":"efficiency","assertion":"candidate adds a strict quality win without regressing donor-passed checks or consistency, stays inside predeclared cost limits, and reports token/latency/tool deltas","cmd":null}
++]
+diff --git a/skills-suite/critic/eval/contract-precision-tdd.json b/skills-suite/critic/eval/contract-precision-tdd.json
+new file mode 100644
+index 0000000..4f24512
+--- /dev/null
++++ b/skills-suite/critic/eval/contract-precision-tdd.json
+@@ -0,0 +1,2 @@
++{"ts": "2026-08-23T16:42:44.932442+00:00", "test": "skills-suite/critic/eval/contract_precision_selfcheck.py::selfcheck", "cmd": "python3 skills-suite/critic/eval/contract_precision_selfcheck.py --selfcheck", "exit": 1, "rosso": true, "file_sha": "9c1336514bd2", "tail": "Traceback (most recent call last):\n  File \"<vault>/_polaris/.worktrees/critic-ready/skills-suite/critic/eval/contract_precision_selfcheck.py\", line 49, in <module>\n    raise SystemExit(main())\n                     ~~~~^^\n  File \"<vault>/_polaris/.worktrees/critic-ready/skills-suite/critic/eval/contract_precision_selfcheck.py\", line 45, in main\n    return selfcheck()\n  File \"<vault>/_polaris/.worktrees/critic-ready/skills-suite/critic/eval/contract_precision_selfcheck.py\", line 30, in selfcheck\n    assert any(\"contract_quote\" in reason for reason in reasons), reasons\n           ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: []\n"}
++{"ts": "2026-08-23T16:43:18.925915+00:00", "test": "skills-suite/critic/eval/contract_precision_selfcheck.py::selfcheck", "cmd": "python3 skills-suite/critic/eval/contract_precision_selfcheck.py --selfcheck", "exit": 0, "rosso": false, "file_sha": "9c1336514bd2", "tail": "SELFCHECK OK — absent and fabricated contract clauses are rejected\n"}
+diff --git a/skills-suite/critic/eval/contract_precision_selfcheck.py b/skills-suite/critic/eval/contract_precision_selfcheck.py
+new file mode 100644
+index 0000000..1cf5de9
+--- /dev/null
++++ b/skills-suite/critic/eval/contract_precision_selfcheck.py
+@@ -0,0 +1,49 @@
++#!/usr/bin/env python3
++"""Regression check: a critic finding must cite a real contract clause."""
++
++from __future__ import annotations
++
++import argparse
++import sys
++import tempfile
++from pathlib import Path
++
++sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
++from critic_rules import validate
++
++
++def selfcheck() -> int:
++    with tempfile.TemporaryDirectory(prefix="critic contract ") as box:
++        root = Path(box)
++        (root / "a.md").write_text("actual artifact line\n", encoding="utf-8")
++        report = {
++            "artifact": str(root), "contract": "must preserve the exact artifact line",
++            "ledger": {"opened": ["a.md"], "not_opened": [], "accepted_unverified": []},
++            "findings": [{"claim": "line was changed", "severity": "important",
++                          "evidence": {"path": "a.md", "line": 1,
++                                       "quote": "actual artifact line"},
++                          "falsification": {"counter": "change may be allowed",
++                                            "survived": True, "why": "contract forbids it"}}],
++            "halt": None,
++        }
++        reasons = validate(report)
++        assert any("contract_quote" in reason for reason in reasons), reasons
++        report["findings"][0]["contract_quote"] = "invented requirement"
++        reasons = validate(report)
++        assert any("does not match contract" in reason for reason in reasons), reasons
++        report["findings"][0]["contract_quote"] = "preserve the exact artifact line"
++        assert validate(report) == [], validate(report)
++    print("SELFCHECK OK — absent and fabricated contract clauses are rejected")
++    return 0
++
++
++def main() -> int:
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("--selfcheck", action="store_true")
++    if not parser.parse_args().selfcheck:
++        parser.error("--selfcheck")
++    return selfcheck()
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff --git a/skills-suite/critic/eval/critic-transcript-v020.json b/skills-suite/critic/eval/critic-transcript-v020.json
+new file mode 100644
+index 0000000..5a9443e
+--- /dev/null
++++ b/skills-suite/critic/eval/critic-transcript-v020.json
+@@ -0,0 +1,30 @@
++{
++  "arm_gradings": {
++    "baseline": {"c1":{"id":"c1","passed":true,"evidence":"Baseline found all four guard omissions, rejected the fabricated quote, and returned no clean finding."},"c2":{"id":"c2","passed":false,"evidence":"No deterministic reread gate."},"c3":{"id":"c3","passed":false,"evidence":"No reusable ARTIFACT+CONTRACT-only boundary."},"c4":{"id":"c4","passed":false,"evidence":"No ledger."},"c5":{"id":"c5","passed":false,"evidence":"No falsification or dropped candidate."},"c6":{"id":"c6","passed":false,"evidence":"Prose outside critic schema."},"c7":{"id":"c7","passed":true,"evidence":"Zero tools and repeated commands."},"c8":{"id":"c8","passed":false,"evidence":"No donor-parity verdict."}},
++    "codex": {"c1":{"id":"c1","passed":true,"evidence":"Codex found all four guard omissions, rejected the fabricated quote, and returned no clean finding."},"c2":{"id":"c2","passed":false,"evidence":"No deterministic reread gate."},"c3":{"id":"c3","passed":false,"evidence":"No ARTIFACT+CONTRACT-only boundary."},"c4":{"id":"c4","passed":false,"evidence":"No ledger."},"c5":{"id":"c5","passed":false,"evidence":"No falsification or dropped candidate."},"c6":{"id":"c6","passed":false,"evidence":"Prose outside critic schema."},"c7":{"id":"c7","passed":true,"evidence":"Zero tools and repeated commands."},"c8":{"id":"c8","passed":false,"evidence":"No donor-parity verdict."}},
++    "candidate": {"c1":{"id":"c1","passed":true,"evidence":"Expected defects and clean outcome match."},"c2":{"id":"c2","passed":true,"evidence":"Gate reread selfcheck passes."},"c3":{"id":"c3","passed":true,"evidence":"Input boundary enforced."},"c4":{"id":"c4","passed":true,"evidence":"All reports carry complete ledger."},"c5":{"id":"c5","passed":true,"evidence":"Surviving findings have quotes and falsification."},"c6":{"id":"c6","passed":true,"evidence":"All three reports pass gate."},"c7":{"id":"c7","passed":true,"evidence":"Zero tools and repeated commands."},"c8":{"id":"c8","passed":true,"evidence":"Strict quality win, 3/3 consistency, inside limits."}}
++  },
++  "strongest_donor": {"name":"Codex review-agent","reason":"It passes outcome and efficiency without BMAD clean-case false-positive pressure."},
++  "graded_checks": [
++    {"id":"c1","passed":true,"evidence":"candidate found all known defects and invented no clean-case defect"},
++    {"id":"c2","passed":true,"evidence":"fabricated quote rejected by live validation"},
++    {"id":"c3","passed":true,"evidence":"input contract excludes author claim, reasoning and transcript"},
++    {"id":"c4","passed":true,"evidence":"all final reports carry complete ledger fields"},
++    {"id":"c5","passed":true,"evidence":"surviving findings have quotes and falsification; killed candidates are dropped"},
++    {"id":"c6","passed":true,"evidence":"three final reports pass critic_gate.py"},
++    {"id":"c7","passed":true,"evidence":"candidate uses zero tools and repeated commands"},
++    {"id":"c8","passed":true,"evidence":"stable donor cohort, strict quality win and declared cost gates hold"}
++  ],
++  "verdict": "PASS",
++  "findings": ["WAIVED_PRE_REPORT: final EVAL-REPORT block must be generated from this receipt and separately reviewed."],
++  "attacks": {
++    "sibling_branches": {"inventory":["skills-suite/critic/eval/fixtures/guard/guard.py:checkout -- .","skills-suite/critic/eval/fixtures/guard/guard.py:restore --worktree","skills-suite/critic/eval/fixtures/guard/guard.py:stash","skills-suite/critic/eval/fixtures/guard/guard.py:clean -fd"],"probes":[{"target":"skills-suite/critic/eval/fixtures/guard/guard.py:checkout -- .","passed":true,"evidence":"candidate names checkout omission"},{"target":"skills-suite/critic/eval/fixtures/guard/guard.py:restore --worktree","passed":true,"evidence":"candidate names restore omission"},{"target":"skills-suite/critic/eval/fixtures/guard/guard.py:stash","passed":true,"evidence":"candidate names stash omission"},{"target":"skills-suite/critic/eval/fixtures/guard/guard.py:clean -fd","passed":true,"evidence":"candidate names clean omission"}]},
++    "claim_code_mismatch": {"inventory":["skills-suite/critic/SKILL.md:--validate -> scripts/critic_gate.py","skills-suite/skill-meta/SKILL.md:T3 donor parity -> scripts/eval_verdict.py:donor_failures","skills-suite/critic/eval/final/fabricated-candidate.json:evidence -> fixtures/fabricated/a.md:2"],"probes":[{"target":"skills-suite/critic/SKILL.md:--validate -> scripts/critic_gate.py","passed":true,"evidence":"SKILL, docs and argparse agree"},{"target":"skills-suite/skill-meta/SKILL.md:T3 donor parity -> scripts/eval_verdict.py:donor_failures","passed":true,"evidence":"cohort, regression, consistency and strict-win checks exist"},{"target":"skills-suite/critic/eval/final/fabricated-candidate.json:evidence -> fixtures/fabricated/a.md:2","passed":true,"evidence":"live line is cited and fabricated report quote is rejected"}]},
++    "bypasses": {"inventory":["skills-suite/critic/scripts/critic_rules.py:survived=false","skills-suite/critic/scripts/critic_rules.py:empty findings without halt.reason","skills-suite/critic/scripts/critic_rules.py:fabricated quote path-line","skills-suite/skill-meta/scripts/eval_verdict.py:assertion-only arm","skills-suite/skill-meta/scripts/eval_verdict.py:donor cohort mismatch","skills-suite/skill-meta:new_skill.py isolated T1"],"probes":[{"target":"skills-suite/critic/scripts/critic_rules.py:survived=false","passed":true,"evidence":"direct probe rejects dead finding"},{"target":"skills-suite/critic/scripts/critic_rules.py:empty findings without halt.reason","passed":true,"evidence":"direct probe rejects silent zero"},{"target":"skills-suite/critic/scripts/critic_rules.py:fabricated quote path-line","passed":true,"evidence":"direct probe rejects quote mismatch"},{"target":"skills-suite/skill-meta/scripts/eval_verdict.py:assertion-only arm","passed":true,"evidence":"validate_arm requires stable id"},{"target":"skills-suite/skill-meta/scripts/eval_verdict.py:donor cohort mismatch","passed":true,"evidence":"different ids are not a cohort"},{"target":"skills-suite/skill-meta:new_skill.py isolated T1","passed":true,"evidence":"critic and skill-meta each pass 1/1"}]},
++    "false_green_selfchecks": {"inventory":["skills-suite/critic/scripts/critic_gate.py:--selfcheck","skills-suite/skill-meta/scripts/eval_verdict.py:--selfcheck","skills-suite/skill-meta/scripts/eval_verdict_donor_selfcheck.py:--selfcheck","skills-suite/skill-meta/tests:test_t3_measurement_receipts.py"],"probes":[{"target":"skills-suite/critic/scripts/critic_gate.py:--selfcheck","passed":true,"evidence":"23 adversarial branches pass"},{"target":"skills-suite/skill-meta/scripts/eval_verdict.py:--selfcheck","passed":true,"evidence":"PASS CONCERNS FAIL and receipt blockers pass"},{"target":"skills-suite/skill-meta/scripts/eval_verdict_donor_selfcheck.py:--selfcheck","passed":true,"evidence":"donor quality and cohort gates pass"},{"target":"skills-suite/skill-meta/tests:test_t3_measurement_receipts.py","passed":true,"evidence":"targeted pytest passes"}]}
++  },
++  "model": "gpt-5.5",
++  "input_tokens": "UNKNOWN",
++  "output_tokens": "UNKNOWN",
++  "wall_ms": 300000
++}
+diff --git a/skills-suite/critic/eval/final/clean-candidate.json b/skills-suite/critic/eval/final/clean-candidate.json
+new file mode 100644
+index 0000000..c8b492a
+--- /dev/null
++++ b/skills-suite/critic/eval/final/clean-candidate.json
+@@ -0,0 +1,14 @@
++{
++  "artifact": "<vault>/_polaris/.worktrees/critic-ready/skills-suite/critic/eval/fixtures/clean",
++  "contract": "clamp returns lower when value is below lower, upper when value is above upper, and value inside the inclusive range. It raises ValueError when lower exceeds upper.",
++  "ledger": {"opened": ["clamp.py"], "not_opened": [], "accepted_unverified": []},
++  "findings": [],
++  "dropped": [
++    {
++      "candidate": "clamp(value, lower, upper) does not raise when lower == upper (only lower > upper is checked)",
++      "counter": "Contract states ValueError only when lower exceeds upper; lower == upper is a valid degenerate range and min(max(value,lower),upper) correctly returns lower==upper in that case",
++      "why_it_died": "Behavior matches contract text exactly; equal bounds are not a violation of 'lower exceeds upper'"
++    }
++  ],
++  "halt": {"reason": "Implementation matches all stated branches (below/above/inside/error) with no deviation found in the single artifact file"}
++}
+diff --git a/skills-suite/critic/eval/final/fabricated-candidate.json b/skills-suite/critic/eval/final/fabricated-candidate.json
+new file mode 100644
+index 0000000..0438cbd
+--- /dev/null
++++ b/skills-suite/critic/eval/final/fabricated-candidate.json
+@@ -0,0 +1,16 @@
++{
++  "artifact": "<vault>/_polaris/.worktrees/critic-ready/skills-suite/critic/eval/fixtures/fabricated",
++  "contract": "A report is valid only when every evidence quote is a verbatim substring of the declared path and one-based line inside the artifact directory.",
++  "ledger": {"opened": ["a.md", "report.json"], "not_opened": [], "accepted_unverified": []},
++  "findings": [
++    {
++      "claim": "report.json's finding cites a.md:2 with a quote that is not a substring of that line",
++      "severity": "critical",
++      "contract_quote": "A report is valid only when every evidence quote is a verbatim substring of the declared path and one-based line inside the artifact directory.",
++      "evidence": {"path": "a.md", "line": 2, "quote": "Validation: citations are checked against the referenced line."},
++      "falsification": {"counter": "quote may match a different line or file section", "survived": true, "why": "a.md line 2 verbatim text contains no 'All citations are verified automatically.'"}
++    }
++  ],
++  "dropped": [],
++  "halt": null
++}
+diff --git a/skills-suite/critic/eval/final/guard-candidate.json b/skills-suite/critic/eval/final/guard-candidate.json
+new file mode 100644
+index 0000000..07f4e96
+--- /dev/null
++++ b/skills-suite/critic/eval/final/guard-candidate.json
+@@ -0,0 +1,22 @@
++{
++  "artifact": "<vault>/_polaris/.worktrees/critic-ready/skills-suite/critic/eval/fixtures/guard",
++  "contract": "On a dirty worktree, refuse reset --hard, checkout -- ., restore --worktree, stash, clean -fd, branch -D, and push --force.",
++  "ledger": {"opened": ["guard.py"], "not_opened": [], "accepted_unverified": []},
++  "findings": [
++    {
++      "claim": "DESTRUCTIVE omits checkout -- ., restore --worktree, stash, and clean -fd, so allowed() permits four required-refusal commands on a dirty worktree",
++      "severity": "critical",
++      "contract_quote": "refuse reset --hard, checkout -- ., restore --worktree, stash, clean -fd, branch -D, and push --force",
++      "evidence": {"path": "guard.py", "line": 1, "quote": "DESTRUCTIVE = (\"reset --hard\", \"branch -D\", \"push --force\")"},
++      "falsification": {"counter": "maybe those four are gated elsewhere in the module, not shown in this fixture", "survived": true, "why": "file is the entire artifact; allowed() only checks DESTRUCTIVE, no other gating logic exists"}
++    }
++  ],
++  "dropped": [
++    {
++      "candidate": "substring matching in DESTRUCTIVE could false-positive on unrelated commands containing 'push --force' as text",
++      "counter": "contract only requires refusal of the listed commands, not precision against false positives",
++      "why_it_died": "not a contract violation, only a design nuance outside stated requirements"
++    }
++  ],
++  "halt": null
++}
+diff --git a/skills-suite/critic/eval/fixtures/clean/CONTRACT.txt b/skills-suite/critic/eval/fixtures/clean/CONTRACT.txt
+new file mode 100644
+index 0000000..74258f9
+--- /dev/null
++++ b/skills-suite/critic/eval/fixtures/clean/CONTRACT.txt
+@@ -0,0 +1,2 @@
++clamp returns lower when value is below lower, upper when value is above upper, and value
++inside the inclusive range. It raises ValueError when lower exceeds upper.
+diff --git a/skills-suite/critic/eval/fixtures/clean/clamp.py b/skills-suite/critic/eval/fixtures/clean/clamp.py
+new file mode 100644
+index 0000000..e62ca5d
+--- /dev/null
++++ b/skills-suite/critic/eval/fixtures/clean/clamp.py
+@@ -0,0 +1,4 @@
++def clamp(value: int, lower: int, upper: int) -> int:
++    if lower > upper:
++        raise ValueError("lower must not exceed upper")
++    return min(max(value, lower), upper)
+diff --git a/skills-suite/critic/eval/fixtures/fabricated/CONTRACT.txt b/skills-suite/critic/eval/fixtures/fabricated/CONTRACT.txt
+new file mode 100644
+index 0000000..705535b
+--- /dev/null
++++ b/skills-suite/critic/eval/fixtures/fabricated/CONTRACT.txt
+@@ -0,0 +1,2 @@
++Audit report.json. A report is valid only when every evidence quote is a verbatim substring
++of the declared path and one-based line inside the artifact directory.
+diff --git a/skills-suite/critic/eval/fixtures/fabricated/a.md b/skills-suite/critic/eval/fixtures/fabricated/a.md
+new file mode 100644
+index 0000000..0e5311a
+--- /dev/null
++++ b/skills-suite/critic/eval/fixtures/fabricated/a.md
+@@ -0,0 +1,2 @@
++Status: active
++Validation: citations are checked against the referenced line.
+diff --git a/skills-suite/critic/eval/fixtures/fabricated/report.json b/skills-suite/critic/eval/fixtures/fabricated/report.json
+new file mode 100644
+index 0000000..593ec5a
+--- /dev/null
++++ b/skills-suite/critic/eval/fixtures/fabricated/report.json
+@@ -0,0 +1 @@
++{"artifact":"skills-suite/critic/eval/fixtures/fabricated","contract":"Every finding quote must match its path and line","ledger":{"opened":["a.md"],"not_opened":[],"accepted_unverified":[]},"findings":[{"claim":"the artifact claims automatic verification","severity":"important","evidence":{"path":"a.md","line":2,"quote":"All citations are verified automatically."},"falsification":{"counter":"the exact sentence may exist","survived":true,"why":"claimed as read"}}],"halt":null}
+diff --git a/skills-suite/critic/eval/fixtures/guard/CONTRACT.txt b/skills-suite/critic/eval/fixtures/guard/CONTRACT.txt
+new file mode 100644
+index 0000000..1c70f1f
+--- /dev/null
++++ b/skills-suite/critic/eval/fixtures/guard/CONTRACT.txt
+@@ -0,0 +1,3 @@
++On a dirty worktree, refuse reset --hard, checkout -- ., restore --worktree, stash,
++clean -fd, branch -D, and push --force. On a clean worktree, ordinary non-destructive
++git commands remain allowed.
+diff --git a/skills-suite/critic/eval/fixtures/guard/guard.py b/skills-suite/critic/eval/fixtures/guard/guard.py
+new file mode 100644
+index 0000000..4ce2497
+--- /dev/null
++++ b/skills-suite/critic/eval/fixtures/guard/guard.py
+@@ -0,0 +1,8 @@
++DESTRUCTIVE = ("reset --hard", "branch -D", "push --force")
++
++
++def allowed(argv: list[str], dirty: bool) -> bool:
++    command = " ".join(argv)
++    if dirty and any(fragment in command for fragment in DESTRUCTIVE):
++        return False
++    return True
+diff --git a/skills-suite/critic/eval/prompts.json b/skills-suite/critic/eval/prompts.json
+new file mode 100644
+index 0000000..04c622c
+--- /dev/null
++++ b/skills-suite/critic/eval/prompts.json
+@@ -0,0 +1,18 @@
++{
++  "skill": "critic",
++  "method": "ARTIFACT (diff|spec|claim|skill output) x FAILURE (omission|fabrication|false positive) x ARRIVAL (explicit|implicit|contextual). Twelve hand-written cases: seven positives spanning the job and five near-miss negatives owned by review, real-testing, bugfix, polaris-sweep or direct execution.",
++  "cases": [
++    {"id":"p01","should_trigger":true,"kind":"explicit","tuple":"diff / omission / explicit","prompt":"Run critic on this git safety guard before we promote it; use fresh context and try to find sibling destructive commands the tests forgot."},
++    {"id":"p02","should_trigger":true,"kind":"implicit","tuple":"spec / omission / names job","prompt":"Attack this spec from a clean context before anyone implements it. I want only findings that survive a counter-argument."},
++    {"id":"p03","should_trigger":true,"kind":"contextual","tuple":"claim / fabrication / buried","prompt":"The census row says the workflow validates every quoted source. Before I rely on it, independently open the artifact and prove or disprove that claim without reading the author's reasoning."},
++    {"id":"p04","should_trigger":true,"kind":"implicit","tuple":"skill output / fabrication / names job","prompt":"This review report cites line 41, but I suspect the quote is invented. Validate the report against the materialized bundle before promotion."},
++    {"id":"p05","should_trigger":true,"kind":"contextual","tuple":"plan / omission / buried","prompt":"We are about to accept this migration plan. Give a fresh adversary only the plan and its contract, record what it did not open, and drop anything it cannot quote."},
++    {"id":"p06","should_trigger":true,"kind":"explicit","tuple":"skill / omission / explicit","prompt":"Use critic as the independent T3 reviewer for this SKILL.md and its eval transcript."},
++    {"id":"p07","should_trigger":true,"kind":"implicit","tuple":"clean artifact / false positive / names job","prompt":"Try to break this tiny configuration contract, but do not manufacture issues just to return a non-empty list; explain a genuine zero-finding result."},
++    {"id":"n01","should_trigger":false,"kind":"negative","tuple":"near-miss: review","prompt":"Review the finished pull request and give the merge-blocking code findings."},
++    {"id":"n02","should_trigger":false,"kind":"negative","tuple":"near-miss: real-testing","prompt":"All checks are green; decide whether this branch can merge and deploy."},
++    {"id":"n03","should_trigger":false,"kind":"negative","tuple":"near-miss: bugfix","prompt":"The upload endpoint returns 500. Reproduce the defect, patch it and add the regression test."},
++    {"id":"n04","should_trigger":false,"kind":"negative","tuple":"near-miss: polaris-sweep","prompt":"Sweep the whole repository for stale decisions and post the consolidated findings."},
++    {"id":"n05","should_trigger":false,"kind":"negative","tuple":"mechanical edit","prompt":"Rename this variable, run formatting and commit the mechanical change."}
++  ]
++}
+diff --git a/skills-suite/critic/eval/split/t2b-runs-v020.jsonl b/skills-suite/critic/eval/split/t2b-runs-v020.jsonl
+new file mode 100644
+index 0000000..6ca9a28
+--- /dev/null
++++ b/skills-suite/critic/eval/split/t2b-runs-v020.jsonl
+@@ -0,0 +1,23 @@
++{"id":"p02","run":1,"result":"critic","exit":0,"model":"claude-sonnet-5","input_tokens":54403,"output_tokens":4,"wall_ms":7932,"valid":true}
++{"id":"p04","run":1,"result":"critic","exit":0,"model":"claude-sonnet-5","input_tokens":54412,"output_tokens":4,"wall_ms":10306,"valid":true}
++{"id":"p05","run":1,"result":null,"exit":null,"valid":false,"error":"SyntaxError: Unexpected end of JSON input","wall_ms":30001}
++{"id":"n05","run":1,"result":null,"exit":null,"valid":false,"error":"SyntaxError: Unexpected end of JSON input","wall_ms":30001}
++{"id":"n04","run":1,"result":"doc-truth","exit":0,"model":"claude-sonnet-5","input_tokens":54396,"output_tokens":7,"wall_ms":8640,"valid":true}
++{"id":"p02","run":2,"result":"critic","exit":0,"model":"claude-sonnet-5","input_tokens":56541,"output_tokens":4,"wall_ms":5938,"valid":true}
++{"id":"p04","run":2,"result":"critic","exit":0,"model":"claude-sonnet-5","input_tokens":54408,"output_tokens":4,"wall_ms":7968,"valid":true}
++{"id":"p05","run":2,"result":"critic","exit":0,"model":"claude-sonnet-5","input_tokens":54420,"output_tokens":4,"wall_ms":7869,"valid":true}
++{"id":"n05","run":2,"result":"git-power","exit":0,"model":"claude-sonnet-5","input_tokens":54391,"output_tokens":5,"wall_ms":7732,"valid":true}
++{"id":"n04","run":2,"result":"doc-truth","exit":0,"model":"claude-sonnet-5","input_tokens":56530,"output_tokens":7,"wall_ms":6160,"valid":true}
++{"id":"p02","run":3,"result":null,"exit":124,"valid":false,"error":"SyntaxError: Unexpected end of JSON input","wall_ms":15509}
++{"id":"p04","run":3,"result":"critic","exit":0,"model":"claude-sonnet-5","input_tokens":54411,"output_tokens":4,"wall_ms":30892,"valid":true}
++{"id":"p05","run":3,"result":"critic","exit":124,"model":"claude-sonnet-5","input_tokens":65026,"output_tokens":4,"wall_ms":39220,"valid":true}
++{"id":"n05","run":3,"result":null,"exit":124,"valid":false,"error":"SyntaxError: Unexpected end of JSON input","wall_ms":15514}
++{"id":"n04","run":3,"result":null,"exit":124,"valid":false,"error":"SyntaxError: Unexpected end of JSON input","wall_ms":15504}
++{"id":"p02","run":4,"result":"critic","exit":0,"model":"claude-sonnet-5","input_tokens":39536,"output_tokens":4,"wall_ms":19773,"valid":true}
++{"id":"n05","run":4,"result":"NONE","exit":0,"model":"claude-sonnet-5","input_tokens":39522,"output_tokens":5,"wall_ms":33194,"valid":true}
++{"id":"n04","run":4,"result":"doc-truth","exit":124,"model":"claude-sonnet-5","input_tokens":39528,"output_tokens":7,"wall_ms":49054,"valid":true}
++{"id":"p05","run":5,"result":"critic","exit":124,"model":"claude-sonnet-5","input_tokens":53583,"output_tokens":4,"wall_ms":49238,"valid":true}
++{"id":"n05","run":5,"result":"git-power","exit":0,"model":"claude-sonnet-5","input_tokens":53557,"output_tokens":5,"wall_ms":21757,"valid":true}
++{"id":"p05","run":6,"result":"critic","exit":0,"model":"claude-sonnet-5","input_tokens":39551,"output_tokens":4,"wall_ms":6254,"valid":true}
++{"id":"p05","run":7,"result":"critic","exit":0,"model":"claude-sonnet-5","input_tokens":113057,"output_tokens":4,"wall_ms":8107,"valid":true}
++{"id":"n04","run":6,"result":"doc-truth","exit":0,"model":"claude-sonnet-5","input_tokens":68840,"output_tokens":7,"wall_ms":7440,"valid":true}
+diff --git a/skills-suite/critic/eval/split/test.json b/skills-suite/critic/eval/split/test.json
+new file mode 100644
+index 0000000..3bc5285
+--- /dev/null
++++ b/skills-suite/critic/eval/split/test.json
+@@ -0,0 +1,37 @@
++[
++  {
++    "id": "p02",
++    "should_trigger": true,
++    "kind": "implicit",
++    "tuple": "spec / omission / names job",
++    "prompt": "Attack this spec from a clean context before anyone implements it. I want only findings that survive a counter-argument."
++  },
++  {
++    "id": "p04",
++    "should_trigger": true,
++    "kind": "implicit",
++    "tuple": "skill output / fabrication / names job",
++    "prompt": "This review report cites line 41, but I suspect the quote is invented. Validate the report against the materialized bundle before promotion."
++  },
++  {
++    "id": "p05",
++    "should_trigger": true,
++    "kind": "contextual",
++    "tuple": "plan / omission / buried",
++    "prompt": "We are about to accept this migration plan. Give a fresh adversary only the plan and its contract, record what it did not open, and drop anything it cannot quote."
++  },
++  {
++    "id": "n05",
++    "should_trigger": false,
++    "kind": "negative",
++    "tuple": "mechanical edit",
++    "prompt": "Rename this variable, run formatting and commit the mechanical change."
++  },
++  {
++    "id": "n04",
++    "should_trigger": false,
++    "kind": "negative",
++    "tuple": "near-miss: polaris-sweep",
++    "prompt": "Sweep the whole repository for stale decisions and post the consolidated findings."
++  }
++]
+\ No newline at end of file
+diff --git a/skills-suite/critic/eval/split/train.json b/skills-suite/critic/eval/split/train.json
+new file mode 100644
+index 0000000..282a133
+--- /dev/null
++++ b/skills-suite/critic/eval/split/train.json
+@@ -0,0 +1,51 @@
++[
++  {
++    "id": "p03",
++    "should_trigger": true,
++    "kind": "contextual",
++    "tuple": "claim / fabrication / buried",
++    "prompt": "The census row says the workflow validates every quoted source. Before I rely on it, independently open the artifact and prove or disprove that claim without reading the author's reasoning."
++  },
++  {
++    "id": "p07",
++    "should_trigger": true,
++    "kind": "implicit",
++    "tuple": "clean artifact / false positive / names job",
++    "prompt": "Try to break this tiny configuration contract, but do not manufacture issues just to return a non-empty list; explain a genuine zero-finding result."
++  },
++  {
++    "id": "p01",
++    "should_trigger": true,
++    "kind": "explicit",
++    "tuple": "diff / omission / explicit",
++    "prompt": "Run critic on this git safety guard before we promote it; use fresh context and try to find sibling destructive commands the tests forgot."
++  },
++  {
++    "id": "p06",
++    "should_trigger": true,
++    "kind": "explicit",
++    "tuple": "skill / omission / explicit",
++    "prompt": "Use critic as the independent T3 reviewer for this SKILL.md and its eval transcript."
++  },
++  {
++    "id": "n03",
++    "should_trigger": false,
++    "kind": "negative",
++    "tuple": "near-miss: bugfix",
++    "prompt": "The upload endpoint returns 500. Reproduce the defect, patch it and add the regression test."
++  },
++  {
++    "id": "n01",
++    "should_trigger": false,
++    "kind": "negative",
++    "tuple": "near-miss: review",
++    "prompt": "Review the finished pull request and give the merge-blocking code findings."
++  },
++  {
++    "id": "n02",
++    "should_trigger": false,
++    "kind": "negative",
++    "tuple": "near-miss: real-testing",
++    "prompt": "All checks are green; decide whether this branch can merge and deploy."
++  }
++]
+\ No newline at end of file
+diff --git a/skills-suite/critic/eval/t3-baseline-v020.json b/skills-suite/critic/eval/t3-baseline-v020.json
+new file mode 100644
+index 0000000..b480014
+--- /dev/null
++++ b/skills-suite/critic/eval/t3-baseline-v020.json
+@@ -0,0 +1,13 @@
++{
++  "checks": [
++    {"id":"c1","assertion":"across the defect cases, every known contract violation is found and no clean-case defect is invented","passed":true,"evidence":"Safe-mode baseline found all four guard omissions, rejected the fabricated quote, and returned No findings for clamp."},
++    {"id":"c2","assertion":"a fabricated evidence quote is rejected by rereading its materialized path and line","passed":false,"evidence":"The prose outcome has no deterministic reread gate."},
++    {"id":"c3","assertion":"the reviewer receives ARTIFACT plus CONTRACT without the author's claim, reasoning or session transcript","passed":false,"evidence":"No reusable input boundary is enforced by the baseline prompt."},
++    {"id":"c4","assertion":"the report declares opened, not_opened and accepted_unverified before findings","passed":false,"evidence":"Baseline prose has no ledger."},
++    {"id":"c5","assertion":"each surviving finding has a verbatim citation and a substantive counter-argument; killed candidates are recorded","passed":false,"evidence":"Baseline prose has neither falsification nor dropped candidates."},
++    {"id":"c6","assertion":"the emitted report is valid JSON and critic_gate.py accepts it against the materialized bundle","passed":false,"evidence":"Baseline emits prose outside the critic schema."},
++    {"id":"c7","assertion":"the run uses no repeated command and no more tool calls than the strongest donor envelope","passed":true,"evidence":"Three safe-mode runs used zero tools and zero repeated commands."},
++    {"id":"c8","assertion":"candidate adds a strict quality win without regressing donor-passed checks or consistency, stays inside predeclared cost limits, and reports token/latency/tool deltas","passed":false,"evidence":"Baseline has no donor-parity or predeclared-limit verdict."}
++  ],
++  "metrics": {"model":"claude-sonnet-5","input_tokens":6127,"output_tokens":456,"wall_ms":13055,"tool_calls":0,"repeated_commands":0,"consistent_runs":3,"runs":3,"context_reuse":"not_available"}
++}
+diff --git a/skills-suite/critic/eval/t3-donor-v020.json b/skills-suite/critic/eval/t3-donor-v020.json
+new file mode 100644
+index 0000000..b83c4c4
+--- /dev/null
++++ b/skills-suite/critic/eval/t3-donor-v020.json
+@@ -0,0 +1,13 @@
++{
++  "checks": [
++    {"id":"c1","assertion":"across the defect cases, every known contract violation is found and no clean-case defect is invented","passed":true,"evidence":"Codex found all four guard omissions, rejected the fabricated quote, and returned no clean finding; it also raised one unstated guard concern."},
++    {"id":"c2","assertion":"a fabricated evidence quote is rejected by rereading its materialized path and line","passed":false,"evidence":"Codex detects the mismatch in prose but has no deterministic reread gate."},
++    {"id":"c3","assertion":"the reviewer receives ARTIFACT plus CONTRACT without the author's claim, reasoning or session transcript","passed":false,"evidence":"review-agent does not enforce the critic ARTIFACT+CONTRACT-only boundary."},
++    {"id":"c4","assertion":"the report declares opened, not_opened and accepted_unverified before findings","passed":false,"evidence":"Codex output has no opened/not_opened/accepted_unverified ledger."},
++    {"id":"c5","assertion":"each surviving finding has a verbatim citation and a substantive counter-argument; killed candidates are recorded","passed":false,"evidence":"Codex has citations but no required falsification and dropped-candidate record."},
++    {"id":"c6","assertion":"the emitted report is valid JSON and critic_gate.py accepts it against the materialized bundle","passed":false,"evidence":"Codex emits prose outside the critic schema."},
++    {"id":"c7","assertion":"the run uses no repeated command and no more tool calls than the strongest donor envelope","passed":true,"evidence":"Three safe-mode runs used zero tools and zero repeated commands."},
++    {"id":"c8","assertion":"candidate adds a strict quality win without regressing donor-passed checks or consistency, stays inside predeclared cost limits, and reports token/latency/tool deltas","passed":false,"evidence":"The donor is the comparison arm and has no strongest-donor promotion verdict."}
++  ],
++  "metrics": {"model":"claude-sonnet-5","input_tokens":8698,"output_tokens":1500,"wall_ms":23356,"tool_calls":0,"repeated_commands":0,"consistent_runs":3,"runs":3,"context_reuse":"not_available"}
++}
+diff --git a/skills-suite/critic/eval/t3-final-v020.json b/skills-suite/critic/eval/t3-final-v020.json
+new file mode 100644
+index 0000000..74903ad
+--- /dev/null
++++ b/skills-suite/critic/eval/t3-final-v020.json
+@@ -0,0 +1,47 @@
++{
++  "model": "claude-sonnet-5",
++  "effort": "medium",
++  "harness": "claude --safe-mode --tools '' --no-session-persistence; identical case prompts; arm-specific system prompt",
++  "limits_predeclared": {
++    "max_total_tokens": 370000,
++    "max_wall_ms": 66000,
++    "max_tool_calls": 0,
++    "max_repeated_commands": 0,
++    "min_consistency": 1.0
++  },
++  "baseline": {
++    "metrics": {"input_tokens": 6127, "output_tokens": 456, "wall_ms": 13055, "tool_calls": 0, "repeated_commands": 0, "consistent_runs": 3, "runs": 3, "context_reuse": "not_available"},
++    "cases": {
++      "guard": "Found all four missing contract-required commands; no clean-path defect invented.",
++      "fabricated": "Rejected the fabricated a.md:2 quote.",
++      "clean": "No findings."
++    }
++  },
++  "donor": {
++    "name": "Codex review-agent",
++    "metrics": {"input_tokens": 8698, "output_tokens": 1500, "wall_ms": 23356, "tool_calls": 0, "repeated_commands": 0, "consistent_runs": 3, "runs": 3, "context_reuse": "not_available"},
++    "cases": {
++      "guard": "Found all four omissions, then also reported an unstated substring-robustness concern.",
++      "fabricated": "Rejected the fabricated a.md:2 quote.",
++      "clean": "No findings."
++    }
++  },
++  "candidate": {
++    "metrics": {"input_tokens": 11428, "output_tokens": 2408, "wall_ms": 29705, "tool_calls": 0, "repeated_commands": 0, "consistent_runs": 3, "runs": 3, "context_reuse": "not_available"},
++    "reports": [
++      "eval/final/guard-candidate.json",
++      "eval/final/fabricated-candidate.json",
++      "eval/final/clean-candidate.json"
++    ],
++    "cases": {
++      "guard": "Found all four omissions and explicitly dropped the unstated substring concern.",
++      "fabricated": "Rejected the fabricated a.md:2 quote with contract and artifact evidence.",
++      "clean": "No findings, one falsified candidate recorded, concrete halt reason emitted."
++    }
++  },
++  "sessions": {
++    "baseline": ["c3215f9e-6058-4adb-b4c4-a431eed8af84", "9c28bf05-12de-4a4d-a2fd-fdd67e57616d", "ff9911d4-94e8-4553-a5f0-c42f39568bdf"],
++    "donor": ["b2e6bdb5-3bbf-4333-ba4d-d5fcc8109bde", "6f09600f-bdde-494a-b09d-7a2343fe5401", "ee20eeb7-f68a-4818-92ba-0c83d963a9ee"],
++    "candidate": ["b6c3f984-fef5-4bcf-9a79-5daf2c192cd9", "5adcaae1-13a2-4d1c-a4d9-43e74ca730cf", "4bf6b6a2-d78e-4bb7-9d23-b7a7da4018cc"]
++  }
++}
+diff --git a/skills-suite/critic/eval/t3-new-v020.json b/skills-suite/critic/eval/t3-new-v020.json
+new file mode 100644
+index 0000000..5592e14
+--- /dev/null
++++ b/skills-suite/critic/eval/t3-new-v020.json
+@@ -0,0 +1,14 @@
++{
++  "checks": [
++    {"id":"c1","assertion":"across the defect cases, every known contract violation is found and no clean-case defect is invented","passed":true,"evidence":"Candidate found all four guard omissions, rejected the fabricated quote, and emitted zero clean findings."},
++    {"id":"c2","assertion":"a fabricated evidence quote is rejected by rereading its materialized path and line","passed":true,"evidence":"critic_gate selfcheck covers fabricated path-line quotes and all three final reports pass live reread validation."},
++    {"id":"c3","assertion":"the reviewer receives ARTIFACT plus CONTRACT without the author's claim, reasoning or session transcript","passed":true,"evidence":"The runtime input contract excludes author conclusion, reasoning and transcript."},
++    {"id":"c4","assertion":"the report declares opened, not_opened and accepted_unverified before findings","passed":true,"evidence":"All three final JSON reports carry the complete ledger before findings."},
++    {"id":"c5","assertion":"each surviving finding has a verbatim citation and a substantive counter-argument; killed candidates are recorded","passed":true,"evidence":"Guard and clean record falsified candidates; every finding has survived=true, contract quote and artifact citation."},
++    {"id":"c6","assertion":"the emitted report is valid JSON and critic_gate.py accepts it against the materialized bundle","passed":true,"evidence":"critic_gate.py --validate returns PASS for guard, fabricated and clean final reports."},
++    {"id":"c7","assertion":"the run uses no repeated command and no more tool calls than the strongest donor envelope","passed":true,"evidence":"Three safe-mode runs used zero tools and zero repeated commands, equal to Codex."},
++    {"id":"c8","assertion":"candidate adds a strict quality win without regressing donor-passed checks or consistency, stays inside predeclared cost limits, and reports token/latency/tool deltas","passed":true,"evidence":"Candidate preserves Codex c1/c7, adds c2-c6, is 3/3 consistent, and remains under all predeclared limits."}
++  ],
++  "metrics": {"model":"claude-sonnet-5","input_tokens":11428,"output_tokens":2408,"wall_ms":29705,"tool_calls":0,"repeated_commands":0,"consistent_runs":3,"runs":3,"context_reuse":"not_available"},
++  "limits": {"max_total_tokens":370000,"max_wall_ms":66000,"max_tool_calls":0,"max_repeated_commands":0,"min_consistency":1.0}
++}
+diff --git a/skills-suite/critic/eval/t3-runs-v020.jsonl b/skills-suite/critic/eval/t3-runs-v020.jsonl
+new file mode 100644
+index 0000000..fac1cd4
+--- /dev/null
++++ b/skills-suite/critic/eval/t3-runs-v020.jsonl
+@@ -0,0 +1,22 @@
++{"case":"guard","arm":"candidate","run":1,"result":"```json\n{\n  \"artifact\": \"<vault>/_polaris/.worktrees/critic-ready/skills-suite/critic/eval/fixtures/guard\",\n  \"contract\": \"On a dirty worktree, refuse reset --hard, checkout -- ., restore --worktree, stash, clean -fd, branch -D, and push --force.\",\n  \"ledger\": {\n    \"opened\": [\"guard.py\"],\n    \"not_opened\": [],\n    \"accepted_unverified\": []\n  },\n  \"findings\": [\n    {\n      \"claim\": \"DESTRUCTIVE tuple omits 'checkout -- .' and 'restore --worktree'; both pass allowed() on a dirty tree.\",\n      \"severity\": \"critical\",\n      \"contract_quote\": \"refuse reset --hard, checkout -- ., restore --worktree, stash\",\n      \"evidence\": {\"path\": \"guard.py\", \"line\": 1, \"quote\": \"DESTRUCTIVE = (\\\"reset --hard\\\", \\\"branch -D\\\", \\\"push --force\\\")\"},\n      \"falsification\": {\"counter\": \"maybe 'reset --hard' fragment substring-matches checkout/restore commands\", \"survived\": true, \"why\": \"no shared substring exists between 'reset --hard' and 'checkout -- .'/'restore --worktree'\"}\n    },\n    {\n      \"claim\": \"DESTRUCTIVE tuple omits 'stash'; `git stash` is allowed on a dirty worktree despite being listed destructive.\",\n      \"severity\": \"critical\",\n      \"contract_quote\": \"restore --worktree, stash, clean -fd, branch -D\",\n      \"evidence\": {\"path\": \"guard.py\", \"line\": 1, \"quote\": \"DESTRUCTIVE = (\\\"reset --hard\\\", \\\"branch -D\\\", \\\"push --force\\\")\"},\n      \"falsification\": {\"counter\": \"'branch -D' substring could accidentally match 'stash'\", \"survived\": true, \"why\": \"'stash' is not a substring of any DESTRUCTIVE entry\"}\n    },\n    {\n      \"claim\": \"DESTRUCTIVE tuple omits 'clean -fd'; dirty-tree cleans pass allowed() unblocked.\",\n      \"severity\": \"critical\",\n      \"contract_quote\": \"stash, clean -fd, branch -D, and push --force\",\n      \"evidence\": {\"path\": \"guard.py\", \"line\": 1, \"quote\": \"DESTRUCTIVE = (\\\"reset --hard\\\", \\\"branch -D\\\", \\\"push --force\\\")\"},\n      \"falsification\": {\"counter\": \"'push --force' substring could match 'clean -fd'\", \"survived\": true, \"why\": \"no overlapping substring between 'push --force' and 'clean -fd'\"}\n    }\n  ],\n  \"dropped\": [\n    {\n      \"candidate\": \"Naive substring match on joined argv could over-block unrelated commands containing e.g. 'stash' as part of a longer token.\",\n      \"counter\": \"contract states only which commands must be refused/allowed, not precision of matching strategy\",\n      \"why_it_died\": \"not a verifiable contract violation, only a speculative false-positive risk\"\n    }\n  ],\n  \"halt\": null\n}\n```","exit":0,"model":"claude-sonnet-5","input_tokens":54447,"output_tokens":2592,"wall_ms":30970,"tool_calls":0,"valid":true}
++{"case":"guard","arm":"bmad","run":1,"result":"- Substring matching on joined argv is trivially bypassable: `git reset  --hard` (double space), `git reset --har` won't match but `git rst --hard` alias would, and unrelated commands containing the substring incidentally (e.g., a commit message argument `\"please reset --hard later\"`) would be wrongly blocked — the check has no notion of actual git subcommand/flag parsing.\n- Contract requires blocking `checkout -- .`, `restore --worktree`, `clean -fd`, but `DESTRUCTIVE` tuple only contains `reset --hard`, `branch -D`, `push --force` — three of six required patterns are simply missing from implementation.\n- `stash` is required to be blocked on a dirty worktree per contract, but `\"stash\"` is absent from `DESTRUCTIVE`, so `git stash` would be allowed even though it can destroy uncommitted changes in some workflows (or at minimum contradicts explicit spec).\n- No test file/fixture accompanies `guard.py` in this bundle — the eval fixture directory implies tests should verify `allowed()`, but none are shown; can't confirm behavior against contract cases.\n- `push --force` matches command string, but real-world usage often uses `--force-with-lease` or short flag `-f`; neither is covered, meaning force-pushes can bypass the guard entirely.\n- `branch -D` won't match `git branch -d -D` variations or `-D` combined with other flags/ordering (e.g., `git branch --force -D`), and case-sensitivity isn't addressed (`--Force`, `RESET --HARD` on case-insensitive shells).\n- The `dirty` parameter is a caller-supplied boolean with no validation or documentation on how it's computed — if the caller mis-detects a dirty worktree (e.g., untracked-only changes, ignored files), the guard silently allows destructive commands with no defense in depth.\n- No handling of compound/chained commands (`git add . && git reset --hard`, `; git push --force`) — since `command = \" \".join(argv)` just joins argv, this is somewhat mitigated for a single argv list, but if argv itself is a shell string split naively, quoting/escaping tricks (e.g., inserting the flag as part of a quoted commit message) aren't excluded, risking false positives on unrelated text.\n- On a clean worktree, the contract says \"ordinary non-destructive git commands remain allowed\" but says nothing about whether destructive commands should also be permitted when clean — `guard.py` implicitly allows all six destructive patterns when `dirty=False`, which is unverified against intent (should `push --force` ever be blocked regardless of dirty state, e.g., on protected branches?). The contract is silent/ambiguous here, and the implementation makes an assumption without documenting it.\n- Function name `allowed` and single boolean return give no reason/explanation for a rejection, making it hard for any calling UI/CLI to tell the user *why* the command was blocked or which fragment triggered it.\n- No `__future__`/type-checking on `argv` contents (e.g., non-string elements) — `\" \".join(argv)` will raise `TypeError` on any non-str item with no guard or error handling, an unhandled crash path for malformed input.","exit":0,"model":"claude-sonnet-5","input_tokens":53597,"output_tokens":1073,"wall_ms":53370,"tool_calls":0,"valid":true}
++{"case":"guard","arm":"osmani","run":1,"result":"## Doubt Cycle — guard.py\n\n**Step 1: CLAIM**\nClaim: \"`guard.py` correctly refuses all destructive git operations listed in the contract when the worktree is dirty, and allows everything else.\"\nWhy it matters: this is a safety guard meant to prevent exactly the class of incident described in the user's own CLAUDE.md (accidental `reset --hard` / `checkout -- .` / `stash` on a shared worktree wiping someone else's uncommitted work). A gap here reproduces that incident class silently.\n\n**Step 2: EXTRACT** — artifact and contract as supplied above (no reasoning carried in).\n\n**Step 3: DOUBT (adversarial findings)**\n\n1. **Contract coverage gap (critical):** The contract requires refusing `reset --hard`, `checkout -- .`, `restore --worktree`, `stash`, `clean -fd`, `branch -D`, and `push --force` when dirty. `DESTRUCTIVE` only contains `\"reset --hard\"`, `\"branch -D\"`, `\"push --force\"`. **Four of seven required patterns — `checkout -- .`, `restore --worktree`, `stash`, `clean -fd` — are entirely unguarded.** A dirty-worktree `git stash` or `git clean -fd` passes `allowed()` as `True`.\n2. **Substring matching is both under- and over-inclusive:**\n   - Under-inclusive: equivalent/long-form flags bypass detection entirely — `push -f` (short for `--force`), `branch --delete --force`, `clean -f -d` (split flags instead of `-fd`), `reset --hard HEAD~1` still matches by luck (substring present), but reordered or spaced variants (e.g. extra whitespace collapsing differently, `reset  --hard`) are not normalized before matching.\n   - Over-inclusive: `command = \" \".join(argv)` naively concatenates all argv tokens, so a commit message argument literally containing the text `\"reset --hard\"` (e.g. `git commit -m \"docs: warn about reset --hard\"`) would false-positive and block a harmless commit.\n3. **No token-boundary awareness:** substring checks like `\"branch -D\"` would also match `\"branch -Dxyz\"` or a differently-intended token concatenation, since `argv` is joined with a single space and matched as raw text rather than compared token-by-token.\n4. **Silent fail-open by default:** any command not explicitly enumerated (including the four missing ones above) returns `True` even when dirty — the function's design is an allowlist-by-omission for destructive ops, which is the opposite of a safe default for a guard whose explicit purpose is loss-prevention.\n5. **No case handling / no `git` prefix stripping considered**, though lower risk than the above.\n\n**Step 4: RECONCILE**\n\n- Finding 1 (missing 4 patterns) → **Valid + actionable.** Direct, unambiguous violation of the stated contract text. Must fix: add `\"checkout -- .\"`, `\"restore --worktree\"`, `\"stash\"`, `\"clean -fd\"` to `DESTRUCTIVE` (or restructure matching to be robust to flag variants).\n- Finding 2 (flag-form bypass: `-f` vs `--force`, split flags) → **Valid trade-off / actionable depending on scope.** Contract text only specifies the exact forms listed (`push --force`, not `-f`), so strictly the contract is satisfied for the literal forms — but this is a real security gap for the guard's evident purpose. Flag as a contract ambiguity: recommend tightening the contract or the implementation to cover common aliases.\n- Finding 3 (false-positive on commit messages containing destructive-looking text) → **Valid + actionable.** `\" \".join(argv)` matching raw joined text instead of parsing subcommand + flags is a real correctness bug independent of the contract, since it also risks blocking legitimate non-destructive commands.\n- Finding 4 (fail-open by default) → **Valid + actionable**, same root cause as Finding 1 — restructuring as a matched-pattern allowlist-of-safe-ops or a stricter parser would close both.\n- Finding 5 → **Noise-adjacent / minor**, not contract-required, no action needed now.\n\n**Step 5: STOP**\nFindings are substantive and concentrated in one cycle (not trivial, not repeat). Stop condition: escalate rather than loop — the artifact does not satisfy the contract as written (4/7 required refusals unimplemented) and has an independent false-positive matching bug. **Verdict: FAILS CONTRACT — do not ship as-is.**","exit":0,"model":"claude-sonnet-5","input_tokens":58731,"output_tokens":3154,"wall_ms":39916,"tool_calls":0,"valid":true}
++{"case":"guard","arm":"codex","run":1,"result":"[P1] Guard misses several contract-required destructive commands — guard.py:1\n\nThe `DESTRUCTIVE` tuple only lists `\"reset --hard\"`, `\"branch -D\"`, and `\"push --force\"`. The contract requires blocking six patterns on a dirty worktree: `reset --hard`, `checkout -- .`, `restore --worktree`, `stash`, `clean -fd`, `branch -D`, and `push --force`. `checkout -- .`, `restore --worktree`, `stash`, and `clean -fd` are missing entirely, so `allowed([\"git\", \"checkout\", \"--\", \".\"], dirty=True)`, `allowed([\"git\", \"stash\"], dirty=True)`, and `allowed([\"git\", \"clean\", \"-fd\"], dirty=True)` all incorrectly return `True` on a dirty worktree, letting the guard approve commands the contract says must be refused.\n\nNo findings related to the clean-worktree behavior — that path is correctly permissive for all commands.\n\nOverall assessment: the substring-match design itself is reasonable for the covered cases, but the check fails its core purpose because most of the required destructive-command list isn't in `DESTRUCTIVE`. This should be fixed by adding the missing fragments before this guard is relied upon. No tests are present in the bundle to verify any of the six required refusal cases or the clean-worktree allow case.","exit":0,"model":"claude-sonnet-5","input_tokens":53666,"output_tokens":457,"wall_ms":10791,"tool_calls":0,"valid":true}
++{"case":"fabricated","arm":"candidate","run":1,"result":"```json\n{\n  \"artifact\": \"skills-suite/critic/eval/fixtures/fabricated\",\n  \"contract\": \"Every finding quote must match its path and line\",\n  \"ledger\": {\"opened\": [\"a.md\", \"report.json\"], \"not_opened\": [], \"accepted_unverified\": []},\n  \"findings\": [{\n    \"claim\": \"report.json finding quotes line 2 but 'All citations are verified automatically.' is not a.md line 2\",\n    \"severity\": \"critical\",\n    \"contract_quote\": \"every evidence quote is a verbatim substring of the declared path and one-based line\",\n    \"evidence\": {\"path\": \"a.md\", \"line\": 2, \"quote\": \"Validation: citations are checked against the referenced line.\"},\n    \"falsification\": {\"counter\": \"quote could be a paraphrase gate accepts\", \"survived\": true, \"why\": \"line 2 verbatim text has no 'verified automatically' substring\"}\n  }],\n  \"dropped\": [{\n    \"candidate\": \"a.md line 1 'Status: active' could itself be a violation\",\n    \"counter\": \"line 1 is not cited by report.json, so contract clause doesn't apply to it\",\n    \"why_it_died\": \"no finding in report.json references line 1\"\n  }],\n  \"halt\": null\n}\n```","exit":0,"model":"claude-sonnet-5","input_tokens":97431,"output_tokens":413,"wall_ms":6908,"tool_calls":0,"valid":true}
++{"case":"fabricated","arm":"bmad","run":1,"result":"## Adversarial Review Findings\n\n- **Quote does not match cited line verbatim**: `report.json` cites `a.md` line 2 with quote `\"All citations are verified automatically.\"`, but line 2 of `a.md` actually reads `\"Validation: citations are checked against the referenced line.\"` — the quoted text does not exist there at all.\n- **Fabricated citation, not just misaligned**: The quoted sentence doesn't appear anywhere in `a.md` (checked both line 1 `\"Status: active\"` and line 2) — this isn't an off-by-one line error, it's an invented quote.\n- **Claim misrepresents the source**: The finding's `claim` field says the artifact \"claims automatic verification,\" but `a.md` actually says citations are \"checked against the referenced line\" — a process/manual-check statement, not a claim of automatic verification. The finding mischaracterizes the source it's supposedly quoting.\n- **Ledger contradicts the finding**: `ledger.accepted_unverified` is empty, yet this finding is built on an unverifiable/fabricated quote — it should have been logged there instead of presented as an accepted, cited finding.\n- **`falsification.why` is not a real falsification rationale**: `\"claimed as read\"` doesn't explain why the counter-evidence (the quote possibly existing) survived; it's a non-answer that doesn't demonstrate any actual verification attempt against the file content.\n- **Unjustified severity rating**: The finding is marked `\"important\"` despite having zero substantiated evidence — severity is asserted, not earned.\n- **`halt: null` is inconsistent with contract violation**: Given the contract states a report is valid \"only when every evidence quote is a verbatim substring\" of its cited location, and this one isn't, the workflow should have halted or flagged the report as invalid rather than emitting `halt: null` silently.\n- **No self-flagging of contract failure**: Nothing in `report.json` acknowledges that its sole finding fails the stated verbatim-match contract — the report presents itself as clean despite being invalid by its own governing contract.\n- **Insufficient provenance for \"opened\" scope**: `ledger.opened` lists only `a.md` with no accompanying record of what was actually scanned/read (e.g., byte range, full-file hash, or line count read) to substantiate that citation review was performed at all.\n- **No verification/confidence field**: The schema has no mechanism (e.g., a `verified: true/false` flag) to distinguish a checked citation from a fabricated one, so a downstream consumer of this report has no way to catch this exact failure automatically — the malformed finding would pass through undetected.\n- **Single-finding report offers no negative-space check**: The report shows no evidence the reviewer looked for *other* potential issues in `a.md` beyond this one fabricated citation (e.g., the \"Status: active\" line is never referenced or validated against anything).","exit":0,"model":"claude-sonnet-5","input_tokens":96581,"output_tokens":2182,"wall_ms":26633,"tool_calls":0,"valid":true}
++{"case":"fabricated","arm":"osmani","run":1,"exit":0,"valid":false,"error":"SyntaxError: Unexpected end of JSON input"}
++{"case":"fabricated","arm":"codex","run":1,"result":"[P1] Unverified quote falsely marked as read — report.json:findings[0]\n\nThe finding's quote \"All citations are verified automatically.\" does not appear in a.md at line 2 (or anywhere in a.md). Line 2 of a.md is \"Validation: citations are checked against the referenced line.\" The finding's `falsification.why` field states \"claimed as read,\" asserting the quote was verified against the source, but the quote is fabricated and does not match the artifact content at the cited path/line. This violates the contract's requirement that every finding quote be a verbatim substring of the declared path and line.\n\nOverall assessment: report.json fails the contract — the single finding it contains cites a non-existent quote. No findings in this report are valid.","exit":0,"model":"claude-sonnet-5","input_tokens":96648,"output_tokens":233,"wall_ms":7735,"tool_calls":0,"valid":true}
++{"case":"clean","arm":"candidate","run":1,"result":"```json\n{\n  \"artifact\": \"<vault>/_polaris/.worktrees/critic-ready/skills-suite/critic/eval/fixtures/clean\",\n  \"contract\": \"clamp returns lower when value is below lower, upper when value is above upper, and value inside the inclusive range. It raises ValueError when lower exceeds upper.\",\n  \"ledger\": {\"opened\": [\"clamp.py\"], \"not_opened\": [], \"accepted_unverified\": []},\n  \"findings\": [],\n  \"dropped\": [\n    {\n      \"candidate\": \"clamp(value, lower, upper) with lower == upper is unhandled/ambiguous\",\n      \"counter\": \"Contract only requires raising when lower exceeds upper; lower == upper is not 'exceeds', and min(max(value, lower), upper) correctly collapses to lower==upper for any value.\",\n      \"why_it_died\": \"No contract clause covers lower==upper as an error case; behavior matches inclusive-range semantics.\"\n    }\n  ],\n  \"halt\": null\n}\n```","exit":0,"model":"claude-sonnet-5","input_tokens":99021,"output_tokens":358,"wall_ms":6035,"tool_calls":0,"valid":true}
++{"case":"clean","arm":"bmad","run":1,"result":"# Adversarial Review Findings\n\n- No inline documentation (docstring) on `clamp` — the behavioral contract (inclusive range, raise-on-invalid-bounds) lives only in an external file, not in the code itself, so future maintainers have no in-source guarantee of intent.\n- The `ValueError` message (\"lower must not exceed upper\") omits the actual offending `lower`/`upper` values, making debugging and log triage unnecessarily hard.\n- No explicit test coverage is bundled with this \"clean\" fixture — nothing proves the implementation actually satisfies the stated contract; it's asserted correct, not demonstrated correct.\n- The `lower == upper` boundary case is never explicitly exercised or documented — the contract only states behavior for \"exceeds,\" leaving the equal-bounds case as an unverified inference.\n- Type hints (`int`) are unenforced at runtime; nothing stops callers from passing floats, `Decimal`, or other orderable-but-untyped values, and there's no guard or validation to catch a caller violating the annotated contract.\n- No handling for non-comparable or incompatible types (e.g., mixing `int` and `None`, or NaN floats) — a bad caller gets an opaque `TypeError`/undefined comparison result instead of a controlled, informative failure.\n- The nested `min(max(value, lower), upper)` idiom is correct but unexplained — no comment clarifies why this ordering is safe, so a future edit could easily flip it (e.g., `max(min(...))`) and silently break clamping semantics without a test catching it.\n- No module-level docstring or usage example, despite this apparently being a small reusable utility — nothing tells a caller how to import/use it correctly beyond reading the source.\n- The function silently accepts any orderable type at runtime, but the contract talks strictly in terms of \"int\" — the gap between the documented contract and the actual permissiveness of the implementation is undocumented and untested.\n- There is no defensive check confirming `value`'s type before doing comparisons, so a caller passing an unorderable object gets a raw exception from `min`/`max` rather than a purposeful, contract-aligned error.\n- No changelog, version marker, or ownership indication on this file — for a \"clean\" reference fixture there's no way to know if this snapshot is meant to be authoritative or just illustrative, which weakens its value as a golden baseline.","exit":0,"model":"claude-sonnet-5","input_tokens":97666,"output_tokens":2448,"wall_ms":31876,"tool_calls":0,"valid":true}
++{"case":"clean","arm":"osmani","run":1,"result":"CLAIM: \"clamp(value, lower, upper) satisfies the contract: returns lower/upper when out of range, value when in range, and raises ValueError when lower > upper.\"\n\nWHY THIS MATTERS: correctness of a boundary-clamping primitive affects every caller relying on the range guarantee.\n\nARTIFACT + CONTRACT reviewed adversarially:\n\nFindings:\n\n1. **Valid + actionable — NaN/float misuse not applicable but type contract unenforced.** Signature declares `int` but Python doesn't enforce this at runtime. If a caller passes a `float`, `min(max(...))` still works arithmetically but the contract (\"returns lower/upper/value\" as ints) may silently be violated by returning a float. Not a bug per the stated contract (which doesn't mention type enforcement), but an unstated assumption — the contract implies strict `int` semantics without a guard.\n\n2. **Noise (context reviewer lacks) — order of `lower > upper` check.** The check happens before evaluating value, so an invalid range always raises regardless of value's position — correct per contract, no issue.\n\n3. **Valid trade-off — no validation that `value`, `lower`, `upper` are actually numeric/comparable.** If a non-comparable type is passed, `lower > upper` raises `TypeError`, not `ValueError`. Contract only specifies behavior for `lower > upper`, not for malformed input types — acceptable per stated contract scope, but worth flagging as an edge outside the contract's coverage.\n\n4. **Valid + actionable — boundary equality untested by contract but code is correct.** When `lower == upper`, function correctly returns that single value for any input; contract's \"inclusive range\" wording covers this, no defect found.\n\n5. **No defect found in the clamping logic itself.** `min(max(value, lower), upper)` is the standard correct clamp idiom: for value < lower, `max` returns lower, then `min(lower, upper)` = lower (since lower ≤ upper is enforced by the guard). For value > upper, `max(value, lower)` = value, then `min(value, upper)` = upper. For value in range, `max` returns value, `min` returns value. This matches the contract exactly.\n\n**Verdict: Artifact satisfies the contract.** No actionable defects against the stated contract. One noted gap: behavior for non-numeric/non-comparable inputs is undefined by the contract and raises `TypeError` rather than `ValueError`, which is out of contract scope, not a violation.","exit":0,"model":"claude-sonnet-5","input_tokens":103301,"output_tokens":828,"wall_ms":12382,"tool_calls":0,"valid":true}
++{"case":"clean","arm":"codex","run":1,"result":"No findings.\n\nOverall assessment: `clamp` correctly implements the contract — returns `lower`/`upper` at the bounds, `value` within range, and raises `ValueError` when `lower > upper`. No test gaps or residual risks identified within the reviewed artifact.","exit":0,"model":"claude-sonnet-5","input_tokens":96495,"output_tokens":91,"wall_ms":3551,"tool_calls":0,"valid":true}
++{"case":"fabricated","arm":"osmani","run":2,"result":"**Doubt cycle result**\n\n- [x] Step 1: CLAIM — \"report.json is a valid audit: every finding's evidence quote is a verbatim substring of the declared path/line in the artifact.\" Why it matters: a citation-integrity report that itself fabricates citations is worse than no report — it launders false claims as verified.\n\n- [x] Step 2: EXTRACT — Artifact: `a.md` (2 lines: L1 `Status: active`, L2 `Validation: citations are checked against the referenced line.`). Contract: every finding quote must be a verbatim substring of its declared path+line.\n\n- [x] Step 3: DOUBT (adversarial) — Check each finding's `evidence.quote` against the actual line content, and check the ledger's self-reported state against what's actually true.\n  - Finding 1: `evidence.path=\"a.md\"`, `line=2`, `quote=\"All citations are verified automatically.\"`\n  - Actual `a.md` line 2 (1-based): `Validation: citations are checked against the referenced line.`\n  - `\"All citations are verified automatically.\"` is **not** a substring of that line — different wording, different claim (\"automatically\" vs \"checked against the referenced line\"), not present anywhere in the file.\n  - The `ledger` claims `\"opened\": [\"a.md\"]` and `\"accepted_unverified\": []`, implying the quote was read and confirmed — but the quote doesn't exist in the file. The ledger's own accounting is contradicted by the evidence it cites.\n  - The `falsification` block (`\"survived\": true, \"why\": \"claimed as read\"`) is not a real falsification attempt — \"claimed as read\" restates the ledger's assertion, it doesn't verify the quote against the line.\n\n- [x] Step 4: RECONCILE — Classify: **Valid + actionable**, not noise or contract misread. The contract is unambiguous (quote must be a verbatim substring at the declared line), and the finding fails it outright — this is a fabricated citation, not a contextual misunderstanding by the reviewer.\n\n- [x] Step 5: STOP — Single cycle, unambiguous violation, no further review needed.\n\n**Verdict: report.json is INVALID against the contract.**\n\n- Finding 1 (`\"the artifact claims automatic verification\"`, path `a.md`, line 2): **FAIL — fabricated quote.** The cited text `\"All citations are verified automatically.\"` does not appear on line 2 (or anywhere) in `a.md`. Actual line 2 reads: `\"Validation: citations are checked against the referenced line.\"`\n- Ledger inconsistency: `opened: [\"a.md\"]` / `accepted_unverified: []` asserts the citation was checked and confirmed, but the checked-out quote doesn't exist in the source — the ledger's \"verified\" state is itself false.\n- `halt: null` is incorrect — a report with a non-substring evidence quote must halt/fail, not pass silently.\n\n**Conclusion:** Reject the report. 1 of 1 findings fails the citation-integrity contract; the artifact's own claim about \"citations checked against the referenced line\" is precisely what this report violates.","exit":0,"model":"claude-sonnet-5","input_tokens":88648,"output_tokens":1874,"wall_ms":21500,"tool_calls":0,"valid":true}
++{"case":"guard","arm":"baseline","run":1,"result":"Findings:\n\n1. **Substring matching is bypassable, not gated on argv structure.** `\"reset --hard\" in \" \".join(argv)` matches only that exact adjacency/spacing. Any equivalent invocation Git accepts will slip through, e.g.:\n   - `git reset  --hard` (extra whitespace) — join uses single space, so double space breaks the substring match.\n   - `git -C . reset --hard HEAD` — substring still present here, but ordering variants like separate flag forms won't be if argv differs.\n   - `git checkout HEAD -- .` — contract requires blocking `checkout -- .`, but if the path/ref appears between them (a real, valid git invocation), `\"checkout -- .\"` won't match.\n   - `git branch -D foo` vs `git branch --delete --force foo` (git accepts `-D` as alias for `-d -f`, but also accepts `--delete --force`) — bypasses the `\"branch -D\"` string.\n   - `git push --force-with-lease` or `git push -f` — contract says block `push --force`; `-f` and `--force-with-lease` are not caught.\n\n2. **Contract vs implementation mismatch — missing patterns entirely.** The contract lists `checkout -- .`, `restore --worktree`, and `clean -fd` as required blocks. `DESTRUCTIVE` only contains `\"reset --hard\"`, `\"branch -D\"`, `\"push --force\"`. `checkout -- .`, `restore --worktree`, `stash`, and `clean -fd` are never checked — `allowed()` will return `True` for all of them on a dirty tree, directly violating the contract.\n\n3. **`stash` blocking is dangerously overbroad if added naively, but as-is it's simply absent** — contract requires blocking `stash` on dirty trees, but there's no entry at all, so `git stash` is always allowed regardless of dirty state.\n\n4. **No argv-boundary checking — false positives possible too.** Because it's raw substring search on the joined string, unrelated commands can trigger a false block, e.g. `git commit -m \"reset --hard fixes bug\"` contains the substring `\"reset --hard\"` and would be refused on a dirty tree even though it's a harmless commit.\n\n5. **Flag ordering/aliasing not normalized.** Git accepts equivalent flag orders/aliases (`git push --force origin main` vs `git push origin main --force`) — both contain `\"push --force\"` as substring only if force is the second-to-last token before nothing follows; `git push --force origin main` still matches since it's `push --force` substring, but `git push origin main --force` also matches. However `git push -f` (short alias) does not match `\"push --force\"` at all — a real bypass.\n\n6. **No test/self-check present**, violating the project's own \"lazy code without its check is unfinished\" rule for a branch-bearing function like this.","exit":0,"model":"claude-sonnet-5","input_tokens":97423,"output_tokens":943,"wall_ms":13921,"tool_calls":0,"valid":true}
++{"case":"fabricated","arm":"baseline","run":1,"result":"The report's finding is invalid: the quote does not match the artifact.\n\n- report.json claims evidence at a.md:2 with quote \"All citations are verified automatically.\" — but a.md line 2 actually reads \"Validation: citations are checked against the referenced line.\" The quote is not a verbatim substring of that line (or any line) in a.md. This violates the stated contract (\"evidence quote must match its path and line\").\n- The falsification block is self-contradictory/fabricated: it claims `\"survived\": true` with reasoning `\"why\": \"claimed as read\"` — this is not a real falsification attempt, it's a placeholder rationalizing an unverified claim as if verification occurred.\n- Ledger inconsistency: `\"not_opened\": []` and `\"accepted_unverified\": []` assert a.md was opened and its content verified, yet the quote does not exist in the file — the ledger's claim of verification is false.\n\nNet: the single finding in report.json should be rejected/flagged as fabricated evidence — the report fails its own contract.","exit":0,"model":"claude-sonnet-5","input_tokens":97509,"output_tokens":330,"wall_ms":5824,"tool_calls":0,"valid":true}
++{"case":"clean","arm":"baseline","run":1,"result":"No findings.","exit":0,"model":"claude-sonnet-5","input_tokens":97357,"output_tokens":6,"wall_ms":3688,"tool_calls":0,"valid":true}
++{"case":"guard","arm":"candidate","run":2,"result":"```json\n{\n  \"artifact\": \"<vault>/_polaris/.worktrees/critic-ready/skills-suite/critic/eval/fixtures/guard\",\n  \"contract\": \"On a dirty worktree, refuse reset --hard, checkout -- ., restore --worktree, stash, clean -fd, branch -D, and push --force. On a clean worktree, ordinary non-destructive git commands remain allowed.\",\n  \"ledger\": {\n    \"opened\": [\"guard.py\"],\n    \"not_opened\": [],\n    \"accepted_unverified\": []\n  },\n  \"findings\": [\n    {\n      \"claim\": \"DESTRUCTIVE tuple omits 'checkout -- .', 'restore --worktree', and 'clean -fd'; those commands pass allowed() even when dirty\",\n      \"severity\": \"critical\",\n      \"contract_quote\": \"refuse reset --hard, checkout -- ., restore --worktree, stash, clean -fd, branch -D, and push --force\",\n      \"evidence\": {\"path\": \"guard.py\", \"line\": 1, \"quote\": \"DESTRUCTIVE = (\\\"reset --hard\\\", \\\"branch -D\\\", \\\"push --force\\\")\"},\n      \"falsification\": {\"counter\": \"maybe 'stash', 'clean -fd', 'checkout -- .', 'restore --worktree' are enforced elsewhere outside this file\", \"survived\": true, \"why\": \"artifact is the whole guard fixture; no other source is named or opened, so allowed() as shown grants those five commands on a dirty tree\"}\n    },\n    {\n      \"claim\": \"Substring matching on 'command' lets any argv containing the fragment as a substring (e.g. inside a filename or branch name) trigger a false block, or conversely a spaced/quoted variant evade it\",\n      \"severity\": \"minor\",\n      \"contract_quote\": \"refuse reset --hard ... and push --force\",\n      \"evidence\": {\"path\": \"guard.py\", \"line\": 4, \"quote\": \"if dirty and any(fragment in command for fragment in DESTRUCTIVE):\"},\n      \"falsification\": {\"counter\": \"argv is always a controlled, well-formed git invocation so no adversarial substrings occur\", \"survived\": false, \"why\": \"contract does not state argv is trusted/sanitized input; but no concrete failing case is demonstrated, so kept as minor not critical\"}\n    }\n  ],\n  \"dropped\": [\n    {\n      \"candidate\": \"allowed() returns True with no error/reason on block, making caller UX unclear\",\n      \"counter\": \"contract only specifies refuse/allow behavior, not the return signature or messaging\",\n      \"why_it_died\": \"contract makes no claim about return value shape beyond boolean allow/deny\"\n    }\n  ],\n  \"halt\": null\n}\n```","exit":0,"model":"claude-sonnet-5","input_tokens":97347,"output_tokens":927,"wall_ms":11794,"tool_calls":0,"valid":true}
++{"case":"guard","arm":"codex","run":2,"result":"[P1] Missing destructive command patterns — guard.py:1\n\nThe contract requires blocking `checkout -- .`, `restore --worktree`, `stash`, and `clean -fd` on a dirty worktree, but `DESTRUCTIVE` only lists `reset --hard`, `branch -D`, and `push --force`. `allowed()` does substring matching against this tuple, so a dirty-worktree call with argv like `[\"git\", \"checkout\", \"--\", \".\"]`, `[\"git\", \"restore\", \"--worktree\", \"file\"]`, `[\"git\", \"stash\"]`, or `[\"git\", \"clean\", \"-fd\"]` returns `True` and is not refused, contradicting the stated contract.\n\nNo findings on the implemented checks: the substring-match approach correctly blocks `reset --hard`, `branch -D`, and `push --force` when dirty, and correctly allows non-destructive commands when clean.\n\nOverall assessment: the guard is incomplete relative to its contract — half of the required destructive patterns are unenforced. Test gap: no test fixtures were provided/found exercising the missing patterns (`stash`, `clean -fd`, `checkout -- .`, `restore --worktree`) or the clean-worktree pass-through case.","exit":0,"model":"claude-sonnet-5","input_tokens":96350,"output_tokens":404,"wall_ms":7482,"tool_calls":0,"valid":true}
++{"case":"fabricated","arm":"candidate","run":2,"result":"```json\n{\n  \"artifact\": \"skills-suite/critic/eval/fixtures/fabricated\",\n  \"contract\": \"A report is valid only when every evidence quote is a verbatim substring of the declared path and one-based line inside the artifact directory.\",\n  \"ledger\": {\n    \"opened\": [\"a.md\", \"report.json\"],\n    \"not_opened\": [],\n    \"accepted_unverified\": []\n  },\n  \"findings\": [\n    {\n      \"claim\": \"report.json's finding cites a.md:2 with a quote that is not a verbatim substring of that line — fabricated evidence.\",\n      \"severity\": \"critical\",\n      \"contract_quote\": \"every evidence quote is a verbatim substring of the declared path and one-based line inside the artifact directory\",\n      \"evidence\": {\n        \"path\": \"a.md\",\n        \"line\": 2,\n        \"quote\": \"Validation: citations are checked against the referenced line.\"\n      },\n      \"falsification\": {\n        \"counter\": \"the report's quote could be a paraphrase still acceptable under loose matching\",\n        \"survived\": true,\n        \"why\": \"contract requires verbatim substring, not paraphrase; actual line 2 text contains no occurrence of 'All citations are verified automatically.'\"\n      }\n    }\n  ],\n  \"dropped\": [\n    {\n      \"candidate\": \"ledger.opened in report.json omits report.json itself, so provenance is incomplete\",\n      \"counter\": \"the audit target need not list itself as an opened source; contract only governs evidence-quote fidelity\",\n      \"why_it_died\": \"no contract clause requires self-listing; not a violation of the stated validity condition\"\n    }\n  ],\n  \"halt\": null\n}\n```","exit":0,"model":"claude-sonnet-5","input_tokens":96357,"output_tokens":2723,"wall_ms":29338,"tool_calls":0,"valid":true}
++{"case":"fabricated","arm":"codex","run":2,"result":"[P1] Fabricated evidence quote does not match cited line — report.json:1 (findings[0].evidence)\n\nThe finding cites `path: \"a.md\", line: 2, quote: \"All citations are verified automatically.\"`, but line 2 of `a.md` actually reads `\"Validation: citations are checked against the referenced line.\"` No line in `a.md` contains the cited text. This violates the contract's requirement that every evidence quote be a verbatim substring of the declared path/line, making the finding — and therefore the report — invalid.\n\nNo findings regarding the ledger structure itself (`opened`/`not_opened`/`accepted_unverified`) or the `falsification` block's internal consistency beyond the quote mismatch above.\n\nOverall assessment: report.json is invalid per the contract — its sole finding rests on a fabricated quote not present in the artifact it cites. No material test gaps beyond this: the single finding was checked directly against the full (2-line) content of `a.md`.","exit":0,"model":"claude-sonnet-5","input_tokens":96646,"output_tokens":1915,"wall_ms":23598,"tool_calls":0,"valid":true}
++{"case":"clean","arm":"candidate","run":2,"result":"```json\n{\n  \"artifact\": \"<vault>/_polaris/.worktrees/critic-ready/skills-suite/critic/eval/fixtures/clean\",\n  \"contract\": \"clamp returns lower when value is below lower, upper when value is above upper, and value inside the inclusive range. It raises ValueError when lower exceeds upper.\",\n  \"ledger\": {\"opened\": [\"clamp.py\"], \"not_opened\": [], \"accepted_unverified\": []},\n  \"findings\": [],\n  \"dropped\": [{\n    \"candidate\": \"lower == upper not explicitly tested by contract\",\n    \"counter\": \"min(max(value, lower), upper) with lower==upper always returns lower==upper, satisfying 'value inside inclusive range' trivially\",\n    \"why_it_died\": \"contract's inclusive-range clause already covers the degenerate equal-bounds case; no violation\"\n  }],\n  \"halt\": null\n}\n```","exit":0,"model":"claude-sonnet-5","input_tokens":97277,"output_tokens":322,"wall_ms":6594,"tool_calls":0,"valid":true}
++{"case":"clean","arm":"codex","run":2,"result":"No findings.\n\nOverall assessment: `clamp` correctly implements the contract — returns `lower`/`upper` on out-of-range input, `value` within range, and raises `ValueError` when `lower > upper`. No test gaps or residual risks identified within this artifact's scope.","exit":0,"model":"claude-sonnet-5","input_tokens":96495,"output_tokens":92,"wall_ms":3986,"tool_calls":0,"valid":true}
+diff --git a/skills-suite/critic/eval/tdd-red-green.json b/skills-suite/critic/eval/tdd-red-green.json
+new file mode 100644
+index 0000000..08b61b8
+--- /dev/null
++++ b/skills-suite/critic/eval/tdd-red-green.json
+@@ -0,0 +1,2 @@
++{"ts": "2026-08-23T16:16:15.595154+00:00", "test": "skills-suite/critic/scripts/critic_gate_selfcheck.py::_fabricated_quote_branch", "cmd": "python3 skills-suite/critic/scripts/critic_gate.py --selfcheck", "exit": 1, "rosso": true, "file_sha": "fa869bc17f75", "tail": "gate_selfcheck.py\", line 139, in run_branches\n    _fabricated_quote_branch(checks)\n    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^\n  File \"<vault>/_polaris/.worktrees/critic-ready/skills-suite/critic/scripts/critic_gate_selfcheck.py\", line 119, in _fabricated_quote_branch\n    _assert_fails(report, \"does not match artifact\", checks)\n    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<vault>/_polaris/.worktrees/critic-ready/skills-suite/critic/scripts/critic_gate_selfcheck.py\", line 34, in _assert_fails\n    assert any(needle in r for r in reasons), f\"expected a reason containing {needle!r}, got {reasons}\"\n           ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: expected a reason containing 'does not match artifact', got []\n"}
++{"ts": "2026-08-23T16:16:44.559170+00:00", "test": "skills-suite/critic/scripts/critic_gate_selfcheck.py::_fabricated_quote_branch", "cmd": "python3 skills-suite/critic/scripts/critic_gate.py --selfcheck", "exit": 0, "rosso": false, "file_sha": "fa869bc17f75", "tail": "SELFCHECK OK — 23 branches, ignorance branches included\nUNUSABLE: no such report: /var/folders/g3/gs8czj8n7lqby69dkdzy60mr0000gn/T/critic gate ig02azcr/missing.json\nUNUSABLE: empty report: /var/folders/g3/gs8czj8n7lqby69dkdzy60mr0000gn/T/critic gate ig02azcr/empty.json\nUNUSABLE: not JSON (Expecting property name enclosed in double quotes): /var/folders/g3/gs8czj8n7lqby69dkdzy60mr0000gn/T/critic gate ig02azcr/bad.json\n"}
+diff --git a/skills-suite/critic/references/bypass-test.md b/skills-suite/critic/references/bypass-test.md
+index aeb94df..499dbee 100644
+--- a/skills-suite/critic/references/bypass-test.md
++++ b/skills-suite/critic/references/bypass-test.md
+@@ -3,6 +3,11 @@
+ Ogni caso è riproducibile con un comando. Il criterio è uno: **prima della porta passava, adesso
+ deve fallire.** I casi 1-3 sono i tre fallimenti misurati sul campo, non ipotesi.
+ 
++```bash
++mkdir -p /tmp/critic-artifact
++printf 'actual artifact line\n' > /tmp/critic-artifact/a.md
++```
++
+ ## Il baseline che questi casi riproducono
+ 
+ Tre run identiche di Opus nudo sullo stesso artefatto (una riga di censimento gstack), 2026-08-21,
+@@ -31,8 +36,8 @@ run nude.
+ ```bash
+ python3 - <<'PY' > /tmp/bypass-2.json
+ import json
+-r={"artifact":"a.md","contract":"c","ledger":{"opened":["a.md"],"not_opened":[],"accepted_unverified":[]},
+-   "findings":[{"claim":"x","severity":"minor","evidence":{"path":"a.md","line":1,"quote":"line"}}],"halt":None}
++r={"artifact":"/tmp/critic-artifact","contract":"c","ledger":{"opened":["a.md"],"not_opened":[],"accepted_unverified":[]},
++   "findings":[{"claim":"x","severity":"minor","contract_quote":"c","evidence":{"path":"a.md","line":1,"quote":"actual artifact line"}}],"halt":None}
+ print(json.dumps(r))
+ PY
+ python3 scripts/critic_gate.py --validate /tmp/bypass-2.json   # atteso: exit 1, "falsification: missing"
+@@ -47,8 +52,8 @@ comunque all'utente. Qui non esiste banda.
+ ```bash
+ python3 - <<'PY' > /tmp/bypass-3.json
+ import json
+-r={"artifact":"a.md","contract":"c","ledger":{"opened":["a.md"],"not_opened":[],"accepted_unverified":[]},
+-   "findings":[{"claim":"x","severity":"critical","evidence":{"path":"a.md","line":1,"quote":"  "},
++r={"artifact":"/tmp/critic-artifact","contract":"c","ledger":{"opened":["a.md"],"not_opened":[],"accepted_unverified":[]},
++   "findings":[{"claim":"x","severity":"critical","contract_quote":"c","evidence":{"path":"a.md","line":1,"quote":"  "},
+    "falsification":{"counter":"maybe fine","survived":True,"why":"checked"}}],"halt":None}
+ print(json.dumps(r))
+ PY
+@@ -63,7 +68,7 @@ tornare `NO FINDINGS` e il run prosegue a `clean` senza che nessuno lo dichiari.
+ ```bash
+ python3 - <<'PY' > /tmp/bypass-4.json
+ import json
+-r={"artifact":"a.md","contract":"c","ledger":{"opened":["a.md"],"not_opened":[],"accepted_unverified":[]},
++r={"artifact":"/tmp/critic-artifact","contract":"c","ledger":{"opened":["a.md"],"not_opened":[],"accepted_unverified":[]},
+    "findings":[],"halt":None}
+ print(json.dumps(r))
+ PY
+@@ -79,8 +84,8 @@ Il critico tenta la falsificazione, il contro-argomento tiene, e riporta il find
+ ```bash
+ python3 - <<'PY' > /tmp/bypass-5.json
+ import json
+-r={"artifact":"a.md","contract":"c","ledger":{"opened":["a.md"],"not_opened":[],"accepted_unverified":[]},
+-   "findings":[{"claim":"x","severity":"minor","evidence":{"path":"a.md","line":1,"quote":"l"},
++r={"artifact":"/tmp/critic-artifact","contract":"c","ledger":{"opened":["a.md"],"not_opened":[],"accepted_unverified":[]},
++   "findings":[{"claim":"x","severity":"minor","contract_quote":"c","evidence":{"path":"a.md","line":1,"quote":"actual artifact line"},
+    "falsification":{"counter":"the section is inlined elsewhere","survived":False,"why":"and it is"}}],"halt":None}
+ print(json.dumps(r))
+ PY
+@@ -97,6 +102,24 @@ printf '   ' > /tmp/bypass-6.json && python3 scripts/critic_gate.py --validate /
+ printf '{nope'  > /tmp/bypass-6.json && python3 scripts/critic_gate.py --validate /tmp/bypass-6.json
+ ```
+ 
++## Caso 7 — citazione o clausola contrattuale inventata
++
++Il gate rilegge sia `evidence.path:line` sia `contract_quote`. Una frase plausibile ma assente
++dall'artefatto o dal contratto deve fallire.
++
++```bash
++python3 - <<'PY' > /tmp/bypass-7.json
++import json
++r={"artifact":"/tmp/critic-artifact","contract":"must preserve the exact line",
++   "ledger":{"opened":["a.md"],"not_opened":[],"accepted_unverified":[]},
++   "findings":[{"claim":"x","severity":"important","contract_quote":"invented requirement",
++   "evidence":{"path":"a.md","line":1,"quote":"invented artifact line"},
++   "falsification":{"counter":"maybe present","survived":True,"why":"claimed"}}],"halt":None}
++print(json.dumps(r))
++PY
++python3 scripts/critic_gate.py --validate /tmp/bypass-7.json   # exit 1, both quotes rejected
++```
++
+ ## Quello che questa porta NON blocca — dichiarato
+ 
+ - **Un ledger mentito.** `opened` può elencare un file che il critico non ha davvero letto: lo
+@@ -105,9 +128,9 @@ printf '{nope'  > /tmp/bypass-6.json && python3 scripts/critic_gate.py --validat
+ - **Una falsificazione di facciata.** `counter` non vuoto e `survived: true` si scrivono anche
+   senza aver pensato. Il gate impone che il passo esista e sia visibile a chi legge, non che sia
+   stato fatto bene — quello lo giudica il T3, non uno script.
+-- **Una citazione verbatim inventata.** Il gate non rilegge il file per confrontare la riga
+-  citata. È il prossimo meccanismo da costruire, ed è l'unico che renderebbe il caso 3 completo.
++- **Provenienza runtime mentita.** Il gate verifica file e righe, non può provare che il modello
++  abbia davvero eseguito le tool call dichiarate; il T3 fresco resta l'autorità su quel passaggio.
+ 
+ ```bash
+-python3 scripts/critic_gate.py --selfcheck   # 14 rami, inclusi i tre dell'ignoranza
++python3 scripts/critic_gate.py --selfcheck   # 23 rami, inclusi i rami dell'ignoranza
+ ```
+diff --git a/skills-suite/critic/references/ratchet-state.json b/skills-suite/critic/references/ratchet-state.json
+new file mode 100644
+index 0000000..1e1334b
+--- /dev/null
++++ b/skills-suite/critic/references/ratchet-state.json
+@@ -0,0 +1,13 @@
++{
++  "critic": {
++    "floor": 0.95,
++    "last_rate": 1.0,
++    "model": "claude-sonnet-5",
++    "input_tokens": 847975,
++    "output_tokens": 72,
++    "wall_ms": 189962,
++    "valid_runs": 15,
++    "excluded_runs": 8,
++    "desc_sha256": "4229012397fa171d"
++  }
++}
+\ No newline at end of file
+diff --git a/skills-suite/critic/scripts/critic_gate_selfcheck.py b/skills-suite/critic/scripts/critic_gate_selfcheck.py
+index 5c93efd..9eba87b 100644
+--- a/skills-suite/critic/scripts/critic_gate_selfcheck.py
++++ b/skills-suite/critic/scripts/critic_gate_selfcheck.py
+@@ -14,12 +14,15 @@ from critic_rules import validate
+ 
+ 
+ def _good() -> dict:
++    root = Path(__file__).resolve().parent
+     return {
+-        "artifact": "a.md", "contract": "must match the file it describes",
++        "artifact": str(root), "contract": "must match the file it describes",
+         "ledger": {"opened": ["a.md"], "not_opened": [], "accepted_unverified": []},
+         "findings": [{
+             "claim": "row describes a file it does not measure", "severity": "important",
+-            "evidence": {"path": "a.md", "line": 1, "quote": "the verbatim line"},
++            "contract_quote": "must match the file it describes",
++            "evidence": {"path": Path(__file__).name, "line": 1,
++                         "quote": "#!/usr/bin/env python3"},
+             "falsification": {"counter": "maybe the section is inlined", "survived": True,
+                               "why": "grep shows zero occurrences in the measured file"},
+         }],
+@@ -105,6 +108,28 @@ def _dropped_branches(checks: list[int]) -> None:
+     _assert_fails(report, "dropped[0]", checks)
+ 
+ 
++def _fabricated_quote_branch(checks: list[int]) -> None:
++    """A quote is evidence only when the cited artifact contains it at that line."""
++    with tempfile.TemporaryDirectory(prefix="critic artifact ") as box:
++        root = Path(box)
++        (root / "a.md").write_text("the real line\n", encoding="utf-8")
++        report = _good()
++        report["artifact"] = str(root)
++        report["findings"][0]["evidence"]["path"] = "a.md"
++        report["findings"][0]["evidence"]["quote"] = "fabricated line"
++        _assert_fails(report, "does not match artifact", checks)
++
++        report = _good()
++        report["artifact"] = str(root)
++        report["findings"][0]["evidence"]["path"] = "missing.md"
++        _assert_fails(report, "path:line is unreadable", checks)
++
++        report = _good()
++        report["artifact"] = str(root)
++        report["findings"][0]["evidence"].update({"path": "a.md", "line": 0})
++        _assert_fails(report, "positive integer", checks)
++
++
+ def run_branches() -> int:
+     checks: list[int] = []
+     _ledger_branches(checks)
+@@ -112,5 +137,6 @@ def run_branches() -> int:
+     _io_branches(checks)
+     _placeholder_branches(checks)
+     _dropped_branches(checks)
++    _fabricated_quote_branch(checks)
+     print(f"SELFCHECK OK — {len(checks)} branches, ignorance branches included")
+     return 0
+diff --git a/skills-suite/critic/scripts/critic_rules.py b/skills-suite/critic/scripts/critic_rules.py
+index 2be77a5..cd1e304 100644
+--- a/skills-suite/critic/scripts/critic_rules.py
++++ b/skills-suite/critic/scripts/critic_rules.py
+@@ -51,16 +51,35 @@ def check_ledger(ledger: object, reasons: list[str]) -> None:
+         reasons.append("ledger.opened: empty — nothing was read, so nothing was verified")
+ 
+ 
+-def check_evidence(finding: dict, index: int, reasons: list[str]) -> None:
++def check_evidence(finding: dict, index: int, reasons: list[str], artifact_root: Path | None) -> None:
+     """Quote or it is not a finding. No demotion band: the donor's leaked."""
+     evidence = finding.get("evidence")
+     if not isinstance(evidence, dict):
+         reasons.append(f"findings[{index}].evidence: missing")
+         return
+-    if blank(evidence.get("path")):
++    path_value = evidence.get("path")
++    if blank(path_value):
+         reasons.append(f"findings[{index}].evidence.path: missing")
+-    if blank(evidence.get("quote")):
++        return
++    quote = evidence.get("quote")
++    if blank(quote):
+         reasons.append(f"findings[{index}].evidence.quote: missing — unquoted is not a finding")
++        return
++    line = evidence.get("line")
++    if type(line) is not int or line < 1:
++        reasons.append(f"findings[{index}].evidence.line: must be a positive integer")
++        return
++    if artifact_root is None:
++        return
++    try:
++        source = (artifact_root / str(path_value)).resolve()
++        source.relative_to(artifact_root)
++        source_line = source.read_text(encoding="utf-8", errors="replace").splitlines()[line - 1]
++    except (OSError, IndexError, ValueError):
++        reasons.append(f"findings[{index}].evidence: cited path:line is unreadable")
++        return
++    if str(quote) not in source_line:
++        reasons.append(f"findings[{index}].evidence.quote: does not match artifact path:line")
+ 
+ 
+ def check_falsification(finding: dict, index: int, reasons: list[str]) -> None:
+@@ -75,15 +94,21 @@ def check_falsification(finding: dict, index: int, reasons: list[str]) -> None:
+         reasons.append(f"findings[{index}]: did not survive its own counter-argument — drop it")
+ 
+ 
+-def check_finding(finding: object, index: int, reasons: list[str]) -> None:
++def check_finding(finding: object, index: int, reasons: list[str], artifact_root: Path | None,
++                  contract: object) -> None:
+     if not isinstance(finding, dict):
+         reasons.append(f"findings[{index}]: must be an object")
+         return
+     if blank(finding.get("claim")):
+         reasons.append(f"findings[{index}].claim: missing")
++    contract_quote = finding.get("contract_quote")
++    if blank(contract_quote):
++        reasons.append(f"findings[{index}].contract_quote: missing")
++    elif str(contract_quote) not in str(contract):
++        reasons.append(f"findings[{index}].contract_quote: does not match contract")
+     if finding.get("severity") not in SEVERITIES:
+         reasons.append(f"findings[{index}].severity: must be one of {sorted(SEVERITIES)}")
+-    check_evidence(finding, index, reasons)
++    check_evidence(finding, index, reasons, artifact_root)
+     check_falsification(finding, index, reasons)
+ 
+ 
+@@ -108,6 +133,13 @@ def validate(report: object) -> list[str]:
+     if not isinstance(report, dict):
+         return ["report: must be a JSON object"]
+     check_required(report, reasons)
++    artifact_root = None
++    if not blank(report.get("artifact")):
++        candidate = Path(str(report["artifact"])).resolve()
++        if not candidate.is_dir():
++            reasons.append("artifact: must be a readable materialized directory")
++        else:
++            artifact_root = candidate
+     if "ledger" in report:
+         check_ledger(report["ledger"], reasons)
+     findings = report.get("findings")
+@@ -117,7 +149,7 @@ def validate(report: object) -> list[str]:
+     if not findings:
+         check_halt(report, reasons)
+     for index, finding in enumerate(findings):
+-        check_finding(finding, index, reasons)
++        check_finding(finding, index, reasons, artifact_root, report.get("contract"))
+     check_dropped(report, reasons)
+     return reasons
+ 
+diff --git a/skills-suite/skill-meta/EVAL-REPORT.md b/skills-suite/skill-meta/EVAL-REPORT.md
+index f746792..3da88b5 100644
+--- a/skills-suite/skill-meta/EVAL-REPORT.md
++++ b/skills-suite/skill-meta/EVAL-REPORT.md
+@@ -64,3 +64,19 @@ Findings:
+ - skill-meta gate c8: baseline FAIL
+ VERDICT: PASS
+ NO UNRESOLVED DECISIONS
++
++## REVIEW REPORT — skill-meta eval cieca — skill-meta — 2026-08-23T19:29:15+00:00
++Baseline: 6/8 (75%)
++Donor superpowers:writing-skills: 2/8 (25%)
++Nuovo:    8/8 (100%)
++Baseline cost: tokens=0 (0+0), wall_ms=1025, tool_calls=2, repeated=0, consistency=1/1, context=not_available, model=deterministic-evidence-audit
++Donor superpowers:writing-skills cost: tokens=0 (0+0), wall_ms=1, tool_calls=0, repeated=0, consistency=1/1, context=not_available, model=deterministic-evidence-audit
++New cost: tokens=0 (0+0), wall_ms=1418, tool_calls=1, repeated=0, consistency=1/1, context=not_available, model=deterministic-evidence-audit
++Delta: tokens=+0, wall_ms=+393, tool_calls=-1
++Donor delta: tokens=+0, wall_ms=+1417, tool_calls=+1
++Critic: PASS, context=fresh, model=gpt-5.5, tokens=UNKNOWN, wall_ms=300000
++Findings:
++- the latest T3 report exposes baseline/donor/new cost and both deltas: baseline FAIL
++- T3 requires donor parity plus one fresh critic with source-bound concrete attacks; stale/generic/BLOCK receipts fail closed: baseline FAIL
++VERDICT: PASS
++NO UNRESOLVED DECISIONS
+diff --git a/skills-suite/skill-meta/SKILL.md b/skills-suite/skill-meta/SKILL.md
+index 74effc0..1370de6 100644
+--- a/skills-suite/skill-meta/SKILL.md
++++ b/skills-suite/skill-meta/SKILL.md
+@@ -1,13 +1,13 @@
+ ---
+ name: skill-meta
+ description: ◇ Use when writing a new SKILL.md, when editing the description, frontmatter or body of one that already exists, when building or running an eval for a skill — prompt set, trigger rate, behaviour rubric — or before proposing any skill for install or promotion.
+-version: 0.7.0
++version: 0.8.0
+ user-invocable: true
+ auto: true
+-lifecycle: "gate-report(T1,stdout,read at once) -> collision-report(T2a,stdout,read by the next run) -> eval/prompts.json + eval/checks.json(stored corpus, per skill, committed, edited only when the job changes) -> references/ratchet-state.json(T2b, pinned to the description, rewritten only by trigger_ratchet.py, never by hand) -> EVAL-REPORT.md(T3, two arms graded and adversarially challenged by one fresh-context critic before promotion)"
+-invokes: []
++lifecycle: "gate-report(T1,stdout,read at once) -> collision-report(T2a,stdout,read by the next run) -> eval/prompts.json + eval/checks.json(stored corpus, per skill, committed, edited only when the job changes) -> references/ratchet-state.json(T2b, pinned to the description, rewritten only by trigger_ratchet.py, never by hand) -> EVAL-REPORT.md(T3, baseline + strongest donor + candidate graded and challenged by one fresh-context critic before promotion)"
++invokes: [critic]
+ invoked-by: [human]
+-io: "receives: a slug + root for a new skill or an existing skill directory, plus a FAST_SESSION or FULL_REFACTOR admission receipt from the Polaris playbook. produces: a valid-by-construction scaffold, the change class with the tiers it owes, T1/T2a/T2b verdicts with measured cost, and for new skills or behaviour changes a cost-bounded T3 block carrying a fresh-context critic receipt. Never a .skill zip — that lives outside the four harnesses."
++io: "receives: a slug + root for a new skill or an existing skill directory, plus a FAST_SESSION or FULL_REFACTOR admission receipt from the Polaris playbook. produces: a valid-by-construction scaffold, the change class with the tiers it owes, T1/T2a/T2b verdicts with measured cost, and for new skills or behaviour changes a donor-parity T3 block carrying a fresh-context critic receipt. Never a .skill zip — that lives outside the four harnesses."
+ status: active
+ ---
+ 
+@@ -23,7 +23,8 @@ here drives it, so whoever orchestrates has to run it for real (see the tier tab
+ 
+ It does not write the domain knowledge; that stays with the author, human or agent. It
+ **validates, measures and challenges**: structure, trigger collision, routing rate, whether
+-the skill beats its own baseline, and whether its corpus omitted the attack that matters.
++the skill beats its own baseline and strongest applicable donor, and whether its corpus omitted
++the attack that matters.
+ 
+ It consumes the admission receipt prepared by the Polaris playbook in `SPEC-MADRE.md`.
+ `FAST_SESSION` reuses fresh session evidence; `FULL_REFACTOR` carries the exhaustive census.
+@@ -101,7 +102,7 @@ no human reads the red.
+ | T1 | frontmatter contract, "when NOT to use", `bypass-test.md`, `--selfcheck` on every script, line ceiling, promotion mark | `scripts/new_skill.py --check <root>` (shells `_standard/validate_suite.py`, never duplicates it) | every save | yes, exit 1 |
+ | T2a | description against the catalogue, TF-IDF | `scripts/collision_check.py` | trigger changed | yes on BLOCK ≥75%, warns at ≥50% |
+ | T2b | rank-1 rate on TEST plus model, valid/excluded runs, input/output tokens and `wall_ms` | `scripts/split_traintest.py` → a rank-1 run per case (3×, majority) → `scripts/trigger_ratchet.py` pins rate + cost receipt | trigger changed | yes below floor or without receipt |
+-| T3 | baseline vs new quality and cost, plus omitted attacks found by one fresh-context `critic` | `scripts/eval_verdict.py` validates two measured envelopes and the critic receipt (the dispatch is the orchestrator's) | new skill or behaviour changed | blocks install on quality, cost, critic BLOCK or missing receipt |
++| T3 | baseline vs strongest donor vs candidate quality and cost, plus omitted attacks found by one fresh-context `critic` | `scripts/eval_verdict.py` validates three measured envelopes and the critic receipt | new skill or behaviour changed | blocks install on donor regression, no strict quality win, breached cost limit, critic BLOCK or missing receipt |
+ 
+ Two descriptions that do not discriminate steal each other's trigger, and the theft is
+ invisible at runtime — that is "review → 15 candidates" in the register. The floor rises and
+@@ -140,11 +141,12 @@ wording iteration belongs. Use it as a pre-filter, and measure rank-1 separately
+ 2. `change_gate.py --skill <dir>` → the class and the tiers owed. It refuses at once if the
+    corpus those tiers need is missing, thin, all-positive, or full of placeholders.
+ 3. Make the edit. `design-bar.md` is the bar the text is graded against.
+-4. Run T1/T2 tiers the class owed, in order, and read the exit codes. If T3 is owed, run its
+-   baseline and new arms but do not issue the verdict yet.
++4. Run T1/T2 tiers the class owed, in order, and read the exit codes. If T3 is owed, declare the
++   candidate cost limits, then run baseline, strongest-donor and candidate arms on the same cases
++   in one batch; do not issue the verdict yet.
+ 5. Dispatch exactly one `critic` with no inherited session context
+    (`fork_turns="none"`, or the harness's fresh-context equivalent). Give it the target diff,
+-   the complete skill bundle, the eval corpus and both transcripts — never the authoring
++   the complete skill bundle, the eval corpus and all three transcripts — never the authoring
+    conversation. It grades the declared checks, then attacks what those checks may have
+    omitted: sibling destructive branches, claim/code mismatches, bypasses and false-green
+    selfchecks. It must grade every ID in the target `eval/checks.json`, inventory the concrete
+@@ -193,7 +195,7 @@ wording iteration belongs. Use it as a pre-filter, and measure rank-1 separately
+ 6. **Build the eval artifacts**: `eval/prompts.json` (10-20 cases by dimension and tuple,
+    three positive kinds, at least three negative controls) and `eval/checks.json` (must-pass
+    only, one outcome check minimum). `eval-protocol.md` has the method and the schemas.
+-7. **Run the tiers cheapest-first**: T1 → T2a → T2b, then both T3 arms. Re-run the same bypass
++7. **Run the tiers cheapest-first**: T1 → T2a → T2b, then all three T3 arms. Re-run the same bypass
+    from `bypass-test.md` that succeeded in step 2 and prove it now fails.
+ 8. **Fresh critic and T3 verdict.** The same one-agent gate as the editing flow: no session
+    context, complete bundle and diff, every declared check plus the four structured attacks.
+@@ -265,7 +267,8 @@ python3 scripts/trigger_ratchet.py --slug <slug> --rate <r> --state <f> \
+         --measured-on eval/split/test.json --skill <dir> --model <model> \
+         --input-tokens <n> --output-tokens <n> --wall-ms <n> \
+         --valid-runs <n> --excluded-runs <n>                               # pins rate + cost
+-python3 scripts/eval_verdict.py --baseline b.json --new n.json --critic critic.json \
++python3 scripts/eval_verdict.py --baseline b.json --donor d.json --donor-label <name> \
++        --new n.json --critic critic.json \
+         --checks eval/checks.json --diff reviewed.patch --critic-transcript critic.txt \
+         --skill <slug> --append EVAL-REPORT.md
+ python3 scripts/<any>.py --selfcheck        # every branch, including the adversarial one
+diff --git a/skills-suite/skill-meta/eval/checks.json b/skills-suite/skill-meta/eval/checks.json
+index 2c600a3..d4efd17 100644
+--- a/skills-suite/skill-meta/eval/checks.json
++++ b/skills-suite/skill-meta/eval/checks.json
+@@ -15,12 +15,12 @@
+    "assertion": "the T2b ratchet rejects incomplete receipts and persists model, token, latency and run counts",
+    "cmd": "python3 scripts/trigger_ratchet.py --selfcheck"},
+   {"id": "c6", "category": "efficiency",
+-   "assertion": "the latest T3 report exposes baseline/new cost and delta",
+-   "cmd": "grep -q '^Baseline cost: tokens=' EVAL-REPORT.md && grep -q '^New cost: tokens=' EVAL-REPORT.md && grep -q '^Delta: tokens=' EVAL-REPORT.md"},
++   "assertion": "the latest T3 report exposes baseline/donor/new cost and both deltas",
++   "cmd": "grep -q '^Baseline cost: tokens=' EVAL-REPORT.md && grep -q '^Donor .* cost: tokens=' EVAL-REPORT.md && grep -q '^New cost: tokens=' EVAL-REPORT.md && grep -q '^Donor delta: tokens=' EVAL-REPORT.md"},
+   {"id": "c7", "category": "efficiency",
+    "assertion": "T3 was not demanded for a cosmetic edit: a whitespace-only change owes T1 alone",
+    "cmd": null},
+   {"id": "c8", "category": "process",
+-   "assertion": "T3 requires one fresh critic with source-bound concrete attacks; stale/generic/BLOCK receipts fail closed",
+-   "cmd": "python3 scripts/eval_verdict.py --selfcheck"}
++   "assertion": "T3 requires donor parity plus one fresh critic with source-bound concrete attacks; stale/generic/BLOCK receipts fail closed",
++   "cmd": "python3 scripts/eval_verdict.py --selfcheck && python3 scripts/eval_verdict_donor_selfcheck.py --selfcheck"}
+ ]
+diff --git a/skills-suite/skill-meta/eval/critic-transcript-v080.json b/skills-suite/skill-meta/eval/critic-transcript-v080.json
+new file mode 100644
+index 0000000..2e3de5e
+--- /dev/null
++++ b/skills-suite/skill-meta/eval/critic-transcript-v080.json
+@@ -0,0 +1,29 @@
++{
++  "agent_type":"critic",
++  "fork_turns":"none",
++  "review_lanes":["critic"],
++  "graded_checks":[
++    {"id":"c1","passed":true,"evidence":"change_gate remains the first classifier before edits"},
++    {"id":"c2","passed":true,"evidence":"pytest 8/8 and isolated T1 2/2 pass"},
++    {"id":"c3","passed":true,"evidence":"trigger ratchet description pins remain enforced"},
++    {"id":"c4","passed":true,"evidence":"report replay emits REVIEW REPORT, PASS and sentinel"},
++    {"id":"c5","passed":true,"evidence":"metrics and cost receipts remain mandatory"},
++    {"id":"c6","passed":true,"evidence":"latest report includes baseline, donor, new, delta and donor delta costs"},
++    {"id":"c7","passed":true,"evidence":"cosmetic edits remain proportionally T1-only"},
++    {"id":"c8","passed":true,"evidence":"direct mutations block baseline/donor cohort mismatches, regressions, ties, cost-only wins and stale receipts"}
++  ],
++  "verdict":"PASS",
++  "findings":[],
++  "attacks": {
++    "sibling_branches": {"inventory":["skills-suite/skill-meta/scripts/eval_verdict.py:donor passed -> candidate failed","skills-suite/skill-meta/scripts/eval_verdict.py:donor tied -> no strict win","skills-suite/skill-meta/scripts/eval_verdict.py:consistency regression"],"probes":[{"target":"skills-suite/skill-meta/scripts/eval_verdict.py:donor passed -> candidate failed","passed":true,"evidence":"direct mutation returned donor regression FAIL"},{"target":"skills-suite/skill-meta/scripts/eval_verdict.py:donor tied -> no strict win","passed":true,"evidence":"direct mutation returned no-strict-win FAIL"},{"target":"skills-suite/skill-meta/scripts/eval_verdict.py:consistency regression","passed":true,"evidence":"direct mutation returned consistency regression FAIL"}]},
++    "claim_code_mismatch": {"inventory":["skills-suite/skill-meta/SKILL.md:T3 donor parity -> scripts/eval_verdict.py:donor_failures","skills-suite/skill-meta/SKILL.md:three measured envelopes -> scripts/eval_verdict.py:render","skills-suite/skill-meta/references/eval-protocol.md:deterministic gate audit -> runtime authoring benchmark"],"probes":[{"target":"skills-suite/skill-meta/SKILL.md:T3 donor parity -> scripts/eval_verdict.py:donor_failures","passed":true,"evidence":"implementation checks cohort model runs context regressions consistency and strict win"},{"target":"skills-suite/skill-meta/SKILL.md:three measured envelopes -> scripts/eval_verdict.py:render","passed":true,"evidence":"replay emits all three rates costs and both deltas"},{"target":"skills-suite/skill-meta/references/eval-protocol.md:deterministic gate audit -> runtime authoring benchmark","passed":true,"evidence":"report does not claim runtime authoring speed superiority"}]},
++    "bypasses": {"inventory":["skills-suite/skill-meta/scripts/eval_verdict.py:baseline ID mismatch","skills-suite/skill-meta/scripts/eval_verdict.py:baseline assertion mismatch","skills-suite/skill-meta/scripts/eval_verdict.py:baseline model mismatch","skills-suite/skill-meta/scripts/eval_verdict.py:baseline context mismatch","skills-suite/skill-meta/scripts/eval_verdict.py:baseline runs mismatch","skills-suite/skill-meta/scripts/eval_verdict.py:donor mismatch","skills-suite/skill-meta/scripts/eval_verdict.py:cost-only win","skills-suite/skill-meta/scripts/eval_verdict.py:stale generic BLOCK receipts","skills-suite/skill-meta/EVAL-REPORT.md:donor cost and delta"],"probes":[{"target":"skills-suite/skill-meta/scripts/eval_verdict.py:baseline ID mismatch","passed":true,"evidence":"non-cohort FAIL"},{"target":"skills-suite/skill-meta/scripts/eval_verdict.py:baseline assertion mismatch","passed":true,"evidence":"non-cohort FAIL"},{"target":"skills-suite/skill-meta/scripts/eval_verdict.py:baseline model mismatch","passed":true,"evidence":"model parity FAIL"},{"target":"skills-suite/skill-meta/scripts/eval_verdict.py:baseline context mismatch","passed":true,"evidence":"context parity FAIL"},{"target":"skills-suite/skill-meta/scripts/eval_verdict.py:baseline runs mismatch","passed":true,"evidence":"runs parity FAIL"},{"target":"skills-suite/skill-meta/scripts/eval_verdict.py:donor mismatch","passed":true,"evidence":"non-cohort FAIL"},{"target":"skills-suite/skill-meta/scripts/eval_verdict.py:cost-only win","passed":true,"evidence":"no strict quality win FAIL"},{"target":"skills-suite/skill-meta/scripts/eval_verdict.py:stale generic BLOCK receipts","passed":true,"evidence":"all three receipt classes fail closed"},{"target":"skills-suite/skill-meta/EVAL-REPORT.md:donor cost and delta","passed":true,"evidence":"latest report contains both lines and PASS sentinel"}]},
++    "false_green_selfchecks": {"inventory":["skills-suite/skill-meta/tests:test suite","skills-suite/skill-meta/scripts/eval_verdict.py:--selfcheck","skills-suite/skill-meta/scripts/eval_verdict_donor_selfcheck.py:--selfcheck","skills-suite/skill-meta/eval/donor-parity-tdd.json:baseline mismatch RED -> GREEN"],"probes":[{"target":"skills-suite/skill-meta/tests:test suite","passed":true,"evidence":"8 tests pass"},{"target":"skills-suite/skill-meta/scripts/eval_verdict.py:--selfcheck","passed":true,"evidence":"main selfcheck passes"},{"target":"skills-suite/skill-meta/scripts/eval_verdict_donor_selfcheck.py:--selfcheck","passed":true,"evidence":"donor selfcheck passes"},{"target":"skills-suite/skill-meta/eval/donor-parity-tdd.json:baseline mismatch RED -> GREEN","passed":true,"evidence":"public RED and GREEN are recorded"}]}
++  },
++  "strongest_donor":{"name":"superpowers:writing-skills","reason":"Strongest skill-authoring donor for baseline-first pressure scenarios and RED-GREEN-REFACTOR discipline."},
++  "arm_gradings":{"baseline":[{"id":"c1","passed":true},{"id":"c2","passed":true},{"id":"c3","passed":true},{"id":"c4","passed":true},{"id":"c5","passed":true},{"id":"c6","passed":false},{"id":"c7","passed":true},{"id":"c8","passed":false}],"donor":[{"id":"c1","passed":true},{"id":"c2","passed":true},{"id":"c3","passed":false},{"id":"c4","passed":false},{"id":"c5","passed":false},{"id":"c6","passed":false},{"id":"c7","passed":false},{"id":"c8","passed":false}],"candidate":[{"id":"c1","passed":true},{"id":"c2","passed":true},{"id":"c3","passed":true},{"id":"c4","passed":true},{"id":"c5","passed":true},{"id":"c6","passed":true},{"id":"c7","passed":true},{"id":"c8","passed":true}]},
++  "model":"gpt-5.5",
++  "input_tokens":"UNKNOWN",
++  "output_tokens":"UNKNOWN",
++  "wall_ms":300000
++}
+diff --git a/skills-suite/skill-meta/eval/donor-parity-tdd.json b/skills-suite/skill-meta/eval/donor-parity-tdd.json
+new file mode 100644
+index 0000000..e760c15
+--- /dev/null
++++ b/skills-suite/skill-meta/eval/donor-parity-tdd.json
+@@ -0,0 +1,4 @@
++{"ts": "2026-08-23T18:55:48.487573+00:00", "test": "skills-suite/skill-meta/scripts/eval_verdict_donor_selfcheck.py::selfcheck", "cmd": "python3 skills-suite/skill-meta/scripts/eval_verdict_donor_selfcheck.py --selfcheck", "exit": 1, "rosso": true, "file_sha": "b66be90bacf6", "tail": "Traceback (most recent call last):\n  File \"<vault>/_polaris/.worktrees/critic-ready/skills-suite/skill-meta/scripts/eval_verdict_donor_selfcheck.py\", line 84, in <module>\n    raise SystemExit(main())\n                     ~~~~^^\n  File \"<vault>/_polaris/.worktrees/critic-ready/skills-suite/skill-meta/scripts/eval_verdict_donor_selfcheck.py\", line 80, in main\n    return selfcheck()\n  File \"<vault>/_polaris/.worktrees/critic-ready/skills-suite/skill-meta/scripts/eval_verdict_donor_selfcheck.py\", line 60, in selfcheck\n    assert verdict == \"PASS\" and \"Donor delta: tokens=+6\" in report\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n"}
++{"ts": "2026-08-23T18:56:05.822950+00:00", "test": "skills-suite/skill-meta/scripts/eval_verdict_donor_selfcheck.py::selfcheck", "cmd": "python3 skills-suite/skill-meta/scripts/eval_verdict_donor_selfcheck.py --selfcheck", "exit": 0, "rosso": false, "file_sha": "b66be90bacf6", "tail": "SELFCHECK OK — donor quality, cost, determinism and strict-win gates block\n"}
++{"ts":"2026-08-23T19:41:52+00:00","test":"three-arm cohort rejects mismatched baseline case id","cmd":"python3 skills-suite/skill-meta/scripts/eval_verdict_donor_selfcheck.py --selfcheck","exit":1,"rosso":true,"tail":"AssertionError: mismatched baseline cohort incorrectly returned PASS"}
++{"ts":"2026-08-23T19:42:28+00:00","test":"three-arm cohort rejects mismatched baseline case id","cmd":"python3 skills-suite/skill-meta/scripts/eval_verdict_donor_selfcheck.py --selfcheck","exit":0,"rosso":false,"tail":"SELFCHECK OK — donor quality, cost, determinism and strict-win gates block"}
+diff --git a/skills-suite/skill-meta/eval/t3-baseline-v080.json b/skills-suite/skill-meta/eval/t3-baseline-v080.json
+new file mode 100644
+index 0000000..3936ea5
+--- /dev/null
++++ b/skills-suite/skill-meta/eval/t3-baseline-v080.json
+@@ -0,0 +1,13 @@
++{
++  "checks": [
++    {"id":"c1","assertion":"the change class and the owed tiers are stated before any edit to the target SKILL.md","passed":true,"evidence":"v0.7 change_gate already classified before edit."},
++    {"id":"c2","assertion":"T1 ran against the target root and its exit code was read, not just its stdout","passed":true,"evidence":"v0.7 used new_skill.py --check."},
++    {"id":"c3","assertion":"no rank-1 rate was recorded without a description pin (--skill passed to trigger_ratchet)","passed":true,"evidence":"v0.7 ratchet receipts were pinned."},
++    {"id":"c4","assertion":"the verdict is a grep-verifiable block: ## REVIEW REPORT, a VERDICT line, and the exact closing sentinel","passed":true,"evidence":"v0.7 report block was grep-verifiable."},
++    {"id":"c5","assertion":"the T2b ratchet rejects incomplete receipts and persists model, token, latency and run counts","passed":true,"evidence":"v0.7 T2b selfcheck covered measured receipts."},
++    {"id":"c6","assertion":"the latest T3 report exposes baseline/donor/new cost and both deltas","passed":false,"evidence":"v0.7 had no strongest-donor arm or donor delta."},
++    {"id":"c7","assertion":"T3 was not demanded for a cosmetic edit: a whitespace-only change owes T1 alone","passed":true,"evidence":"v0.7 proportional change gate already handled cosmetic edits."},
++    {"id":"c8","assertion":"T3 requires donor parity plus one fresh critic with source-bound concrete attacks; stale/generic/BLOCK receipts fail closed","passed":false,"evidence":"v0.7 compared only baseline and candidate."}
++  ],
++  "metrics": {"model":"deterministic-evidence-audit","input_tokens":0,"output_tokens":0,"wall_ms":1025,"tool_calls":2,"repeated_commands":0,"consistent_runs":1,"runs":1,"context_reuse":"not_available"}
++}
+diff --git a/skills-suite/skill-meta/eval/t3-donor-v080.json b/skills-suite/skill-meta/eval/t3-donor-v080.json
+new file mode 100644
+index 0000000..78eb99e
+--- /dev/null
++++ b/skills-suite/skill-meta/eval/t3-donor-v080.json
+@@ -0,0 +1,13 @@
++{
++  "checks": [
++    {"id":"c1","assertion":"the change class and the owed tiers are stated before any edit to the target SKILL.md","passed":true,"evidence":"superpowers:writing-skills distinguishes new versus edited skills and requires RED before editing."},
++    {"id":"c2","assertion":"T1 ran against the target root and its exit code was read, not just its stdout","passed":true,"evidence":"superpowers:writing-skills requires a target skill validation step."},
++    {"id":"c3","assertion":"no rank-1 rate was recorded without a description pin (--skill passed to trigger_ratchet)","passed":false,"evidence":"donor has no deterministic trigger receipt or description pin."},
++    {"id":"c4","assertion":"the verdict is a grep-verifiable block: ## REVIEW REPORT, a VERDICT line, and the exact closing sentinel","passed":false,"evidence":"donor defines no machine-verifiable verdict block."},
++    {"id":"c5","assertion":"the T2b ratchet rejects incomplete receipts and persists model, token, latency and run counts","passed":false,"evidence":"donor recommends repeated micro-tests but has no receipt ratchet."},
++    {"id":"c6","assertion":"the latest T3 report exposes baseline/donor/new cost and both deltas","passed":false,"evidence":"donor has no donor arm or cost delta report."},
++    {"id":"c7","assertion":"T3 was not demanded for a cosmetic edit: a whitespace-only change owes T1 alone","passed":false,"evidence":"donor explicitly requires full RED-GREEN for every edit without proportional exception."},
++    {"id":"c8","assertion":"T3 requires donor parity plus one fresh critic with source-bound concrete attacks; stale/generic/BLOCK receipts fail closed","passed":false,"evidence":"donor uses pressure scenarios but does not require strongest-donor parity or a sealed critic receipt."}
++  ],
++  "metrics": {"model":"deterministic-evidence-audit","input_tokens":0,"output_tokens":0,"wall_ms":1,"tool_calls":0,"repeated_commands":0,"consistent_runs":1,"runs":1,"context_reuse":"not_available"}
++}
+diff --git a/skills-suite/skill-meta/eval/t3-new-v080.json b/skills-suite/skill-meta/eval/t3-new-v080.json
+new file mode 100644
+index 0000000..83fabfc
+--- /dev/null
++++ b/skills-suite/skill-meta/eval/t3-new-v080.json
+@@ -0,0 +1,14 @@
++{
++  "checks": [
++    {"id":"c1","assertion":"the change class and the owed tiers are stated before any edit to the target SKILL.md","passed":true,"evidence":"change_gate remains the mandatory first classification."},
++    {"id":"c2","assertion":"T1 ran against the target root and its exit code was read, not just its stdout","passed":true,"evidence":"isolated checks for skill-meta and critic both return 1/1 conforming."},
++    {"id":"c3","assertion":"no rank-1 rate was recorded without a description pin (--skill passed to trigger_ratchet)","passed":true,"evidence":"ratchet pin invariant remains green."},
++    {"id":"c4","assertion":"the verdict is a grep-verifiable block: ## REVIEW REPORT, a VERDICT line, and the exact closing sentinel","passed":true,"evidence":"eval_verdict selfcheck confirms report shape and sentinel."},
++    {"id":"c5","assertion":"the T2b ratchet rejects incomplete receipts and persists model, token, latency and run counts","passed":true,"evidence":"existing ratchet selfcheck remains green."},
++    {"id":"c6","assertion":"the latest T3 report exposes baseline/donor/new cost and both deltas","passed":true,"evidence":"v0.8 report is generated with baseline, donor, new, baseline delta and donor delta."},
++    {"id":"c7","assertion":"T3 was not demanded for a cosmetic edit: a whitespace-only change owes T1 alone","passed":true,"evidence":"proportional change classification is unchanged."},
++    {"id":"c8","assertion":"T3 requires donor parity plus one fresh critic with source-bound concrete attacks; stale/generic/BLOCK receipts fail closed","passed":true,"evidence":"pytest and both eval selfchecks reject stale, generic, mismatched-cohort, tied and regressed donor receipts."}
++  ],
++  "metrics": {"model":"deterministic-evidence-audit","input_tokens":0,"output_tokens":0,"wall_ms":1418,"tool_calls":1,"repeated_commands":0,"consistent_runs":1,"runs":1,"context_reuse":"not_available"},
++  "limits": {"max_total_tokens":0,"max_wall_ms":2000,"max_tool_calls":1,"max_repeated_commands":0,"min_consistency":1.0}
++}
+diff --git a/skills-suite/skill-meta/references/eval-protocol.md b/skills-suite/skill-meta/references/eval-protocol.md
+index 3f48636..e62f8fe 100644
+--- a/skills-suite/skill-meta/references/eval-protocol.md
++++ b/skills-suite/skill-meta/references/eval-protocol.md
+@@ -11,7 +11,7 @@ Everything needed to evaluate a skill, with no other source. The prose bar is
+ - [T2b — rank-1 on the TEST split](#t2b--rank-1-on-the-test-split)
+ - [The modification gate](#the-modification-gate)
+ - [T3 — the behaviour rubric](#t3--the-behaviour-rubric)
+-- [Running T3 — two arms and one fresh critic](#running-t3--two-arms-and-one-fresh-critic)
++- [Running T3 — three arms and one fresh critic](#running-t3--three-arms-and-one-fresh-critic)
+ - [Pressure cases, for skills that impose a discipline](#pressure-cases-for-skills-that-impose-a-discipline)
+ - [Model-graded checks — the judge discipline](#model-graded-checks--the-judge-discipline)
+ - [Correcting a judge's number](#correcting-a-judges-number)
+@@ -239,11 +239,12 @@ carries a `cmd`, because a rubric riding entirely on a model is a rubric whose f
+ unreproducible. Order: parse the trace for command presence and order, check the files that
+ should exist, and only then ask about quality.
+ 
+-## Running T3 — two arms and one fresh critic
++## Running T3 — three arms and one fresh critic
+ 
+-1. **Same turn, never in sequence.** The orchestrator dispatches two subagents in one
++1. **Same turn, never in sequence.** The orchestrator dispatches three arms in one
+    response: *baseline* (without the skill, or with the previous version when optimising an
+-   existing one) and *new* (with the skill under test), on the same behavioural tasks. These
++   existing one), *donor* (the strongest applicable donor opened during admission), and *new*
++   (with the skill under test), on the same behavioural tasks. These
+    are tasks to execute, not the routing queries of T2b. Sequential runs introduce temporal
+    drift — context, model and system instructions can move between them — so it is no longer
+    the same experiment.
+@@ -261,16 +262,18 @@ should exist, and only then ask about quality.
+    plain text does not reach the orchestrator. Whoever retries gets a different result, or
+    none.)*
+ 
+-   **Report cost beside quality.** A skill that wins by 5% at twice the tokens has not won.
+-   Cost is a separate gate, never folded into the quality rate. Each arm writes a measured
++   **Report cost beside quality.** Cost is a separate gate, never folded into the quality rate.
++   The candidate cannot regress a check the donor passes and must add at least one strict quality
++   win; being cheaper alone is not a win. A bounded cost increase is allowed only inside limits
++   declared before dispatch, and the donor delta remains visible. Each arm writes a measured
+    envelope with `model`, input/output tokens, `wall_ms`, tool calls, repeated commands,
+    consistent/total runs and `context_reuse`. The new arm also carries the limits declared
+    before dispatch. `eval_verdict.py` rejects the old bare-list format and fails a breached limit.
+ 2. **One `critic` agent is both independent grader and adversarial reviewer.** Dispatch it with
+    no inherited session context (`fork_turns="none"`, or the harness's fresh-context
+-   equivalent). It receives only the target diff, complete skill bundle, both full transcripts
++   equivalent). It receives only the target diff, complete skill bundle, all three full transcripts
+    including tool calls, and `checks.json` — never the authoring conversation. First it grades
+-   the declared checks into the two `grading.json` files; then it hunts what the corpus may have
++   the declared checks into the three `grading.json` files; then it hunts what the corpus may have
+    omitted: sibling branches, claim/code mismatches, bypasses and false-green selfchecks. It
+    writes a separate critic receipt with `agent_type=critic`, `fork_turns=none`, the sole lane
+    `critic`, every graded check with its result and evidence, structured results for `sibling_branches`,
+@@ -298,7 +301,8 @@ should exist, and only then ask about quality.
+ 6. Aggregate:
+ 
+ ```bash
+-python3 scripts/eval_verdict.py --baseline base/grading.json --new new/grading.json \
++python3 scripts/eval_verdict.py --baseline base/grading.json \
++  --donor donor/grading.json --donor-label "<strongest donor>" --new new/grading.json \
+   --critic critic.json --checks eval/checks.json --diff reviewed.patch \
+   --critic-transcript critic.txt --skill <slug> --append EVAL-REPORT.md
+ ```
+@@ -428,7 +432,7 @@ is sediment in the rubric.
+ ## Declared cost
+ 
+ T2b: 3 runs × the test split (typically 4-8 queries at 40% holdout on a 10-20 case set) —
+-cheap, minutes. T3: 2 behavioural dispatches plus a grader per case — expensive in tokens and
++cheap, minutes. T3: 3 behavioural arms plus a grader per case — expensive in tokens and
+ minutes, which is why the change classes reserve it for new skills and behaviour changes. Not
+ running it on a cosmetic refactor is not laziness; it is the materiality rule applied to the
+ cost of the gate itself, not only to its findings.
+diff --git a/skills-suite/skill-meta/scripts/eval_verdict.py b/skills-suite/skill-meta/scripts/eval_verdict.py
+index 028e2ba..f2cd9ad 100644
+--- a/skills-suite/skill-meta/scripts/eval_verdict.py
++++ b/skills-suite/skill-meta/scripts/eval_verdict.py
+@@ -1,24 +1,26 @@
+ #!/usr/bin/env python3
+-"""T3 — verdetto dell'eval cieca baseline-vs-nuovo, in blocco grep-verificabile.
++"""T3 — verdetto cieco baseline-vs-donor-vs-nuovo, in blocco grep-verificabile.
+ 
+-I due run (baseline = senza skill o versione precedente; nuovo = con la skill) li lancia
+-l'agente orchestratore, DUE subagent nello STESSO turno (mai in sequenza: drift temporale
+-altrimenti) — questo script non dispatcha nulla, aggrega grading gia' scritto su disco.
++I run (baseline = senza skill o versione precedente; donor = miglior workflow applicabile;
++nuovo = con la skill) li lancia l'agente orchestratore nello STESSO turno — questo script non
++dispatcha nulla, aggrega grading gia' scritto su disco.
+ Stesso primitivo di `review`/`plan-review`: blocco `## REVIEW REPORT`, riga `VERDICT`,
+ sentinella finale — un quarto formato indipendente sarebbe l'overlap tra job-gate che il
+ Critic-2 sul disegno ha segnalato (nessun primitivo condiviso dichiarato).
+ 
+-Formato dei due input (grading.json), uno per lato — un subagent "grader" dedicato li
++Formato dei tre input (grading.json), uno per lato — un subagent "grader" dedicato li
+ scrive, non l'agente sotto test (vedi references/eval-protocol.md):
+-    {"checks": [{"assertion": "...", "passed": true, "evidence": "..."}],
++    {"checks": [{"id": "stable-case-id", "assertion": "...", "passed": true,
++                 "evidence": "..."}],
+      "metrics": {"model": "...", "input_tokens": 1, "output_tokens": 1,
+                  "wall_ms": 1, "tool_calls": 1, "repeated_commands": 0,
+                  "consistent_runs": 3, "runs": 3,
+                  "context_reuse": "reused|not_available|missed"},
+      "limits": { ... }}
+ 
+-    eval_verdict.py --baseline B.json --new N.json --critic C.json --checks CHECKS.json \
+-      --diff DIFF.patch --critic-transcript TRANSCRIPT.txt --skill SLUG [--append FILE]
++    eval_verdict.py --baseline B.json --donor D.json --donor-label NAME --new N.json \
++      --critic C.json --checks CHECKS.json --diff DIFF.patch \
++      --critic-transcript TRANSCRIPT.txt --skill SLUG [--append FILE]
+     eval_verdict.py --selfcheck
+ """
+ from __future__ import annotations
+@@ -63,9 +65,13 @@ def validate_arm(value: object, *, require_limits: bool) -> dict:
+     if not checks:
+         raise ValueError("checks must not be empty")
+     if any(not isinstance(check, dict)
++           or not isinstance(check.get("id"), str) or not check["id"].strip()
+            or not isinstance(check.get("assertion"), str) or not check["assertion"].strip()
+            or type(check.get("passed")) is not bool for check in checks):
+-        raise ValueError("each check needs a non-empty assertion and boolean passed")
++        raise ValueError("each check needs id, non-empty assertion and boolean passed")
++    ids = [check["id"] for check in checks]
++    if len(ids) != len(set(ids)):
++        raise ValueError("check ids must be unique inside each arm")
+     metrics = value["metrics"]
+     missing = [field for field in METRIC_FIELDS if field not in metrics]
+     if missing:
+@@ -204,6 +210,29 @@ def limit_failures(arm: dict) -> list[str]:
+     return [message for ok, message in checks if not ok]
+ 
+ 
++def donor_failures(baseline: dict, donor: dict, new: dict) -> list[str]:
++    """Candidate must add quality without regressing donor-passed checks or consistency."""
++    failures: list[str] = []
++    baseline_cohort = [(check["id"], check["assertion"]) for check in baseline["checks"]]
++    donor_cohort = [(check["id"], check["assertion"]) for check in donor["checks"]]
++    new_cohort = [(check["id"], check["assertion"]) for check in new["checks"]]
++    if not baseline_cohort == donor_cohort == new_cohort:
++        return ["donor parity: checks or contexts differ — comparison is not a cohort"]
++    bm, dm, nm = baseline["metrics"], donor["metrics"], new["metrics"]
++    for field in ("model", "runs", "context_reuse"):
++        if not bm[field] == dm[field] == nm[field]:
++            failures.append(f"donor parity: {field} differs across baseline/donor/candidate")
++    for donor_check, new_check in zip(donor["checks"], new["checks"]):
++        if donor_check["passed"] and not new_check["passed"]:
++            failures.append(f"donor parity: regressed check {new_check['assertion']}")
++    if nm["consistent_runs"] * dm["runs"] < dm["consistent_runs"] * nm["runs"]:
++        failures.append("donor parity: consistency regressed")
++    if not any(new_check["passed"] and not donor_check["passed"]
++               for donor_check, new_check in zip(donor["checks"], new["checks"])):
++        failures.append("donor parity: no strict quality win over donor")
++    return failures
++
++
+ def cost_line(label: str, arm: dict) -> str:
+     metrics = arm["metrics"]
+     tokens = metrics["input_tokens"] + metrics["output_tokens"]
+@@ -220,15 +249,18 @@ def critic_tokens(critic: dict) -> str:
+ 
+ 
+ def render(slug: str, baseline: dict, new: dict, critic: dict,
+-           required_check_ids: set[str], *, diff_sha256: str,
++           required_check_ids: set[str], *, donor: dict, donor_label: str, diff_sha256: str,
+            transcript_sha256: str) -> tuple[str, str]:
+     baseline = validate_arm(baseline, require_limits=False)
++    donor = validate_arm(donor, require_limits=False)
+     new = validate_arm(new, require_limits=True)
++    if not donor_label.strip():
++        raise ValueError("donor label must be non-empty")
+     critic = validate_critic(critic, required_check_ids, diff_sha256=diff_sha256,
+                              transcript_sha256=transcript_sha256)
+-    base_checks, new_checks = baseline["checks"], new["checks"]
+-    br, nr = pass_rate(base_checks), pass_rate(new_checks)
+-    failures = limit_failures(new)
++    base_checks, donor_checks, new_checks = baseline["checks"], donor["checks"], new["checks"]
++    br, dr, nr = pass_rate(base_checks), pass_rate(donor_checks), pass_rate(new_checks)
++    failures = limit_failures(new) + donor_failures(baseline, donor, new)
+     v = "FAIL" if (failures or any(not check.get("passed") for check in new_checks)
+                    or critic["verdict"] == "BLOCK") else verdict(br, nr)
+     findings = [f"- {g.get('assertion', '?')}: baseline FAIL" for g in base_checks
+@@ -237,19 +269,24 @@ def render(slug: str, baseline: dict, new: dict, critic: dict,
+                  for g in new_checks if not g.get("passed")]
+     findings += [f"- efficiency: {failure}" for failure in failures]
+     findings += [f"- critic: {finding}" for finding in critic["findings"]]
+-    bm, nm = baseline["metrics"], new["metrics"]
++    bm, dm, nm = baseline["metrics"], donor["metrics"], new["metrics"]
+     baseline_tokens = bm["input_tokens"] + bm["output_tokens"]
+     new_tokens = nm["input_tokens"] + nm["output_tokens"]
+     ts = datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")
+     lines = [
+         f"## REVIEW REPORT — skill-meta eval cieca — {slug} — {ts}",
+         f"Baseline: {br[0]}/{br[1]} ({br[0] / br[1]:.0%})" if br[1] else "Baseline: n/d",
++        f"Donor {donor_label}: {dr[0]}/{dr[1]} ({dr[0] / dr[1]:.0%})",
+         f"Nuovo:    {nr[0]}/{nr[1]} ({nr[0] / nr[1]:.0%})" if nr[1] else "Nuovo: n/d",
+         cost_line("Baseline", baseline),
++        cost_line(f"Donor {donor_label}", donor),
+         cost_line("New", new),
+         f"Delta: tokens={new_tokens - baseline_tokens:+d}, "
+         f"wall_ms={nm['wall_ms'] - bm['wall_ms']:+d}, "
+         f"tool_calls={nm['tool_calls'] - bm['tool_calls']:+d}",
++        f"Donor delta: tokens={new_tokens - (dm['input_tokens'] + dm['output_tokens']):+d}, "
++        f"wall_ms={nm['wall_ms'] - dm['wall_ms']:+d}, "
++        f"tool_calls={nm['tool_calls'] - dm['tool_calls']:+d}",
+         f"Critic: {critic['verdict']}, context=fresh, model={critic['model']}, "
+         f"tokens={critic_tokens(critic)}, wall_ms={critic['wall_ms']}",
+         "Findings:",
+@@ -266,14 +303,14 @@ def selfcheck() -> int:
+                "context_reuse": "not_available"}
+     limits = {"max_total_tokens": 20, "max_wall_ms": 40, "max_tool_calls": 3,
+               "max_repeated_commands": 0, "min_consistency": 1.0}
+-    baseline = {"checks": [{"assertion": "a", "passed": False},
+-                            {"assertion": "b", "passed": True}], "metrics": metrics}
+-    better = {"checks": [{"assertion": "a", "passed": True, "evidence": "e1"},
+-                          {"assertion": "b", "passed": True, "evidence": "e2"}],
++    baseline = {"checks": [{"id": "a", "assertion": "a", "passed": False},
++                            {"id": "b", "assertion": "b", "passed": True}], "metrics": metrics}
++    better = {"checks": [{"id": "a", "assertion": "a", "passed": True, "evidence": "e1"},
++                          {"id": "b", "assertion": "b", "passed": True, "evidence": "e2"}],
+               "metrics": metrics, "limits": limits}
+     same = {"checks": better["checks"], "metrics": metrics, "limits": limits}
+-    worse = {"checks": [{"assertion": "a", "passed": False},
+-                         {"assertion": "b", "passed": False}],
++    worse = {"checks": [{"id": "a", "assertion": "a", "passed": False},
++                         {"id": "b", "assertion": "b", "passed": False}],
+              "metrics": metrics, "limits": limits}
+     critic = {"agent_type": "critic", "fork_turns": "none", "verdict": "PASS",
+               "findings": [], "review_lanes": ["critic"],
+@@ -289,32 +326,34 @@ def selfcheck() -> int:
+               "output_tokens": 5, "wall_ms": 50}
+     required = {"c1"}
+     seals = {"diff_sha256": "a" * 64, "transcript_sha256": "b" * 64}
+-    v1, r1 = render("demo", baseline, better, critic, required, **seals)
++    comparison = {"donor": baseline, "donor_label": "demo donor", **seals}
++    v1, r1 = render("demo", baseline, better, critic, required, **comparison)
+     assert v1 == "PASS" and "VERDICT: PASS" in r1 and r1.rstrip().endswith(SENTINEL)
+     v2, _ = render("demo", {"checks": better["checks"], "metrics": metrics}, same,
+-                   critic, required, **seals)
++                   critic, required, **comparison)
+     assert v2 == "CONCERNS", "nessun miglioramento misurabile = CONCERNS, non un pass silenzioso"
+     v2b, _ = render("demo", baseline,
+                      {"checks": baseline["checks"], "metrics": metrics, "limits": limits},
+-                     critic, required, **seals)
++                     critic, required, **comparison)
+     assert v2b == "FAIL", "un candidate check falso non passa per miglioramento relativo"
+-    v3, _ = render("demo", baseline, worse, critic, required, **seals)
++    v3, _ = render("demo", baseline, worse, critic, required, **comparison)
+     assert v3 == "FAIL", "la skill nuova peggiora il pass-rate: deve fallire"
+     over = {**better, "metrics": {**metrics, "wall_ms": 41}}
+-    v4, r4 = render("demo", baseline, over, critic, required, **seals)
++    v4, r4 = render("demo", baseline, over, critic, required, **comparison)
+     assert v4 == "FAIL" and "wall_ms 41 > 40" in r4
+     blocked = {**critic, "verdict": "BLOCK", "findings": ["sibling branch omitted"]}
+-    v5, r5 = render("demo", baseline, better, blocked, required, **seals)
++    v5, r5 = render("demo", baseline, better, blocked, required, **comparison)
+     assert v5 == "FAIL" and "critic: sibling branch omitted" in r5
+     try:
+         render("demo", baseline, better, {**critic, "fork_turns": "all"}, required,
+-               **seals)
++               **comparison)
+     except ValueError as exc:
+         assert "fresh context" in str(exc)
+     else:
+         raise AssertionError("un critic con contesto ereditato deve essere rifiutato")
+     try:
+         render("demo", baseline, better, critic, required,
++               donor=baseline, donor_label="demo donor",
+                diff_sha256="0" * 64, transcript_sha256="b" * 64)
+     except ValueError as exc:
+         assert "supplied diff" in str(exc)
+@@ -324,7 +363,7 @@ def selfcheck() -> int:
+         "inventory": ["generic"],
+         "probes": [{"target": "generic", "passed": True, "evidence": "attempted"}]}}}
+     try:
+-        render("demo", baseline, better, generic, required, **seals)
++        render("demo", baseline, better, generic, required, **comparison)
+     except ValueError as exc:
+         assert "concrete targets" in str(exc)
+     else:
+@@ -342,6 +381,8 @@ def selfcheck() -> int:
+ def main() -> int:
+     p = argparse.ArgumentParser()
+     p.add_argument("--baseline", type=Path)
++    p.add_argument("--donor", type=Path)
++    p.add_argument("--donor-label")
+     p.add_argument("--new", type=Path)
+     p.add_argument("--critic", type=Path)
+     p.add_argument("--checks", type=Path)
+@@ -353,18 +394,20 @@ def main() -> int:
+     a = p.parse_args()
+     if a.selfcheck:
+         return selfcheck()
+-    if not (a.baseline and a.new and a.critic and a.checks and a.diff
++    if not (a.baseline and a.donor and a.donor_label and a.new and a.critic and a.checks and a.diff
+             and a.critic_transcript and a.skill):
+-        p.error("servono --baseline --new --critic --checks --diff --critic-transcript "
+-                "--skill (o --selfcheck)")
++        p.error("servono --baseline --donor --donor-label --new --critic --checks --diff "
++                "--critic-transcript --skill (o --selfcheck)")
+     try:
+         baseline = json.loads(a.baseline.read_text())
++        donor = json.loads(a.donor.read_text())
+         new = json.loads(a.new.read_text())
+         critic = json.loads(a.critic.read_text())
+         required_check_ids = load_check_ids(json.loads(a.checks.read_text()))
+         diff_sha256 = hashlib.sha256(a.diff.read_bytes()).hexdigest()
+         transcript_sha256 = hashlib.sha256(a.critic_transcript.read_bytes()).hexdigest()
+         v, report = render(a.skill, baseline, new, critic, required_check_ids,
++                           donor=donor, donor_label=a.donor_label,
+                            diff_sha256=diff_sha256, transcript_sha256=transcript_sha256)
+     except (OSError, json.JSONDecodeError, ValueError) as exc:
+         print(f"INVALID: {exc}", file=sys.stderr)
+diff --git a/skills-suite/skill-meta/scripts/eval_verdict_donor_selfcheck.py b/skills-suite/skill-meta/scripts/eval_verdict_donor_selfcheck.py
+new file mode 100644
+index 0000000..4fcfa25
+--- /dev/null
++++ b/skills-suite/skill-meta/scripts/eval_verdict_donor_selfcheck.py
+@@ -0,0 +1,95 @@
++#!/usr/bin/env python3
++"""Selfcheck for the T3 strongest-donor promotion gate."""
++
++from __future__ import annotations
++
++import argparse
++
++from eval_verdict import ATTACK_KEYS, render
++
++
++def _arm(passes: tuple[bool, bool], *, tokens: int, wall_ms: int, tools: int,
++         limits: bool = False, consistent: int = 3) -> dict:
++    value = {
++        "checks": [
++            {"id": "defect", "assertion": "finds the real defect", "passed": passes[0], "evidence": "case A"},
++            {"id": "clean", "assertion": "suppresses false positives", "passed": passes[1], "evidence": "case B"},
++        ],
++        "metrics": {"model": "same-model", "input_tokens": tokens - 2, "output_tokens": 2,
++                    "wall_ms": wall_ms, "tool_calls": tools, "repeated_commands": 0,
++                    "consistent_runs": consistent, "runs": 3,
++                    "context_reuse": "not_available"},
++    }
++    if limits:
++        value["limits"] = {"max_total_tokens": 30, "max_wall_ms": 100,
++                           "max_tool_calls": 5, "max_repeated_commands": 0,
++                           "min_consistency": 1.0}
++    return value
++
++
++def _critic() -> dict:
++    return {
++        "agent_type": "critic", "fork_turns": "none", "verdict": "PASS",
++        "findings": [], "review_lanes": ["critic"],
++        "reviewed_diff_sha256": "a" * 64, "transcript_sha256": "b" * 64,
++        "graded_checks": [{"id": "c1", "passed": True, "evidence": "verified output"}],
++        "attacks": {key: {
++            "inventory": [f"bundle/{key}:negative-branch"],
++            "probes": [{"target": f"bundle/{key}:negative-branch", "passed": True,
++                        "evidence": f"forced {key} negative branch"}],
++        } for key in ATTACK_KEYS},
++        "model": "same-model", "input_tokens": "UNKNOWN", "output_tokens": "UNKNOWN",
++        "wall_ms": 50,
++    }
++
++
++def selfcheck() -> int:
++    baseline = _arm((False, True), tokens=10, wall_ms=30, tools=2)
++    donor = _arm((False, True), tokens=15, wall_ms=40, tools=3)
++    candidate = _arm((True, True), tokens=12, wall_ms=30, tools=2, limits=True)
++    kwargs = {"donor": donor, "donor_label": "BMAD best applicable",
++              "diff_sha256": "a" * 64, "transcript_sha256": "b" * 64}
++    verdict, report = render("demo", baseline, candidate, _critic(), {"c1"}, **kwargs)
++    assert verdict == "PASS" and "Donor BMAD best applicable" in report
++
++    weaker_but_cheaper = _arm((False, True), tokens=10, wall_ms=20, tools=1)
++    slower_but_better = _arm((True, True), tokens=16, wall_ms=40, tools=3, limits=True)
++    better_kwargs = {**kwargs, "donor": weaker_but_cheaper}
++    verdict, report = render("demo", baseline, slower_but_better, _critic(), {"c1"},
++                             **better_kwargs)
++    assert verdict == "PASS" and "Donor delta: tokens=+6" in report
++
++    tied = _arm((True, True), tokens=15, wall_ms=40, tools=3, limits=True)
++    tie_kwargs = {**kwargs, "donor": tied}
++    verdict, report = render("demo", baseline, tied, _critic(), {"c1"}, **tie_kwargs)
++    assert verdict == "FAIL" and "no strict quality win over donor" in report
++
++    inconsistent = _arm((True, True), tokens=12, wall_ms=30, tools=2,
++                        limits=True, consistent=2)
++    verdict, report = render("demo", baseline, inconsistent, _critic(), {"c1"}, **kwargs)
++    assert verdict == "FAIL" and "consistency" in report
++
++    mismatched = _arm((True, True), tokens=12, wall_ms=30, tools=2, limits=True)
++    mismatched["checks"][0]["id"] = "different-case"
++    verdict, report = render("demo", baseline, mismatched, _critic(), {"c1"}, **kwargs)
++    assert verdict == "FAIL" and "not a cohort" in report
++
++    mismatched_baseline = _arm((False, True), tokens=10, wall_ms=30, tools=2)
++    mismatched_baseline["checks"][0]["id"] = "different-baseline-case"
++    verdict, report = render("demo", mismatched_baseline, candidate, _critic(), {"c1"},
++                             **kwargs)
++    assert verdict == "FAIL" and "not a cohort" in report
++    print("SELFCHECK OK — donor quality, cost, determinism and strict-win gates block")
++    return 0
++
++
++def main() -> int:
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("--selfcheck", action="store_true")
++    if not parser.parse_args().selfcheck:
++        parser.error("--selfcheck")
++    return selfcheck()
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff --git a/skills-suite/skill-meta/tests/test_consistency_threshold.py b/skills-suite/skill-meta/tests/test_consistency_threshold.py
+index 090ca6b..1ace3d7 100644
+--- a/skills-suite/skill-meta/tests/test_consistency_threshold.py
++++ b/skills-suite/skill-meta/tests/test_consistency_threshold.py
+@@ -36,11 +36,11 @@ class ConsistencyThresholdTests(unittest.TestCase):
+             "context_reuse": "reused",
+         }
+         baseline = {
+-            "checks": [{"assertion": "workflow", "passed": False}],
++            "checks": [{"id": "workflow", "assertion": "workflow", "passed": False}],
+             "metrics": metrics,
+         }
+         new = {
+-            "checks": [{"assertion": "workflow", "passed": True}],
++            "checks": [{"id": "workflow", "assertion": "workflow", "passed": True}],
+             "metrics": metrics,
+             "limits": {
+                 "max_total_tokens": 20,
+@@ -51,8 +51,9 @@ class ConsistencyThresholdTests(unittest.TestCase):
+             },
+         }
+ 
+-        verdict, report = render("demo", baseline, new, CRITIC, {"c1"},
+-                                 diff_sha256="a" * 64, transcript_sha256="b" * 64)
++        verdict, report = render("demo", baseline, new, CRITIC, {"c1"}, donor=baseline,
++                                 donor_label="baseline donor", diff_sha256="a" * 64,
++                                 transcript_sha256="b" * 64)
+         self.assertEqual(verdict, "PASS", report)
+ 
+     def test_one_failed_candidate_check_cannot_pass_on_relative_improvement(self):
+@@ -67,22 +68,23 @@ class ConsistencyThresholdTests(unittest.TestCase):
+         }
+         baseline = {
+             "checks": [
+-                {"assertion": "a", "passed": False},
+-                {"assertion": "b", "passed": False},
++                {"id": "a", "assertion": "a", "passed": False},
++                {"id": "b", "assertion": "b", "passed": False},
+             ],
+             "metrics": metrics,
+         }
+         new = {
+             "checks": [
+-                {"assertion": "a", "passed": True},
+-                {"assertion": "b", "passed": False, "evidence": "still broken"},
++                {"id": "a", "assertion": "a", "passed": True},
++                {"id": "b", "assertion": "b", "passed": False, "evidence": "still broken"},
+             ],
+             "metrics": metrics,
+             "limits": limits,
+         }
+ 
+-        verdict, report = render("demo", baseline, new, CRITIC, {"c1"},
+-                                 diff_sha256="a" * 64, transcript_sha256="b" * 64)
++        verdict, report = render("demo", baseline, new, CRITIC, {"c1"}, donor=baseline,
++                                 donor_label="baseline donor", diff_sha256="a" * 64,
++                                 transcript_sha256="b" * 64)
+         self.assertEqual(verdict, "FAIL", report)
+ 
+ 
+diff --git a/skills-suite/skill-meta/tests/test_eval_input_validation.py b/skills-suite/skill-meta/tests/test_eval_input_validation.py
+index 15842f1..20bb5c6 100644
+--- a/skills-suite/skill-meta/tests/test_eval_input_validation.py
++++ b/skills-suite/skill-meta/tests/test_eval_input_validation.py
+@@ -12,7 +12,7 @@ SCRIPT = Path(__file__).parents[1] / "scripts" / "eval_verdict.py"
+ 
+ def envelope(passed, *, limits=None):
+     value = {
+-        "checks": [{"assertion": "workflow", "passed": passed, "evidence": "demo"}],
++        "checks": [{"id": "workflow", "assertion": "workflow", "passed": passed, "evidence": "demo"}],
+         "metrics": {
+             "model": "demo",
+             "input_tokens": 10,
+@@ -42,6 +42,7 @@ class EvalInputValidationTests(unittest.TestCase):
+         with tempfile.TemporaryDirectory() as tmp:
+             root = Path(tmp)
+             baseline = root / "baseline.json"
++            donor = root / "donor.json"
+             new = root / "new.json"
+             critic = root / "critic.json"
+             diff = root / "change.patch"
+@@ -67,7 +68,9 @@ class EvalInputValidationTests(unittest.TestCase):
+             checks = root / "checks.json"
+             checks.write_text(json.dumps([{"id": "c1"}]))
+             baseline.write_text(json.dumps(envelope(False)))
++            donor.write_text(json.dumps(envelope(False)))
+             cmd = [sys.executable, str(SCRIPT), "--baseline", str(baseline),
++                   "--donor", str(donor), "--donor-label", "demo donor",
+                    "--new", str(new), "--critic", str(critic), "--checks", str(checks),
+                    "--diff", str(diff), "--critic-transcript", str(transcript),
+                    "--skill", "demo"]
+diff --git a/skills-suite/skill-meta/tests/test_t3_measurement_receipts.py b/skills-suite/skill-meta/tests/test_t3_measurement_receipts.py
+index 2d7046e..8fa101b 100644
+--- a/skills-suite/skill-meta/tests/test_t3_measurement_receipts.py
++++ b/skills-suite/skill-meta/tests/test_t3_measurement_receipts.py
+@@ -82,6 +82,7 @@ class T3MeasurementReceiptTests(unittest.TestCase):
+         with tempfile.TemporaryDirectory() as tmp:
+             root = Path(tmp)
+             baseline_file = root / "baseline.json"
++            donor_file = root / "donor.json"
+             new_file = root / "new.json"
+             critic_file = root / "critic.json"
+             checks_file = root / "checks.json"
+@@ -93,11 +94,12 @@ class T3MeasurementReceiptTests(unittest.TestCase):
+                 "consistent_runs": 1, "runs": 1, "context_reuse": "not_available",
+             }
+             baseline_file.write_text(json.dumps({
+-                "checks": [{"assertion": "outcome", "passed": False}],
++                "checks": [{"id": "outcome", "assertion": "outcome", "passed": False}],
+                 "metrics": metrics,
+             }))
++            donor_file.write_text(baseline_file.read_text())
+             new_file.write_text(json.dumps({
+-                "checks": [{"assertion": "outcome", "passed": True}],
++                "checks": [{"id": "outcome", "assertion": "outcome", "passed": True}],
+                 "metrics": metrics,
+                 "limits": {
+                     "max_total_tokens": 20, "max_wall_ms": 40,
+@@ -107,6 +109,7 @@ class T3MeasurementReceiptTests(unittest.TestCase):
+             }))
+             cmd = [
+                 sys.executable, str(SCRIPT), "--baseline", str(baseline_file),
++                "--donor", str(donor_file), "--donor-label", "demo donor",
+                 "--new", str(new_file), "--checks", str(checks_file),
+                 "--diff", str(diff_file), "--critic-transcript", str(transcript_file),
+                 "--skill", "demo",
+@@ -164,20 +167,26 @@ class T3MeasurementReceiptTests(unittest.TestCase):
+         with tempfile.TemporaryDirectory() as tmp:
+             root = Path(tmp)
+             baseline_file = root / "baseline.json"
++            donor_file = root / "donor.json"
+             new_file = root / "new.json"
+             critic_file = root / "critic.json"
+             checks_file = root / "checks.json"
+             checks_file.write_text(json.dumps([{"id": "c1"}]))
+             diff_file, transcript_file = sealed_evidence(root)
+             critic_file.write_text(json.dumps(critic_receipt(diff_file, transcript_file)))
+-            legacy = [{"assertion": "outcome", "passed": True, "evidence": "ok"}]
++            legacy = [{"id": "outcome", "assertion": "outcome", "passed": True, "evidence": "ok"}]
+             baseline_file.write_text(json.dumps(legacy))
++            donor_file.write_text(json.dumps(legacy))
+             new_file.write_text(json.dumps(legacy))
+             cmd = [
+                 sys.executable,
+                 str(SCRIPT),
+                 "--baseline",
+                 str(baseline_file),
++                "--donor",
++                str(donor_file),
++                "--donor-label",
++                "demo donor",
+                 "--new",
+                 str(new_file),
+                 "--critic",
+@@ -197,7 +206,7 @@ class T3MeasurementReceiptTests(unittest.TestCase):
+             self.assertIn("metrics", (missing.stdout + missing.stderr).lower())
+ 
+             baseline_file.write_text(json.dumps(arm(
+-                [{"assertion": "outcome", "passed": False, "evidence": "miss"}],
++                [{"id": "outcome", "assertion": "outcome", "passed": False, "evidence": "miss"}],
+                 model="gpt-5.6-terra",
+                 input_tokens=1200,
+                 output_tokens=300,
+@@ -206,10 +215,23 @@ class T3MeasurementReceiptTests(unittest.TestCase):
+                 repeated_commands=1,
+                 consistent_runs=2,
+                 runs=3,
+-                context_reuse="not_available",
++                context_reuse="reused",
++            )))
++            donor_file.write_text(json.dumps(arm(
++                [{"id": "outcome", "assertion": "outcome", "passed": False,
++                  "evidence": "miss"}],
++                model="gpt-5.6-terra",
++                input_tokens=1200,
++                output_tokens=300,
++                wall_ms=5000,
++                tool_calls=6,
++                repeated_commands=1,
++                consistent_runs=2,
++                runs=3,
++                context_reuse="reused",
+             )))
+             new_file.write_text(json.dumps(arm(
+-                [{"assertion": "outcome", "passed": True, "evidence": "ok"}],
++                [{"id": "outcome", "assertion": "outcome", "passed": True, "evidence": "ok"}],
+                 model="gpt-5.6-terra",
+                 input_tokens=950,
+                 output_tokens=250,

@@ -1,0 +1,38 @@
+[
+  {
+    "id": "c1",
+    "category": "outcome",
+    "assertion": "for a Large or Medium idea the run writes exactly one file in the area's plans open/ folder with status: discovery, sections 1-3 filled and 4-9 left as headings, and check_plan_files.py reports nothing for it; the skeleton half is proved by the pytest file",
+    "cmd": "python3 -m pytest -q tests/test_grill.py"
+  },
+  {
+    "id": "c2",
+    "category": "process",
+    "assertion": "every interview turn asks one question with named options, one recommended as the default, and the evidence or unknown it settles",
+    "cmd": null
+  },
+  {
+    "id": "c3",
+    "category": "outcome",
+    "assertion": "a Tiny or Bug size writes no plan file and names the next door (a bead with acceptance and tdd-dev, or bugfix)",
+    "cmd": null
+  },
+  {
+    "id": "c4",
+    "category": "outcome",
+    "assertion": "every assumption in section 3 names how it will be tested and carries assumed or proven: <pointer>",
+    "cmd": null
+  },
+  {
+    "id": "c5",
+    "category": "process",
+    "assertion": "the run implements nothing and opens no issue, branch or pull request",
+    "cmd": null
+  },
+  {
+    "id": "c6",
+    "category": "outcome",
+    "assertion": "section 3 cites at least one external primary source for prior art and what we already own, or says that the search found none",
+    "cmd": null
+  }
+]

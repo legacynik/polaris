@@ -27,16 +27,14 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-UPDATE = HERE.parent.parent / "update" / "scripts"
 sys.path.insert(0, str(HERE))
-sys.path.insert(0, str(UPDATE))
 from datetime import date  # noqa: E402
 from merge_truth import CITES, default_branch, verdict  # noqa: E402  (F3: every citation)
 from state_lines import kinds, lane_id, read, section  # noqa: E402
 from state_sections import heading  # noqa: E402
 
 OPEN = heading("## Open")   # the ONE registry (gate round 2, F1)
-CLOSER = UPDATE / "state_close.py"
+CLOSER = HERE / "state_close.py"
 
 
 def candidates(path: Path) -> list[str]:
@@ -134,7 +132,7 @@ def _fixture(root: Path) -> Path:
     shutil.copyfile(src, path)
     for row in ("- `feat/b` (acme-api) — chiude #77 · since 2026-09-02",
                 "- `feat/a` (acme-api) — nessuna citazione · since 2026-09-01"):
-        done = subprocess.run([sys.executable, str(UPDATE / "state_upsert.py"), "thread", str(path),
+        done = subprocess.run([sys.executable, str(HERE / "state_upsert.py"), "thread", str(path),
                                "--owner", "probe", "--now", "2026-09-03"],
                               input=row + "\n", capture_output=True, text=True)
         if done.returncode:

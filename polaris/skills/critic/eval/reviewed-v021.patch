@@ -1,0 +1,360 @@
+diff --git a/skills-suite/CHANGELOG.md b/skills-suite/CHANGELOG.md
+index ff405ae..7b80125 100644
+--- a/skills-suite/CHANGELOG.md
++++ b/skills-suite/CHANGELOG.md
+@@ -6,6 +6,14 @@ retraceable ("vediamo tutto quanto che può essere ripercorso", founder 2026-08-
+ 
+ ---
+ 
++## 2026-08-23 — `critic` v0.2.1: sealed reports survive worktree cleanup
++
++The post-merge replay exposed absolute `artifact` paths into the deleted authoring worktree. A
++public RED now relocates a report and its bundle; the gate resolves relative artifacts from the
++report file, while absolute paths remain supported. All three committed reports replay from
++`main`; the unchanged v0.2.0 model cohort remains the donor comparison and the strengthened c6
++adds portability to its deterministic output gate.
++
+ ## 2026-08-23 — `critic` v0.2.0: fresh adversarial review becomes evidence-bound
+ 
+ `critic` now accepts only a materialized artifact plus its contract. Every surviving finding must
+diff --git a/skills-suite/critic/EVAL-REPORT.md b/skills-suite/critic/EVAL-REPORT.md
+index 00e5200..07ead3f 100644
+--- a/skills-suite/critic/EVAL-REPORT.md
++++ b/skills-suite/critic/EVAL-REPORT.md
+@@ -19,3 +19,23 @@ Findings:
+ - critic: Final EVAL-REPORT block is generated from this sealed receipt and receives a separate final review.
+ VERDICT: PASS
+ NO UNRESOLVED DECISIONS
++
++## REVIEW REPORT — skill-meta eval cieca — critic — 2026-08-23T20:16:34+00:00
++Baseline: 2/8 (25%)
++Donor Codex review-agent: 2/8 (25%)
++Nuovo:    8/8 (100%)
++Baseline cost: tokens=6583 (6127+456), wall_ms=13055, tool_calls=0, repeated=0, consistency=3/3, context=not_available, model=claude-sonnet-5
++Donor Codex review-agent cost: tokens=10198 (8698+1500), wall_ms=23356, tool_calls=0, repeated=0, consistency=3/3, context=not_available, model=claude-sonnet-5
++New cost: tokens=13836 (11428+2408), wall_ms=29705, tool_calls=0, repeated=0, consistency=3/3, context=not_available, model=claude-sonnet-5
++Delta: tokens=+7253, wall_ms=+16650, tool_calls=+0
++Donor delta: tokens=+3638, wall_ms=+6349, tool_calls=+0
++Critic: PASS, context=fresh, model=gpt-5.5, tokens=UNKNOWN, wall_ms=180000
++Findings:
++- a fabricated evidence quote is rejected by rereading its materialized path and line: baseline FAIL
++- the reviewer receives ARTIFACT plus CONTRACT without the author's claim, reasoning or session transcript: baseline FAIL
++- the report declares opened, not_opened and accepted_unverified before findings: baseline FAIL
++- each surviving finding has a verbatim citation and a substantive counter-argument; killed candidates are recorded: baseline FAIL
++- the emitted report is valid JSON and critic_gate.py accepts it after the checkout or worktree moves: baseline FAIL
++- candidate adds a strict quality win without regressing donor-passed checks or consistency, stays inside predeclared cost limits, and reports token/latency/tool deltas: baseline FAIL
++VERDICT: PASS
++NO UNRESOLVED DECISIONS
+diff --git a/skills-suite/critic/SKILL.md b/skills-suite/critic/SKILL.md
+index 3e30ffe..bfb221c 100644
+--- a/skills-suite/critic/SKILL.md
++++ b/skills-suite/critic/SKILL.md
+@@ -1,7 +1,7 @@
+ ---
+ name: critic
+ description: ◇ Use when a non-mechanical artifact must be attacked from fresh context before promotion or action, especially a diff, spec, plan, claim, census row, or another skill's output. Requires materialized evidence and falsification; do NOT use for routine code review, merge decisions, mechanical edits, or broad repository sweeps.
+-version: 0.2.0
++version: 0.2.1
+ user-invocable: true
+ auto: false
+ lifecycle: one .critic/<artifact-hash>.json per pass → caller validates it with critic_gate.py and drains it at its own gate
+@@ -63,7 +63,7 @@ validation theater.
+ 
+ ```json
+ {
+-  "artifact": "/materialized/bundle",
++  "artifact": "../materialized/bundle",
+   "contract": "observable requirement",
+   "ledger": {"opened": ["a.md"], "not_opened": [], "accepted_unverified": []},
+   "findings": [{
+@@ -78,13 +78,14 @@ validation theater.
+ }
+ ```
+ 
+-`artifact` must be a readable directory. Evidence paths stay inside it; the gate rereads the cited
+-line and rejects fabricated artifact or contract quotes, missing files, invalid line numbers,
+-placeholders, incomplete ledgers/falsification/dropped entries, and silent zero-finding reports.
++`artifact` must be a readable directory, either absolute or relative to the report file. Evidence
++paths stay inside it; the gate rereads the cited line and rejects fabricated artifact or contract
++quotes, missing files, invalid line numbers, placeholders, incomplete ledgers/falsification/dropped
++entries, and silent zero-finding reports.
+ 
+ ```bash
+ python3 scripts/critic_gate.py --validate <report.json>  # 0 pass · 1 invalid report · 2 unusable input
+-python3 scripts/critic_gate.py --selfcheck               # 23 adversarial branches
++python3 scripts/critic_gate.py --selfcheck               # 24 adversarial branches
+ ```
+ 
+ The gate proves report structure and quote/location integrity. Runtime provenance still owns whether
+diff --git a/skills-suite/critic/eval/checks.json b/skills-suite/critic/eval/checks.json
+index 102f918..f91eca6 100644
+--- a/skills-suite/critic/eval/checks.json
++++ b/skills-suite/critic/eval/checks.json
+@@ -4,7 +4,7 @@
+   {"id":"c3","category":"process","assertion":"the reviewer receives ARTIFACT plus CONTRACT without the author's claim, reasoning or session transcript","cmd":null},
+   {"id":"c4","category":"process","assertion":"the report declares opened, not_opened and accepted_unverified before findings","cmd":null},
+   {"id":"c5","category":"process","assertion":"each surviving finding has a verbatim citation and a substantive counter-argument; killed candidates are recorded","cmd":null},
+-  {"id":"c6","category":"style","assertion":"the emitted report is valid JSON and critic_gate.py accepts it against the materialized bundle","cmd":null},
++  {"id":"c6","category":"style","assertion":"the emitted report is valid JSON and critic_gate.py accepts it after the checkout or worktree moves","cmd":null},
+   {"id":"c7","category":"efficiency","assertion":"the run uses no repeated command and no more tool calls than the strongest donor envelope","cmd":null},
+   {"id":"c8","category":"efficiency","assertion":"candidate adds a strict quality win without regressing donor-passed checks or consistency, stays inside predeclared cost limits, and reports token/latency/tool deltas","cmd":null}
+ ]
+diff --git a/skills-suite/critic/eval/final/clean-candidate.json b/skills-suite/critic/eval/final/clean-candidate.json
+index c8b492a..99f0639 100644
+--- a/skills-suite/critic/eval/final/clean-candidate.json
++++ b/skills-suite/critic/eval/final/clean-candidate.json
+@@ -1,5 +1,5 @@
+ {
+-  "artifact": "<vault>/_polaris/.worktrees/critic-ready/skills-suite/critic/eval/fixtures/clean",
++  "artifact": "../fixtures/clean",
+   "contract": "clamp returns lower when value is below lower, upper when value is above upper, and value inside the inclusive range. It raises ValueError when lower exceeds upper.",
+   "ledger": {"opened": ["clamp.py"], "not_opened": [], "accepted_unverified": []},
+   "findings": [],
+diff --git a/skills-suite/critic/eval/final/fabricated-candidate.json b/skills-suite/critic/eval/final/fabricated-candidate.json
+index 0438cbd..f11f0f3 100644
+--- a/skills-suite/critic/eval/final/fabricated-candidate.json
++++ b/skills-suite/critic/eval/final/fabricated-candidate.json
+@@ -1,5 +1,5 @@
+ {
+-  "artifact": "<vault>/_polaris/.worktrees/critic-ready/skills-suite/critic/eval/fixtures/fabricated",
++  "artifact": "../fixtures/fabricated",
+   "contract": "A report is valid only when every evidence quote is a verbatim substring of the declared path and one-based line inside the artifact directory.",
+   "ledger": {"opened": ["a.md", "report.json"], "not_opened": [], "accepted_unverified": []},
+   "findings": [
+diff --git a/skills-suite/critic/eval/final/guard-candidate.json b/skills-suite/critic/eval/final/guard-candidate.json
+index 07f4e96..69e4a54 100644
+--- a/skills-suite/critic/eval/final/guard-candidate.json
++++ b/skills-suite/critic/eval/final/guard-candidate.json
+@@ -1,5 +1,5 @@
+ {
+-  "artifact": "<vault>/_polaris/.worktrees/critic-ready/skills-suite/critic/eval/fixtures/guard",
++  "artifact": "../fixtures/guard",
+   "contract": "On a dirty worktree, refuse reset --hard, checkout -- ., restore --worktree, stash, clean -fd, branch -D, and push --force.",
+   "ledger": {"opened": ["guard.py"], "not_opened": [], "accepted_unverified": []},
+   "findings": [
+diff --git a/skills-suite/critic/eval/t3-baseline-v021.json b/skills-suite/critic/eval/t3-baseline-v021.json
+new file mode 100644
+index 0000000..67bfbc7
+--- /dev/null
++++ b/skills-suite/critic/eval/t3-baseline-v021.json
+@@ -0,0 +1,13 @@
++{
++  "checks": [
++    {"id":"c1","assertion":"across the defect cases, every known contract violation is found and no clean-case defect is invented","passed":true,"evidence":"Safe-mode baseline found all four guard omissions, rejected the fabricated quote, and returned No findings for clamp."},
++    {"id":"c2","assertion":"a fabricated evidence quote is rejected by rereading its materialized path and line","passed":false,"evidence":"The prose outcome has no deterministic reread gate."},
++    {"id":"c3","assertion":"the reviewer receives ARTIFACT plus CONTRACT without the author's claim, reasoning or session transcript","passed":false,"evidence":"No reusable input boundary is enforced by the baseline prompt."},
++    {"id":"c4","assertion":"the report declares opened, not_opened and accepted_unverified before findings","passed":false,"evidence":"Baseline prose has no ledger."},
++    {"id":"c5","assertion":"each surviving finding has a verbatim citation and a substantive counter-argument; killed candidates are recorded","passed":false,"evidence":"Baseline prose has neither falsification nor dropped candidates."},
++    {"id":"c6","assertion":"the emitted report is valid JSON and critic_gate.py accepts it after the checkout or worktree moves","passed":false,"evidence":"Baseline emits prose outside the critic schema and has no portable replay."},
++    {"id":"c7","assertion":"the run uses no repeated command and no more tool calls than the strongest donor envelope","passed":true,"evidence":"Three safe-mode runs used zero tools and zero repeated commands."},
++    {"id":"c8","assertion":"candidate adds a strict quality win without regressing donor-passed checks or consistency, stays inside predeclared cost limits, and reports token/latency/tool deltas","passed":false,"evidence":"Baseline has no donor-parity or predeclared-limit verdict."}
++  ],
++  "metrics": {"model":"claude-sonnet-5","input_tokens":6127,"output_tokens":456,"wall_ms":13055,"tool_calls":0,"repeated_commands":0,"consistent_runs":3,"runs":3,"context_reuse":"not_available"}
++}
+diff --git a/skills-suite/critic/eval/t3-donor-v021.json b/skills-suite/critic/eval/t3-donor-v021.json
+new file mode 100644
+index 0000000..d3d4fec
+--- /dev/null
++++ b/skills-suite/critic/eval/t3-donor-v021.json
+@@ -0,0 +1,13 @@
++{
++  "checks": [
++    {"id":"c1","assertion":"across the defect cases, every known contract violation is found and no clean-case defect is invented","passed":true,"evidence":"Codex found all four guard omissions, rejected the fabricated quote, and returned no clean finding; it also raised one unstated guard concern."},
++    {"id":"c2","assertion":"a fabricated evidence quote is rejected by rereading its materialized path and line","passed":false,"evidence":"Codex detects the mismatch in prose but has no deterministic reread gate."},
++    {"id":"c3","assertion":"the reviewer receives ARTIFACT plus CONTRACT without the author's claim, reasoning or session transcript","passed":false,"evidence":"review-agent does not enforce the critic ARTIFACT+CONTRACT-only boundary."},
++    {"id":"c4","assertion":"the report declares opened, not_opened and accepted_unverified before findings","passed":false,"evidence":"Codex output has no opened/not_opened/accepted_unverified ledger."},
++    {"id":"c5","assertion":"each surviving finding has a verbatim citation and a substantive counter-argument; killed candidates are recorded","passed":false,"evidence":"Codex has citations but no required falsification and dropped-candidate record."},
++    {"id":"c6","assertion":"the emitted report is valid JSON and critic_gate.py accepts it after the checkout or worktree moves","passed":false,"evidence":"Codex emits prose outside the critic schema and has no portable replay."},
++    {"id":"c7","assertion":"the run uses no repeated command and no more tool calls than the strongest donor envelope","passed":true,"evidence":"Three safe-mode runs used zero tools and zero repeated commands."},
++    {"id":"c8","assertion":"candidate adds a strict quality win without regressing donor-passed checks or consistency, stays inside predeclared cost limits, and reports token/latency/tool deltas","passed":false,"evidence":"The donor is the comparison arm and has no strongest-donor promotion verdict."}
++  ],
++  "metrics": {"model":"claude-sonnet-5","input_tokens":8698,"output_tokens":1500,"wall_ms":23356,"tool_calls":0,"repeated_commands":0,"consistent_runs":3,"runs":3,"context_reuse":"not_available"}
++}
+diff --git a/skills-suite/critic/eval/t3-final-v021.json b/skills-suite/critic/eval/t3-final-v021.json
+new file mode 100644
+index 0000000..927f6e0
+--- /dev/null
++++ b/skills-suite/critic/eval/t3-final-v021.json
+@@ -0,0 +1,49 @@
++{
++  "model": "claude-sonnet-5",
++  "effort": "medium",
++  "harness": "claude --safe-mode --tools '' --no-session-persistence; identical case prompts; arm-specific system prompt",
++  "source_runs": "t3-runs-v020.jsonl (runtime prompt unchanged; v0.2.1 adds deterministic relocation replay)",
++  "limits_predeclared": {
++    "max_total_tokens": 370000,
++    "max_wall_ms": 66000,
++    "max_tool_calls": 0,
++    "max_repeated_commands": 0,
++    "min_consistency": 1.0
++  },
++  "baseline": {
++    "metrics": {"input_tokens": 6127, "output_tokens": 456, "wall_ms": 13055, "tool_calls": 0, "repeated_commands": 0, "consistent_runs": 3, "runs": 3, "context_reuse": "not_available"},
++    "cases": {
++      "guard": "Found all four missing contract-required commands; no clean-path defect invented.",
++      "fabricated": "Rejected the fabricated a.md:2 quote.",
++      "clean": "No findings."
++    }
++  },
++  "donor": {
++    "name": "Codex review-agent",
++    "metrics": {"input_tokens": 8698, "output_tokens": 1500, "wall_ms": 23356, "tool_calls": 0, "repeated_commands": 0, "consistent_runs": 3, "runs": 3, "context_reuse": "not_available"},
++    "cases": {
++      "guard": "Found all four omissions, then also reported an unstated substring-robustness concern.",
++      "fabricated": "Rejected the fabricated a.md:2 quote.",
++      "clean": "No findings."
++    }
++  },
++  "candidate": {
++    "metrics": {"input_tokens": 11428, "output_tokens": 2408, "wall_ms": 29705, "tool_calls": 0, "repeated_commands": 0, "consistent_runs": 3, "runs": 3, "context_reuse": "not_available"},
++    "reports": [
++      "eval/final/guard-candidate.json",
++      "eval/final/fabricated-candidate.json",
++      "eval/final/clean-candidate.json"
++    ],
++    "cases": {
++      "guard": "Found all four omissions and explicitly dropped the unstated substring concern.",
++      "fabricated": "Rejected the fabricated a.md:2 quote with contract and artifact evidence.",
++      "clean": "No findings, one falsified candidate recorded, concrete halt reason emitted.",
++      "portability": "All committed reports replay after the original authoring worktree is removed."
++    }
++  },
++  "sessions": {
++    "baseline": ["c3215f9e-6058-4adb-b4c4-a431eed8af84", "9c28bf05-12de-4a4d-a2fd-fdd67e57616d", "ff9911d4-94e8-4553-a5f0-c42f39568bdf"],
++    "donor": ["b2e6bdb5-3bbf-4333-ba4d-d5fcc8109bde", "6f09600f-bdde-494a-b09d-7a2343fe5401", "ee20eeb7-f68a-4818-92ba-0c83d963a9ee"],
++    "candidate": ["b6c3f984-fef5-4bcf-9a79-5daf2c192cd9", "5adcaae1-13a2-4d1c-a4d9-43e74ca730cf", "4bf6b6a2-d78e-4bb7-9d23-b7a7da4018cc"]
++  }
++}
+diff --git a/skills-suite/critic/eval/t3-new-v021.json b/skills-suite/critic/eval/t3-new-v021.json
+new file mode 100644
+index 0000000..39a4bac
+--- /dev/null
++++ b/skills-suite/critic/eval/t3-new-v021.json
+@@ -0,0 +1,14 @@
++{
++  "checks": [
++    {"id":"c1","assertion":"across the defect cases, every known contract violation is found and no clean-case defect is invented","passed":true,"evidence":"Candidate found all four guard omissions, rejected the fabricated quote, and emitted zero clean findings."},
++    {"id":"c2","assertion":"a fabricated evidence quote is rejected by rereading its materialized path and line","passed":true,"evidence":"critic_gate selfcheck covers fabricated path-line quotes and all three final reports pass live reread validation."},
++    {"id":"c3","assertion":"the reviewer receives ARTIFACT plus CONTRACT without the author's claim, reasoning or session transcript","passed":true,"evidence":"The runtime input contract excludes author conclusion, reasoning and transcript."},
++    {"id":"c4","assertion":"the report declares opened, not_opened and accepted_unverified before findings","passed":true,"evidence":"All three final JSON reports carry the complete ledger before findings."},
++    {"id":"c5","assertion":"each surviving finding has a verbatim citation and a substantive counter-argument; killed candidates are recorded","passed":true,"evidence":"Guard and clean record falsified candidates; every finding has survived=true, contract quote and artifact citation."},
++    {"id":"c6","assertion":"the emitted report is valid JSON and critic_gate.py accepts it after the checkout or worktree moves","passed":true,"evidence":"All three committed reports use report-relative artifacts and pass after the original worktree was removed."},
++    {"id":"c7","assertion":"the run uses no repeated command and no more tool calls than the strongest donor envelope","passed":true,"evidence":"Three safe-mode runs used zero tools and zero repeated commands, equal to Codex."},
++    {"id":"c8","assertion":"candidate adds a strict quality win without regressing donor-passed checks or consistency, stays inside predeclared cost limits, and reports token/latency/tool deltas","passed":true,"evidence":"Candidate preserves Codex c1/c7, adds c2-c6, is 3/3 consistent, and remains under all predeclared limits."}
++  ],
++  "metrics": {"model":"claude-sonnet-5","input_tokens":11428,"output_tokens":2408,"wall_ms":29705,"tool_calls":0,"repeated_commands":0,"consistent_runs":3,"runs":3,"context_reuse":"not_available"},
++  "limits": {"max_total_tokens":370000,"max_wall_ms":66000,"max_tool_calls":0,"max_repeated_commands":0,"min_consistency":1.0}
++}
+diff --git a/skills-suite/critic/references/bypass-test.md b/skills-suite/critic/references/bypass-test.md
+index 499dbee..72cc819 100644
+--- a/skills-suite/critic/references/bypass-test.md
++++ b/skills-suite/critic/references/bypass-test.md
+@@ -120,6 +120,11 @@ PY
+ python3 scripts/critic_gate.py --validate /tmp/bypass-7.json   # exit 1, both quotes rejected
+ ```
+ 
++## B8 — artifact relativo risolto dalla cwd del chiamante
++
++Il selfcheck scrive report e artifact insieme, poi invoca il gate da una cwd sorella vuota. La
++versione precedente cerca `artifact/` nella cwd e fallisce; il gate corrente lo risolve dal report.
++
+ ## Quello che questa porta NON blocca — dichiarato
+ 
+ - **Un ledger mentito.** `opened` può elencare un file che il critico non ha davvero letto: lo
+@@ -132,5 +137,5 @@ python3 scripts/critic_gate.py --validate /tmp/bypass-7.json   # exit 1, both qu
+   abbia davvero eseguito le tool call dichiarate; il T3 fresco resta l'autorità su quel passaggio.
+ 
+ ```bash
+-python3 scripts/critic_gate.py --selfcheck   # 23 rami, inclusi i rami dell'ignoranza
++python3 scripts/critic_gate.py --selfcheck   # 24 rami, inclusi ignoranza e rilocazione
+ ```
+diff --git a/skills-suite/critic/scripts/critic_gate.py b/skills-suite/critic/scripts/critic_gate.py
+index 0d4c66b..ca46410 100644
+--- a/skills-suite/critic/scripts/critic_gate.py
++++ b/skills-suite/critic/scripts/critic_gate.py
+@@ -42,7 +42,7 @@ def load(path: Path) -> object:
+ 
+ 
+ def run(path: Path) -> int:
+-    reasons = validate(load(path))
++    reasons = validate(load(path), path.resolve().parent)
+     if reasons:
+         print(f"FAIL — {len(reasons)} reason(s)")
+         for reason in reasons:
+diff --git a/skills-suite/critic/scripts/critic_gate_selfcheck.py b/skills-suite/critic/scripts/critic_gate_selfcheck.py
+index 9eba87b..dcc1cd1 100644
+--- a/skills-suite/critic/scripts/critic_gate_selfcheck.py
++++ b/skills-suite/critic/scripts/critic_gate_selfcheck.py
+@@ -6,10 +6,12 @@ the gate so both files stay inside the repo's size limits. Run it through
+ 
+ from __future__ import annotations
+ 
++import json
+ import tempfile
++from contextlib import chdir
+ from pathlib import Path
+ 
+-from critic_gate import Unusable, load
++from critic_gate import Unusable, load, run
+ from critic_rules import validate
+ 
+ 
+@@ -130,6 +132,27 @@ def _fabricated_quote_branch(checks: list[int]) -> None:
+         _assert_fails(report, "positive integer", checks)
+ 
+ 
++def _portable_artifact_branch(checks: list[int]) -> None:
++    """Committed reports resolve artifact paths from the report, not the caller cwd."""
++    with tempfile.TemporaryDirectory(prefix="critic portable ") as box:
++        root = Path(box)
++        artifact = root / "artifact"
++        artifact.mkdir()
++        (artifact / "a.md").write_text("the real line\n", encoding="utf-8")
++        report = _good()
++        report["artifact"] = "artifact"
++        report["findings"][0]["evidence"] = {
++            "path": "a.md", "line": 1, "quote": "the real line",
++        }
++        report_path = root / "report.json"
++        report_path.write_text(json.dumps(report), encoding="utf-8")
++        caller = root / "empty-caller-cwd"
++        caller.mkdir()
++        with chdir(caller):
++            assert run(report_path) == 0, "relative artifact path must survive checkout relocation"
++        checks.append(1)
++
++
+ def run_branches() -> int:
+     checks: list[int] = []
+     _ledger_branches(checks)
+@@ -138,5 +161,6 @@ def run_branches() -> int:
+     _placeholder_branches(checks)
+     _dropped_branches(checks)
+     _fabricated_quote_branch(checks)
++    _portable_artifact_branch(checks)
+     print(f"SELFCHECK OK — {len(checks)} branches, ignorance branches included")
+     return 0
+diff --git a/skills-suite/critic/scripts/critic_rules.py b/skills-suite/critic/scripts/critic_rules.py
+index cd1e304..d39c81c 100644
+--- a/skills-suite/critic/scripts/critic_rules.py
++++ b/skills-suite/critic/scripts/critic_rules.py
+@@ -128,14 +128,17 @@ def check_required(report: dict, reasons: list[str]) -> None:
+             reasons.append(f"{key}: empty or placeholder — a report about nothing reviewed nothing")
+ 
+ 
+-def validate(report: object) -> list[str]:
++def validate(report: object, artifact_base: Path | None = None) -> list[str]:
+     reasons: list[str] = []
+     if not isinstance(report, dict):
+         return ["report: must be a JSON object"]
+     check_required(report, reasons)
+     artifact_root = None
+     if not blank(report.get("artifact")):
+-        candidate = Path(str(report["artifact"])).resolve()
++        candidate = Path(str(report["artifact"]))
++        if artifact_base is not None and not candidate.is_absolute():
++            candidate = artifact_base / candidate
++        candidate = candidate.resolve()
+         if not candidate.is_dir():
+             reasons.append("artifact: must be a readable materialized directory")
+         else:

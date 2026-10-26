@@ -1,0 +1,37 @@
+[
+  {
+    "id": "p01",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "logic / explicit",
+    "prompt": "Prototype the quote approval state machine — I want to see if 'partially approved' even makes sense."
+  },
+  {
+    "id": "p03",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "logic / implicit",
+    "prompt": "Non sono sicuro che il modello degli sconti regga il caso sconto su sconto. Posso cliccarci sopra prima di scriverlo?"
+  },
+  {
+    "id": "p05",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "UI / implicit",
+    "prompt": "What should the empty state of the dashboard look like? Show me a few options I can switch between."
+  },
+  {
+    "id": "n02",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "bugfix",
+    "prompt": "La pagina del preventivo va in errore 500 quando il cliente non ha indirizzo."
+  },
+  {
+    "id": "n04",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "grill",
+    "prompt": "Ho un'idea per un'area clienti, ma non so ancora cosa debba fare."
+  }
+]

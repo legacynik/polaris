@@ -1,0 +1,4 @@
+interface:
+  display_name: "Prototype"
+  short_description: "Answer one design question with a throwaway spike"
+  default_prompt: "Use $prototype to answer one named question with throwaway code on a spike branch, then write only the verdict into the plan file's section 4."

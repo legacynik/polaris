@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""verdict_checks.py — le regole pure di validazione di un verdetto real-test.
+"""verdict_checks.py — the pure validation rules for a real-test verdict.
 
-Nessuna dipendenza da git: prende dict gia' caricati + un `repo: Path` solo per
-controllare gli `evidence_artifact` sul filesystem. `verdict.py` orchestra
-queste funzioni contro il perimetro reale calcolato da `perimeter.py`.
+No dependency on git: takes already-loaded dicts + a `repo: Path` only to
+check `evidence_artifact` files on the filesystem. `verdict.py` orchestrates
+these functions against the real perimeter computed by `perimeter.py`.
 
-  G2.6/F6/F7 -> validate_hash            (il verdetto deve combaciare con l'hash ORA)
-  G1.6       -> validate_branches_covered (ogni ramo nuovo va citato)
-  G2.1       -> validate_evidence         (mock/vuoto non e' prova; live va fresco)
+  G2.6/F6/F7 -> validate_hash            (the verdict must match the hash NOW)
+  G1.6       -> validate_branches_covered (every new branch must be cited)
+  G2.1       -> validate_evidence         (mock/empty is not proof; live must be fresh)
 
-Uso: verdict_checks.py --selfcheck
+Usage: verdict_checks.py --selfcheck
 """
 from __future__ import annotations
 
@@ -20,14 +20,14 @@ from pathlib import Path
 
 VERDETTI = {"MERGEABLE", "MERGEABLE-CON-GAP", "NOT-MERGEABLE"}
 CLASSES = {
-    "symbol": "simbolo applicativo (chiamanti/fallback/tipi)",
+    "symbol": "application symbol (callers/fallbacks/types)",
     "api-cli": "API/CLI/tool/event/schema",
     "config-ci": "config/permission/hook/CI",
-    "dependency": "dipendenza/lock/build",
-    "db-migration": "DB/migrazione/storage",
+    "dependency": "dependency/lock/build",
+    "db-migration": "DB/migration/storage",
     "frontend": "frontend (browser)",
     "llm-agent": "LLM/agent/prompt/toolset",
-    "deletion": "delezione/rename",
+    "deletion": "deletion/rename",
     "docs": "docs/guidance/history",
     "test-only": "test-only",
 }
@@ -40,25 +40,25 @@ def load_verdict(path: Path) -> dict:
     try:
         return json.loads(path.read_text())
     except (OSError, json.JSONDecodeError) as e:
-        raise ValueError(f"verdetto illeggibile ({path}): {e}") from e
+        raise ValueError(f"verdict unreadable ({path}): {e}") from e
 
 
 def validate_verdetto_value(v: dict) -> list[str]:
     val = v.get("verdetto")
-    return [] if val in VERDETTI else [f"verdetto '{val}' non e' uno dei tre stati: {VERDETTI}"]
+    return [] if val in VERDETTI else [f"verdict '{val}' is not one of the three states: {VERDETTI}"]
 
 
 def validate_hash(v: dict, expected: str) -> list[str]:
     got = v.get("content_hash")
     if got != expected:
-        return [f"content_hash stale: verdetto ha '{got}', perimetro reale ora e' '{expected}'"]
+        return [f"content_hash stale: verdict has '{got}', real perimeter is now '{expected}'"]
     return []
 
 
 def validate_files_covered(v: dict, files: list[str]) -> list[str]:
     matrix_files = {row.get("file") for row in v.get("matrix", [])}
     missing = [f for f in files if f not in matrix_files]
-    return [f"file fuori dalla matrice: {missing}"] if missing else []
+    return [f"files outside the matrix: {missing}"] if missing else []
 
 
 def validate_branches_covered(v: dict, new_branches: list[dict]) -> list[str]:
@@ -70,35 +70,35 @@ def validate_branches_covered(v: dict, new_branches: list[dict]) -> list[str]:
         for b in new_branches
         if f"{b['file']}:{b['line']}" not in exercised
     ]
-    return [f"rami nuovi non esercitati nel verdetto: {missing}"] if missing else []
+    return [f"new branches not exercised in the verdict: {missing}"] if missing else []
 
 
 def _schema_errors(row: dict, art: str, p: Path) -> list[str]:
-    """EVAL-real-test-copertura.md riga 3 (G2.1): esistenza+freschezza non e' prova —
-    un file di prosa che dichiara 'nessuna chiamata reale, MagicMock in test' passava.
-    Richiede JSON con 'call_id' non vuoto: un identificatore riconducibile a UNA
-    chiamata (request id, hash, trace id) — non intercetta IO (attestazione, non
-    interception, dichiarato in matrix-classes.md), ma un testo/nota sciolta non e'
-    piu' uno schema valido."""
+    """EVAL-real-test-copertura.md row 3 (G2.1): existence+freshness is not proof —
+    a prose file declaring 'no real call, MagicMock in test' used to pass.
+    Requires JSON with a non-empty 'call_id': an identifier traceable to ONE
+    call (request id, hash, trace id) — it does not intercept IO (attestation, not
+    interception, stated in matrix-classes.md), but loose text/a note is no
+    longer a valid schema."""
     try:
         data = json.loads(p.read_text())
     except (OSError, json.JSONDecodeError):
-        return [f"{row.get('file')}: evidence_artifact '{art}' non e' JSON — non e' uno schema verificabile"]
+        return [f"{row.get('file')}: evidence_artifact '{art}' is not JSON — not a verifiable schema"]
     if not isinstance(data, dict) or not str(data.get("call_id") or "").strip():
-        return [f"{row.get('file')}: evidence_artifact '{art}' senza 'call_id' — attestazione senza schema non e' prova"]
+        return [f"{row.get('file')}: evidence_artifact '{art}' without 'call_id' — an attestation without a schema is not proof"]
     return []
 
 
 def _artifact_errors(row: dict, repo: Path) -> list[str]:
     art = row.get("evidence_artifact")
     if not art:
-        return [f"{row.get('file')}: evidence=live senza evidence_artifact"]
+        return [f"{row.get('file')}: evidence=live without evidence_artifact"]
     p = repo / art if not Path(art).is_absolute() else Path(art)
     if not p.exists() or p.stat().st_size == 0:
-        return [f"{row.get('file')}: evidence_artifact '{art}' assente o vuoto"]
+        return [f"{row.get('file')}: evidence_artifact '{art}' missing or empty"]
     src = repo / row["file"]
     if src.exists() and p.stat().st_mtime < src.stat().st_mtime:
-        return [f"{row.get('file')}: evidence_artifact '{art}' piu' vecchio del file — prova stale"]
+        return [f"{row.get('file')}: evidence_artifact '{art}' older than the file — stale proof"]
     return _schema_errors(row, art, p)
 
 
@@ -107,13 +107,13 @@ def validate_evidence(v: dict, repo: Path) -> list[str]:
     for row in v.get("matrix", []):
         cls, ev = row.get("class"), row.get("evidence")
         if ev not in {"live", "assumed", "not-applicable"}:
-            errs.append(f"{row.get('file')}: evidence '{ev}' non valida")
+            errs.append(f"{row.get('file')}: evidence '{ev}' is invalid")
         elif cls in LIVE_REQUIRED and ev == "not-applicable":
-            errs.append(f"{row.get('file')}: classe '{cls}' non puo' essere not-applicable")
+            errs.append(f"{row.get('file')}: class '{cls}' cannot be not-applicable")
         elif ev == "live":
             errs += _artifact_errors(row, repo)
         elif ev == "assumed" and not row.get("exception_ticket"):
-            errs.append(f"{row.get('file')}: evidence=assumed senza exception_ticket")
+            errs.append(f"{row.get('file')}: evidence=assumed without exception_ticket")
     return errs
 
 
@@ -122,18 +122,18 @@ def validate_raccolto(v: dict) -> list[str]:
         return []
     raccolto = v.get("raccolto") or []
     if not raccolto:
-        return ["raccolto vuoto: nessuna scoperta classificata, nessun test lasciato in CI"]
+        return ["raccolto empty: no classified finding, no test left in CI"]
     errs = []
     for e in raccolto:
         if e.get("tipo") in RACCOLTO_NEEDS_ARTIFACT and not e.get("artifact"):
-            errs.append(f"raccolto '{e.get('tipo')}' senza artifact (test lasciato in CI)")
+            errs.append(f"raccolto '{e.get('tipo')}' without artifact (test left in CI)")
         if e.get("tipo") in RACCOLTO_NEEDS_NOTA and not e.get("nota"):
-            errs.append(f"raccolto '{e.get('tipo')}' senza nota")
+            errs.append(f"raccolto '{e.get('tipo')}' without nota")
     return errs
 
 
 def _selfcheck() -> int:
-    """Unit-level, senza git: prova ogni funzione pura su dict costruiti a mano."""
+    """Unit-level, no git: exercises each pure function on hand-built dicts."""
     assert validate_verdetto_value({"verdetto": "MERGEABLE"}) == []
     assert validate_verdetto_value({"verdetto": "BOH"}) != []
 
@@ -163,14 +163,14 @@ def _selfcheck() -> int:
         art = repo / "trace.json"
         row_live = {"file": "a.py", "class": "llm-agent", "evidence": "live",
                     "evidence_artifact": "trace.json"}
-        art.write_text('{"note": "fabbricato a mano, nessuna chiamata reale - MagicMock in test"}')
+        art.write_text('{"note": "handmade, no real call - MagicMock in test"}')
         assert validate_evidence({"matrix": [row_live]}, repo) != [], \
-            "prosa senza call_id (il reproducer di EVAL-copertura riga 3) deve fallire"
-        art.write_text("solo testo, non json")
-        assert validate_evidence({"matrix": [row_live]}, repo) != [], "non-JSON deve fallire"
-        art.write_text('{"call_id": "req-abc123", "note": "chiamata reale"}')
-        assert validate_evidence({"matrix": [row_live]}, repo) == [], "JSON con call_id deve passare"
-    print("SELFCHECK OK — 15 asserzioni sulle funzioni pure (call_id schema incluso)")
+            "prose without call_id (the EVAL-copertura row 3 reproducer) must fail"
+        art.write_text("plain text, not json")
+        assert validate_evidence({"matrix": [row_live]}, repo) != [], "non-JSON must fail"
+        art.write_text('{"call_id": "req-abc123", "note": "real call"}')
+        assert validate_evidence({"matrix": [row_live]}, repo) == [], "JSON with call_id must pass"
+    print("SELFCHECK OK — 15 assertions on the pure functions (call_id schema included)")
     return 0
 
 

@@ -1,0 +1,56 @@
+[
+ {
+  "id": "c1",
+  "category": "outcome",
+  "assertion": "across the defect cases, every known contract violation is found and no clean-case defect is invented",
+  "cmd": null
+ },
+ {
+  "id": "c2",
+  "category": "outcome",
+  "assertion": "a fabricated evidence quote is rejected by rereading its materialized path and line",
+  "cmd": "python3 scripts/critic_gate.py --selfcheck"
+ },
+ {
+  "id": "c3",
+  "category": "process",
+  "assertion": "the reviewer receives ARTIFACT plus CONTRACT without the author's claim, reasoning or session transcript",
+  "cmd": null
+ },
+ {
+  "id": "c4",
+  "category": "process",
+  "assertion": "the report declares opened, not_opened and accepted_unverified before findings",
+  "cmd": null
+ },
+ {
+  "id": "c5",
+  "category": "process",
+  "assertion": "each surviving finding has a verbatim citation and a substantive counter-argument; killed candidates are recorded",
+  "cmd": null
+ },
+ {
+  "id": "c6",
+  "category": "style",
+  "assertion": "the emitted report is valid JSON and critic_gate.py accepts it after the checkout or worktree moves",
+  "cmd": null
+ },
+ {
+  "id": "c7",
+  "category": "efficiency",
+  "assertion": "the run uses no repeated command and no more tool calls than the strongest donor envelope",
+  "cmd": null
+ },
+ {
+  "id": "c8",
+  "category": "efficiency",
+  "assertion": "candidate adds a strict quality win without regressing donor-passed checks or consistency, stays inside predeclared cost limits, and reports token/latency/tool deltas",
+  "cmd": null
+ },
+ {
+  "id": "c9",
+  "category": "outcome",
+  "assertion": "given a plan whose DoD line contradicts its outcome and a naming nit, the report marks the contradiction critical or important (blocking, returned to the author, the plan is not accepted) and only the nit as minor taste for the human",
+  "cmd": null
+ }
+]

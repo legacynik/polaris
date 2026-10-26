@@ -22,11 +22,11 @@ _git_power() {
 phase() {
     local repo="${1:-$PWD}"
     git -C "$repo" rev-parse --is-inside-work-tree >/dev/null 2>&1 || {
-        echo "lane_phase: non è un checkout git — nessuna classificazione della lane"; return 0; }
+        echo "lane_phase: not a git checkout — no lane classification"; return 0; }
     [ -n "$(git -C "$repo" remote 2>/dev/null)" ] || {
-        echo "nessun remote: push non applicabile — nessuna classificazione della lane"; return 0; }
+        echo "no remote: push does not apply — no lane classification"; return 0; }
     local gp; gp="$(_git_power)"
-    [ -n "$gp" ] || { echo "NOTA: git-power non installato — nessuna classificazione della lane"; return 0; }
+    [ -n "$gp" ] || { echo "NOTE: git-power not installed — no lane classification"; return 0; }
     python3 "$gp" phase post-push --repo "$repo"
 }
 
@@ -41,13 +41,13 @@ _selfcheck() {
         then pass=$((pass+1)); echo "  ok   $1"
         else fail=$((fail+1)); echo "  FAIL $1 (rc=$rc want=$3) :: $out"; fi
     }
-    want "a directory that is not a checkout is not a lane" "non è un checkout git" 0
+    want "a directory that is not a checkout is not a lane" "not a git checkout" 0
     git -C "$d" init -q -b main .; git -C "$d" config user.email t@t; git -C "$d" config user.name t
     echo x > "$d/a"; git -C "$d" add a; git -C "$d" commit -qm init
-    want "no remote: the question cannot be asked" "nessun remote" 0
+    want "no remote: the question cannot be asked" "no remote" 0
     git -C "$d" remote add origin "$d/../bare.git"
     CLAUDE_PLUGIN_ROOT="$d/absent" HOME="$d/absent" want \
-        "a remote and no git-power degrades, it does not crash" "git-power non installato" 0
+        "a remote and no git-power degrades, it does not crash" "git-power not installed" 0
     rm -rf "$d"
     echo "lane_phase selfcheck: $pass passed, $fail failed"
     [ "$fail" = "0" ]

@@ -1,0 +1,37 @@
+[
+  {
+    "id": "p04",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "regression / explicit",
+    "prompt": "Run tdd-dev: the fix already exists, but I need evidence that the regression test catches the old defect and the relevant suite remains green."
+  },
+  {
+    "id": "p05",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "regression / implicit",
+    "prompt": "This test is green after my patch. Show that it fails when the bug is safely reintroduced, then verify the repaired tree."
+  },
+  {
+    "id": "p07",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "proof review / implicit",
+    "prompt": "Does this passing parser test prove the contract, or is it mirroring the same branches and fixtures as the implementation?"
+  },
+  {
+    "id": "n02",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "third-party workaround",
+    "prompt": "The upstream SDK crashes internally and we cannot reproduce it in our code; document a pinned workaround and upstream issue."
+  },
+  {
+    "id": "n04",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "observability probe",
+    "prompt": "Add a production health probe for the queue and alert when no jobs complete for ten minutes."
+  }
+]

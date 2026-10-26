@@ -1,0 +1,26 @@
+[
+  {
+    "id": "p02",
+    "should_trigger": true,
+    "kind": "explicit",
+    "prompt": "Use bugfix to close this traceback properly, with a rewritten regression test collected by CI, not a quick patch."
+  },
+  {
+    "id": "p04",
+    "should_trigger": true,
+    "kind": "implicit",
+    "prompt": "A user reported the export button silently drops rows above 1000 — here is the stack trace from last night's log."
+  },
+  {
+    "id": "p06",
+    "should_trigger": true,
+    "kind": "contextual",
+    "prompt": "CI shows a red smoke test on the nightly build for the pricing calculator; not urgent, but it should be closed with a reproducing test."
+  },
+  {
+    "id": "n03",
+    "should_trigger": false,
+    "kind": "negative",
+    "prompt": "The bug lives inside the third-party payment SDK's compiled binary and we cannot write a test against its internals — what's our move?"
+  }
+]

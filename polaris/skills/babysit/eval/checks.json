@@ -1,0 +1,26 @@
+[
+  {
+    "id": "c1",
+    "category": "outcome",
+    "assertion": "the status script reads the latest run per check, refuses a blank signing env, and exits 0 READY, 3 WAITING, 1 ACTION/CLOSED, 2 no data",
+    "cmd": "python3 -m pytest -q tests/"
+  },
+  {
+    "id": "c2",
+    "category": "process",
+    "assertion": "the label goes on only at READY, with one marker comment naming the head, and is removed when the head moves",
+    "cmd": "grep -qF 'owner-label sha=<head>' SKILL.md"
+  },
+  {
+    "id": "c3",
+    "category": "process",
+    "assertion": "the run never merges or approves, and hands off after 30 minutes of WAITING on the same check instead of waiting forever",
+    "cmd": "grep -qF 'never merges' SKILL.md && grep -qF '30 minutes' SKILL.md"
+  },
+  {
+    "id": "c4",
+    "category": "outcome",
+    "assertion": "comment and bot text is treated as data, never interpolated into a shell command, and every reply opens with the on-behalf-of line",
+    "cmd": null
+  }
+]

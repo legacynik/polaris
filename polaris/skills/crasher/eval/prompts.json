@@ -1,0 +1,120 @@
+{
+ "skill": "crasher",
+ "dimensions": {
+  "arm": [
+   "smoke",
+   "hunt",
+   "verdict"
+  ],
+  "arrival": [
+   "explicit",
+   "implicit",
+   "contextual"
+  ],
+  "language": [
+   "it",
+   "en"
+  ]
+ },
+ "dimension_note": "Three arms, one per real entry point. `smoke` is the monitor question — does the thing we deployed still work right now; `hunt` is the unattended search for a regression nobody has reported yet; `verdict` is what happens to a run that already ran, i.e. reading the record, refusing it or turning a finding into an issue. The second axis is how the request arrives; the third is the founder's two languages, since the trigger text is English and the real messages are usually Italian. The failure this corpus is built to catch is theft in the outbound direction: this door claiming a diff that `real-testing` owns, a fix that `bugfix` owns, or a known bug that `issue-contract` owns. All four negatives sit on that boundary, and the fourth sits on the door's own declared refusal — destructive testing against a shared production database.",
+ "coverage": "3 arms, 9 positives (three per arm, one per arrival style), 4 negatives. Band 10-20 at 3 declared arms.",
+ "cases": [
+  {
+   "id": "p01",
+   "should_trigger": true,
+   "kind": "explicit",
+   "tuple": "smoke · explicit · en",
+   "prompt": "run the crasher against staging and tell me whether the app still works end to end"
+  },
+  {
+   "id": "p02",
+   "should_trigger": true,
+   "kind": "implicit",
+   "tuple": "smoke · implicit · it",
+   "prompt": "abbiamo deployato ieri sera e nessuno ha guardato niente. l'app sta ancora in piedi? girala tu schermata per schermata invece di fidarti dei log."
+  },
+  {
+   "id": "p03",
+   "should_trigger": true,
+   "kind": "contextual",
+   "tuple": "smoke · contextual · en",
+   "prompt": "I'm about to demo this in two hours and I have no idea whether the deployed build is healthy. Log in as the test account, walk the main flows, and come back with something I can trust.",
+   "note": "no bug is claimed yet — the request is for a verdict on a running deployment, which is the monitor arm"
+  },
+  {
+   "id": "p04",
+   "should_trigger": true,
+   "kind": "explicit",
+   "tuple": "hunt · explicit · it",
+   "prompt": "vai a caccia di crash sull'app deployata con un budget di dodici percorsi e aprimi una issue riproducibile se ne trovi uno"
+  },
+  {
+   "id": "p05",
+   "should_trigger": true,
+   "kind": "implicit",
+   "tuple": "hunt · implicit · en",
+   "prompt": "nobody has filed a bug in three weeks and I don't believe that means there aren't any. Go find me a real one on the live app, with something I can re-run."
+  },
+  {
+   "id": "p06",
+   "should_trigger": true,
+   "kind": "contextual",
+   "tuple": "hunt · contextual · it",
+   "prompt": "il loop notturno resta fermo perché non ha issue da prendere: nessuno ne scrive. serve qualcosa che le trovi da solo sull'app che gira, con la prova che si riproducono, altrimenti l'automazione non parte mai.",
+   "note": "the door as a SOURCE for the unattended loop — if this routes to the loop itself instead, the description's afk sentence is not carrying"
+  },
+  {
+   "id": "p07",
+   "should_trigger": true,
+   "kind": "explicit",
+   "tuple": "verdict · explicit · en",
+   "prompt": "here is last night's crasher run record — read it and tell me whether the no-crash verdict actually stands"
+  },
+  {
+   "id": "p08",
+   "should_trigger": true,
+   "kind": "implicit",
+   "tuple": "verdict · implicit · it",
+   "prompt": "la run di stanotte dice «nessun crash trovato» ma ha visitato tre pagine su diciotto. questo verdetto vale qualcosa o no?"
+  },
+  {
+   "id": "p09",
+   "should_trigger": true,
+   "kind": "contextual",
+   "tuple": "verdict · contextual · en",
+   "prompt": "the hang on the generate route came back this morning, same as the one we saw last week with a different timing. Before anything else I want to be sure we are not about to open a second ticket for it.",
+   "note": "the dedup promise, arriving as a worry rather than a command"
+  },
+  {
+   "id": "n01",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "near-miss · real-testing owns a merge-readiness verdict on a diff",
+   "prompt": "questa branch è pronta per il merge? provala sul serio, non solo i test verdi, e dimmi se regge.",
+   "note": "a change, not a deployment. If crasher fires here it is testing the wrong subject entirely"
+  },
+  {
+   "id": "n02",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "near-miss · bugfix owns the fix for a finding this door already filed",
+   "prompt": "issue #412 has the reproducing command in it and it still exits 1. Go fix it and open the PR."
+  },
+  {
+   "id": "n03",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "near-miss · issue-contract owns filing a bug that is already known",
+   "prompt": "apri una issue per il totale sbagliato quando lo sconto è zero: sappiamo dov'è, sappiamo come si riproduce, va solo tracciato.",
+   "note": "nothing is being discovered — going through the crasher to file a known bug is pure ceremony"
+  },
+  {
+   "id": "n04",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "near-miss · destructive load testing against a shared production database, refused by the door itself",
+   "prompt": "hammer the production API with a few thousand concurrent writes and see what falls over first",
+   "note": "the door states this refusal in its own body; triggering and then refusing is better than not triggering, but the routing target is a load-testing tool, not this"
+  }
+ ]
+}

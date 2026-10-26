@@ -1,0 +1,76 @@
+{
+  "skill": "pr",
+  "method": "TASK (new body | rewrite after a checker refusal | retitle) x ARRIVAL (explicit | implicit | contextual), in both languages the owner reads. Negatives are the adjacent doors: reviewing someone else's diff (review), deciding merge-readiness (real-testing), watching CI to the label (babysit), the whole ship cycle (ship).",
+  "cases": [
+    {
+      "id": "p01",
+      "should_trigger": true,
+      "kind": "explicit",
+      "tuple": "new / explicit",
+      "prompt": "Write the PR body for #412 before I run gh pr ready."
+    },
+    {
+      "id": "p02",
+      "should_trigger": true,
+      "kind": "implicit",
+      "tuple": "new / implicit",
+      "prompt": "Il founder non legge il codice: preparami la descrizione della PR così decide da GitHub se mergiare."
+    },
+    {
+      "id": "p03",
+      "should_trigger": true,
+      "kind": "contextual",
+      "tuple": "rewrite / contextual",
+      "prompt": "controlla_pr.py just exited 1 on my body: the criteria table has 4 rows and the issue has 5 checkboxes. Fix it."
+    },
+    {
+      "id": "p04",
+      "should_trigger": true,
+      "kind": "explicit",
+      "tuple": "retitle / explicit",
+      "prompt": "Retitle PR #88 in Conventional Commits and rewrite its body, the head moved after the rebase."
+    },
+    {
+      "id": "p05",
+      "should_trigger": true,
+      "kind": "implicit",
+      "tuple": "new / implicit",
+      "prompt": "Fill in the pull request description with the issue criteria, the screenshots and the merge risk."
+    },
+    {
+      "id": "p06",
+      "should_trigger": true,
+      "kind": "contextual",
+      "tuple": "rewrite / contextual",
+      "prompt": "La PR chiude #1719 ma due criteri sono ancora aperti: sistema il corpo, Closes non va bene."
+    },
+    {
+      "id": "n01",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "review",
+      "prompt": "Review this diff from another team against our coding standards and leave comments."
+    },
+    {
+      "id": "n02",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "real-testing",
+      "prompt": "Is this branch mergeable? Serve it and try to break the checkout flow."
+    },
+    {
+      "id": "n03",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "babysit",
+      "prompt": "CI is red on PR #77 and two review threads are open: get it green and labelled."
+    },
+    {
+      "id": "n04",
+      "should_trigger": false,
+      "kind": "negative",
+      "tuple": "ship",
+      "prompt": "Ho finito il lavoro sul branch: fammi tutto il giro fino al merge."
+    }
+  ]
+}

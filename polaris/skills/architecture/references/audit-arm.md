@@ -10,7 +10,7 @@ changing yet** — which is why the bar below is stricter than everywhere else i
 **The bar, and it is not negotiable.** The purpose of evaluating is to *simplify*. A finding
 whose remedy makes the system bigger — a new layer, a new service, a new abstraction, a new
 config surface — is a **defect of the audit**, not a result of it, until it clears both the
-reversibility gate in `SKILL.md` and §5 below. Refactor-to-simplify is the whole point; an
+reversibility gate in `process.md` and §5 below. Refactor-to-simplify is the whole point; an
 audit that grows the system has answered a question nobody asked.
 
 ## Contents
@@ -94,7 +94,7 @@ dominant conflicting characteristic — each is a legitimate reason for the audi
 
 ## 3. The sweep — what is measured, and what it costs when it cannot be
 
-Every row runs the census-then-verify shape from `SKILL.md`: one script pass finds the
+Every row runs the census-then-verify shape from `process.md`: one script pass finds the
 candidates, the graph closes the question on the survivors. **Every row also has a
 precondition, and most of them are a tool that may not exist in this repo** — that is the
 arm's most frequent halt, and the honest output is `ASSUMED` plus the instrument to build,
@@ -138,7 +138,7 @@ Short list, each mapped to what settles it. A tell is a hypothesis (`102`), neve
 |---|---|
 | a `services/`- or `utils/`-shaped package that is a layer name holding many unrelated domains | `detect.py package-size`, then the `leftover-naming-test` on the proposed residue |
 | a cycle that runs out through the API or transport layer and back | `detect.py cycle` — a cycle of N is one deployable unit of N, whatever the tree says |
-| an adapter, port or interface with exactly one implementation | judgment: the two-adapter rule in `SKILL.md`, and it is only a defect under `OWNED` |
+| an adapter, port or interface with exactly one implementation | judgment: the two-adapter rule in `process.md`, and it is only a defect under `OWNED` |
 | ports that mirror the database tables one-for-one | judgment: domain-strategy 17 plus the model-fit read — the seam was cut on storage, not on behaviour |
 | a module pinned at `I = 1.0` that everything else avoids | `detect.py instability`, then `abstractness` to tell **stable** from **rigid** — and it usually cannot, which is the honest answer |
 | a config flag or parameter no live caller ever sets | judgment: census the call sites, then close on the graph |
@@ -249,7 +249,7 @@ Applied to **every** recommendation before it is written down:
 Deletion and splitting pass. An addition passes only when **all three** hold, and the report
 states all three:
 
-1. the reversibility verdict in `SKILL.md` was taken first, and the addition survives it;
+1. the reversibility verdict in `process.md` was taken first, and the addition survives it;
 2. the addition removes a **named, priced** cost from §1 that is larger than the cost it adds
    — stated as both numbers, not as a direction;
 3. the thing it replaces is deleted in the same change. An addition that leaves the old path

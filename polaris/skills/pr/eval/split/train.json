@@ -1,0 +1,44 @@
+[
+  {
+    "id": "p01",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "new / explicit",
+    "prompt": "Write the PR body for #412 before I run gh pr ready."
+  },
+  {
+    "id": "p02",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "new / implicit",
+    "prompt": "Il founder non legge il codice: preparami la descrizione della PR così decide da GitHub se mergiare."
+  },
+  {
+    "id": "p04",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "retitle / explicit",
+    "prompt": "Retitle PR #88 in Conventional Commits and rewrite its body, the head moved after the rebase."
+  },
+  {
+    "id": "p05",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "new / implicit",
+    "prompt": "Fill in the pull request description with the issue criteria, the screenshots and the merge risk."
+  },
+  {
+    "id": "n01",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "review",
+    "prompt": "Review this diff from another team against our coding standards and leave comments."
+  },
+  {
+    "id": "n03",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "babysit",
+    "prompt": "CI is red on PR #77 and two review threads are open: get it green and labelled."
+  }
+]

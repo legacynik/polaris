@@ -1,0 +1,29 @@
+{
+  "agent_type": "critic",
+  "fork_turns": "none",
+  "review_lanes": ["critic"],
+  "reviewed_diff_sha256": "321bd3c3c595cc0ccd1726831e57f49c87443b4ceb9d579c8576d6f753d94b37",
+  "transcript_sha256": "4da5379cd223bc814e15f6ace4e8cdb58168de497a5ca3d622c8badf14af2c2e",
+  "graded_checks": [
+    {"id": "c1", "passed": true, "evidence": "t3-new-v020 c1 passed; DOMAIN.md has stable domains/components and check_context_backbone validates all paths."},
+    {"id": "c2", "passed": true, "evidence": "t3-new-v020 c2 passed; customer-supplier appears only in negative/anti-pattern discussion, not as accepted emitted pattern."},
+    {"id": "c3", "passed": true, "evidence": "t3-new-v020 c3 passed; SKILL requires every pattern row to state what it costs."},
+    {"id": "c4", "passed": true, "evidence": "t3-new-v020 c4 passed; subdomain classification must carry build-best/build-simple/buy-or-adopt consequence."},
+    {"id": "c5", "passed": true, "evidence": "t3-new-v020 c5 passed; edge claims must be caller-closed or ASSUMED with reason."},
+    {"id": "c6", "passed": true, "evidence": "t3-new-v020 c6 passed; boundary locating/granularity is handed to architecture."},
+    {"id": "c7", "passed": true, "evidence": "t3-new-v020 c7 passed; emitted domain artifacts exclude design vocabulary as authority."},
+    {"id": "c8", "passed": true, "evidence": "t3-new-v020 c8 passed; domain loads only the Khononov extract and no chapter files."}
+  ],
+  "attacks": {
+    "sibling_branches": {"inventory": ["skills-suite/domain/eval/prompts.json:n01/n02 -> architecture-boundary-locating"], "probes": [{"target": "skills-suite/domain/eval/prompts.json:n01/n02 -> architecture-boundary-locating", "passed": true, "evidence": "Both pricing/listino boundary-location and service-granularity cases are negative controls for domain and explicitly name architecture ownership."}]},
+    "claim_code_mismatch": {"inventory": ["DOMAIN.md:components[].paths -> scripts/check_context_backbone.py:COMPONENT_PATH_MISSING/UNKNOWN_DOMAIN"], "probes": [{"target": "DOMAIN.md:components[].paths -> scripts/check_context_backbone.py:COMPONENT_PATH_MISSING/UNKNOWN_DOMAIN", "passed": true, "evidence": "check_context_backbone --check passed with four components; selfcheck covers missing component paths and unknown domains."}]},
+    "bypasses": {"inventory": ["scripts/check_context_backbone.py:ContextPack -> no-hardcoded-issue-or-transcript"], "probes": [{"target": "scripts/check_context_backbone.py:ContextPack -> no-hardcoded-issue-or-transcript", "passed": true, "evidence": "--emit-context output work_item foundation:polaris-os, exact source_hashes, token_estimate 400/1200, and no hardcoded issue or transcript-derived field."}]},
+    "false_green_selfchecks": {"inventory": ["skills-suite/domain/SKILL.md:repo-map -> scripts/check_context_backbone.py:selfcheck"], "probes": [{"target": "skills-suite/domain/SKILL.md:repo-map -> scripts/check_context_backbone.py:selfcheck", "passed": true, "evidence": "14-fixture selfcheck covers stale structural doc, unknown scope, conflict, path escape, manifest tamper and deterministic emit_context repeatability."}]}
+  },
+  "verdict": "PASS",
+  "findings": [],
+  "model": "gpt-5.5",
+  "input_tokens": "UNKNOWN",
+  "output_tokens": "UNKNOWN",
+  "wall_ms": 3614
+}

@@ -1,0 +1,44 @@
+[
+  {
+    "id": "p01",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "red CI / explicit",
+    "prompt": "Babysit PR #1942 until it has the owner label."
+  },
+  {
+    "id": "p02",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "threads / implicit",
+    "prompt": "There are three unresolved review comments on my PR and a failing lint check, handle them."
+  },
+  {
+    "id": "p04",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "waiting / implicit",
+    "prompt": "Tienimi d'occhio la PR finché non è verde e pronta per me."
+  },
+  {
+    "id": "p05",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "red CI / explicit",
+    "prompt": "Check on PR #210 and get it green."
+  },
+  {
+    "id": "n02",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "pr",
+    "prompt": "Write the PR description for this branch from the issue criteria."
+  },
+  {
+    "id": "n04",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "ship",
+    "prompt": "The branch is done, open the PR the way this repo expects."
+  }
+]

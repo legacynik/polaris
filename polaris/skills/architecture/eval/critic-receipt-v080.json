@@ -1,0 +1,74 @@
+{
+  "agent_type": "critic",
+  "fork_turns": "none",
+  "review_lanes": ["critic"],
+  "reviewed_diff_sha256": "5018c876333395aa4c3d618fca5c4f8aad52b3f72e0b98a024b083ff7150f8a3",
+  "reviewed_diff_scope": "behavior candidate: origin/main...6ef29d67c554c6fb93db3920cad5de408db26ed9, excluding reviewed-diff-v080.patch itself; promotion receipts generated after PASS are final-review evidence, not critic input",
+  "transcript_sha256": "de54d6355fd18d3423701733ca0c81783495fe1977881a370f21f5bc8eb647a2",
+  "graded_checks": [
+    {"id": "c1", "passed": true, "evidence": "typed Decisions, landing receipts and live-document fields are present; legacy authority sweep is covered"},
+    {"id": "c2", "passed": true, "evidence": "SKILL Step 0 keeps OWNED or PUBLISHED before rule-derived advice"},
+    {"id": "c3", "passed": true, "evidence": "init traces close from the public checker and land is explicitly outside the checker-first shortcut"},
+    {"id": "c4", "passed": true, "evidence": "decision and audit contracts require explicit cost fields"},
+    {"id": "c5", "passed": true, "evidence": "unclosed counts remain ASSUMED or non_observable with reasons"},
+    {"id": "c6", "passed": true, "evidence": "missing-worker receipts preserve exactly four rows with one freshness non_observable"},
+    {"id": "c7", "passed": true, "evidence": "missing results and collisions stop as BLOCK or REPLAN while generated seals remain merger-owned"},
+    {"id": "c8", "passed": true, "evidence": "the audit addition test remains mandatory"}
+  ],
+  "attacks": {
+    "sibling_branches": {
+      "inventory": [
+        "skills-suite/architecture/SKILL.md:init-checker-first->land-exclusion"
+      ],
+      "probes": [
+        {
+          "target": "skills-suite/architecture/SKILL.md:init-checker-first->land-exclusion",
+          "passed": true,
+          "evidence": "init and land PASS only with closed evidence; stale resume BLOCK and collision REPLAN"
+        }
+      ]
+    },
+    "claim_code_mismatch": {
+      "inventory": [
+        "audit/prototypes/architecture-director-probe:reviewed-diff->cohort-receipt"
+      ],
+      "probes": [
+        {
+          "target": "audit/prototypes/architecture-director-probe:reviewed-diff->cohort-receipt",
+          "passed": true,
+          "evidence": "diff, behavior sources, 12-run cohort summary and prototype receipt hashes reconcile"
+        }
+      ]
+    },
+    "bypasses": {
+      "inventory": [
+        "audit/prototypes/architecture-director-probe/run_probe.py:receipt-contract"
+      ],
+      "probes": [
+        {
+          "target": "audit/prototypes/architecture-director-probe/run_probe.py:receipt-contract",
+          "passed": true,
+          "evidence": "stale self-certification is absent and all results carry eight ordered stages, reasons, evidence and stop_reason"
+        }
+      ]
+    },
+    "false_green_selfchecks": {
+      "inventory": [
+        "audit/prototypes/architecture-director-probe/run_probe.py:selfcheck->cohort-adversaries"
+      ],
+      "probes": [
+        {
+          "target": "audit/prototypes/architecture-director-probe/run_probe.py:selfcheck->cohort-adversaries",
+          "passed": true,
+          "evidence": "timeout maps to 124, exit-zero variants pass, missing worker BLOCKs, #96/#97 close, and A+B/C uses exactly five merger classes"
+        }
+      ]
+    }
+  },
+  "verdict": "PASS",
+  "findings": [],
+  "model": "gpt-5.5",
+  "input_tokens": "UNKNOWN",
+  "output_tokens": "UNKNOWN",
+  "wall_ms": 360000
+}

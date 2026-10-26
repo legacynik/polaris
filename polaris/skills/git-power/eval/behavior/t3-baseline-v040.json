@@ -1,0 +1,23 @@
+{
+  "checks": [
+    {"assertion": "c1 public commit-check reports exact staged counts and exit 3", "passed": true, "evidence": "origin/main public unittest passes the staged boundary case"},
+    {"assertion": "c2 size remains a concern signal, not semantic atomicity proof", "passed": true, "evidence": "origin/main SKILL.md and cmd_commit_check state this invariant"},
+    {"assertion": "c3 concern requires split or indivisible-boundary receipt", "passed": true, "evidence": "origin/main bugfix and ship callers carry the blocking rule"},
+    {"assertion": "c4 destructive actions are guarded in the shared primitive", "passed": true, "evidence": "origin/main cantiere.py --selfcheck passes nine branches"},
+    {"assertion": "c5 update ship and end route exact lifecycle phases", "passed": false, "evidence": "origin/main update and end contain no phase router; ship only calls commit-check"},
+    {"assertion": "c6 phase-specific execution avoids census and repeated commands", "passed": true, "evidence": "origin/main commit-check reads one diff and does not call census"},
+    {"assertion": "c7 OPEN stays alive and remote MERGED finalizes despite dirty stale main", "passed": false, "evidence": "OPEN is classified vivo, but no post-push phase exists; remote merge is checked against stale local main, leaving branch cleanup refused"},
+    {"assertion": "c8 clean unmerged worktree close is refused", "passed": false, "evidence": "origin/main close_worktree removes a clean unmerged worktree by absolute path"}
+  ],
+  "metrics": {
+    "model": "claude-sonnet-5",
+    "input_tokens": 994780,
+    "output_tokens": 6755,
+    "wall_ms": 213236,
+    "tool_calls": 10,
+    "repeated_commands": 0,
+    "consistent_runs": 1,
+    "runs": 1,
+    "context_reuse": "reused"
+  }
+}

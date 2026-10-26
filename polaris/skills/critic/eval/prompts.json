@@ -1,0 +1,118 @@
+{
+ "skill": "critic",
+ "method": "ARTIFACT (diff|spec|claim|skill output) x FAILURE (omission|fabrication|false positive) x ARRIVAL (explicit|implicit|contextual). Twelve hand-written cases: seven positives spanning the job and five near-miss negatives owned by review, real-testing, bugfix, sweep or direct execution.",
+ "cases": [
+  {
+   "id": "p01",
+   "should_trigger": true,
+   "kind": "explicit",
+   "tuple": "diff / omission / explicit",
+   "prompt": "Run critic on this git safety guard before we promote it; use fresh context and try to find sibling destructive commands the tests forgot."
+  },
+  {
+   "id": "p02",
+   "should_trigger": true,
+   "kind": "implicit",
+   "tuple": "spec / omission / names job",
+   "prompt": "Attack this spec from a clean context before anyone implements it. I want only findings that survive a counter-argument."
+  },
+  {
+   "id": "p03",
+   "should_trigger": true,
+   "kind": "contextual",
+   "tuple": "claim / fabrication / buried",
+   "prompt": "The census row says the workflow validates every quoted source. Before I rely on it, independently open the artifact and prove or disprove that claim without reading the author's reasoning."
+  },
+  {
+   "id": "p04",
+   "should_trigger": true,
+   "kind": "implicit",
+   "tuple": "skill output / fabrication / names job",
+   "prompt": "This review report cites line 41, but I suspect the quote is invented. Validate the report against the materialized bundle before promotion."
+  },
+  {
+   "id": "p05",
+   "should_trigger": true,
+   "kind": "contextual",
+   "tuple": "plan / omission / buried",
+   "prompt": "We are about to accept this migration plan. Give a fresh adversary only the plan and its contract, record what it did not open, and drop anything it cannot quote."
+  },
+  {
+   "id": "p06",
+   "should_trigger": true,
+   "kind": "explicit",
+   "tuple": "skill / omission / explicit",
+   "prompt": "Use critic as the independent T3 reviewer for this SKILL.md and its eval transcript."
+  },
+  {
+   "id": "p07",
+   "should_trigger": true,
+   "kind": "implicit",
+   "tuple": "clean artifact / false positive / names job",
+   "prompt": "Try to break this tiny configuration contract, but do not manufacture issues just to return a non-empty list; explain a genuine zero-finding result."
+  },
+  {
+   "id": "n01",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "near-miss: review",
+   "prompt": "Review the finished pull request and give the merge-blocking code findings."
+  },
+  {
+   "id": "n02",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "near-miss: real-testing",
+   "prompt": "All checks are green; decide whether this branch can merge and deploy."
+  },
+  {
+   "id": "n03",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "near-miss: bugfix",
+   "prompt": "The upload endpoint returns 500. Reproduce the defect, patch it and add the regression test."
+  },
+  {
+   "id": "n04",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "near-miss: sweep",
+   "prompt": "Sweep the whole repository for stale decisions and post the consolidated findings."
+  },
+  {
+   "id": "n05",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "mechanical edit",
+   "prompt": "Rename this variable, run formatting and commit the mechanical change."
+  },
+  {
+   "id": "p08",
+   "should_trigger": true,
+   "kind": "explicit",
+   "tuple": "decision record / omission / explicit",
+   "prompt": "Run critic once on DEC-polaris-retrieval-002 before the founder accepts it: the CONTRACT is the three ADR tests and its probe."
+  },
+  {
+   "id": "n06",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "near-miss: tiny work",
+   "prompt": "It is a one-line typo fix in a log message. Run the full adversarial pass on it before I commit."
+  },
+  {
+   "id": "p09",
+   "should_trigger": true,
+   "kind": "implicit",
+   "tuple": "plan / omission / names job",
+   "prompt": "The plan file for the pricing area is complete. Before status goes to accepted, have a fresh adversary attack it against its own outcome and DoD."
+  },
+  {
+   "id": "n07",
+   "should_trigger": false,
+   "kind": "negative",
+   "tuple": "near-miss: review audit",
+   "prompt": "Audit this phase diff on the six axes and open beads for the structural findings."
+  }
+ ]
+}

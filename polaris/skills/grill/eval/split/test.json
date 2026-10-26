@@ -1,0 +1,37 @@
+[
+  {
+    "id": "p02",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "Large / explicit",
+    "prompt": "Fammi il grill su questa idea: spostare i job schedulati da cron a Temporal."
+  },
+  {
+    "id": "p04",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "Medium / implicit",
+    "prompt": "Here's a rough spec for the onboarding wizard — poke holes in it before we plan anything."
+  },
+  {
+    "id": "p06",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "Tiny / explicit",
+    "prompt": "Challenge this: we want to add a dark mode toggle to the settings page."
+  },
+  {
+    "id": "n01",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "Bug / bugfix",
+    "prompt": "Il calcolo IVA restituisce 0 sulle fatture estere, ecco il traceback: ..."
+  },
+  {
+    "id": "n03",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "status",
+    "prompt": "A che punto siamo con le PR aperte oggi?"
+  }
+]

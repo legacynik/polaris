@@ -1,0 +1,37 @@
+[
+  {
+    "id": "p01",
+    "should_trigger": true,
+    "kind": "explicit",
+    "tuple": "Medium / explicit",
+    "prompt": "Grill this idea: let customers export their quotes as Excel, with our price breakdown."
+  },
+  {
+    "id": "p03",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "Large / implicit",
+    "prompt": "Vorrei che il preventivo si aggiornasse da solo quando cambia il listino del fornitore. Come la vedi?"
+  },
+  {
+    "id": "p05",
+    "should_trigger": true,
+    "kind": "implicit",
+    "tuple": "Large / implicit",
+    "prompt": "Ho un'idea vaga: un cruscotto per vedere quali clienti stanno per abbandonarci. Da dove partiamo?"
+  },
+  {
+    "id": "n02",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "plan-area",
+    "prompt": "The plan for the export feature is accepted — break it into phases and tasks in Beads."
+  },
+  {
+    "id": "n04",
+    "should_trigger": false,
+    "kind": "negative",
+    "tuple": "issue-contract",
+    "prompt": "Apri una issue per il bottone di stampa che non funziona su Safari."
+  }
+]

@@ -3,6 +3,43 @@
 All notable changes to Polaris Team OS. The installed version is pinned in
 `polaris/.claude-plugin/plugin.json`.
 
+## 0.33.0 — 2026-10-26 — one operating model: size picks the path, a router, Beads for the work
+
+**Upgrading:** `npx skills update -g -y` does not delete retired skills. Remove them once:
+
+```bash
+npx skills remove -g ambitious-goal codex-review plan-week pol-babysit pol-pr pol-ship \
+  polaris-grill polaris-review polaris-status polaris-sweep reference-capture report retro update
+```
+
+Renamed or merged
+
+- `polaris-grill` → `grill`, `polaris-review` → `review`, `polaris-status` → `status`,
+  `pol-ship` → `ship`, `pol-pr` → `pr`, `pol-babysit` → `babysit`.
+- `update` → `end` (`/end checkpoint`); `plan-week` + `report` → `week`;
+  `codex-review` → `review`'s second-opinion mode; `ambitious-goal` → `plan-area` (outcome and DoD).
+- Retired from the public package: `polaris-sweep`, `reference-capture`, `retro`.
+
+Added
+
+- `base-workflow` is now the router: it names the case (idea, bug, scoped work, accepted plan, small
+  change, decision, finished work, "track this"), invokes the owning skill, and proposes the next one.
+- `prototype` (one named question on a throwaway branch), `plan-area` (one plan file per piece of
+  work, its phases poured into a Beads epic gated by `feature_gate.py`), `implement-plan` (phase by
+  phase from `bd ready`, RED first), `eval` (measure prompts, agents and skills; golden sets,
+  graders, calibrated judges, loops, release gates, and a record for every run),
+  `prompt-engineering` (the words a model reads, measured by `eval`).
+- `docs/`: one page per structure — delivery cycle, plan file, work tracking, decision records,
+  documents, context pack, sessions, memory.
+
+Changed
+
+- Work has two homes: GitHub issues for deliveries a person schedules, Beads for operational work
+  (phases, tasks, findings). `issue-contract` is the filter; nothing mirrors between them.
+- A Beads phase closes on green tests; `review` and `real-testing` run once, on the pull request.
+- Every skill follows the 60-line form (What it does · When · Steps · Output · Not for), in English,
+  with its own `CHANGELOG.md` and version.
+
 ## Unreleased
 
 ### The PR chain, review tiers, and a package that stands alone

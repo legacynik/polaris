@@ -1,0 +1,39 @@
+{
+  "instrument": "real first-turn harness, full skill registry — `claude -p \"<prompt>\" --max-turns 1 --output-format stream-json --verbose < /dev/null`, cwd inside the repo where `domain` is a real installed skill (~/.claude/skills/domain -> skills-suite/domain), first tool_use parsed from the transcript",
+  "supersedes": "the prior instrument in this file (description-level six-way forced choice) is superseded — it measured against a fixed candidate list printed in the prompt, not real registry routing, and was itself marked OPTIMISTIC/not-runnable for that reason. This file replaces it with runs against the actual harness.",
+  "runs_per_case": 3,
+  "measured_on": "eval/split/test.json",
+  "infra_note": "9 of the first 21 raw runs returned a literal API 529 Overloaded response with no tool_use at all (same failure class that stalled the Opus predecessor on this issue). Those are NOT counted as no-fire: each was identified by grep-ing the transcript for the 529 text and re-run until a real model response was obtained. A genuine first-tool of Bash (the model explored before considering a skill) is counted as a miss, since that is real behaviour, not infra noise.",
+  "positives_rank1_per_run": "10/15 = 66.7%",
+  "negatives_wrongly_fired": "0/6",
+  "floor": 0.80,
+  "verdict": "RED — below floor, ratchet refuses, no state written for `domain`",
+  "cases": [
+    {"id": "i02", "arm": "integrate", "should_trigger": true,
+     "runs": ["architecture", "domain", "Bash"], "rank1": [false, true, false],
+     "diagnosis": "same A/B collision the old proxy predicted: 'seems like free plumbing' reads as a data-contract question (architecture's job) as often as a models-differ question (domain's job). Unresolved — not touched in this slice (touching the description reopens T2a/T2b, out of scope for an absorption slice)."},
+
+    {"id": "c03", "arm": "classify", "should_trigger": true,
+     "runs": ["Bash", "Bash", "domain"], "rank1": [false, false, true],
+     "diagnosis": "same defect class the old proxy found: the description names the CATEGORY (core/supporting/generic) while the prompt names the SYMPTOM (two weeks gone, is there something off the shelf) — the model explores the repo via Bash before considering a skill for a symptom-shaped question."},
+
+    {"id": "t03", "arm": "term", "should_trigger": true,
+     "runs": ["domain", "domain", "domain"], "rank1": [true, true, true]},
+
+    {"id": "i03", "arm": "integrate", "should_trigger": true,
+     "runs": ["domain", "domain", "domain"], "rank1": [true, true, true],
+     "note": "explicit 'usa dominio:' phrasing — clean 3/3 now that the real registry actually holds `domain` (the earlier proxy's door_absent_control had this landing on `domain-modeling` because the registry couldn't see `domain` at all in that session)"},
+
+    {"id": "m01", "arm": "map", "should_trigger": true,
+     "runs": ["Bash", "domain", "domain"], "rank1": [false, true, true],
+     "note": "matches the usage-map doc's own prediction (n05 near-miss with code-graph/navigation skills): 'map the contexts of this repo' sometimes reads as 'show me the codebase structure' and the model goes straight to Bash/exploration instead of a skill."},
+
+    {"id": "n02", "arm": "negative", "should_trigger": false,
+     "runs": ["architecture", "architecture", "Bash"], "rank1": [false, false, false],
+     "note": "correct: granularity question, routes to architecture or explores — never wrongly fires domain"},
+
+    {"id": "n03", "arm": "negative", "should_trigger": false,
+     "runs": ["architecture", "architecture", "architecture"], "rank1": [false, false, false],
+     "note": "correct: published-contract change is architecture's job"}
+  ]
+}

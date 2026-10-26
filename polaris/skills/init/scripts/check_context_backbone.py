@@ -3,7 +3,7 @@
 
 This file stays so every `import check_context_backbone` and every
 `python3 scripts/check_context_backbone.py ...` keeps working. It resolves the skill's copy in the
-vault layout (`architecture/scripts/`), the package layout
+vault layout (`skills-suite/architecture/scripts/`), the package layout
 (`skills/architecture/scripts/`) or, shipped inside another skill's `scripts/`, the sibling
 installed skill (`<skills>/architecture/scripts/`), registers it under this module's name and runs it, so importers
 get the real module object: private names and monkeypatching behave exactly as before. Run as a

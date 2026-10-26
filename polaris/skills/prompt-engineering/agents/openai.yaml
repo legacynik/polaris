@@ -1,0 +1,6 @@
+interface:
+  display_name: "Prompt Engineering"
+  short_description: "Write or change the words a model reads, measured by eval"
+  default_prompt: "Use $prompt-engineering to write or fix this prompt, then hand the candidate to $eval for its measure."
+policy:
+  allow_implicit_invocation: true

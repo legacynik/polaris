@@ -1,0 +1,23 @@
+{"id":"p02","run":1,"result":"critic","exit":0,"model":"claude-sonnet-5","input_tokens":54403,"output_tokens":4,"wall_ms":7932,"valid":true}
+{"id":"p04","run":1,"result":"critic","exit":0,"model":"claude-sonnet-5","input_tokens":54412,"output_tokens":4,"wall_ms":10306,"valid":true}
+{"id":"p05","run":1,"result":null,"exit":null,"valid":false,"error":"SyntaxError: Unexpected end of JSON input","wall_ms":30001}
+{"id":"n05","run":1,"result":null,"exit":null,"valid":false,"error":"SyntaxError: Unexpected end of JSON input","wall_ms":30001}
+{"id":"n04","run":1,"result":"doc-truth","exit":0,"model":"claude-sonnet-5","input_tokens":54396,"output_tokens":7,"wall_ms":8640,"valid":true}
+{"id":"p02","run":2,"result":"critic","exit":0,"model":"claude-sonnet-5","input_tokens":56541,"output_tokens":4,"wall_ms":5938,"valid":true}
+{"id":"p04","run":2,"result":"critic","exit":0,"model":"claude-sonnet-5","input_tokens":54408,"output_tokens":4,"wall_ms":7968,"valid":true}
+{"id":"p05","run":2,"result":"critic","exit":0,"model":"claude-sonnet-5","input_tokens":54420,"output_tokens":4,"wall_ms":7869,"valid":true}
+{"id":"n05","run":2,"result":"git-power","exit":0,"model":"claude-sonnet-5","input_tokens":54391,"output_tokens":5,"wall_ms":7732,"valid":true}
+{"id":"n04","run":2,"result":"doc-truth","exit":0,"model":"claude-sonnet-5","input_tokens":56530,"output_tokens":7,"wall_ms":6160,"valid":true}
+{"id":"p02","run":3,"result":null,"exit":124,"valid":false,"error":"SyntaxError: Unexpected end of JSON input","wall_ms":15509}
+{"id":"p04","run":3,"result":"critic","exit":0,"model":"claude-sonnet-5","input_tokens":54411,"output_tokens":4,"wall_ms":30892,"valid":true}
+{"id":"p05","run":3,"result":"critic","exit":124,"model":"claude-sonnet-5","input_tokens":65026,"output_tokens":4,"wall_ms":39220,"valid":true}
+{"id":"n05","run":3,"result":null,"exit":124,"valid":false,"error":"SyntaxError: Unexpected end of JSON input","wall_ms":15514}
+{"id":"n04","run":3,"result":null,"exit":124,"valid":false,"error":"SyntaxError: Unexpected end of JSON input","wall_ms":15504}
+{"id":"p02","run":4,"result":"critic","exit":0,"model":"claude-sonnet-5","input_tokens":39536,"output_tokens":4,"wall_ms":19773,"valid":true}
+{"id":"n05","run":4,"result":"NONE","exit":0,"model":"claude-sonnet-5","input_tokens":39522,"output_tokens":5,"wall_ms":33194,"valid":true}
+{"id":"n04","run":4,"result":"doc-truth","exit":124,"model":"claude-sonnet-5","input_tokens":39528,"output_tokens":7,"wall_ms":49054,"valid":true}
+{"id":"p05","run":5,"result":"critic","exit":124,"model":"claude-sonnet-5","input_tokens":53583,"output_tokens":4,"wall_ms":49238,"valid":true}
+{"id":"n05","run":5,"result":"git-power","exit":0,"model":"claude-sonnet-5","input_tokens":53557,"output_tokens":5,"wall_ms":21757,"valid":true}
+{"id":"p05","run":6,"result":"critic","exit":0,"model":"claude-sonnet-5","input_tokens":39551,"output_tokens":4,"wall_ms":6254,"valid":true}
+{"id":"p05","run":7,"result":"critic","exit":0,"model":"claude-sonnet-5","input_tokens":113057,"output_tokens":4,"wall_ms":8107,"valid":true}
+{"id":"n04","run":6,"result":"doc-truth","exit":0,"model":"claude-sonnet-5","input_tokens":68840,"output_tokens":7,"wall_ms":7440,"valid":true}
