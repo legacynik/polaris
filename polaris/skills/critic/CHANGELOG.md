@@ -1,5 +1,9 @@
 # Changelog — critic
 
+## 0.3.3 — 2026-10-26
+
+- `invoked-by` names `apex-curate`, which runs critic on its AGENTS.md proposals.
+
 ## 0.3.2 — 2026-10-25
 
 - Public-package clean (C5): recorded runs and patches carry `<vault>/` and `~/` instead of the machine path. Evidence content unchanged.

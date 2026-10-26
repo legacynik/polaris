@@ -1,7 +1,7 @@
 ---
 name: git-power
 description: ◇ Polaris — Use before any Git commit or PR boundary and before any destructive Git action. MUST invoke for every `reset --hard` and every pre-PR comparison of a branch against origin/main; never substitute raw Git. Also censuses and safely closes worktrees, branches, stashes and PRs. Triggers on commit hygiene, PR too large, stale branches. Requires git, gh and python 3.
-version: 0.7.3
+version: 0.7.4
 user-invocable: true
 auto: false
 status: active

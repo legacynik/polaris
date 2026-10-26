@@ -1,7 +1,7 @@
 ---
 name: ship
 description: "◇ Polaris — Use when the work is done: one command that tests, audits, real-tests, updates the docs the diff made stale, opens the PR, signs it on staging once, writes the body and drives it to the owner's label, then merges once on the owner's yes and closes the work. Triggers: ship it, open the PR, submit, finish this branch. Requires git, gh and python 3."
-version: 3.0.3
+version: 3.0.5
 user-invocable: true
 auto: true
 lifecycle: "PR, receipt, label and replies live on GitHub, drained by the merge; .ship/ (canary state, merge log, drift alert) is local and overwritten by the next run, delete it to reset; the facts file for the PR body is scratch, deleted once the body is published"

@@ -1,10 +1,10 @@
 ---
 name: end
 description: ◇ Polaris — save the session, as a checkpoint or as the close. Every call appends a session-log entry, rewrites your lane line in the cockpit, records lessons, lists decisions with their homes and commits pathspec-only; the close also prunes the cockpit against git and the tracker and leaves a handoff only while the lane has open work. Use on "checkpoint / save progress / salva", after a blocker, or on "wrap up / end session". Requires git, python3; gh to prune; bd for follow-ups.
-version: 1.25.1
+version: 1.26.0
 user-invocable: true
 status: active
-lifecycle: session work → every call, one session-log entry + your lane line rewritten in the cockpit → at the close, the cockpit pruned against proof and a handoff file only while the lane has open work → committed on the current branch, read by the next start
+lifecycle: session work → every call, one session-log entry + your lane line rewritten in the cockpit → at the close, the cockpit pruned against proof and a handoff file only while the lane has open work → committed on the current branch, raked to the default branch by a docs PR the same day, read by the next start
 invokes: [git-power]
 invoked-by: human
 io: the session's changes + mode (checkpoint, or close by default) → one session-log entry, one cockpit lane line, lesson records and follow-up beads, the decisions listed with their homes, a pathspec-only commit; at the close also the pruned cockpit, handoff/<date>.md unless the lane is closed, a three-bullet summary
@@ -19,8 +19,7 @@ your lane line; the close also prunes the cockpit against proof and hands off on
 
 ## When
 
-- **Checkpoint**, the session stays open: "checkpoint / save progress / salva", `/end checkpoint`,
-  or after meaningful progress, a blocker or a context switch.
+- **Checkpoint**, the session stays open: "checkpoint / save progress / salva", `/end checkpoint`, or after progress, a blocker or a context switch.
 - **Close**, the default for a bare `/end`: stopping work, before a pause, "wrap up / end session".
 
 ## Steps
@@ -51,7 +50,8 @@ your lane line; the close also prunes the cockpit against proof and hands off on
    is open. Closed = `lane_phase.sh` printed `READY_FINALIZE` and In progress, Next session and Blocker
    are `none` → no handoff file. Any other answer (KEEP, no remote, refused) writes it.
 10. Land: `"$S/end/scripts/session_commit.sh" --end <log> <handoff if written> <week file> <records written>`;
-    exit 2 names a declared exception — say it. `git status --short`: no Polaris path. Never push or `--no-verify`.
+    exit 2 names a declared exception — say it. `git status --short`: no Polaris path. Never `--no-verify`.
+    Rake: `python3 "$S/end/scripts/session_rake.py" apply --merge`, then `sync`; exit 1 → say why (`references/close.md`, Step 5b).
 11. Only on `READY_FINALIZE`: `python3 "$S/git-power/scripts/cantiere.py" phase finalize --repo "$PWD" --confirm "$PWD"`.
 
 ## Output
@@ -69,4 +69,4 @@ This skill produces: **none (the session log, cockpit and handoff live under `te
 
 - Resuming (`start`), a status view (`status`), the week (`week`).
 - Writing a decision record (`architecture`); closing a plan file or a Beads epic (`plan close`, from `ship`).
-- Pushing, merging, deleting branches on its own, or touching the tracker.
+- Pushing or merging anything but its own `chore/sessions-<login>-<date>` rake PR; deleting branches; the tracker.

@@ -1,5 +1,29 @@
 # Changelog — eval
 
+## 0.4.2 — 2026-10-27
+
+- `runner.md`: `promote.py` judges a skill only when it is new or its description changed;
+  `--evals` judges every one. A trigger case reads only the description and the catalog.
+
+## 0.4.1 — 2026-10-26
+
+- `runner.md`: `eval_run.py --repeat N` judges each item N times (odd) and scores the majority,
+  every answer kept in `items.json`; `--compare` refuses only when more cases went from right on
+  every baseline call to wrong on every call now than the reverse. `promote.py` passes
+  `--repeat 3` to both arms: one haiku call against one refused unchanged skills at random.
+
+## 0.4.0 — 2026-10-26
+
+- `lift`: `eval_run.py --lift` runs each behavioural check that names a `task` with the skill's
+  SKILL.md and without it, same judge; `lift.json` reports with, without and the lift; a negative
+  lift exits 1. First live run, this skill on sonnet: c8 passed with the skill and failed without,
+  c7 failed both (the arm sees SKILL.md only) — lift +0.50. Tests in
+  `_standard/tests/test_eval_run.py` (RED recorded).
+- The weekly skill loop (propose-only, small itemised edits, kept only if trigger accuracy and
+  lift hold, rejected edits logged) in `references/loops.md`.
+- Always: whoever edits a skill or prompt leaves its `eval/` untouched.
+- `checks.json` c7 and c8 carry a `task`.
+
 ## 0.3.0 — 2026-10-26
 
 - Rebuilt around the stages of an eval suite, one reference per stage: `suite.md` (traces, error

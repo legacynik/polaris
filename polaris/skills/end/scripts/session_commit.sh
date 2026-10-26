@@ -9,6 +9,12 @@
 # message. The spool, the sibling-worktree hand-off and the "wait for the next default-branch
 # session" rule are removed; a session log belongs to the branch the session happened on.
 #
+# Amended by the founder, 2026-10-26 (the note above stands): commits still land where you are;
+# the daily rake (`session_rake.py apply`, at the close) brings the session logs to the default
+# branch through one docs PR, and `session_rake.py sync` keeps the local default branch
+# fast-forwardable once they are upstream. Checkpoints had piled up on a local main while origin
+# moved on, and a feature branch held the day's log until it merged.
+#
 # Commit hygiene, enforced here so a model following the skill can't skip it:
 #   • pathspec-ONLY (never `git add -A`), absent paths dropped first because `git add -- a missing`
 #     stages NOTHING: parallel panels sharing one tree never drag each other's uncommitted work.

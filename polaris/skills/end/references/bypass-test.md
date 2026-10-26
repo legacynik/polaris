@@ -13,7 +13,7 @@ An `if [ -f "$GATE" ] && … || echo "no gate"` chain sent every refusal of `ses
 is now `session_gate.py close … || exit 1`: a missing engine exits 0 with a note, a refusal stops.
 
 ```bash
-python3 skills-suite/start/scripts/session_gate.py --selfcheck
+python3 "${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/start/scripts/session_gate.py" --selfcheck
 ```
 
 ## B2 — a decision lived only in the log

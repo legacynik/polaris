@@ -73,6 +73,29 @@ An optimiser that edits a document (prompt, skill) in a loop follows the same ga
 - **Propose-only for anything shipped**: the loop writes a proposal; a person or the repository's
   acceptance gate adopts it. A kept candidate is evidence, never a merge, deploy or promotion.
 
+## lift — does this skill help at all
+
+A skill earns its place by changing the outcome, not by triggering. Each behavioural check that
+names a `task` runs twice — the agent with the skill's SKILL.md and without it — and the same
+judge grades both against the check's assertion:
+
+`eval_run.py --lift --skill <name> --backend claude-code --model sonnet` → `lift.json`:
+`with` and `without` passes, `lift = (with − without) / n`. A negative lift fails (exit 1): the
+skill makes the outcome worse. Zero means the skill only costs tokens: shorten it to what the
+model does not already do, then measure again. A promotion needs lift ≥ 0, and a skill change is
+kept only if its lift does not drop.
+
+## The skill loop — weekly, propose-only
+
+1. Pick the two skills with the most failures this week: lesson occurrences that name them,
+   failed traces, checks that fell.
+2. For each, propose small itemised edits (a line added, merged or removed — never a rewrite),
+   words from `prompt-engineering`.
+3. Keep an edit only if the held-out trigger split does not drop and the lift does not drop;
+   log the rejected ones in the skill's CHANGELOG as "tried, reverted, why" so the next round
+   does not retry them.
+4. The kept edits go to a PR for a person; nothing ships from the loop itself.
+
 ## skill-tdd — a skill change, test-first
 
 1. Write the case that shows the defect: a trigger case in `eval/prompts.json` (with its split) or

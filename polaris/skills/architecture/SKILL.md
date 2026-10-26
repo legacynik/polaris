@@ -1,7 +1,7 @@
 ---
 name: architecture
 description: ◇ Polaris — Decide one architectural commitment and record it, usually when the move is already picked and offered for a sanity check. Fires when a change moves a boundary, an interface, a data contract or a dependency, when a schema changes under separately deployed readers, when a query is fast until it is not or a hot path repays the same cost every turn, when the written architecture is stale, or when code must be judged before refactor. Gates on reversibility first. Requires python3.
-version: 1.5.2
+version: 1.5.3
 user-invocable: true
 auto: true
 job: emit one decision record whose options are MECE, whose every option names what it COSTS, whose pick is the least worst, and which carries its enforcement hook and its closure check — or, before a target has been chosen, one audit report whose every finding names the simplification it enables — or, before a module exists at all, N genuinely different interface designs compared and one recommended — or halt naming the measurement that is missing and who owns getting it

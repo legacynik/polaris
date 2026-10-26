@@ -1,5 +1,13 @@
 # Changelog — prototype
 
+## 1.0.4 — 2026-10-26
+
+- `invoked-by` names `problem-solver` (renamed from `unstick`).
+
+## 1.0.3 — 2026-10-26
+
+- `invoked-by` names `unstick`, which runs its discriminating experiments through prototype.
+
 ## 1.0.2 — 2026-10-25
 
 - Output ends with a **Next:** line: the next skill, or STOP with who decides and the options to offer. Text only.

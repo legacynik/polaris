@@ -16,6 +16,10 @@ python3 skills-suite/_standard/eval_run.py --skill X --backend openrouter --mode
 python3 skills-suite/_standard/eval_run.py --skill X --backend openrouter --model vendor/model --bar 0.9
 ```
 
+```bash
+python3 skills-suite/_standard/eval_run.py --lift --skill X --backend claude-code --model sonnet   # with vs without the skill
+```
+
 Exit 0 ok · 1 format defect, judge error, below bar, regression or stop rule · 2 usage or
 refusal (GPT judge on OpenRouter, missing key, no pilot) · 3 harness answers pending.
 
@@ -39,7 +43,15 @@ variable when it is missing.
 A trigger case is judged with the whole lab catalog as decoys: "would the agent pick this skill,
 among all of them, for this message?" — not the description in isolation, which flatters it.
 
+`--repeat 3` (odd only) judges each item three times and scores the majority; `items.json` keeps
+every answer. Under `--compare`, REGRESSED means more cases went from right on every baseline call
+to wrong on every call now than the reverse: one call against one refuses a flicker at random.
+`promote.py` runs both arms with `--repeat 3`, only for a new skill or a changed description (`--evals` judges every one).
+
 ## Not built yet
+
+`--lift` gives the arms SKILL.md only, with no tools: they describe the work instead of doing it,
+and a check that depends on a reference file the body only points to can fail in both arms.
 
 `eval_run.py` writes `report.json` and `items.json` under `--out` (default `.eval-runs`, local).
 It does not yet write the record of [records.md](records.md) (`run.json`, `cases.jsonl`, the

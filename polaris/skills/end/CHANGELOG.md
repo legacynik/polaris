@@ -1,5 +1,29 @@
 # Changelog — end
 
+## 1.26.0 — 2026-10-26 — the session rake
+
+- New `scripts/session_rake.py` (founder, 2026-10-26: every day's session log reaches the default
+  branch the same day). `plan` lists, read-only, the session-only commits on any local branch that
+  origin/<default> lacks, the newest version of each path and the commits that are `mixed — not
+  raked`, and never a version older than origin's last change to that path; `apply` writes those versions in a throwaway worktree on origin/<default>, pushes
+  `chore/sessions-<login>-<date>` and opens or updates one docs PR, merged only with `--merge`
+  and `session.rake_merge: true` in config.yml (default false); `sync` puts the local default
+  branch back on origin/<default> with `reset --keep` (or `branch -f`) only when its extra commits
+  are session-only and identical upstream, and changes nothing otherwise.
+- A session log is combined by entry, never chosen: the raked file is the union of origin's and
+  every branch's `## HH:MM — ` entries, each once, in time order, so two branches appending to one
+  day's log both survive; `sync` counts a log whose entries are all upstream as upstream. Files
+  without entries (handoffs) keep newest-wins. The rake PR adds `merge=union` for
+  `team/*/sessions/*.md` and `team/*/handoff/*.md` to the contract root's `.gitattributes`, so the
+  feature branch that merges after its log was raked does not conflict.
+- The close runs `apply --merge` then `sync` after landing the handoff (`references/close.md`,
+  Step 5b). Checkpoints still commit where you are: `session_commit.sh` carries the dated
+  amendment under the 2026-09-04 note.
+
+## 1.25.2 — 2026-10-26
+
+- `references/bypass-test.md` runs `session_gate.py` from the installed skill, not from the lab path `skills-suite/`, which an installed package does not have.
+
 ## 1.25.1 — 2026-10-26
 
 - A `- Decision:` pointer may name a DEC record (`decisions/<DEC-id>.md`) that `/architecture decide`

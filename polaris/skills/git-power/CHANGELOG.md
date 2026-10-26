@@ -1,5 +1,9 @@
 # Changelog — git-power
 
+## 0.7.4 — 2026-10-26
+
+- The baseline transcripts under `eval/behavior/` no longer carry the machine's username (public-package perimeter).
+
 ## 0.7.3 — 2026-10-26
 
 - `cantiere` `BLOCKED_DIRTY` names the checkpoint of `/end`, no longer `/update` (absorbed, #637).

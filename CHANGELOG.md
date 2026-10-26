@@ -28,7 +28,9 @@ Added
   work, its phases poured into a Beads epic gated by `feature_gate.py`), `implement-plan` (phase by
   phase from `bd ready`, RED first), `eval` (measure prompts, agents and skills; golden sets,
   graders, calibrated judges, loops, release gates, and a record for every run),
-  `prompt-engineering` (the words a model reads, measured by `eval`).
+  `prompt-engineering` (the words a model reads, measured by `eval`), `problem-solver` (break a
+  loop: restate the problem, find the crux, many hypotheses, prior art, the cheapest experiment that
+  tells them apart).
 - `docs/`: one page per structure — delivery cycle, plan file, work tracking, decision records,
   documents, context pack, sessions, memory.
 

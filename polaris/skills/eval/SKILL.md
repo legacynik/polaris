@@ -1,7 +1,7 @@
 ---
 name: eval
 description: ◇ Polaris — Measure prompts, agents and skills before calling them better. Build an eval suite from real failures, choose between a golden set, code checks and a judge, calibrate the judge, audit an existing eval, run a bounded keep-or-revert loop, prove a skill change test-first, gate a release or a CI on no regression, monitor production. Use when something must be measured, two versions compared, or a judge trusted. Requires python ≥ 3.9; a judge key only for paid runs.
-version: 0.3.0
+version: 0.4.2
 user-invocable: true
 auto: true
 status: active
@@ -28,7 +28,7 @@ on, and leave a record a stranger can query in six months. For skills one format
 | setup · read | a target has no eval; what is failing behind many results | [suite.md](references/suite.md) |
 | judge | golden set, code check or judge? write and calibrate one | [graders.md](references/graders.md) |
 | audit | an eval exists: is it testing anything? report only | [audit.md](references/audit.md) |
-| loop · skill-tdd | improve against a metric; change a skill test-first | [loops.md](references/loops.md) |
+| loop · skill-tdd · lift | improve against a metric; change a skill test-first; does this skill help at all | [loops.md](references/loops.md) |
 | release · CI · production | no regression before publishing; a gate per change; live traffic | [ship.md](references/ship.md) |
 
 Every mode: [records.md](references/records.md); agents, conversations, retrieval, tools: [systems.md](references/systems.md); commands: [runner.md](references/runner.md).
@@ -56,7 +56,7 @@ Every mode: [records.md](references/records.md); agents, conversations, retrieva
 - Every grader answers PASS or FAIL for one mode; every number has its cases behind it (per case, per bucket, the tail).
 - Agent, judge, prompt and dataset pinned by version or hash; requested and served model both kept.
 - A judge or harness error is excluded and counted ("judged 47 of 50").
-- Held-out cases stay out of every prompt and example; a diff on each change proves it.
+- Held-out cases stay out of every prompt and example; whoever edits a skill leaves its `eval/` untouched.
 
 ## Output
 

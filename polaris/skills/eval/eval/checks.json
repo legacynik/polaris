@@ -39,12 +39,14 @@
   "id": "c7",
   "category": "outcome",
   "assertion": "every run leaves run.json, cases.jsonl and one index.jsonl line under eval/experiments/<category>/, with pinned models (requested and served), dataset hash, commit and a trace id per case; a run without its record is reported NOT_RUN",
-  "cmd": null
+  "cmd": null,
+  "task": "We just ran an eval of our retrieval prompt. What do we keep from this run so someone can rebuild the verdict in six months?"
  },
  {
   "id": "c8",
   "category": "process",
   "assertion": "asked to choose a grader, the answer applies the order code check → golden comparison → reference-free check → binary judge → person, and uses a golden set only where a single right answer exists",
-  "cmd": null
+  "cmd": null,
+  "task": "We have 300 extraction outputs with a known right answer, and chat replies where tone matters. How do we grade each kind in our eval?"
  }
 ]

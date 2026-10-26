@@ -1,13 +1,13 @@
 ---
 name: prototype
 description: ◇ Polaris — Prototype, phase 2. Answer one named design question with throwaway code on a spike branch — does this state model or logic hold, what should this UI look like — and write only the verdict into the plan file. Use when a plan assumption is still assumed and code can settle it, or before building anything new. Requires git.
-version: 1.0.2
+version: 1.0.4
 user-invocable: true
 auto: true
 status: active
 lifecycle: a spike branch that never merges + one verdict block in plan file section 4 → read by `plan-area` when it writes contracts and approach; a spike that answers nothing is deleted and leaves nothing
 invokes: []
-invoked-by: [human, grill]
+invoked-by: [human, grill, problem-solver]
 io: "one named question and the assumption it tests → a pushed spike branch plus one verdict block (question, answer, evidence, what it changes) under section 4 Prototype verdicts; or the spike deleted"
 ---
 

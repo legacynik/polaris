@@ -1,5 +1,9 @@
 # Changelog — architecture
 
+## 1.5.3 — 2026-10-26
+
+- Two eval cases name a generic memory CLI instead of the private one, which does not ship.
+
 ## 1.5.2 — 2026-10-25
 
 - Public-package clean (C5): eval run notes and prompts carry neutral names (`acme/acme-api`, `<vault>`, "offerte") instead of the product repo, its owner login and machine paths. No behaviour change.

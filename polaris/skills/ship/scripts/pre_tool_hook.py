@@ -15,8 +15,14 @@ import sys, os, json, re, shlex, subprocess, tempfile, time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import redact_scan, version_bump, realtest_gate  # sibling scripts, same dir
-from gh_parse import JUDGED, JUDGED_VERB, MERGE_API, RAW_MERGE, cd_target, flag_value, gh_calls, pr_ref
+try:
+    import redact_scan, version_bump, realtest_gate  # sibling scripts, same dir
+    from gh_parse import JUDGED, JUDGED_VERB, MERGE_API, RAW_MERGE, cd_target, flag_value, gh_calls, pr_ref
+except Exception as e:  # noqa: BLE001 - outside main()'s try, an exit 1 here would let the command run
+    if __name__ != "__main__":
+        raise
+    print(f"ship: gate BLOCKED, a sibling script failed to load ({type(e).__name__}: {e})", file=sys.stderr)
+    sys.exit(2)
 
 BYPASS_ENV = "SHIP_BYPASS_GATE"
 
@@ -45,8 +51,16 @@ def declared(root: Path, key: str) -> bool:
     return False
 
 
+def base_ref(root: Path) -> str:
+    """The remote default branch: a stale local copy would drag other people's commits into the diff."""
+    name = default_branch(root)
+    remote = subprocess.run(["git", "-C", str(root), "rev-parse", "--verify", "-q", f"refs/remotes/origin/{name}"],
+                            capture_output=True, text=True)
+    return f"origin/{name}" if remote.returncode == 0 else name
+
+
 def phase_a_check(root: Path, draft: bool) -> tuple[bool, str]:
-    r = subprocess.run(["git", "-C", str(root), "diff", f"{default_branch(root)}...HEAD"], capture_output=True, text=True)
+    r = subprocess.run(["git", "-C", str(root), "diff", f"{base_ref(root)}...HEAD"], capture_output=True, text=True)
     diff = r.stdout if r.returncode == 0 else ""
     if any(f.severity == "HIGH" for f in redact_scan.scan_text(diff)):
         return False, "redaction: a HIGH-severity secret is in this diff, run redact_scan.py"

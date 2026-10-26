@@ -535,12 +535,57 @@ this step exists to close:
 git status --short   # 0 lines on the Polaris paths, or say exactly which one is left and why
 ```
 
-Never commit or push without an explicit request. After committing, if the branch is ahead of its
+Never commit or push without an explicit request — the rake branch of Step 5b is the one exception. After committing, if the branch is ahead of its
 remote, remind the contributor there is unpushed work:
 
 ```bash
 git status -sb | head -1   # e.g. "## main...origin/main [ahead 1]"
 ```
+
+## Step 5b — Rake the day's session logs to the default branch
+
+A checkpoint commits where you are (Step 5). Left there, two things went wrong (founder,
+2026-10-26): on a repository's main checkout the session commits piled up on the LOCAL default
+branch — five of them, while origin had moved 64 commits ahead — so `git pull` stopped
+fast-forwarding; and on a feature branch the day's log waited days for the branch to merge. The
+rake brings every day's log to the default branch the same day, through a docs-only PR:
+
+```bash
+RK="${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/end/scripts/session_rake.py"
+python3 "$RK" plan            # read-only: what would be raked, from which commit and branch
+python3 "$RK" apply --merge   # one PR, chore/sessions-<login>-<date>, based on origin/<default>
+python3 "$RK" sync            # the local default branch back onto origin/<default>, when safe
+```
+
+- **What is raked.** Commits on any local branch (the default one included) and not on
+  `origin/<default>` that touch only `$ROOT/team/<login>/sessions/` and `.../handoff/`. A session
+  log is append-only, one `## HH:MM — ` entry at a time, so its versions are never chosen between:
+  the raked file is the union of origin's entries and each branch's newest version, every entry
+  once, in time order — two branches that appended to the same day's log both survive. A log
+  whose entries are all upstream already is skipped. A file without entries (a handoff) takes its
+  newest version, never one older than origin's last change to it (a kept, squash-merged branch
+  still carries yesterday's). A commit that also touches other paths is printed as
+  `mixed — not raked`: its session change reaches the default branch with the rest of its branch,
+  never split off by a script.
+- **Union merge.** The rake PR also carries, in the contract root's `.gitattributes`,
+  `team/*/sessions/*.md merge=union` and the same for `handoff/` (patterns in a nested
+  `.gitattributes` match relative to its directory). A feature branch whose log was raked to main
+  and then grew further merges without a conflict: git keeps both sides' lines.
+- **apply** writes those versions in a throwaway worktree on `origin/<default>` (or on the
+  day's rake branch, when it already exists on origin), commits pathspec-only, pushes the rake
+  branch and opens or updates ONE PR. Nothing to rake → no branch, no PR, exit 0.
+- **Merge.** `--merge` merges only where `_polaris/config.yml` (or the vault's `config.yml`) says
+  `session.rake_merge: true`; the default is false, and a repository whose hook routes every merge
+  through `/ship` keeps it false — the PR then waits for the normal merge, and you say so.
+- **sync** touches the local default branch only, and only when every commit it has beyond
+  `origin/<default>` is a session-only commit whose paths are identical upstream, or are logs
+  whose entries are all upstream (i.e. after the rake PR merged). Checked out in the main worktree → `git reset --keep origin/<default>`, which
+  refuses on its own rather than touch an uncommitted change; not checked out → `git branch -f`;
+  checked out in another worktree → refused. Any failed condition changes nothing and names it.
+
+Exit 1 on either command is a refusal with its reason: report it verbatim, never retry with
+force. These two commands are the only push and the only merge `end` makes, and only on the rake
+branch.
 
 ## Finish
 

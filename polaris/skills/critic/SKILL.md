@@ -1,12 +1,12 @@
 ---
 name: critic
 description: "◇ Polaris — Attack one artifact from fresh context: a plan before it is accepted, a decision record, a claim, or a diff that needs more than review. Only quoted, falsified findings survive; blocking ones go back to the author, only taste reaches the human. Use before accepting a plan or decision, or before relying on a claim. Requires python3. Not routine code review (review), merge verdicts (real-testing) or mechanical edits."
-version: 0.3.2
+version: 0.3.3
 user-invocable: true
 auto: false
 lifecycle: one .critic/<artifact-hash>.json per pass → caller validates it with critic_gate.py and drains it at its own gate
 invokes: []
-invoked-by: [human, architecture]
+invoked-by: [human, architecture, apex-curate]
 io: receives a materialized ARTIFACT directory plus CONTRACT, never the author's claim/reasoning/transcript → emits a validated JSON ledger with only quoted, falsified findings, each blocking or taste
 status: active
 ---

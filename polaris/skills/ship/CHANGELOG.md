@@ -1,5 +1,19 @@
 # Changelog — ship
 
+## 3.0.5 — 2026-10-26
+
+- Tests and CHANGELOG name no product repository; the stale-main test assembles its fake key at run time, like the hook's selfcheck.
+
+## 3.0.4 — 2026-10-26
+
+- `pre_tool_hook.py` diffs a new PR against `origin/<default>...HEAD`, not the local default branch:
+  a local `main` 61 commits behind origin dragged other people's commits into the diff and the
+  redaction scan refused every `gh pr create` (reported from a product repository). Local only when the
+  remote ref is missing. Test: `tests/test_pre_tool_hook_stale_main.py` (RED recorded).
+- The hook fails closed when a sibling script cannot load: the imports ran outside `main()`'s
+  `try`, exited 1, and Claude Code let the command run (reported from a product repository). Now exit 2.
+  Test: `tests/test_pre_tool_hook_fail_closed.py` (RED recorded).
+
 ## 3.0.3 — 2026-10-25
 
 - Public-package clean (C5): `redact_scan.py` and `pre_tool_hook.py` selfchecks build their AWS key, PEM header and URL-credential fixtures at run time, and `references/bypass-test.md` assembles the key with `printf`; the scanners see the same input.

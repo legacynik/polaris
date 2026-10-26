@@ -129,7 +129,7 @@
    "should_trigger": true,
    "kind": "implicit",
    "tuple": "decision · PUBLISHED · implicit · symptom",
-   "prompt": "We published the polaris-memory bundle on npm last month. Only one repo of ours consumes it so far, so renaming the recall() parameters is basically free, right?",
+   "prompt": "We published the team-memory bundle on npm last month. Only one repo of ours consumes it so far, so renaming the recall() parameters is basically free, right?",
    "note": "the two-bad-cases pair, half two: one known consumer, unknown set"
   },
   {
@@ -245,7 +245,7 @@
    "should_trigger": false,
    "kind": "negative",
    "tuple": "near-miss · document-generate / code-documentation",
-   "prompt": "write the README for the polmem CLI — install, the four commands, and what each flag does",
+   "prompt": "write the README for the team's memory CLI — install, the four commands, and what each flag does",
    "note": "documentation that is not the architecture doc; the near-miss p19 sits next to from the other side"
   },
   {

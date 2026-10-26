@@ -82,14 +82,14 @@ npx skills remove -g ambitious-goal codex-review plan-week pol-babysit pol-pr po
 
 ## Skills
 
-26 skills. `base-workflow` is the router: it names the case, invokes the skill that owns it and
+27 skills. `base-workflow` is the router: it names the case, invokes the skill that owns it and
 proposes the next one, so nobody has to remember the chain. Each `SKILL.md` is the authority;
 [docs/skills.md](docs/skills.md) lists every skill with its version and description.
 
 | Phase | Skills |
 |---|---|
 | Route | `base-workflow` |
-| Discover · define | `grill` (scope, assumptions, size) · `prototype` (one question, throwaway code) · `plan-area` (one plan file, Beads epic) · `architecture` (decisions) · `domain` (language and boundaries) · `database-schema` (the real schema first) |
+| Discover · define | `grill` (scope, assumptions, size) · `prototype` (one question, throwaway code) · `problem-solver` (stuck, or a plan to flip: the crux, many hypotheses, the cheapest telling experiment) · `plan-area` (one plan file, Beads epic) · `architecture` (decisions) · `domain` (language and boundaries) · `database-schema` (the real schema first) |
 | Build | `implement-plan` (phase by phase from `bd ready`) · `tdd-dev` (RED first) · `bugfix` (12 gated stages) |
 | Verify | `review` (six-axis audit) · `real-testing` (the real product, a fresh breaker) · `critic` (attack from fresh context) · `crasher` (hunt the deployed app) · `eval` (measure prompts, agents and skills) |
 | Ship | `ship` (one coordinator) · `pr` (a body the owner judges without reading code) · `babysit` (to the owner's label) · `git-power` (commits, PR boundaries, destructive Git) |
