@@ -1,5 +1,20 @@
 # Changelog — init
 
+## 0.7.0 — 2026-10-27
+
+- **Ships the dependency installer**: `scripts/install_deps.py` (moved from the lab's
+  `_standard/`) — `deps` plans the binaries (bd, browser-harness, serena), the MCP servers
+  (Serena, Context7, Sequential Thinking, ai-memory) and Beads per harness through each harness's
+  own command, `--apply` runs them; `doctor` is read-only (skills per harness, missing deps per
+  Polaris skill, homonyms, dead hooks, judge keys by presence). It reads the skills root it is
+  installed in, recognises Polaris skills by `◇ Polaris` in their description, writes a Claude
+  Code hook only when a caller passes `--hook`/`--mark` (the lab's `install.sh --deps` does), and
+  `--selfcheck` runs both modes in a throwaway HOME. No value from a config or env var is printed.
+- `description:` names bd (Beads) and browser-harness, which the installer now carries
+  (promote's dependency rule). Eval `n02` (install the deps on my machine) becomes positive `p07`.
+- "When" names the installer; "Not for" no longer points at the lab's `install.sh`.
+  Tests: `tests/test_install_deps.py` (RED recorded with `red_check.py`).
+
 ## 0.6.0 — 2026-10-25
 
 - Public-package clean (C5): **`polaris_team.py` takes `--repo <owner>/<name>` (or `POLARIS_REPO`) and names no repository of its own**: a run without either exits 2 instead of pinning a hard-coded owner. SKILL.md step 5 and `references/team-mode.md` say where to find it (the install source in `~/.agents/.skill-lock.json`). Minor: an invocation without `--repo` now refuses.

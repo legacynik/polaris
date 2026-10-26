@@ -1,7 +1,7 @@
 ---
 name: init
-description: "◇ Polaris — bring an existing repository into the harness: audit, propose, then write a typed CONTEXT/ARCHITECTURE/DOMAIN backbone; with --team required|optional, pin a Polaris release the whole team auto-installs. Use when a repo has none of those or the context pack emits nothing there. Not for refactors or repos already sealed READY. Requires git and python3; --team also gh and npx."
-version: 0.6.0
+description: "◇ Polaris — bring an existing repository into the harness: audit, propose, then write a typed CONTEXT/ARCHITECTURE/DOMAIN backbone; with --team required|optional, pin a Polaris release the whole team auto-installs. Use when a repo has none of those or the context pack emits nothing there. Not for refactors or repos already sealed READY. Requires git and python3; --team also gh and npx; scripts/install_deps.py sets up bd (Beads), browser-harness and the MCP servers the skills use."
+version: 0.7.0
 user-invocable: true
 auto: false
 lifecycle: one alignment plan per run → the repo owner signs the areas → apply seals the backbone once; --team writes a pin the team commits
@@ -25,6 +25,8 @@ Polaris release in the repo so every teammate's sessions install and update it o
 - A repo has no typed `CONTEXT.md`, `ARCHITECTURE.md` or `DOMAIN.md`, or the pack emits nothing.
 - A team wants the same Polaris version for everyone: `--team required` blocks skills until it is
   installed, `--team optional` only nudges.
+- First setup on a machine, or a skill reports a missing dependency: `python3 "$INIT/install_deps.py"
+  deps` lists what it would install (`--apply` installs), `doctor` checks without writing.
 
 ## Steps
 
@@ -64,4 +66,4 @@ alignment plan); the backbone documents and the team pin live at the repo root b
 - Refactoring a repo, moving files or touching CI: minimal mode never does.
 - Creating a documentation area or dossier: areas are proposed and signed, never derived.
 - A repo whose backbone already seals `READY`: re-running writes nothing useful.
-- Installing the suite on your own machine: that is `install.sh` (`--deps`, `--doctor`).
+- Installing the skills themselves: that is `npx skills add`; this skill only wires their dependencies.
