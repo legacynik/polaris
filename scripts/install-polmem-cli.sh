@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# polaris/scripts/install-polmem-cli.sh
+# scripts/install-polmem-cli.sh
 # Make `polmem` available on your shell PATH.
 #
 # Installs a tiny launcher at ~/.local/bin/polmem that, at RUN TIME, resolves the

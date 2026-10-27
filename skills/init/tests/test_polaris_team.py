@@ -14,7 +14,7 @@ from pathlib import Path
 
 CLI = Path(__file__).resolve().parents[1] / "scripts" / "polaris_team.py"
 REPO = "acme/polaris"
-SOURCE = f"https://github.com/{REPO}/tree/v9.9.9/polaris/skills"
+SOURCE = f"https://github.com/{REPO}/tree/v9.9.9/skills"
 
 
 def team(root, mode, ref="v9.9.9", repo=REPO, env=None):
@@ -154,5 +154,5 @@ def test_the_package_repo_comes_from_the_caller_never_from_the_script(tmp_path):
     assert not (tmp_path / "a" / ".polaris" / "team.json").exists()
     assert team(tmp_path / "b", "optional", repo=None, env=env | {"POLARIS_REPO": "other/pkg"}).returncode == 0
     assert json.loads((tmp_path / "b" / ".polaris" / "team.json").read_text())["source"] == \
-        "https://github.com/other/pkg/tree/v9.9.9/polaris/skills"
+        "https://github.com/other/pkg/tree/v9.9.9/skills"
     assert team(tmp_path / "c", "optional", repo="not a repo; rm -rf /", env=env).returncode == 2

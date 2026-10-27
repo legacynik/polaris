@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# polaris/bin/polmem — Polaris memory CLI for teammates (v0).
+# bin/polmem — Polaris memory CLI for teammates (v0).
 # Speaks JSON-MCP over stdin to the CURRENT repo's committed bundle
 # (scripts/polaris_memory_repo.py) — zero engine duplication. Repo-scoped,
 # consumer-first: recall reads the repository you run it in; remember appends

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# polaris/scripts/check_skills.sh — shipped skill-surface gate.
+# scripts/check_skills.sh — shipped skill-surface gate.
 #
 # Every skill is promoted from the lab and marks itself with a diamond in its own
 # description (`◇ Polaris — `), so skills are READ, not listed: a hand list is a skill

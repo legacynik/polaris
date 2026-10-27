@@ -1,5 +1,10 @@
 # Changelog — init
 
+## 0.7.1 — 2026-10-27
+
+- `--team` writes the pinned skills source as `https://github.com/<owner>/<name>/tree/<ref>/skills`:
+  the package now keeps its skills at the repository root, not under `polaris/`.
+
 ## 0.7.0 — 2026-10-27
 
 - **Ships the dependency installer**: `scripts/install_deps.py` (moved from the lab's

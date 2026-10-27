@@ -11,7 +11,7 @@ so every harness reads it, not only Claude Code.
 
 | File | Content |
 |---|---|
-| `.polaris/team.json` | `mode`, `ref`, `source` = `https://github.com/<owner>/<name>/tree/<ref>/polaris/skills` |
+| `.polaris/team.json` | `mode`, `ref`, `source` = `https://github.com/<owner>/<name>/tree/<ref>/skills` |
 | `.polaris/session-start.sh` | the hook below; POSIX `sh`, no dependency beyond `npx` |
 | `.claude/settings.json` | SessionStart → the hook; `required` adds PreToolUse `Skill` → the hook with `--check` |
 | `AGENTS.md` | one section between `<!-- polaris-team:start -->` and `<!-- polaris-team:end -->` |

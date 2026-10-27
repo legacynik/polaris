@@ -7,9 +7,9 @@ decider: Niccolò Franzin
 date: 2026-08-02
 supersedes: —
 governed:
-  - polaris/skills/*/SKILL.md
-  - polaris/evals/run_behavior.py
-  - polaris/evals/cases.json
+  - skills/*/SKILL.md
+  - evals/run_behavior.py
+  - evals/cases.json
 component: polaris-skills
 decides: change-promotion
 value: per-skill-semver-gated-by-eval
@@ -35,7 +35,7 @@ mergiati), `/update` prescriveva uno script irraggiungibile sulle macchine skill
 skill si contraddiceva su Codex in due righe diverse. Tutti difetti che un caso rosso avrebbe
 intercettato in un minuto, e che invece sono stati trovati settimane dopo, dal vivo.
 
-Dal 2026-08-02 esiste `polaris/evals/`: fixture in stato dichiarato, asserzioni su filesystem e git,
+Dal 2026-08-02 esiste `evals/`: fixture in stato dichiarato, asserzioni su filesystem e git,
 `--selfcheck` senza modello nel giro. Il primo bench ha dato 8/8 contro 4/8 sul baseline. Lo
 strumento c'è; questa decisione lo rende la condizione per promuovere.
 
@@ -57,7 +57,7 @@ strumento c'è; questa decisione lo rende la condizione per promuovere.
    dipende da cosa hai toccato, perché in una skill la prosa È il codice:
    - hai toccato la **`description:`** → eval di trigger (`skill-creator/scripts/run_eval.py`): la
      skill parte dove deve e non parte dove non deve.
-   - hai toccato il **corpo** → eval comportamentale (`polaris/evals/run_behavior.py`): fixture in
+   - hai toccato il **corpo** → eval comportamentale (`evals/run_behavior.py`): fixture in
      stato dichiarato, asserzioni su filesystem e git.
    - hai toccato **entrambi** → entrambi.
    - **PATCH** dichiarato tale: il selfcheck dell'harness basta, ma se un caso esistente diventa rosso

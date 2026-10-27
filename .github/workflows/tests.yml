@@ -29,16 +29,16 @@ jobs:
           git config --global user.email "ci@example.invalid"
           git config --global user.name "CI"
           git config --global init.defaultBranch main
-      - run: python -m pytest polaris/tests -q
+      - run: python -m pytest tests -q
       - name: Every shipped script that has a selfcheck passes it
         run: |
           fail=0
-          for f in polaris/skills/*/scripts/*.py; do
+          for f in skills/*/scripts/*.py; do
             grep -q -- --selfcheck "$f" || continue
             python "$f" --selfcheck >/dev/null || { echo "FAIL $f"; fail=1; }
           done
           exit $fail
-      - run: bash polaris/scripts/check_skills.sh
+      - run: bash scripts/check_skills.sh
       - name: Every touched skill moved its version
         if: github.event_name == 'pull_request'
-        run: python polaris/scripts/check_skill_versions.py "origin/${{ github.base_ref }}"
+        run: python scripts/check_skill_versions.py "origin/${{ github.base_ref }}"

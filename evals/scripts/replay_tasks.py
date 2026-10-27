@@ -30,11 +30,11 @@ from skillopt_sleep.types import TaskRecord  # noqa: E402
 PLUGIN = Path.home() / "dev/polaris-plugin"
 SKILL = sys.argv[1] if len(sys.argv) > 1 else "update"
 BASELINE = sys.argv[2] if len(sys.argv) > 2 else "HEAD~1"
-TASKS = PLUGIN / f"polaris/evals/{SKILL}-skillopt.tasks.json"
+TASKS = PLUGIN / f"evals/{SKILL}-skillopt.tasks.json"
 
 
 def skill_text(ref: str | None) -> str:
-    rel = f"polaris/skills/{SKILL}/SKILL.md"
+    rel = f"skills/{SKILL}/SKILL.md"
     if ref is None:
         return (PLUGIN / rel).read_text()
     return subprocess.run(["git", "-C", str(PLUGIN), "show", f"{ref}:{rel}"],

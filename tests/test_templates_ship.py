@@ -16,7 +16,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-PKG = Path(__file__).resolve().parents[1]          # polaris/
+PKG = Path(__file__).resolve().parents[1]          # the repository root
 SKILLS = PKG / "skills"
 PLUGIN_ROOT = re.compile(r"\$\{?CLAUDE_PLUGIN_ROOT(?::-[^}]*)?\}?/([A-Za-z0-9_./-]+)")
 GUARD = re.compile(r"\[\s+!?\s*-[fd]\s")   # the skill says what it does without the path

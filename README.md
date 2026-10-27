@@ -138,9 +138,9 @@ machine, not both: a skill installed twice is listed twice.
 
 The skills CLI links the skills into every supported agent CLI it finds; Codex reads them from
 `~/.agents/skills`. For a CLI it does not support, clone this repository and point the CLI at
-`polaris/skills/`. Skills find their own scripts through
+`skills/`. Skills find their own scripts through
 `${CLAUDE_PLUGIN_ROOT:-$HOME/.agents}/skills/<skill>/`, so set `CLAUDE_PLUGIN_ROOT` to the clone's
-`polaris/` directory. The dependency installer prints the MCP lines for CLIs whose command is
+root directory. The dependency installer prints the MCP lines for CLIs whose command is
 interactive (Hermes) instead of running them.
 
 </details>
@@ -509,11 +509,14 @@ Each `SKILL.md` is the authority for its own behaviour.
 
 | Path | What it holds |
 |---|---|
-| `polaris/skills/` | the 27 skills |
-| `polaris/scripts/` | the context-pack resolver and the package checks |
-| `polaris/tests/` | the package contract tests |
-| `.claude-plugin/`, `polaris/.claude-plugin/` | marketplace and plugin manifests |
-| `docs/` | one page per structure, the same content as the sections above |
+| `skills/` | the 27 skills |
+| `scripts/` | the context-pack resolver and the package checks |
+| `tests/` | the package contract tests |
+| `evals/` | the behaviour evals the release gate runs |
+| `bin/` | maintainer tools; the plugin puts them on `PATH`, the skills CLI does not install them |
+| `.claude-plugin/` | marketplace and plugin manifests; the repository root is the plugin |
+| `.mcp.json` | the plugin's MCP servers |
+| `docs/` | one page per structure, the same content as the sections above; `docs/adr/` holds the decision records |
 
 Skills are developed in a private lab and promoted here only through the release gates. A skill
 must be in English, carry no private names or paths, keep the 60-line form, and declare its

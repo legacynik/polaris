@@ -1,7 +1,25 @@
 # Changelog
 
 All notable changes to Polaris Team OS. The installed version is pinned in
-`polaris/.claude-plugin/plugin.json`.
+`.claude-plugin/plugin.json`.
+
+## 0.35.0 — 2026-10-27 — flat layout
+
+Changed
+
+- The repository now has the standard skill-package layout. `skills/`, `scripts/`, `tests/`,
+  `evals/` and `bin/` sit at the root, next to `.mcp.json`. The plugin manifest moved to
+  `.claude-plugin/plugin.json`, beside `marketplace.json`, whose plugin source is now `./`.
+- The one decision record moved to `docs/adr/`.
+- `init` 0.7.1: `--team` pins `https://github.com/<owner>/<name>/tree/<ref>/skills`.
+- For an agent CLI the skills CLI does not support, `CLAUDE_PLUGIN_ROOT` is now the clone's root.
+
+Upgrading
+
+- Skills CLI: run `npx skills update -g -y`. Nothing else changes.
+- Claude Code plugin: run `/plugin marketplace update`. If the plugin no longer resolves, reinstall
+  it with `/plugin install polaris-team-os@polaris-team-os`.
+- A repository set up with `init --team` keeps its old `source` URL until you rerun `init --team`.
 
 ## 0.34.0 — 2026-10-27 — skills that make the model think: contextual questions, three approaches, light procedures
 
