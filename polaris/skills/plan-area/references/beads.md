@@ -35,3 +35,6 @@ Stage → artifact (`feature_gate.py check --stage …`):
 | `phase` | the plan's `tests:` exits 0 · no open bead blocks the phase. No review, no real-test: both run once on the PR (founder, 2026-10-26) |
 | `implement` | every phase bead of the molecule closed |
 | `ship` | `--pr`: MERGED, and a real-test receipt comment for the merged head |
+
+After `pour`, close the `plan` and `critic` steps through the gate:
+`feature_gate.py close --step <id> --record <plan> --repo . [--report]`.

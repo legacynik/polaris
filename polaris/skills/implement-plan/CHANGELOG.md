@@ -1,5 +1,30 @@
 # Changelog — implement-plan
 
+## 0.4.0 — 2026-10-27
+
+- **Rulings, not stalls**: conflicts, ambiguities, plan defects and an agent's unanswered
+  question are decided and noted on the bead or epic (`Ruling: <what> — <why> — <cost if wrong>`),
+  and the build continues. Four stops only: destructive/irreversible, security-sensitive, a side
+  effect outside the worktree, a plan where every path is a guess. The fix budget's exit 1 and a
+  `G` refusal stay stops: evidence, not ambiguity. `references/rulings.md`.
+- **Preflight** conflict scan (plan vs spec or area README vs code) before the first dispatch,
+  rulings on the epic. `references/preflight.md`.
+- **Model per task** instead of "the strongest it has": cheapest that can do it, by the task's
+  shape. **Batching** of tiny same-shape tasks into one dispatch, every file checked in the diff.
+- Dispatch brief: the agent may ask before coding (`NEEDS_CONTEXT`), self-reviews against the
+  acceptance, never spawns agents; it carries the rulings already made.
+- Beads + `git log` are the ledger after a crash or compaction: a bead closed with a commit is
+  never dispatched again. At most one line between tasks, never "continue?".
+- Judgment parts written as goal, criterion and traps, not checklists (founder, 2026-10-27).
+  Body 55 → 60 lines. Description unchanged. No script change: batching reads the phase's ready
+  beads through `next_bead.py` + `bd ready --mol`, and `red_check.py` keeps one log per bead.
+- Eval: lift cases c7–c11 (ruling, destructive stop, cheap model, resume, batch); c1–c6
+  unchanged. Sonnet, n=5, two runs each: before (0.3.0)
+  `eval/lift-baseline-v030-run{1,2}.json` with 1/5 and 1/5, without 1/5 and 0/5, lift +0.00 and
+  +0.20 (only c8 passed with the skill); after `eval/lift-after-v040-run{1,2}.json` with 5/5 and
+  5/5, without 0/5 and 0/5, lift +1.00 both.
+- Version bump: minor, from 0.3.0.
+
 ## 0.3.0 — 2026-10-26
 
 - Step 5: a phase closes through `G close` on green tests alone; no per-phase `real-testing`

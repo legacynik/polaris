@@ -60,7 +60,7 @@ def test_close_refuses_until_the_canonical_doc_absorbed_the_plan(repo):
     p = poured_plan(repo, "- Issues: none")
     merged_with_receipt(repo)
     r = close(repo, p, "--merged", "--pr", "7")
-    assert r.returncode == 1 and "canonical" in r.stderr
+    assert r.returncode == 1 and "README" in r.stderr
     assert p.exists()
 
 
@@ -68,7 +68,7 @@ def test_close_refuses_until_the_canonical_doc_absorbed_the_plan(repo):
 def test_close_promotes_a_passing_dec_moves_the_file_and_burns(repo):
     setup_vault(repo, [("DEC-demo-ready-001", "accepted", "test -f marker")])
     p = poured_plan(repo, "- Decisions: DEC-demo-ready-001")
-    (repo / "docs/modules/demo/demo.md").write_text("# demo\n\nProven by 2026-10-24-demo: X.\n")
+    (repo / "docs/modules/demo/README.md").write_text("# demo\n\nProven by 2026-10-24-demo: X.\n")
     epic = re.findall(r"Beads epic:\s*`?([\w.-]+)", p.read_text())[-1]
     merged_with_receipt(repo)
     r = close(repo, p, "--merged", "--pr", "7")
@@ -89,7 +89,7 @@ def test_close_promotes_a_passing_dec_moves_the_file_and_burns(repo):
 def test_close_refuses_a_dec_whose_probe_fails_and_changes_nothing(repo):
     setup_vault(repo, [("DEC-demo-pend-001", "accepted", "exit 1")])
     p = poured_plan(repo, "- Decisions: DEC-demo-pend-001")
-    (repo / "docs/modules/demo/demo.md").write_text("2026-10-24-demo\n")
+    (repo / "docs/modules/demo/README.md").write_text("2026-10-24-demo\n")
     merged_with_receipt(repo)
     r = close(repo, p, "--merged", "--pr", "7")
     assert r.returncode == 1 and "NOT_DONE" in r.stderr

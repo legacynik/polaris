@@ -42,11 +42,12 @@ One question decides each: **what does it take to undo this?**
 |---|---|---|
 | **decision** | undoing it needs more than a commit: it fixes the shape or meaning of stored data, something a customer signs, sees and relies on, something another system calls, money, a vendor or a legal commitment, or who the product serves. Judge by effect: a one-line flip that lets bad data be stored is a decision | a record, below |
 | **spec** | it says how something works or must be built: behaviour, fields, flow, limits, wording, tests. Changing it is normal product work | the area's document (`outputs.spec` in the repository's output map, else the area README) |
-| **detail** | a real choice, cheap to undo, with no stored or customer-visible consequence: a name, a placement, a threshold, a tool | the pull request description, or a comment beside the code |
+| **detail** | a real choice, cheap to undo, with no stored or customer-visible consequence: a name, a placement, a tool | the pull request description, or a comment beside the code |
 
 When no statement is a decision, write no record: say so in one line and say where each
-statement went. A dated line in the area document keeps a choice from being re-argued without
-turning it into a constraint every later agent must obey.
+statement went. A threshold, method, prompt, heuristic or number someone could re-argue is one
+ledger line in `decisions.md`, never an ADR — [writing.md](writing.md) owns which of the three
+documents each statement belongs in.
 
 ## 3. Admit it — six requirements
 
@@ -83,35 +84,25 @@ go to `records/` through `scripts/lesson_record.py` and are never decisions.
 | Home | Write it when |
 |---|---|
 | **Ledger entry** in `decisions.md` (chose · over · because · evidence · supersedes · impact) | the choice could be questioned later, enacting it takes no change a probe could check, and it fails at least one ADR test |
-| **DEC file** `decisions/DEC-<ws>-<key>-NNN.md` (JSON frontmatter) with `call_sites`, `probe` — the exact command that proves it is in effect — and `probe_kills` — one of its own `call_sites`, without which the probe must fail — plus one ledger line pointing to it | the choice must be **enacted**: code, config, infra, or a process a command can check — `kind: process` unless it is also an ADR |
-| **DEC file with `kind: architecture`** — an ADR | all three ADR tests pass: hard to reverse · surprising without the context · the fruit of a real trade-off — a DEC file even when nothing must be built. Any test failing → `kind: process` (enacted) or a ledger entry (not enacted) |
+| **DEC file** `decisions/DEC-<ws>-<key>-NNN.md` (JSON frontmatter) with `call_sites`, `probe` — the exact command that proves it is in effect — and `probe_kills` — one of its own `call_sites`, without which the probe must fail — plus one ledger line pointing to it | a choice **below the ADR bar** must be **enacted**: code, config, infra, or a process a command can check — always `kind: process` |
+| **ADR** `docs/adr/NNNN-kebab-title.md` — always there, never a DEC file | it affects the system's structure, non-functional characteristics, dependencies, interfaces or construction techniques, **and** all three ADR tests pass: hard to reverse · surprising without the context · the fruit of a real trade-off. An ADR that needs enforcement may carry optional `probe:` / `probe_kills:` frontmatter. Any test failing → a DEC file `kind: process` (enacted) or a ledger entry (not enacted) |
 
 A probe that cannot fail is not a probe: the gate re-runs it against a copy of HEAD with the
 `probe_kills` call site removed, and it must fail there.
 
-The output map (`outputs.decision`) names the place: an append-only decisions log, a folder of
-typed records, or a folder of prose records. **The repository's own convention wins**: write in
-the shape its existing records use, name the location in `modalità`, and leave existing records in
-the shape they have. One commitment is one record, in one place; `kind: architecture` marks the
-architectural ones inside that place.
+ADRs always live in `docs/adr/` (`outputs.adr`), in the format of [writing.md](writing.md) —
+status · context · decision · consequences, the optional sections, one to two pages — and a set
+starts with ADR 0001 from [adr-0001.md](adr-0001.md). A repository whose ADRs sit elsewhere (DEC
+files with `kind: architecture`, a prose folder) keeps them as they are until a compaction moves
+them; new ADRs go to `docs/adr/`. DEC files (`outputs.decision`) hold only non-architecture
+choices that must be enacted. One commitment is one record, in one place; name the location in
+`modalità`.
 
-Where the repository has no shape yet, use these parts, in this order, on about one screen
-(60 lines):
+The six requirements land where writing.md places them. A DEC file carries `probe` and
+`probe_kills`; an ADR may. The paths a record governs are only paths that exist and that it really
+governs. "What we did before" is an option only with its cost written.
 
-1. **Decision** — one or two sentences, only the statements that passed the sort.
-2. **Undo cost** — what reversing it takes, naming the stored data, contract or commitment.
-3. **Options** — at least two that were really weighed, each with what it costs. "What we did
-   before" is an option only with its cost written.
-4. **Evidence** — what was tried or measured before deciding.
-5. **Reopen when** — the review trigger.
-6. **Check** — the enforcement: the command or test that fails when the decision is violated, or
-   the named reviewer.
-7. **Rules** — the `<file>:<rule-id>` list.
-8. Metadata: `status`, `kind` (`architecture` or `process` for a DEC file, per the table above),
-   `probe` and `probe_kills` for a DEC file, and the paths it governs — only paths that exist and
-   that it really governs.
-
-The how — flow, fields, limits, tests — goes to the area's spec, and the record links it.
+The how — flow, fields, limits, tests — goes to the code and the area README, and the record links it.
 
 **Lifecycle.** A record with Options or Evidence still unfilled is `status: proposed`, and the
 missing part says what is missing; ask for it in one line, as a trade-off ("we want X, but we
@@ -120,17 +111,20 @@ lose Y: which matters more?"). It becomes `accepted` only when every part is fil
 record is in force as direction, not yet a fact. `executed` is written
 only by `plan close`, when the decision gate (`scripts/check_decision_execution.py`) reports the
 probe passing and failing once the `probe_kills` call site is removed; this skill never writes it. A decision
-is never edited into another decision: write a new record whose Options include the old choice
-with what it cost, mark the old one `superseded`, link the two, and leave the old text otherwise
-untouched.
+is never edited into another decision, and never grows an appended "Update" section: a reversal
+is a new record whose options include the old choice with what it cost, the old one marked
+`superseded`, the two linked. Drift (a path, a name, a count) is amended in place without
+changing what was decided, and overlapping records are compacted — [writing.md](writing.md),
+*Keeping the set current*.
 
 ## Red flags
 
 - An `accepted` record with one option, or with "to be filled" anywhere.
 - Numbers of seconds, pixels, items or button labels inside a Decision section — that is spec.
-- A record longer than one screen.
+- A record longer than two pages, or one with an appended update section.
+- An ADR for a threshold, a method, a prompt or a heuristic.
 - A decision with neither a reopen condition nor a check.
 - A pick that reached the record without its challenge, when step 1 applied.
-- A DEC file without `probe`, a ledger entry for a choice that must be enacted, or
-  `kind: architecture` on a record that fails one of the three ADR tests.
+- A DEC file without `probe`, a ledger entry for a choice that must be enacted, a new ADR
+  written as a DEC file, or an ADR for a record that fails one of the three ADR tests.
 - `status: executed` written by hand.

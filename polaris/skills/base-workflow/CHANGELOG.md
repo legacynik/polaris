@@ -1,5 +1,9 @@
 # Changelog — base-workflow
 
+## 0.7.3 — 2026-10-27
+
+- Router row for decisions: `doc` writes the area README, or ARCHITECTURE.md when no area is named. Founder 2026-10-27: each area has one document besides its plans, its README.
+
 ## 0.7.2 — 2026-10-26
 
 - An eval case no longer names a private project (promotion leak gate).

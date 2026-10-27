@@ -39,6 +39,17 @@ the threshold that says it worked.
 - **Prior art** — how others solved it, each with its primary source and what it does better.
 - **What we already own** — code, skills, decisions or plans that cover part of it.
 - **Scope in / out** — explicit lists.
+- **Appetite** — how much time the founder says this is worth (his words), or `unknown — ask`;
+  never an agent estimate written as his.
+- **No-gos and anti-goals** — what this must not do or become, even if it technically works.
+- **Rabbit holes** — the parts likely to eat the appetite, each with how it is avoided or time-boxed.
+- **Approaches considered** — the two or three, one line each with its trade-off; which one the
+  founder picked and why. ADR-level differences point to the architecture record instead.
+- **Theirs and ours** — what the founder said stays his, verbatim; every fill is marked
+  `proposal (agent): <what> — because <reason>`, every technical choice he handed over
+  `agent's call: <choice> — because <reason>`.
+- **Press release + FAQ** (Large, optional) — a five-line release written as if shipped (who, what
+  changes for them, why it matters) and the three hardest questions with their answers.
 - **Assumptions** — `A1 <claim> — test: <command, spike or measurement> — assumed`; a proven one
   reads `proven: <test | receipt | verdict | PR>`.
 
@@ -48,17 +59,24 @@ the threshold that says it worked.
 
 ## 5. Contracts
 
-<plan: interfaces, error paths, acceptance examples — executable where possible, each tagged>
+<plan: interfaces as signatures (name, types, file), error paths, acceptance examples with the
+spec's values — executable where possible, each tagged. The owner's words verbatim or with a
+pointer; what the agent added starts `proposal (agent):`>
 
 ## 6. DoD and regression checks
 
 - <plan: given input/context, the observable result> — evidence: <what could refute it>
 - Regression: <existing behaviour to preserve>
 
+## Review Focus
+
+- <plan: up to five inputs or failure modes the spec implies but no phase tests — the expected
+  behaviour — phase N: test_name; or "none found" after looking>
+
 ## 7. Approach
 
 ### Phase 1: <plan: the observable result of this phase>
-- <task>
+- <task: one action with a checkable result — a test name and its assertions, or a signature and file>
 
 ## 8. Links
 

@@ -76,5 +76,19 @@
     "category": "process",
     "assertion": "after the merge the run converges Git (git-power phase finalize) and runs phase 8 (plan close) when a plan file exists; it never leaves closing to the end of the session",
     "cmd": "grep -qF 'phase finalize' SKILL.md && grep -qF 'plan_close.py --record' SKILL.md"
+  },
+  {
+    "id": "c14",
+    "category": "outcome",
+    "assertion": "the rewritten README section leads with what changed for the reader (Latin-1 files are now accepted) in its first sentence; it states the detection result with its source and date (118 of 120 sample files, 3 banks, 2026-10-20); and its prose has no filler or buzzwords (comprehensive, seamless, robust, leverage, powerful, it's worth noting), no hedges (might potentially, could possibly, arguably, it seems that), no 'This section describes' opener, and no sentence over 40 words",
+    "cmd": null,
+    "task": "In the project ledgerd (a CLI that reconciles bank CSV exports) the README section 'Import' says: 'Imports accept UTF-8 files only.' This branch adds Latin-1 support: the encoding is detected from the bytes, no flag needed. Measured on 2026-10-20 on 120 sample files from 3 banks, detection was right on 118; the 2 misses were files under 200 bytes, which fall back to UTF-8. Write the updated 'Import' section of the README."
+  },
+  {
+    "id": "c15",
+    "category": "outcome",
+    "assertion": "the PR body's opening states the change and its effect in the first sentence (exports stream rows, so files over 2 GB no longer time out); it gives the failure count with its source (7 timeouts in September, from the job log); and its prose has no filler or buzzwords, no hedges, no 'This PR describes' style opener, and no sentence over 40 words",
+    "cmd": null,
+    "task": "Write the opening paragraph of a pull request body for this change in the repo reportd: the nightly export job loaded the whole file in memory and timed out on files over 2 GB (7 timeouts in September, counted from the job log). This branch streams rows to the file instead. The owner reads the PR on GitHub and will not read the code."
   }
 ]

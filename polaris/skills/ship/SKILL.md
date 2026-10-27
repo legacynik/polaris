@@ -1,7 +1,7 @@
 ---
 name: ship
 description: "◇ Polaris — Use when the work is done: one command that tests, audits, real-tests, updates the docs the diff made stale, opens the PR, signs it on staging once, writes the body and drives it to the owner's label, then merges once on the owner's yes and closes the work. Triggers: ship it, open the PR, submit, finish this branch. Requires git, gh and python 3."
-version: 3.0.5
+version: 3.1.0
 user-invocable: true
 auto: true
 lifecycle: "PR, receipt, label and replies live on GitHub, drained by the merge; .ship/ (canary state, merge log, drift alert) is local and overwritten by the next run, delete it to reset; the facts file for the PR body is scratch, deleted once the body is published"
@@ -40,7 +40,8 @@ and `real_test:` contract first and never invents a command it does not name; a 
    with its reason and a new item through `issue-contract`. *Done when nothing is undecided.*
 5. **Docs.** List the docs whose claims the diff changed (README, AGENTS.md, the area's canonical
    doc, help text, examples); fix each in this branch, or name it under «Still open» in the PR
-   body. *Done when no stale claim is left unnamed.*
+   body. `slop_check.py` on every `.md` the branch touched: fix each finding or allow it with a
+   reason (`references/writing.md`). *Done when no stale claim is left unnamed and the check exits 0.*
 6. **Push and PR.** `redact_scan.py --stdin < <(git diff origin/<base>...HEAD)` clean; `git-power`
    `commit-check`, `phase pre-pr`, `phase push`; `gh pr create --draft`; `phase post-push`.
    *Done when the draft's head equals the local HEAD.*
@@ -63,8 +64,7 @@ rollback); the plan file closed when one exists; hook: `references/hook.md`. **N
 
 ## Where this goes
 
-This skill produces: **none (the PR, its body through `pr`, the label through `babysit`)**; the
-receipt is `real-testing`'s and lands where `outputs.validation` says.
+This skill produces: **none** (PR, body via `pr`, label via `babysit`); receipt: `real-testing`'s.
 
 ## Not for
 

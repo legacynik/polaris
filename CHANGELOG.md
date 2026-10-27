@@ -3,6 +3,33 @@
 All notable changes to Polaris Team OS. The installed version is pinned in
 `polaris/.claude-plugin/plugin.json`.
 
+## 0.34.0 — 2026-10-27 — skills that make the model think: contextual questions, three approaches, light procedures
+
+Changed
+
+- `grill` 2.1.0 reads the project before asking. It plays your request back with what it found and
+  asks the one question whose answer changes most what gets built. Questions are one sentence each.
+  In its playback your words stay yours, and anything it adds is labelled as a proposal. It records
+  appetite, no-gos, rabbit holes and a pre-mortem, and lays out 2–3 approaches (one inverted) before
+  the plan. It hands off to `architecture` when approaches differ on a boundary, and to
+  `problem-solver` when all of them are weak.
+- `problem-solver` 0.4.1 proposes three opposite ways of thinking about the problem and lets you
+  pick. Then it works the problem through that lens to the cheapest experiment. Its methods (systems
+  loops and traps, the leverage ladder, crux trees, inversion, analogy) are optional tools.
+- `plan-area` 0.5.0: a plan records decisions, not code, and every behaviour has a concrete
+  example. The riskiest assumption is proven first. A Review Focus section is pinned by tests. A
+  builder check runs from a fresh context before `critic`. The owner approves the written plan, not
+  the idea.
+- `implement-plan` 0.4.0 decides, records the ruling and continues. It stops only for the
+  irreversible, security, effects outside the worktree or a broken plan. It adds a preflight conflict
+  scan, picks the cheapest model that can do each task, and batches same-shape tasks.
+- `architecture` 1.6.1: ADRs only for decisions that shape the system, in `docs/adr/NNNN-title.md`,
+  ADR 0001 records how ADRs are written, amend drift / supersede reversals / compact; a read-only
+  triage of an ADR folder; how to write `ARCHITECTURE.md` and the area README.
+- `ship` 3.1.0 runs `slop_check.py` on every touched `.md` (filler words, hedges, triads, long
+  sentences, empty headings) and carries short writing rules with before/after examples.
+- `base-workflow` 0.7.3: the area README is the one area document.
+
 ## 0.33.1 — 2026-10-27 — one command for the dependencies, a README that explains everything
 
 Added
