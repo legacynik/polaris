@@ -12,5 +12,6 @@
     "sessions",
     "team",
     "repository-first"
-  ]
+  ],
+  "license": "MIT"
 }
