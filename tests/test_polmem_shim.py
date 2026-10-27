@@ -1,4 +1,4 @@
-# polaris/tests/test_polmem_shim.py
+# tests/test_polmem_shim.py
 """polmem shim: discovery, protocol round-trip, CLI contract. No mocks on
 subprocess — the fake bundle is a real process speaking the real protocol."""
 from __future__ import annotations

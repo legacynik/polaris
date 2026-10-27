@@ -7,7 +7,7 @@ receive what merges to `main`, through `npx skills update -g -y`.
 
 1. Open an issue that names the skill, the behaviour you saw, and the behaviour you want. A bug
    carries the input that reproduces it.
-2. Branch from `main`, change the skill folder under `polaris/skills/<skill>/`, and raise its
+2. Branch from `main`, change the skill folder under `skills/<skill>/`, and raise its
    `version:` in the `SKILL.md` frontmatter. Every skill touched by the PR must move its version.
 3. Add a public English entry under `## Unreleased` in [CHANGELOG.md](CHANGELOG.md): what changes
    for the user, and the skill with its new version.
@@ -24,8 +24,8 @@ A new skill follows the same path, plus one row in the README table, one section
 ## What every skill must hold
 
 - **Self-contained.** A skill runs with only what its folder and the other skills in
-  `polaris/skills/` carry. It never calls a skill, script or path outside the package, and it never
-  asks the user to run anything under `polaris/bin` or `polaris/scripts`: the skills CLI does not
+  `skills/` carry. It never calls a skill, script or path outside the package, and it never
+  asks the user to run anything under `bin` or `scripts`: the skills CLI does not
   install those.
 - **Adapts through the repository.** Repository-specific values (tracker, labels, output paths,
   deploy workflows) come from the product repository's `_polaris/config.yml`. A missing key is named,
@@ -41,17 +41,17 @@ A new skill follows the same path, plus one row in the README table, one section
 Run from the repository root, on your branch, after merging `origin/main`:
 
 ```bash
-bash polaris/scripts/check_skills.sh
-python3 polaris/scripts/check_skill_versions.py origin/main
-uvx --with pyyaml pytest polaris/tests -q
+bash scripts/check_skills.sh
+python3 scripts/check_skill_versions.py origin/main
+uvx --with pyyaml pytest tests -q
 ```
 
 | Gate | Fails when |
 |---|---|
 | `check_skills.sh` | a skill's description lacks the `◇ ` mark, it names a retired or private path, or the `start` settings hook fails its selfcheck |
 | `check_skill_versions.py` | a skill changed against the base without raising its `version:` |
-| `pytest polaris/tests` | a shipped script, template or contract test breaks |
+| `pytest tests` | a shipped script, template or contract test breaks |
 
-Before a release, the maintainer also runs `package_perimeter.py` over `polaris/skills`: it refuses a
+Before a release, the maintainer also runs `package_perimeter.py` over `skills`: it refuses a
 machine path, a private name or a key-shaped string in any shipped file. It is not part of this
 repository, so a contributor cannot run it; a PR that fails it is sent back with the finding.

@@ -14,7 +14,10 @@ import yaml
 
 
 ROOT = Path(__file__).resolve().parents[1]
-REPO = ROOT.parent
+REPO = ROOT
+# What ships: the plugin is the repository root, but the root's prose (README, CHANGELOG, docs)
+# names the public slug on purpose. The perimeter walk covers the package, not the prose.
+PACKAGE = ("skills", "scripts", "tests", "evals", "bin", ".claude-plugin", ".mcp.json")
 SKILLS = ROOT / "skills"
 
 
@@ -32,7 +35,7 @@ def test_marketplace_exposes_the_same_skills_to_agent_skills_cli() -> None:
     marketplace = json.loads((REPO / ".claude-plugin" / "marketplace.json").read_text())
     plugin = marketplace["plugins"][0]
     declared = {Path(path).name for path in plugin["skills"]}
-    assert plugin["source"] == "./polaris"
+    assert plugin["source"] == "./"
     assert declared == shipped()
     for relative in plugin["skills"]:
         assert (ROOT / relative.removeprefix("./") / "SKILL.md").is_file()
@@ -73,14 +76,17 @@ def test_the_shipped_tree_carries_no_machine_path_and_no_real_login() -> None:
     tree could.
     """
     allowed = {
-        "polaris/bin/polaris-update": "the repository's own public slug, in its own installer",
-        "polaris/.claude-plugin/plugin.json": "the plugin author URL — identity, not leakage",
-        "polaris/scripts/check_skills.sh": "the denylist guard: the needles ARE its subject",
-        "polaris/tests/test_team_os_contract.py": "this test: the needles are its subject too",
+        "bin/polaris-update": "the repository's own public slug, in its own installer",
+        ".claude-plugin/plugin.json": "the plugin author URL — identity, not leakage",
+        ".claude-plugin/marketplace.json": "the marketplace owner URL — identity, not leakage",
+        "scripts/check_skills.sh": "the denylist guard: the needles ARE its subject",
+        "tests/test_team_os_contract.py": "this test: the needles are its subject too",
     }
     needles = re.compile(r"/Users/|All Vibe|nichome|legacynik")
     offenders = []
-    for path in ROOT.rglob("*"):
+    paths = [p for top in PACKAGE for p in ([ROOT / top] if (ROOT / top).is_file()
+                                            else (ROOT / top).rglob("*"))]
+    for path in paths:
         relative = path.relative_to(REPO).as_posix()
         if not path.is_file() or relative in allowed or "__pycache__" in relative:
             continue

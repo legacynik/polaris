@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "polaris-team-os",
-      "source": "./polaris",
+      "source": "./",
       "description": "Polaris — skills that carry work from an idea to a merged, verified change: a router (base-workflow), grill, prototype, plan-area and implement-plan, tdd-dev and bugfix, review and real-testing, ship with pr and babysit, eval, and the session commands.",
       "skills": [
         "./skills/architecture",

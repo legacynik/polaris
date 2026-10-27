@@ -5,7 +5,7 @@
 `start 1.5.0` mentre spediva uno `start` diverso, e chi confronta due installazioni per versione
 concludeva che fossero uguali.
 
-    python3 polaris/scripts/check_skill_versions.py <base-ref>     # 0 pulito · 1 versioni ferme · 2 input inutilizzabile
+    python3 scripts/check_skill_versions.py <base-ref>     # 0 pulito · 1 versioni ferme · 2 input inutilizzabile
 """
 from __future__ import annotations
 
@@ -28,15 +28,15 @@ def git(*args: str) -> str:
 
 def touched_skills(base: str) -> set[str]:
     names = set()
-    for line in git("diff", "--name-only", f"{base}..HEAD", "--", "polaris/skills").splitlines():
+    for line in git("diff", "--name-only", f"{base}..HEAD", "--", "skills").splitlines():
         parts = line.split("/")
         if len(parts) > 2:
-            names.add(parts[2])
+            names.add(parts[1])
     return names
 
 
 def version_at(ref: str, skill: str) -> str | None:
-    done = subprocess.run(["git", "show", f"{ref}:polaris/skills/{skill}/SKILL.md"],
+    done = subprocess.run(["git", "show", f"{ref}:skills/{skill}/SKILL.md"],
                           capture_output=True, text=True)
     if done.returncode:
         return None                      # skill nuova: nessuna versione precedente da confrontare
@@ -48,7 +48,7 @@ def stale(base: str) -> list[str]:
     out = []
     for skill in sorted(touched_skills(base)):
         was, now = version_at(base, skill), version_at("HEAD", skill)
-        gone = subprocess.run(["git", "cat-file", "-e", f"HEAD:polaris/skills/{skill}"],
+        gone = subprocess.run(["git", "cat-file", "-e", f"HEAD:skills/{skill}"],
                               capture_output=True).returncode != 0
         if gone:
             continue                     # skill rimossa: non c'e' versione da alzare

@@ -2,7 +2,7 @@
   "format": "skillopt_sleep.tasks.v1",
   "project": "polaris-team-os",
   "transcript_source": "founder-correction-2026-07-19",
-  "target_skill_path": "polaris/skills/end/SKILL.md",
+  "target_skill_path": "skills/end/SKILL.md",
   "reviewed": true,
   "tasks": [
     {

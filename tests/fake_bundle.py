@@ -1,4 +1,4 @@
-# polaris/tests/fake_bundle.py
+# tests/fake_bundle.py
 """Minimal stand-in for scripts/polaris_memory_repo.py — same JSON-RPC envelope
 (initialize / tools/call) AND the same remember contract: requires title+body,
 raises on validation failure so isError:True with "error: 'title' and 'body'

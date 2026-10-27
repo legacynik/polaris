@@ -1,7 +1,7 @@
 ---
 name: init
 description: "◇ Polaris — bring an existing repository into the harness: audit, propose, then write a typed CONTEXT/ARCHITECTURE/DOMAIN backbone; with --team required|optional, pin a Polaris release the whole team auto-installs. Use when a repo has none of those or the context pack emits nothing there. Not for refactors or repos already sealed READY. Requires git and python3; --team also gh and npx; scripts/install_deps.py sets up bd (Beads), browser-harness and the MCP servers the skills use."
-version: 0.7.0
+version: 0.7.1
 user-invocable: true
 auto: false
 lifecycle: one alignment plan per run → the repo owner signs the areas → apply seals the backbone once; --team writes a pin the team commits

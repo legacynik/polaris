@@ -26,7 +26,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-SOURCE = "https://github.com/{repo}/tree/{ref}/polaris/skills"
+SOURCE = "https://github.com/{repo}/tree/{ref}/skills"
 HOOK_CMD = 'sh "$CLAUDE_PROJECT_DIR/.polaris/session-start.sh"'
 START, END = "<!-- polaris-team:start -->", "<!-- polaris-team:end -->"
 
