@@ -1,6 +1,6 @@
 {
   "skill": "init",
-  "method": "ARRIVAL (explicit | implicit) x ARM (bring a repo in | team pin). Six positives cover the backbone audit and the --team modes; four negatives are the doors it must not absorb — a refactor, installing the suite on one machine (install.sh --deps/--doctor), creating a documentation area, and a repo already sealed READY.",
+  "method": "ARRIVAL (explicit | implicit) x ARM (bring a repo in | team pin). Seven positives cover the backbone audit, the --team modes and the dependency installer (scripts/install_deps.py); three negatives are the doors it must not absorb — a refactor, creating a documentation area, and a repo already sealed READY.",
   "cases": [
     {
       "id": "p01",
@@ -45,9 +45,9 @@
       "prompt": "Refactor the folder layout of this repo and move the CI config under ci/."
     },
     {
-      "id": "n02",
-      "should_trigger": false,
-      "kind": "negative",
+      "id": "p07",
+      "should_trigger": true,
+      "kind": "implicit",
       "prompt": "Install the Polaris suite and its MCP servers on my machine, and tell me what deps are missing."
     },
     {

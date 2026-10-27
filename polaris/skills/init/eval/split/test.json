@@ -12,9 +12,9 @@
     "prompt": "Make Polaris optional for this repo's team: just nudge people who don't have it installed."
   },
   {
-    "id": "n02",
-    "should_trigger": false,
-    "kind": "negative",
+    "id": "p07",
+    "should_trigger": true,
+    "kind": "implicit",
     "prompt": "Install the Polaris suite and its MCP servers on my machine, and tell me what deps are missing."
   },
   {
