@@ -52,5 +52,47 @@
     "category": "outcome",
     "assertion": "the record lands in the operating model §6 home: a DEC file carrying call_sites, probe and probe_kills when the choice must be enacted or passes all three ADR tests (hard to reverse, surprising without context, a real trade-off), kind: architecture only in the latter case; otherwise a ledger entry; status written as proposed, never as accepted or executed by the skill",
     "cmd": null
+  },
+  {
+    "id": "c10",
+    "category": "outcome",
+    "assertion": "the threshold and prompt-wording choice is recorded below the ADR bar: a short ledger entry for decisions.md (what was chosen, over what, why, the evidence; described or shown, any wording) and NOT an ADR -- no ADR file and no `kind: architecture` record is written or proposed for it",
+    "cmd": null,
+    "task": "In acme-api the catalogue matcher accepts a match when cosine similarity is above 0.78. A review of 400 matches last week found 31 false accepts, so we are raising the threshold to 0.84 and rewording the judge prompt to ask for the unit of measure first. Record this decision."
+  },
+  {
+    "id": "c11",
+    "category": "outcome",
+    "assertion": "the reply writes one ADR of one to two pages (not a long multi-page document) in this shape, any exact wording: a numbered short title that names the decision (e.g. '# 2. Pricing runs as its own service'); a date; a status section; a context section with the forces behind it; a decision section in full sentences, active voice ('We will ...' or equivalent); and a consequences section that states the negative consequences as well as the positive ones",
+    "cmd": null,
+    "task": "In acme-api we have decided to move pricing out of the quoting service into its own service: the quoting service and the invoicing app will both call it over HTTP, and the price tables move with it into their own database. Write the architecture decision record."
+  },
+  {
+    "id": "c12",
+    "category": "outcome",
+    "assertion": "the reply does not append another update section to the existing ADR; it moves how ingestion works today into a living current-state document (the ingestion area's README or the repository's ARCHITECTURE.md, not a new kind of document), and either compacts the ADR into one current record (with a note on what it absorbed) or supersedes it with a new ADR linked both ways, recording today's change as its own ADR or as a decisions.md line",
+    "cmd": null,
+    "task": "Our acme-api ingestion ADR has grown 13 appended 'Update' sections over two months. It is 530 lines and nobody can tell how ingestion works today. Today we changed how ambiguous rows are judged: one request per document instead of one per row. Add this change to the ADR."
+  },
+  {
+    "id": "c13",
+    "category": "outcome",
+    "assertion": "the reply writes or updates the area's README (one document for the area, not a new kind of document) describing how ingestion works today: what the area owns; one diagram of the flow; for each step what enters, the logic in a few lines, what exits and where it breaks; that the OCR fallback is off in production; the existing ADRs pointed to from a decisions section, one line each or a placeholder list to fill with their links (the run has no access to their titles), instead of restated; and no dated history, changelog or 'update' sections",
+    "cmd": null,
+    "task": "Document how the document-ingestion area of acme-api works today: uploaded PDFs are OCR'd, split into rows, each row is classified by an LLM, and classified rows are saved to the catalogue. The OCR fallback for scanned pages is switched off in production. Six ADRs about this area already exist, and the area folder is docs/areas/ingestion/."
+  },
+  {
+    "id": "c14",
+    "category": "outcome",
+    "assertion": "the reply gives a read-only triage of the ADR folder: a table (or its exact shape) with one row per ADR that flags appended update sections and excessive length, and gives each ADR a call among: keep, amend in place (drift), supersede, compact or merge with named others, demote to decisions.md line(s), or move current-state prose to the owning area's README or ARCHITECTURE.md -- and it states that the triage itself moves, rewrites or deletes nothing",
+    "cmd": null,
+    "task": "acme-api has 97 ADRs in docs/adr: on average 172 lines, the largest 864. Several have 'Update' sections appended, and many record thresholds and prompt choices. Triage the folder."
+  },
+  {
+    "id": "c15",
+    "category": "outcome",
+    "assertion": "the reply writes ADR 0001 'Record architecture decisions' (or an equivalent title) before the queue decision: a meta-record that states the format the ADR set uses and how the set is kept current (for example when to amend, supersede or compact); the queue decision follows as the next numbered ADR",
+    "cmd": null,
+    "task": "acme-api has no ADRs yet. We just decided to put a message queue between the order service and the warehouse service, so that a warehouse outage no longer blocks checkout. Write our first ADR."
   }
 ]

@@ -667,9 +667,9 @@ A step loads only the rule ids it names (number and slug), never the whole file.
 
 ### 98. adr-with-alternatives-and-consequences
 - **condition:** any consequential architecture decision is made.
-- **decision:** record it as an ADR in four parts: a short noun-phrase title; Context with the problem and the alternatives considered; Decision with a detailed justification; Consequences with what happens after it is applied and the trade-offs weighed. Where an external condition could reverse it (scalability needs change, a release-gating policy relaxes), name that condition in Consequences as its trip-wire.
+- **decision:** record it as an ADR in the format of [writing.md](../writing.md): a short numbered title; Context with the forces; Decision in full sentences; Consequences with what happens after it is applied and the trade-offs weighed, the bad with the good; the alternatives considered under Rejected. Where an external condition could reverse it (scalability needs change, a release-gating policy relaxes), name that condition in Consequences as its trip-wire.
 - **why:** the reasoning outlives the memory of whoever made it and the decision declares what would make it stale. It costs writing time on every decision for documents that may go unread — yet written justifications are often what keeps a sponsor's trust.
-- **check:** the alternatives were genuinely considered; a record with one option documents an assumption, not a decision. Keep it open to add issues found later, and when the named trip-wire fires, reopen it.
+- **check:** the alternatives were genuinely considered; a record with one option documents an assumption, not a decision. Issues found later are amended in place when they are drift and superseded when they reverse it — never appended as dated updates; when the named trip-wire fires, reopen it.
 
 ### 99. the-three-habits
 - **condition:** asking how to sustain good architecture beyond one project.

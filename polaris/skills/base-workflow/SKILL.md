@@ -1,7 +1,7 @@
 ---
 name: base-workflow
 description: ◇ Polaris — The router. On any request that touches code or the tracker (an idea, "add X", "fix Y", a traceback, "open the PR", "track this"), name the case, invoke the skill that owns it, and at the end of each skill propose the next one or stop and ask with the options. Use at the start of work and after every skill ends.
-version: 0.7.2
+version: 0.7.3
 user-invocable: true
 auto: true
 lifecycle: writes nothing of its own — the size and path are stated in the conversation; the design lives where the size's path puts it; each gated step's evidence is produced and drained by the skill the step routes to (tdd-dev RED log, review findings, real-testing verdict, critic ledger, architecture Decision)
@@ -36,7 +36,7 @@ test first, verify) lives in those skills and in `references/method.md`.
    | scoped Medium or Large work | `plan-area` | one plan file: DoD, contracts, phases |
    | accepted plan, epic poured | `implement-plan` | phase by phase, RED first, gated |
    | one small clear change | a bead → `tdd-dev` | a plan would be ceremony |
-   | any decision: a high-level architectural choice, or a rule that binds the future | `/architecture decide` (`design` first when options are open; `doc` for ARCHITECTURE.md) | it picks the home: ADR/DEC with probe, or a `decisions.md` entry |
+   | any decision: a high-level architectural choice, or a rule that binds the future | `/architecture decide` (`design` first when options are open; `doc` writes the area README, or ARCHITECTURE.md when no area is named) | it picks the home: ADR/DEC with probe, or a `decisions.md` entry |
    | work finished, "open the PR" | `ship` | one coordinator owns the order |
    | track it, for later | `issue-contract` | GitHub or a bead, with the reason |
    | words a model reads | `prompt-engineering` → `eval` | better only when measured |

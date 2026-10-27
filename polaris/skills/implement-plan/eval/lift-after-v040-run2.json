@@ -1,0 +1,40 @@
+{
+ "skill": "problem-solver",
+ "model": "sonnet",
+ "n": 6,
+ "with": 6,
+ "without": 2,
+ "lift": 0.6666666666666666,
+ "rows": [
+  {
+   "id": "c1",
+   "with": true,
+   "without": false
+  },
+  {
+   "id": "c2",
+   "with": true,
+   "without": false
+  },
+  {
+   "id": "c3",
+   "with": true,
+   "without": false
+  },
+  {
+   "id": "c4",
+   "with": true,
+   "without": false
+  },
+  {
+   "id": "c5",
+   "with": true,
+   "without": true
+  },
+  {
+   "id": "c6",
+   "with": true,
+   "without": true
+  }
+ ]
+}

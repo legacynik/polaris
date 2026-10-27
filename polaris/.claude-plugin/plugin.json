@@ -1,6 +1,6 @@
 {
   "name": "polaris-team-os",
-  "version": "0.33.1",
+  "version": "0.34.0",
   "description": "Polaris: 27 skills for the delivery cycle — base-workflow routes each request to grill, prototype, plan-area, implement-plan, tdd-dev, bugfix, review, real-testing, ship and the rest; start and end keep the session. Start with docs/TEAM-ONBOARDING.md.",
   "author": {
     "name": "Niccolò Franzin",

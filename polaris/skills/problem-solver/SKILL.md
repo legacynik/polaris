@@ -1,61 +1,55 @@
 ---
 name: problem-solver
-description: "◇ Polaris — Break a loop when nobody knows how to solve the problem: stop, restate it, find the crux, generate many hypotheses and invert the assumptions, search how other repos and products solved it, then pick the cheapest experiment that tells the hypotheses apart. Use after repeated failed attempts at the same thing, when a fix budget says STOP, or on \"non so come risolverlo\", \"siamo in loop\", \"we're stuck\". Requires git."
-version: 0.3.0
+description: "◇ Polaris — Unstick a problem by changing how it is looked at: name what repeats and the crux, propose three opposite ways of thinking about it, let the founder pick, then work the problem through that lens to an answer and the cheapest experiment that confirms it. Use after repeated failed attempts, a fix budget STOP, or on \"siamo in loop\", \"we're stuck\", \"options we haven't thought of\", \"ribalta questo piano\" / \"flip this plan\". Requires git."
+version: 0.4.1
 user-invocable: true
 auto: true
 status: active
-lifecycle: one problem-solving note in the work's plan file (section 9) or the bead, when the experiment's result is known; the hypotheses that failed stay in the note
+lifecycle: one problem-solving note in the work's plan file (section 9) or the bead, when the experiment's result is known; approaches that yielded nothing stay in the note
 invokes: [prototype]
-invoked-by: [human]
-io: a problem that resisted several attempts -> a restated problem, its crux, a ranked hypothesis table with the assumption each one flips, prior art with links, and one or two discriminating experiments run through prototype
+invoked-by: [human, grill]
+io: a problem that resisted several attempts, or a course of action to flip -> three opposite approaches with a recommendation and a question; after the founder's pick, the problem worked through that approach to an answer and the cheapest experiment that would confirm it
 ---
 
 # problem-solver
 
 ## What it does
 
-Gets a stuck problem moving by changing how it is looked at, not by trying the same fix again.
-It widens first — many hypotheses, flipped assumptions, how others solved it — then narrows to
-the one cheap experiment that tells the best hypotheses apart. Methods: [methods.md](references/methods.md).
+Changes how a stuck problem is looked at instead of trying the same fix again: three opposite
+ways of thinking about it, the founder picks, then the work follows that one for real. Approaches
+and optional tools: [methods.md](references/methods.md) — an open list, not a menu to recite.
 
 ## When
 
-- Three attempts at the same thing failed, or a fix budget (`bugfix`, `implement-plan`) said STOP.
-- "Non so come risolverlo", "siamo in loop", "nothing works", a problem with no visible next step.
+- Several attempts at the same thing failed, or a fix budget (`bugfix`, `implement-plan`) said STOP.
+- "Siamo in loop", "non so come risolverlo", "we're stuck", "options we haven't thought of", or
+  `grill` found every approach on the table weak.
+- "Ribalta questo piano" / "flip this plan".
 
 ## Steps
 
-1. **Stop the loop.** List every attempt so far: what was tried, what it showed. Done when the
-   list exists and names the assumption each attempt shared.
-2. **Restate the problem** in the problem worksheet ([methods.md](references/methods.md)): outcome,
-   measure, deadline, what is off limits, who decides. Flip one premise and relax one constraint.
-   Done when the statement is outcome-focused and measurable and one wider framing is noted.
-3. **Break it down and find the crux**: a tree of the problem that is mutually exclusive and
-   collectively exhaustive, cut by two or three different frames; score each branch on impact
-   and on whether we can move it. Done when one movable, high-impact branch is named the crux.
-4. **Diverge, at least ten hypotheses** before judging any: flip each shared assumption, state the
-   contradiction (improving X worsens Y) and how to separate it, solve a smaller or related
-   problem, work backwards from "solved", borrow from another domain, and add three on purpose
-   absurd. Done when there are ten and none is evaluated yet.
-5. **Prior art, in parallel**: fresh-context scouts, one lens each — GitHub repos and issues with
-   the same symptom, products that solved it, papers, a neighbouring domain. Primary sources
-   only, each with a link. Done when every lens returned or said it found nothing.
-6. **Is it a loop in the system?** Look for a feedback loop, a delay or a limit that keeps
-   recreating the problem; a fix at the leverage point beats a fix at the symptom.
-7. **Converge**: write the one-day answer (situation · complication · resolution) as a target to
-   attack; for the top hypotheses ask what you would have to believe for each to hold; pick the
-   knock-out test — the one result that would make other work unnecessary — and sketch the chart
-   it should produce under each hypothesis before running it. Time-box it.
-8. **Run them** through `prototype`, one question per spike. Record the result, including the
-   hypotheses it killed; a recurring cause becomes a lesson through `scripts/lesson_record.py`.
+1. **Stop.** Name what is being repeated: the attempts so far and the assumption they share.
+2. **The crux**, in a sentence or two: what actually blocks. What would have to be true for this
+   to be the real blocker? If the framing is the problem, restate it.
+3. **Three approaches, not three fixes.** Ways of thinking about *this* problem — invert it, drop
+   the constraint treated as fixed, dig to the first cause, find the loop that keeps it alive,
+   borrow from a field with the same structure, work backwards from done, or one of your own.
+   Choose three that pull in different directions and that the attempts so far did not use. For
+   each: what it would look at, what it might surface, why it fits here. Recommend one, with why.
+   Flipping a plan: one approach attacks the plan's central assumption.
+4. **Stop and ask.** The first reply ends with the three and a question — which one, or the one
+   fact that would change the recommendation. No solution yet. "You pick" → pick and go on.
+5. **Work the chosen approach for real**, to an answer. Push it: what would have to be true, what
+   would prove it wrong? End with the cheapest experiment that would confirm it and the result
+   expected if it is right; run it through `prototype` when it needs code.
+6. **Nothing there?** Say so plainly and offer the next approach; never dress up a weak answer.
 
 ## Output
 
-The problem-solving note: the attempts, the chosen restatement, the crux, the hypothesis table
-(hypothesis · assumption flipped · evidence · test · cost), the prior art with links, the
-experiments and their result. **Next:** the winning hypothesis goes back to the skill that was
-stuck (`bugfix`, `implement-plan`, `plan-area`); none survived → back to step 2 with what was learned.
+First reply: the repetition, the crux, three approaches, the recommendation, one question. After
+the pick: the work, the answer, the experiment and its expected result; once known, a note in the
+plan file (section 9) or the bead, with the approaches that yielded nothing. **Next:** back to the
+stuck skill (`bugfix`, `implement-plan`, `plan-area`); a recurring cause → `scripts/lesson_record.py`.
 
 ## Where this goes
 
@@ -64,4 +58,4 @@ This skill produces: **review** (the note, in the plan file or the bead it unblo
 ## Not for
 
 - A defect with a reproduction and a known way forward (`bugfix`); a metric to push (`eval` loop).
-- Product ideas to grow (`grill`); a decision between known options (`architecture`).
+- Product ideas to grow (`grill`); a choice between options already on the table (`architecture`).

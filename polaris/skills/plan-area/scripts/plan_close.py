@@ -4,7 +4,7 @@
 Called by `ship` after the merge (the loop included), never by `/end`. Everything is checked
 before anything is written:
 
-  merged     the area's canonical doc names the plan (proven content absorbed); every DEC the
+  merged     the area README names the plan (proven content absorbed); every DEC the
              plan's Links name passes the repository's own `check_decision_execution.py` verdict
              (EXECUTED, or EXECUTED_IN_FACT → promoted to `executed` by this script, then re-judged);
              the `ship` step closes through feature_gate.py; the epic is burned (the PR comment is
@@ -116,9 +116,9 @@ def promote(repo: Path, todo: list[tuple[Path, str, dict]]) -> tuple[list, list[
 def merged(a, plan: Path, text: str) -> list[str]:
     """Every check first; then promote (revertible), close ship, burn, move."""
     area_dir = plan.parent.parent.parent              # <area>/plans/open/<file>
-    canon = area_dir / f"{area_dir.name}.md"
+    canon = area_dir / "README.md"
     if not canon.is_file() or plan.stem not in canon.read_text(errors="replace"):
-        return [f"absorb the proven content into the canonical doc {canon} first (it must name {plan.stem})"]
+        return [f"absorb the proven content into the area README {canon} first (it must name {plan.stem})"]
     todo, errs = dec_plan(a.repo, sorted(set(DEC_ID.findall(section(text, "Links")))))
     if errs:
         return errs

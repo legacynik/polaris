@@ -34,5 +34,54 @@
     "category": "outcome",
     "assertion": "section 3 cites at least one external primary source for prior art and what we already own, or says that the search found none",
     "cmd": null
+  },
+  {
+    "id": "c7",
+    "category": "process",
+    "assertion": "the first message to the founder (a) restates the request in the agent's own words: what, for whom (the accountants at the two biggest clients) and why (retyping); (b) brings up at least one of the given repo findings that bears on it — the accepted decision that margins are never shown to customers, or reusing the existing render_quote PDF path; (c) has one line inviting corrections; (d) ends on exactly one question that is specific to this request (for example whether the breakdown includes the margin lines), not a generic one such as 'what are the requirements' or 'who are the users', and not a list of questions",
+    "cmd": null,
+    "task": "The founder writes: 'Let customers export their quotes as Excel with our price breakdown, so the accountants at our two biggest clients stop retyping them.' You have already read the repo: quotes/export.py exports a quote as PDF through render_quote(); the price breakdown in pricing/breakdown.py carries internal margin fields next to the customer prices; decisions.md has an accepted decision that margins are never shown to customers. Write the exact first message you send the founder (a message to him may end with a question)."
+  },
+  {
+    "id": "c8",
+    "category": "process",
+    "assertion": "the first message asks exactly one open question in the founder's own terms (not a numbered list of questions and not a menu of example answers to pick from) and says what the answer would change about what gets built",
+    "cmd": null,
+    "task": "The founder writes: 'Ho un'idea vaga: un cruscotto per vedere quali clienti stanno per abbandonarci. Da dove partiamo?' Nothing else is known yet. Write the exact first message you send the founder (a message to him may end with a question)."
+  },
+  {
+    "id": "c9",
+    "category": "outcome",
+    "assertion": "the playback attributes to the founder only what he said, unchanged (about two hours a day lost re-entering measurements, dictating measurements on the phone into the quote, must work offline on site, Italian only, Android only) — no number altered, no claim strengthened or softened; everything the agent adds (for example how the audio is kept, who reviews a dictated value, an accuracy threshold, the speech engine) is explicitly labelled as the agent's proposal or the agent's call with a reason; and it ends by asking what is wrong or missing",
+    "cmd": null,
+    "task": "Over three turns the founder said: 'Our installers waste about two hours a day re-entering site measurements. I want them to dictate measurements on the phone and get them straight into the quote. It must work offline on site.' Then: 'Italian only.' Then: 'Android only, they all have company Android phones.' He said nothing about storage, review, accuracy or which speech engine, and told you the technical choices are yours. Write the playback message of what is understood so far."
+  },
+  {
+    "id": "c10",
+    "category": "process",
+    "assertion": "before any plan file, the reply sends a message of its own with two or three distinct approaches, each a short paragraph saying what it means in this project (grounded in the given facts: the existing render_quote PDF path, the existing invoice spreadsheet export, the margin decision) and what it trades off, recommends one with a reason, and asks the founder to pick; the plan file is written only after the pick, not in that message",
+    "cmd": null,
+    "task": "Grilling 'export quotes as Excel for clients' accountants' is settled on what: one sheet per quote, customer prices only, no margins (per the accepted decision), triggered from the existing quote page; he confirmed the accountants import the lines into their bookkeeping software, so one row per line with numeric cells. Facts: quotes/export.py renders PDF via render_quote(); openpyxl is already installed and used by invoices/export_xlsx.py; quotes have up to 400 lines. Say what you send the founder next and what you do after."
+  },
+  {
+    "id": "c11",
+    "category": "outcome",
+    "assertion": "the reply gets the appetite (how much time the work is worth) from the founder — asks for it, or records it as unknown to ask — and never invents an appetite and attributes it to him; and the plan's Discovery records no-gos or anti-goals and rabbit holes (risky parts to avoid or time-box), with any the agent proposed labelled as its proposals",
+    "cmd": null,
+    "task": "The founder says: 'Spostiamo tutti i job schedulati da cron a Temporal, su tutti e tre i servizi.' Over several turns you agreed what is in scope (the 14 cron jobs in the three services) and why (missed runs go unnoticed today). He never said how much time this is worth or what must not happen. Describe what you do from here up to and including the Discovery section of the plan file."
+  },
+  {
+    "id": "c12",
+    "category": "process",
+    "assertion": "the reply does not have the founder pick between the approaches inside the grill: because they differ on a data contract (where the price list lives and what shape the quote reads), it hands off to the architecture skill (design to open the alternatives, then decide) before the plan is written, while it may still describe the approaches coarsely",
+    "cmd": null,
+    "task": "Grilling 'update quotes automatically when a supplier changes its price list' is settled on what. Two ways to build it remain: (A) the supplier feed writes into our existing prices table and quotes keep reading it as today; (B) quotes read a new versioned price-list contract published by a separate ingestion service, so the quote stores which price-list version it used. Say what you do next."
+  },
+  {
+    "id": "c13",
+    "category": "process",
+    "assertion": "the reply does not force the founder to pick among the weak approaches: it hands off to the problem-solver skill (or names it as the next step) to look at the problem differently, and says the grill resumes afterwards with what that work found",
+    "cmd": null,
+    "task": "Grilling 'cut the time installers spend re-entering site measurements' is settled on what. The founder notes this is the third attempt: a paper form and a tablet app were both abandoned by installers within a month. The approaches you can see now (another form, a better app, an office clerk who retypes) all look weak against that history, and the founder writes: 'Dammi opzioni a cui non abbiamo ancora pensato, anche ribaltando il piano.' Say what you do next."
   }
 ]

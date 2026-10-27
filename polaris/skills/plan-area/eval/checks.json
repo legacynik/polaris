@@ -34,5 +34,40 @@
     "category": "process",
     "assertion": "a course change appends a dated Trajectory change entry (what proved wrong, evidence, what changes) before any code edit, and never edits an accepted decision in place",
     "cmd": null
+  },
+  {
+    "id": "c7",
+    "category": "outcome",
+    "assertion": "the reply rewrites the draft so the code step gives the exact signature, the file and the spec's values (rounding to 2 decimals, the 0.22 rate) and the test step gives the test name and its assertions with the spec's values, and the reply contains NO full function body; the rewritten step is shorter than the draft (any wording, any heading)",
+    "cmd": null,
+    "task": "Here is a draft step of an implementation plan for adding VAT to quote totals. Spec: the total with VAT is the net total times 1.22, rounded half-up to 2 decimals; a net total of 0 gives 0. Draft step: 'Step 3: implement in pricing/vat.py:\n```python\nfrom decimal import Decimal, ROUND_HALF_UP\n\ndef total_with_vat(net):\n    if net is None:\n        raise ValueError(\"net is required\")\n    rate = Decimal(\"0.22\")\n    gross = Decimal(net) * (Decimal(1) + rate)\n    return gross.quantize(Decimal(\"0.01\"), rounding=ROUND_HALF_UP)\n```\nStep 4: write tests for the above.' Fix these two steps of the plan."
+  },
+  {
+    "id": "c8",
+    "category": "outcome",
+    "assertion": "the reply names at least one input the spec implies but the listed tests do not exercise (e.g. an empty file, a header-only file, a row with a missing or non-numeric price, duplicated SKUs, a different delimiter or encoding), states the behaviour a reasonable user would expect for it, and adds a concrete test for it to the phase that owns the import code -- not merely a generic 'handle edge cases' line (any wording, any heading)",
+    "cmd": null,
+    "task": "Spec for a plan: 'Users upload a supplier price list as CSV with columns sku,price; each row updates that SKU's price.' Phase 1 of the plan: parse the CSV and update prices; its tests: test_parses_two_rows (two valid rows update two SKUs). Phase 2: show the import summary; its tests: test_summary_counts_rows. Finish the test side of this plan before it goes to review."
+  },
+  {
+    "id": "c9",
+    "category": "process",
+    "assertion": "the reply does NOT treat the owner's earlier 'scope ok' as approval of the plan: it does not mark the plan accepted nor create the phases/epic yet, and it asks the owner to read and approve the written plan file itself, pointing to it (path or the file)",
+    "cmd": null,
+    "task": "Context: yesterday the owner reviewed the idea for the PDF export and said 'scope ok, go'. You have just written the plan file docs/areas/export/plans/open/2026-10-27-pdf-export.md (status: proposed) with DoD and three phases. What do you do next? Say exactly what you do and what you write to the owner."
+  },
+  {
+    "id": "c10",
+    "category": "outcome",
+    "assertion": "in the drafted plan text the founder's statements appear verbatim (quoted) or with a pointer to where he said them, and every element the agent added on its own (e.g. a retry policy, a dry-run mode, a notification, a threshold, extra scope) is visibly marked as the agent's proposal rather than presented as the founder's requirement (any marking)",
+    "cmd": null,
+    "task": "The founder wrote in chat today: 'Il listino del fornitore va importato ogni notte alle 2, e se una riga ha il prezzo vuoto la saltiamo.' Draft the outcome, the scope and the DoD sections of the plan file for this import; add whatever you think the plan needs."
+  },
+  {
+    "id": "c11",
+    "category": "outcome",
+    "assertion": "every behaviour the reply writes into the DoD/contract carries at least one concrete example with real values (a specific input and its expected output, e.g. a given net amount and the resulting total, or a scenario with numbers/rows), usable as an acceptance test -- not only abstract sentences such as 'discounts are applied correctly' (any wording, any heading)",
+    "cmd": null,
+    "task": "Write the DoD section of the plan for this spec: 'A quote can have a percentage discount between 0 and 50%. The discount applies to the net total before VAT (22%). Totals are shown with 2 decimals.'"
   }
 ]

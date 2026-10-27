@@ -1,6 +1,6 @@
 {
  "skill": "problem-solver",
- "coverage": "6 positives (explicit, implicit, contextual: loops, failed fixes, fix budget STOP); 5 decoys: bugfix (a fresh traceback), eval loop (a metric to push), grill (an idea), architecture (known options), naming.",
+ "coverage": "8 positives (explicit, implicit, contextual: loops, failed fixes, fix budget STOP, options nobody considered, flip a plan); 5 decoys: bugfix (a fresh traceback), eval loop (a metric to push), grill (an idea), architecture (known options), naming.",
  "cases": [
   {
    "id": "p01",
@@ -37,6 +37,18 @@
    "should_trigger": true,
    "kind": "implicit",
    "prompt": "every approach to deduplicating these quotes fails on some edge case; I need a completely different angle"
+  },
+  {
+   "id": "p07",
+   "should_trigger": true,
+   "kind": "explicit",
+   "prompt": "ribalta questo piano: vogliamo migrare tutto il backend a microservizi per ridurre i bug in produzione"
+  },
+  {
+   "id": "p08",
+   "should_trigger": true,
+   "kind": "implicit",
+   "prompt": "every option we have for cutting onboarding drop-off looks weak; give me approaches we haven't thought of"
   },
   {
    "id": "n01",

@@ -1,0 +1,35 @@
+{
+ "skill": "implement-plan",
+ "model": "sonnet",
+ "n": 5,
+ "with": 1,
+ "without": 1,
+ "lift": 0.0,
+ "rows": [
+  {
+   "id": "c7",
+   "with": false,
+   "without": true
+  },
+  {
+   "id": "c8",
+   "with": true,
+   "without": false
+  },
+  {
+   "id": "c9",
+   "with": false,
+   "without": false
+  },
+  {
+   "id": "c10",
+   "with": false,
+   "without": false
+  },
+  {
+   "id": "c11",
+   "with": false,
+   "without": false
+  }
+ ]
+}

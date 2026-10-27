@@ -1,5 +1,39 @@
 # Changelog — grill
 
+## 2.1.0 — 2026-10-27
+
+- The interview grounds every question in context instead of asking formulaic ones. Look before
+  you ask: read what the founder pointed at and the code it touches. The first message plays the
+  request back (what, for whom, why) with what was found. It ends on ONE question, the one that most
+  changes what gets built. Then one Socratic question per turn, built on the last answer or a
+  finding, with no menu of answers. A correctable proposal often beats a question.
+- Fidelity: playback in chunks keeps the founder's words and numbers as his, unchanged; every fill
+  is labelled as the agent's proposal with a reason, every handed-over technical choice as "my call".
+- Before writing: appetite (never invented as his), no-gos and rabbit holes, recorded in Discovery;
+  a press release + FAQ option for Large work.
+- Approaches in a message of their own: 2–3 coarse ways, trade-offs, one recommended, the founder
+  picks. Approaches that differ on a boundary, data contract, dependency or pipeline shape go to
+  `/architecture design` then `decide`; all weak, repeated failure or "flip the plan" go to
+  `problem-solver` (added to `invokes`; problem-solver 0.4.1 declares grill in `invoked-by`), then
+  the grill resumes.
+- Three thinking tools, one line each: what would have to be true (the assumptions), a pre-mortem
+  (anti-goals, no-gos, rabbit holes), a quick divergence with at least one inverted approach before
+  the 2–3 are laid out; deeper → `problem-solver`.
+- Lighter body: procedure (evidence pack, prior art, premise teardown, size table) moved to
+  `references/interview.md` or compressed; the body gives goal, moves and critical-thinking prompts.
+  Body 60 → 60 lines. `references/interview.md` rewritten with an example per move;
+  `references/plan-file.md` Discovery gains appetite, no-gos, rabbit holes, approaches, theirs/ours
+  and the optional press release + FAQ.
+- Eval: checks c7–c13 with a `task` for `eval_run.py --lift` (first message, vague request,
+  fidelity, approaches, appetite/no-gos, architecture handoff, problem-solver handoff); c1–c6 unchanged.
+- Description unchanged. Version bump: minor, from 2.0.6.
+## 2.0.6 — 2026-10-27
+
+- Plan template (sections plan-area fills): `## Review Focus` between §6 and §7; §5 asks for
+  signatures and the owner's words verbatim, agent additions as `proposal (agent):`; §7 tasks are
+  one action with a checkable result. Owned by plan-area 0.5.0; grill's own sections untouched.
+- Version bump: patch, from 2.0.5.
+
 ## 2.0.5 — 2026-10-25
 
 - A decision that surfaces in discovery (boundary, interface, contract, dependency, or a rule that binds the future) goes to `/architecture` (`design` if open, else `decide`) before the plan; Large work's path starts with `/architecture decide`. Seen in the chain probe: on a public-contract idea grill proposed `prototype` → `plan-area` and skipped `architecture`.

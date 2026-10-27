@@ -1,0 +1,40 @@
+{
+ "skill": "architecture",
+ "model": "sonnet",
+ "n": 6,
+ "with": 6,
+ "without": 0,
+ "lift": 1.0,
+ "rows": [
+  {
+   "id": "c10",
+   "with": true,
+   "without": false
+  },
+  {
+   "id": "c11",
+   "with": true,
+   "without": false
+  },
+  {
+   "id": "c12",
+   "with": true,
+   "without": false
+  },
+  {
+   "id": "c13",
+   "with": true,
+   "without": false
+  },
+  {
+   "id": "c14",
+   "with": true,
+   "without": false
+  },
+  {
+   "id": "c15",
+   "with": true,
+   "without": false
+  }
+ ]
+}

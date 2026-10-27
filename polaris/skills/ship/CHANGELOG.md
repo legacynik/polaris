@@ -1,5 +1,14 @@
 # Changelog — ship
 
+## 3.1.0 — 2026-10-27
+
+- Step 5 runs `scripts/slop_check.py` on every `.md` the branch touched: buzzwords, hedges,
+  adjective triads, sentences over 40 words, empty headings, a first sentence that repeats its
+  heading, "This document describes" openers. Exit 0 clean, 1 findings, 2 unreadable; a finding is
+  fixed or allowed with `<!-- slop-ok: reason -->`. Rules for the judgement part in
+  `references/writing.md`. Test: `tests/test_slop_check.py` (RED recorded).
+- Version bump: minor, from 3.0.5. Description unchanged.
+
 ## 3.0.5 — 2026-10-26
 
 - Tests and CHANGELOG name no product repository; the stale-main test assembles its fake key at run time, like the hook's selfcheck.
@@ -33,7 +42,7 @@
 - Rewritten to the 60-line form (What it does · When · Steps · Output · Not for); details moved to
   `references/contract.md` (contract, staging, gotchas, scripts), `references/merge-and-deploy.md`
   (proposal screen, Phase B, verification window) and `references/hook.md`.
-- The steps follow the operating model §3 phase 7: local tests → `review` audit (replaces the
+- The steps follow the operating model §3 phase 7: local tests → `review` audit (replaces the <!-- slop-ok: changelog history, not rewritten -->
   separate simplify step and security angle) → local `real-testing` with a fresh-context breaker →
   DoD → **docs step** (new, from gstack `/document-release`: docs whose claims the diff changed are
   fixed or named under «Still open») → push and draft PR → staging once → `pr` → `babysit` →

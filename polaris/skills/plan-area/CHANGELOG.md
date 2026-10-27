@@ -1,5 +1,30 @@
 # Changelog — plan-area
 
+## 0.5.0 — 2026-10-27
+
+- A plan records decisions, not a transcript of the code: a code step is a signature, a file and
+  the spec's values; a test step is a test name and its assertions. `check_plan_files.py` gains
+  the `transcript` rule (code lines outnumber prose, mermaid not counted). Test:
+  `test_plan_mostly_code_is_a_transcript` (RED recorded).
+- `## Review Focus` (template, between §6 and §7): up to five inputs the spec implies and no
+  phase tests, each pinned by a test in the owning phase.
+- The owner's words are carried verbatim or with a pointer; agent additions are marked
+  `proposal (agent):`. Approving the idea is not approving the plan: the owner approves the file.
+- Spec by example: every contract and DoD behaviour carries a real input → expected output that
+  can become its acceptance test (eval c11).
+- Three thinking tools, one line each: riskiest assumption proven or killed in the earliest phase;
+  a pre-mortem feeding the Review Focus; for Large work, what reacts after release and with what
+  delay, named in the risks (founder, 2026-10-27).
+- Builder check before `critic`: `references/builder-check.md` (fresh-context builder lists what
+  it would still have to ask; answered · minor · the owner's).
+- Body rewritten from a numbered procedure to goal, done-criterion, traps and questions to ask
+  oneself (founder, 2026-10-27: heavy structure dulls the model); still 60 lines. Examples per
+  behaviour moved to `references/plan-file.md`. Description unchanged.
+- Version bump: minor, from 0.4.1.
+## 0.4.1 — 2026-10-27
+
+- Close absorbs the proven content into the area README (`<area>/README.md`); `plan_close.py --merged` checks that file, not `<area>/<area>.md`. Test: `test_close_promotes_a_passing_dec_moves_the_file_and_burns` (RED recorded). Founder 2026-10-27: no separate `<area>.md` main document.
+
 ## 0.4.0 — 2026-10-26
 
 - `feature_gate.py` phase stage: tests green and nothing open blocking it — the real-test

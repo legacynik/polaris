@@ -84,3 +84,27 @@ Nothing, on its own. Each row's last column is the verb the founder invokes next
 has an answer for both `RED` and `UNKNOWN` in [menu.md](menu.md) — including the rows where the
 honest answer is that no verb follows. A finding acted on inside the doctor run is a repair nobody
 asked for.
+
+## On an ADR folder — the triage
+
+`python3 scripts/adr_triage.py <adr-dir> [--json]` — read-only, like the rest of `doctor`. One row
+per ADR with the signals a script can see: lines, appended update sections (`Update`,
+`Aggiornamento`, `2bis`…), the frontmatter's `kind`, `status` and `governed` count, and two flags —
+`appended` (never allowed) and `long` (past 200 lines; the budget is one to two pages, a healthy
+set's median about 100). The summary line gives count, median and max.
+
+The agent fills the `call` column by the bar and the governance in [writing.md](writing.md), one
+call per row:
+
+| call | when |
+|---|---|
+| **keep** | an architecturally significant decision, current, within budget |
+| **amend** | drift: a path, name, count, status or wording reality has outrun — the decision itself still holds |
+| **supersede** | what it decided has been reversed: a new ADR, both linked |
+| **compact with <ADR…>** | it overlaps others, is dead, or is a diary: merge into one current record with a provenance note |
+| **demote to ledger** | a threshold, method, prompt, heuristic or number — one `decisions.md` line each |
+| **move to the area README** | prose that describes how the area works today rather than a decision — `ARCHITECTURE.md` when it spans areas |
+
+A row may carry two calls (a diary is usually *compact* plus *move to the area README*). The report is
+the table plus the summary line, with the `appended` and `long` rows listed first. Nothing is
+moved, rewritten or deleted: each row is a proposal the repo owner takes to `doc` or `decide`.

@@ -2,22 +2,43 @@
  {
   "id": "c1",
   "category": "process",
-  "assertion": "before proposing any new fix, the reply lists the attempts already made and names an assumption they share",
+  "assertion": "before proposing anything new, the reply lists the attempts already made and names an assumption they share",
   "cmd": null,
   "task": "We tried three fixes for the nightly import job timing out: a bigger timeout, batching rows by 500, and an index on the source table. It still times out. What do we do?"
  },
  {
   "id": "c2",
-  "category": "process",
-  "assertion": "the reply produces at least ten distinct hypotheses before ranking or recommending any of them",
+  "category": "outcome",
+  "assertion": "the reply proposes three different ways of thinking about the problem (approaches or lenses, e.g. inverting it, dropping a constraint treated as fixed, seeing it as a system, borrowing from another field) rather than three candidate fixes, and for each says what it would look at or might surface and why it fits this problem",
   "cmd": null,
   "task": "Our PDF parser keeps breaking on new supplier formats; each fix for one format breaks another. We are out of ideas."
  },
  {
   "id": "c3",
-  "category": "outcome",
-  "assertion": "the reply proposes one or two experiments, each with a time box, and states for each of the top hypotheses what result that experiment would show, so the result tells the hypotheses apart",
+  "category": "process",
+  "assertion": "the reply recommends one of several proposed approaches with a reason, then ends by asking the user to choose (or asking one question whose answer would change the recommendation), without working the problem through to a solution or committing to a fix",
   "cmd": null,
   "task": "Prices in the cache go stale after a deploy and four attempted fixes did not hold. Help us get unstuck."
+ },
+ {
+  "id": "c4",
+  "category": "outcome",
+  "assertion": "among the approaches or alternatives proposed, at least one attacks the plan's central assumption (that the flaky end-to-end tests are worth keeping and making pass through retries and quarantine) rather than improving how the plan is executed",
+  "cmd": null,
+  "task": "Flip this plan: our end-to-end suite is flaky, so the plan is to add automatic retries on every test, a nightly job that quarantines tests failing twice, and a weekly rotation where one engineer fixes quarantined tests."
+ },
+ {
+  "id": "c5",
+  "category": "outcome",
+  "assertion": "the reply works the problem through the system lens the user picked (what feeds the problem and keeps it coming back, where a change would have leverage) to a concrete answer, and names a cheap experiment that would confirm it together with the result expected if the answer is right",
+  "cmd": null,
+  "task": "Context: our support queue keeps growing even after we hired two more agents. You proposed three approaches: invert it, see it as a system, borrow from another field. I pick 'see it as a system'. Go."
+ },
+ {
+  "id": "c6",
+  "category": "process",
+  "assertion": "the reply chooses one way of approaching the problem itself and works the problem through it, without ending by asking the user to pick among options",
+  "cmd": null,
+  "task": "We're stuck: our webhook consumer processes some events twice and three dedup fixes failed. Don't give me a menu — you pick the approach and go."
  }
 ]

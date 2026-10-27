@@ -319,9 +319,14 @@ Any open plan can also be `paused` (reason, date, slot freed) or `abandoned`.
 | **GitHub issue** | deliveries a person schedules or approves, or a customer sees: few, readable by a human |
 | **Beads** (`bd`) | everything operational: plan phases and tasks, Tiny work, bugs found while testing, review findings, follow-ups, spikes, waiting ideas |
 
-`issue-contract` is the only door. It opens a GitHub issue only when **all** hold: a person must
-schedule or approve it; it will not be done inside the current PR or phase; it says how to prove it
-done and names an area; no open issue already covers it. Otherwise it creates a bead and says why.
+`issue-contract` is the only door. It opens a GitHub issue only when all four hold:
+
+1. a person must schedule or approve it;
+2. it will not be done inside the current PR or phase;
+3. it says how to prove it done and names an area;
+4. no open issue already covers it.
+
+Otherwise it creates a bead and says why.
 
 Beads gives real `blocks` edges (`bd ready` lists only unblocked work), claims with leases that
 expire when a worker crashes, phases poured from a formula and closed only through the gate, and an
@@ -350,14 +355,14 @@ Sort each statement by one question: **what does it take to undo this?**
   `docs/adr/NNNN-title.md`, numbered in sequence, one or two pages each: Status · Context (the forces,
   as facts) · Decision ("We will…") · Consequences (all of them, not only the good ones). ADR 0001 of
   every repository is the one that records how ADRs are written.
-- **The ADR set stays small and current**, so each one describes the system as it is: drift (a path,
-  a name, a count) is amended in place without changing what was decided; a reversal is a new ADR
-  that supersedes the old one, linked both ways; overlapping or dead records are compacted from time
-  to time, with git as the archive. An ADR never grows dated "update" sections.
-- **How it works today** lives in two documents that already exist, never in a record:
-  `ARCHITECTURE.md`, a short map of the whole repository, and each area's README
-  (`docs/areas/<area>/README.md`), which walks that area's flow step by step and is updated when a
-  plan closes. Both name files, not functions: the detail is the code.
+- **The ADR set stays small and current**, so each one describes the system as it is. Drift (a
+  path, a name, a count) is amended in place without changing what was decided. A reversal is a new
+  ADR that supersedes the old one, linked both ways. Overlapping or dead records are compacted from
+  time to time, with git as the archive. An ADR never grows dated "update" sections.
+- **How it works today** lives in two documents that already exist, never in a record.
+  `ARCHITECTURE.md` is a short map of the whole repository. Each area's README
+  (`docs/areas/<area>/README.md`) walks that area's flow step by step and is updated when a plan
+  closes. Both name files, not functions: the detail is the code.
 
 Records are written by `/architecture decide`, never by hand. Status runs `proposed` → `accepted`
 (the owner) → `executed` (only when the probe passes): `accepted` is the target, the code is reality.
@@ -391,9 +396,10 @@ Records are written by `/architecture decide`, never by hand. Status runs `propo
 | **Agent memory** (ai-memory) | what did we discuss, try or learn before | history: a lead, never proof |
 | **Knowledge base** | what do trusted outside sources say | reference, with its source named |
 
-The context pack is a list of rows, each saying why it entered and whether it is known true: `sealed`
-rows from committed files, `declared` prose nobody proved fresh, `flight` rows of work in progress
-(news, never authority), and `UNKNOWN` for an authority the work needs and the repository lacks. It
+The context pack is a list of rows, each saying why it entered and whether it is known true. There
+are four kinds: `sealed` rows from committed files, `declared` prose nobody proved fresh, `flight`
+rows of work in progress (news, never authority), and `UNKNOWN` for an authority the work needs and
+the repository lacks. It
 loads when work enters an area and has a token budget; after a context compaction a hook reprints the
 same pack without recomputing it.
 
@@ -420,9 +426,9 @@ Each `SKILL.md` is the authority for its own behaviour.
 
 | Skill | What it does | Use when |
 |---|---|---|
-| `grill` | Grills an idea against the repo, earlier ideas and prior art; scope, assumptions with tests, size; opens the plan | An idea, a feature request, a vague spec |
+| `grill` | Reads the context first, plays your request back, asks one sharp question at a time, lays out 2–3 approaches (one inverted), records appetite and no-gos; opens the plan | An idea, a feature request, a vague spec |
 | `prototype` | Answers one named question with throwaway code on a spike branch; keeps only the verdict | A plan assumption is still assumed and code can settle it |
-| `problem-solver` | Stops the loop, restates the problem, finds the crux, generates many hypotheses, searches prior art, picks the cheapest experiment that tells them apart | Repeated failed attempts, a fix budget says STOP, "we're stuck", a plan to flip |
+| `problem-solver` | Names the crux, proposes three opposite ways of thinking about the problem, lets you pick, then works it through that lens to the cheapest experiment that confirms it | Repeated failed attempts, a fix budget says STOP, "we're stuck", options nobody considered, a plan to flip |
 | `plan-area` | One plan file per piece of work; pours its phases into a gated Beads epic; records course changes; closes after merge | Scoped Medium or Large work |
 | `architecture` | Decides one architectural commitment and records its cost; audits, maps and documents the system | A boundary, interface, data contract or dependency moves; architecture docs are stale |
 | `domain` | Names the domain, removes overloaded terms, types subdomains, maps contexts | A term means two things, or two models must integrate |
@@ -509,9 +515,10 @@ Each `SKILL.md` is the authority for its own behaviour.
 | `.claude-plugin/`, `polaris/.claude-plugin/` | marketplace and plugin manifests |
 | `docs/` | one page per structure, the same content as the sections above |
 
-Skills are developed in a private lab and promoted here only through the release gates: English, no
-private names or paths, the 60-line form, a version above the published one with its CHANGELOG
-entry, declared dependencies, and trigger evals for new or re-described skills. CI runs the contract
+Skills are developed in a private lab and promoted here only through the release gates. A skill
+must be in English, carry no private names or paths, keep the 60-line form, and declare its
+dependencies. Its version must be above the published one, with a CHANGELOG entry. A new or
+re-described skill must also pass its trigger evals. CI runs the contract
 tests, every script's `--selfcheck`, the skill markers and the version check.
 
 ## Contributing
